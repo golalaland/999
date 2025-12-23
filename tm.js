@@ -283,18 +283,17 @@ function updateInfoTab() {
 }
 
 // ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
-// ---------- LOAD USER — FINAL FIXED VERSION ----------
+// ---------- LOAD USER — FINAL CLEAN REWRITE ----------
 async function loadCurrentUserForGame() {
   try {
-    console.log("%cStarting loadCurrentUserForGame()", "color:#ff6600;font-weight:bold");
-
+    // Log for debugging
     const vipRaw = localStorage.getItem("vipUser");
-    console.log("vipUser raw:", vipRaw);
+    console.log("vipUser raw from localStorage:", vipRaw);
 
     const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
-    // FIXED CHECK — accepts uid or email
-    if (!storedUser?.uid && !storedUser?.email) {
+    // Check if we have uid or email
+    if (!storedUser || (!storedUser.uid && !storedUser.email)) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
@@ -304,15 +303,20 @@ async function loadCurrentUserForGame() {
       return;
     }
 
-    // BUILD UID — from uid or email
-    let uid = storedUser.uid || storedUser.email
-      .trim()
-      .toLowerCase()
-      .replace(/[@.]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
-
-    console.log("%cLoading profile:", "color:#00ffaa", uid);
+    // Determine uid
+    let uid;
+    if (storedUser.uid) {
+      uid = storedUser.uid;
+      console.log("%cUsing stored UID:", "color:#00ffaa", uid);
+    } else if (storedUser.email) {
+      uid = storedUser.email
+        .trim()
+        .toLowerCase()
+        .replace(/[@.]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+      console.log("%cGenerated UID from email:", "color:#00ffaa", uid);
+    }
 
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
@@ -328,7 +332,7 @@ async function loadCurrentUserForGame() {
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
-      email: storedUser.email || uid.replace(/_/g, "@"),
+      email: data.email || storedUser.email || uid.replace(/_/g, "@"),
       stars: Number(data.stars || 0),
       cash: Number(data.cash || 0),
       totalTaps: Number(data.totalTaps || 0),
@@ -338,17 +342,16 @@ async function loadCurrentUserForGame() {
     persistentBonusLevel = currentUser.bonusLevel || 1;
     if (persistentBonusLevel < 1) persistentBonusLevel = 1;
 
-    // UPDATE UI
+    // Update UI
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
     updateInfoTab();
 
     console.log("%cGame loaded — Welcome back!", "color:#00ff9d", currentUser.chatId);
-
   } catch (err) {
     console.warn("Game load error:", err);
-    alert("Failed to load — login in chat");
+    alert("Failed to load profile — login in chat");
     currentUser = null;
     persistentBonusLevel = 1;
   }
