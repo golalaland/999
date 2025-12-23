@@ -316,7 +316,8 @@ async function loadCurrentUserForGame() {
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = 1;
+      persistentBonusLevel = null; // ← leave null, don't default to 1 yet
+      bonusLevelEl && (bonusLevelEl.textContent = ''); // hide bonus
       return;
     }
 
@@ -329,6 +330,8 @@ async function loadCurrentUserForGame() {
     if (!snap.exists()) {
       alert("Profile not found");
       currentUser = null;
+      persistentBonusLevel = null;
+      bonusLevelEl && (bonusLevelEl.textContent = '');
       return;
     }
 
@@ -344,20 +347,23 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    persistentBonusLevel = currentUser.bonusLevel || ;
-    if (persistentBonusLevel < 1) persistentBonusLevel = 1;
+    // ONLY ASSIGN BONUS AFTER DATA IS LOADED
+    persistentBonusLevel = currentUser.bonusLevel;
+    if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
-    // UPDATE UI
+    // UPDATE UI AFTER DATA IS READY
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
+    bonusLevelEl && (bonusLevelEl.textContent = persistentBonusLevel);
     updateInfoTab();
 
   } catch (err) {
     console.warn("Load error:", err);
     alert("Failed to load");
     currentUser = null;
-    persistentBonusLevel = 1;
+    persistentBonusLevel = null;
+    bonusLevelEl && (bonusLevelEl.textContent = '');
   }
 }
 // ---------- DEDUCT ANIMATION ----------
