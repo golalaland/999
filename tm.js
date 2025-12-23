@@ -1,37 +1,4 @@
-async function loginWithToken(token) {
-  if (!token) return null;
-
-  const vipRaw = localStorage.getItem("vipUser");
-  if (vipRaw?.uid) return vipRaw.uid; // Already logged in via localStorage
-
-  try {
-    // Optional cleanup
-    await cleanupExpiredTokens();
-
-    const tokenRef = doc(db, "loginTokens", token);
-    const snap = await getDoc(tokenRef);
-    if (!snap.exists()) throw new Error("Invalid or expired token");
-
-    const data = snap.data();
-    if (Date.now() > data.expiresAt) {
-      await deleteDoc(tokenRef);
-      throw new Error("Token expired");
-    }
-
-    // Store UID for reloads
-    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
-
-    // Delete token after first use
-    await deleteDoc(tokenRef);
-
-    return data.uid;
-
-  } catch (err) {
-    console.warn("Token login error:", err);
-    return null;
-  }
-}
-lo  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   
   // AUTH — onAuthStateChanged lives here
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
