@@ -282,42 +282,38 @@ function updateInfoTab() {
   }
 }
 
-// ---------- LOAD USER — FINAL BULLETPROOF REWRITE (DEBUG + PERSISTENT) ----------
+// ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
 async function loadCurrentUserForGame() {
   try {
-    // DEBUG: Check localStorage vipUser
     const vipRaw = localStorage.getItem("vipUser");
-    console.log("%c localStorage vipUser:", "color:#ff6600;font-weight:bold", vipRaw);
-    console.log("Game localStorage vipUser:", localStorage.getItem("vipUser"));
-
     const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
-    if (!storedUser?.email) {
-      // GUEST MODE
+    // FIXED CHECK — accepts uid or email
+    if (!storedUser?.uid && !storedUser?.email) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
       persistentBonusLevel = 1;
-      console.log("%cGuest mode — no persistent login found", "color:#ff6600");
+      console.log("%cGuest mode — no login found", "color:#ff6600");
       return;
     }
 
-    // BUILD UID FROM EMAIL
-    const uid = storedUser.email
+    // BUILD UID — from uid or email
+    let uid = storedUser.uid || storedUser.email
       .trim()
       .toLowerCase()
       .replace(/[@.]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
 
-    console.log("%cLoading profile from persistent login", "color:#00ffaa", uid);
+    console.log("%cLoading profile", "color:#00ffaa", uid);
 
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
-      alert("Profile not found — login again in chat");
+      alert("Profile not found — login in chat again");
       currentUser = null;
       return;
     }
