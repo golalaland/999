@@ -911,14 +911,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // BUTTONS LOGIN
   // ------------------------------
 function updateRedeemLink() {
-  if (!refs.redeemBtn) return;
-  refs.redeemBtn.href = "https://cube.xixi.live/tm";
+  if (!refs.redeemBtn || !currentUser?.uid) return;
+  const token = btoa(currentUser.uid);
+  refs.redeemBtn.href = `/tm?t=${token}`;  // relative path
   refs.redeemBtn.style.display = "inline-block";
 }
 
 function updateTipLink() {
-  if (!refs.tipBtn) return;
-  refs.tipBtn.href = "https://cube.xixi.live/tm";
+  if (!refs.tipBtn || !currentUser?.uid) return;
+  const token = btoa(currentUser.uid);
+  refs.tipBtn.href = `/tm?t=${token}`;
   refs.tipBtn.style.display = "inline-block";
 }
 /* ----------------------------
