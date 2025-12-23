@@ -285,36 +285,49 @@ function updateInfoTab() {
 // ---------- LOAD USER — PERSISTENT FROM CHAT ONLY ----------
 async function loadCurrentUserForGame() {
   try {
-    // ONLY FROM localStorage (set by chat login)
-    const vipRaw = localStorage.getItem("vipUser");
-    const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
+    let uid = null;
 
-    if (!storedUser?.email) {
-      // NO LOGIN — GUEST MODE
+    // 1. TRY TOKEN FROM URL (for links from chat)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("t");
+
+    if (token) {
+      try {
+        uid = atob(token);
+        console.log("%cLoaded from token link", "color:#ff6600", uid);
+      } catch (e) {
+        console.warn("Invalid token");
+      }
+    }
+
+    // 2. FALLBACK TO localStorage (persistent)
+    if (!uid) {
+      const vipRaw = localStorage.getItem("vipUser");
+      const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
+      if (storedUser?.uid) {
+        uid = storedUser.uid;
+        console.log("%cLoaded from localStorage", "color:#00ffaa");
+      }
+    }
+
+    // GUEST MODE
+    if (!uid) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
       persistentBonusLevel = 1;
-      console.log("%cGuest mode — login in chat to play", "color:#ff6600");
       return;
     }
 
-    // BUILD UID FROM EMAIL — FIXED WITH '_' NOT '*'
-    const uid = storedUser.email
-      .trim()
-      .toLowerCase()
-      .replace(/[@.]/g, '_')   // ← '_' not '*'
-      .replace(/_+/g, '_')     // ← remove duplicate _
-      .replace(/^_|_$/g, '');  // ← remove leading/trailing _
-
-    console.log("%cLoading your profile from chat login", "color:#00ffaa", uid);
+    // STORE UID FOR PERSISTENCE
+    localStorage.setItem("vipUser", JSON.stringify({ uid }));
 
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
-      alert("Profile not found — login in chat again");
+      alert("Profile not found");
       currentUser = null;
       return;
     }
@@ -324,7 +337,7 @@ async function loadCurrentUserForGame() {
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
-      email: storedUser.email,
+      email: uid.replace(/_/g, "@"),
       stars: Number(data.stars || 0),
       cash: Number(data.cash || 0),
       totalTaps: Number(data.totalTaps || 0),
@@ -340,11 +353,9 @@ async function loadCurrentUserForGame() {
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
     updateInfoTab();
 
-    console.log("%cGame loaded — Welcome back!", "color:#00ff9d", currentUser.chatId);
-
   } catch (err) {
-    console.warn("Game load error:", err);
-    alert("Failed to load — login in chat");
+    console.warn("Load error:", err);
+    alert("Failed to load");
     currentUser = null;
     persistentBonusLevel = 1;
   }
