@@ -282,6 +282,7 @@ function updateInfoTab() {
   }
 }
 
+
 // ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
 async function loadCurrentUserForGame() {
   try {
@@ -316,8 +317,7 @@ async function loadCurrentUserForGame() {
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = null; // ← leave null, don't default to 1 yet
-      bonusLevelEl && (bonusLevelEl.textContent = ''); // hide bonus
+      persistentBonusLevel = undefined; // ← leave undefined to prevent flashing 1
       return;
     }
 
@@ -330,8 +330,7 @@ async function loadCurrentUserForGame() {
     if (!snap.exists()) {
       alert("Profile not found");
       currentUser = null;
-      persistentBonusLevel = null;
-      bonusLevelEl && (bonusLevelEl.textContent = '');
+      persistentBonusLevel = undefined;
       return;
     }
 
@@ -347,25 +346,24 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    // ONLY ASSIGN BONUS AFTER DATA IS LOADED
+    // FIXED: assign bonus only after user is loaded
     persistentBonusLevel = currentUser.bonusLevel;
     if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
-    // UPDATE UI AFTER DATA IS READY
+    // UPDATE UI
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
-    bonusLevelEl && (bonusLevelEl.textContent = persistentBonusLevel);
     updateInfoTab();
 
   } catch (err) {
     console.warn("Load error:", err);
     alert("Failed to load");
     currentUser = null;
-    persistentBonusLevel = null;
-    bonusLevelEl && (bonusLevelEl.textContent = '');
+    persistentBonusLevel = undefined;
   }
 }
+
 // ---------- DEDUCT ANIMATION ----------
 function animateDeduct(el, from, to, duration = 600) {
   if (from === to) {
