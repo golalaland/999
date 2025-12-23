@@ -288,6 +288,7 @@ async function loadCurrentUserForGame() {
     // DEBUG: Check localStorage vipUser
     const vipRaw = localStorage.getItem("vipUser");
     console.log("%c localStorage vipUser:", "color:#ff6600;font-weight:bold", vipRaw);
+    console.log("Game localStorage vipUser:", localStorage.getItem("vipUser"));
 
     const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
