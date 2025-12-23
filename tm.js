@@ -288,18 +288,17 @@ async function loadCurrentUserForGame() {
     const vipRaw = localStorage.getItem("vipUser");
     const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
-    // FIXED CHECK — accepts uid or email
+    // FIXED: Accept uid or email
     if (!storedUser?.uid && !storedUser?.email) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
       persistentBonusLevel = 1;
-      console.log("%cGuest mode — no login found", "color:#ff6600");
       return;
     }
 
-    // BUILD UID — from uid or email
+    // BUILD UID
     let uid = storedUser.uid || storedUser.email
       .trim()
       .toLowerCase()
@@ -308,8 +307,7 @@ async function loadCurrentUserForGame() {
       .replace(/^_|_$/g, '');
 
     console.log("%cLoading profile", "color:#00ffaa", uid);
-
-    const userRef = doc(db, "users", uid);
+  const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
