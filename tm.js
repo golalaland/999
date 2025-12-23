@@ -283,25 +283,51 @@ function updateInfoTab() {
 }
 
 
+async function loadUserFromToken(token) {
+  try {
+    if (!token) throw new Error("No token provided");
+
+    const tokenRef = doc(db, "loginTokens", token);
+    const snap = await getDoc(tokenRef);
+
+    if (!snap.exists()) throw new Error("Invalid or expired token");
+
+    const data = snap.data();
+
+    // Check expiration
+    if (Date.now() > data.expiresAt) {
+      await deleteDoc(tokenRef);
+      throw new Error("Token expired");
+    }
+
+    // Valid token — delete it immediately (one-time use)
+    await deleteDoc(tokenRef);
+
+    const uid = data.uid;
+    return uid;
+
+  } catch (err) {
+    console.warn("Token login error:", err);
+    alert(err.message);
+    return null;
+  }
+}
+
+
 // ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1. TRY TOKEN FROM URL (for links from chat)
+    // Try token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
-
     if (token) {
-      try {
-        uid = atob(token);
-        console.log("%cLoaded from token link", "color:#ff6600", uid);
-      } catch (e) {
-        console.warn("Invalid token");
-      }
+      uid = await loadUserFromToken(token);
+      if (uid) console.log("%cLogged in via token", "color:#ff6600", uid);
     }
 
-    // 2. FALLBACK TO localStorage (persistent)
+    // Fallback to localStorage
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
@@ -311,19 +337,20 @@ async function loadCurrentUserForGame() {
       }
     }
 
-    // GUEST MODE
+    // Guest mode
     if (!uid) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined; // ← leave undefined to prevent flashing 1
+      persistentBonusLevel = undefined; // prevent flashing 1
       return;
     }
 
-    // STORE UID FOR PERSISTENCE
+    // Store UID for persistence
     localStorage.setItem("vipUser", JSON.stringify({ uid }));
 
+    // Load user data
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
@@ -346,11 +373,11 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    // FIXED: assign bonus only after user is loaded
+    // Set bonus only after user data loaded
     persistentBonusLevel = currentUser.bonusLevel;
     if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
-    // UPDATE UI
+    // Update UI
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
