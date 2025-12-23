@@ -286,9 +286,10 @@ function updateInfoTab() {
 async function loadCurrentUserForGame() {
   try {
     const vipRaw = localStorage.getItem("vipUser");
+    console.log("vipUser raw:", vipRaw);
     const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
-    // FIXED: Accept uid or email
+    // FIXED CHECK
     if (!storedUser?.uid && !storedUser?.email) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
@@ -306,7 +307,8 @@ async function loadCurrentUserForGame() {
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
 
-    console.log("%cLoading profile", "color:#00ffaa", uid);
+    console.log("%cLoading profile:", "color:#00ffaa", uid);
+
   const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
