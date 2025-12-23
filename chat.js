@@ -912,13 +912,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ------------------------------
 function updateRedeemLink() {
   if (!refs.redeemBtn) return;
-  refs.redeemBtn.href = "tapmaster.html";
+  refs.redeemBtn.href = "https://cube.xixi.live/tm";
   refs.redeemBtn.style.display = "inline-block";
 }
 
 function updateTipLink() {
   if (!refs.tipBtn) return;
-  refs.tipBtn.href = "tapmaster.html";
+  refs.tipBtn.href = "https://cube.xixi.live/tm";
   refs.tipBtn.style.display = "inline-block";
 }
 /* ----------------------------
@@ -5440,7 +5440,7 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
   const chatId = currentUser.chatId || 'friend';
   const prettyHandle = chatId.startsWith('@') ? chatId : `@${chatId}`;
   const message = `Hey! I'm on cube, join my tab and let’s win some together! Sign up using my link: `;
-  const link = `https://golalaland.github.io/cube/signup.html?ref=${encodeURIComponent(prettyHandle)}`;
+  const link = `https://cube.xixi.live/signup?ref=${encodeURIComponent(prettyHandle)}`;
   const fullText = message + link;
 
   navigator.clipboard.writeText(fullText)
