@@ -14,6 +14,7 @@
     serverTimestamp,
     updateDoc,
     getDocs,
+    deleteDoc,
     increment,
     limit,
     getCountFromServer,
