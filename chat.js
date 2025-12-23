@@ -2335,8 +2335,9 @@ function setCurrentUserFromData(data, uidKey, email) {
 }
 
 // HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
-function setupPostLogin(email) {
-  localStorage.setItem("vipUser", JSON.stringify({ email }));
+function setupPostLogin() {
+  // Store UID directly — faster, safer, no conversion needed
+  localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
 
   updateRedeemLink();
   setupPresence(currentUser);
@@ -2350,13 +2351,14 @@ function setupPostLogin(email) {
     });
   }
 
-  // SHOW UI & UPDATE EVERYTHING
+  // UI & BALANCE UPDATES
   showChatUI(currentUser);
-  updateInfoTab();     // Info Tab balance shows
+  updateInfoTab();     // Info tab balance
   safeUpdateDOM();     // Header balances
   revealHostTabs();    // Host features
+  setupPostLogin();  // ← Just call this (no param needed)
 
-  console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
+  console.log("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
 }
 
 /* LOGOUT — CLEAN, FUN, SAFE */
