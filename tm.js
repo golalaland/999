@@ -284,10 +284,11 @@ function updateInfoTab() {
 }
 
 
-async function loadUserFromToken(token) {
-  try {
-    if (!token) throw new Error("No token provided");
 
+async function loadUserFromToken(token) {
+  if (!token) return null;
+
+  try {
     const tokenRef = doc(db, "loginTokens", token);
     const snap = await getDoc(tokenRef);
 
@@ -295,21 +296,21 @@ async function loadUserFromToken(token) {
 
     const data = snap.data();
 
-    // Check expiration
     if (Date.now() > data.expiresAt) {
       await deleteDoc(tokenRef);
       throw new Error("Token expired");
     }
 
-    // Valid token — delete it immediately (one-time use)
+    // Valid token — store UID in localStorage for reload safety
+    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
+
+    // Delete the token for security (optional — still works on reload)
     await deleteDoc(tokenRef);
 
-    const uid = data.uid;
-    return uid;
+    return data.uid;
 
   } catch (err) {
     console.warn("Token login error:", err);
-    alert(err.message);
     return null;
   }
 }
@@ -320,7 +321,7 @@ async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // Try token from URL
+    // 1️⃣ Try token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
     if (token) {
@@ -328,7 +329,7 @@ async function loadCurrentUserForGame() {
       if (uid) console.log("%cLogged in via token", "color:#ff6600", uid);
     }
 
-    // Fallback to localStorage
+    // 2️⃣ Fallback to localStorage
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
@@ -338,20 +339,20 @@ async function loadCurrentUserForGame() {
       }
     }
 
-    // Guest mode
+    // 3️⃣ Guest mode
     if (!uid) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined; // prevent flashing 1
+      persistentBonusLevel = undefined; // prevents flashing 1
       return;
     }
 
     // Store UID for persistence
     localStorage.setItem("vipUser", JSON.stringify({ uid }));
 
-    // Load user data
+    // Load user data from Firestore
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
@@ -374,7 +375,7 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    // Set bonus only after user data loaded
+    // Set bonus level only after data loads
     persistentBonusLevel = currentUser.bonusLevel;
     if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
@@ -391,6 +392,7 @@ async function loadCurrentUserForGame() {
     persistentBonusLevel = undefined;
   }
 }
+
 
 // ---------- DEDUCT ANIMATION ----------
 function animateDeduct(el, from, to, duration = 600) {
