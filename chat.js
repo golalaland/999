@@ -324,7 +324,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
- // ——— BUILD CURRENT USER OBJECT ———
+// ——— BUILD CURRENT USER OBJECT ———
 currentUser = {
   uid,
   email,
@@ -336,7 +336,7 @@ currentUser = {
   isVIP: !!data.isVIP,
   isHost: !!data.isHost,
   isAdmin: !!data.isAdmin,
-  hasPaid: !!data.hasPaid,  // ← ADD THIS LINE
+  hasPaid: !!data.hasPaid,  // ← VIP payment status
   stars: data.stars || 0,
   cash: data.cash || 0,
   starsGifted: data.starsGifted || 0,
@@ -352,29 +352,31 @@ currentUser = {
 };
 
 console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-console.log("[HOST/VIP CHECK]", {
-  uid: currentUser?.uid,
-  isHost: currentUser?.isHost,
-  isVIP: currentUser?.isVIP,
-  hasPaid: currentUser?.hasPaid  // ← good for debugging
+console.log("[USER STATUS]", {
+  uid: currentUser.uid,
+  isHost: currentUser.isHost,
+  isVIP: currentUser.isVIP,
+  hasPaid: currentUser.hasPaid,
+  stars: currentUser.stars,
+  cash: currentUser.cash
 });
 
-// after currentUser is created
+// AFTER currentUser IS BUILT
 revealHostTabs();
+updateInfoTab();  // Info tab balance shows
 
-// THIS MAKES INFO TAB SHOW CORRECT BALANCE
-updateInfoTab();
- // Block Cheaters!
-    document.addEventListener("click", (e) => {
+// BLOCK NON-HOSTS FROM INFO TAB (TOOLS)
+document.addEventListener("click", (e) => {
   const btn = e.target.closest('.tab-btn[data-tab="infoTab"]');
   if (!btn) return;
 
-  if (!currentUser || currentUser.isHost !== true) {
+  if (!currentUser?.isHost) {
     e.preventDefault();
-    console.warn("[BLOCKED] non-host tried to open Tools");
+    e.stopPropagation();
+    console.warn("[BLOCKED] Non-host tried to open Info/Tools tab");
+    showStarPopup("Host only — nice try! 😏");
   }
 });
-
 
 
     // ——— UI STATE ———
@@ -2338,9 +2340,10 @@ function setCurrentUserFromData(data, uidKey, email) {
 
 // HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
 function setupPostLogin() {
-  // Store UID directly — faster, safer
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%cvipUser stored:", "color:#00ffaa", localStorage.getItem("vipUser"));
+  console.log("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
+  console.log("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
+
 
   updateRedeemLink();
   setupPresence(currentUser);
