@@ -282,52 +282,41 @@ function updateInfoTab() {
   }
 }
 
-// ---------- LOAD USER — PERSISTENT FROM CHAT ONLY ----------
+// ---------- LOAD USER — FINAL BULLETPROOF REWRITE (DEBUG + PERSISTENT) ----------
 async function loadCurrentUserForGame() {
   try {
-    let uid = null;
+    // DEBUG: Check localStorage vipUser
+    const vipRaw = localStorage.getItem("vipUser");
+    console.log("%c localStorage vipUser:", "color:#ff6600;font-weight:bold", vipRaw);
 
-    // 1. TRY TOKEN FROM URL (for links from chat)
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("t");
+    const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
-    if (token) {
-      try {
-        uid = atob(token);
-        console.log("%cLoaded from token link", "color:#ff6600", uid);
-      } catch (e) {
-        console.warn("Invalid token");
-      }
-    }
-
-    // 2. FALLBACK TO localStorage (persistent)
-    if (!uid) {
-      const vipRaw = localStorage.getItem("vipUser");
-      const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
-      if (storedUser?.uid) {
-        uid = storedUser.uid;
-        console.log("%cLoaded from localStorage", "color:#00ffaa");
-      }
-    }
-
-    // GUEST MODE
-    if (!uid) {
+    if (!storedUser?.email) {
+      // GUEST MODE
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
       persistentBonusLevel = 1;
+      console.log("%cGuest mode — no persistent login found", "color:#ff6600");
       return;
     }
 
-    // STORE UID FOR PERSISTENCE
-    localStorage.setItem("vipUser", JSON.stringify({ uid }));
+    // BUILD UID FROM EMAIL
+    const uid = storedUser.email
+      .trim()
+      .toLowerCase()
+      .replace(/[@.]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+
+    console.log("%cLoading profile from persistent login", "color:#00ffaa", uid);
 
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
-      alert("Profile not found");
+      alert("Profile not found — login again in chat");
       currentUser = null;
       return;
     }
@@ -337,7 +326,7 @@ async function loadCurrentUserForGame() {
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
-      email: uid.replace(/_/g, "@"),
+      email: storedUser.email,
       stars: Number(data.stars || 0),
       cash: Number(data.cash || 0),
       totalTaps: Number(data.totalTaps || 0),
@@ -353,9 +342,11 @@ async function loadCurrentUserForGame() {
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
     updateInfoTab();
 
+    console.log("%cGame loaded — Welcome back!", "color:#00ff9d", currentUser.chatId);
+
   } catch (err) {
-    console.warn("Load error:", err);
-    alert("Failed to load");
+    console.warn("Game load error:", err);
+    alert("Failed to load — login in chat");
     currentUser = null;
     persistentBonusLevel = 1;
   }
