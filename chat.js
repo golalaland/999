@@ -909,22 +909,42 @@ document.addEventListener('DOMContentLoaded', () => {
   updateMessagesPlaceholder();
 
 });
+
+
+// Generate a secure random token and store in Firestore
+async function createLoginToken(uid) {
+  const randomToken = crypto.getRandomValues(new Uint8Array(16))
+                            .reduce((str, byte) => str + byte.toString(16).padStart(2,'0'), '');
+
+  const tokenRef = doc(db, "loginTokens", randomToken);
+  await setDoc(tokenRef, {
+    uid: uid,
+    createdAt: serverTimestamp(),
+    expiresAt: Date.now() + 15 * 60 * 1000 // 15 min expiry
+  });
+
+  return randomToken;
+}
+
   // ------------------------------
   // BUTTONS LOGIN
   // ------------------------------
-function updateRedeemLink() {
+async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) return;
-  const token = btoa(currentUser.uid);
-  refs.redeemBtn.href = `/tm?t=${token}`;  // relative path
+
+  const token = await createLoginToken(currentUser.uid);
+  refs.redeemBtn.href = `/tm?t=${token}`;
   refs.redeemBtn.style.display = "inline-block";
 }
 
-function updateTipLink() {
+async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) return;
-  const token = btoa(currentUser.uid);
+
+  const token = await createLoginToken(currentUser.uid);
   refs.tipBtn.href = `/tm?t=${token}`;
   refs.tipBtn.style.display = "inline-block";
 }
+
 /* ----------------------------
    GIFT ALERT (ON-SCREEN CELEBRATION)
 ----------------------------- */
