@@ -283,23 +283,28 @@ function updateInfoTab() {
 }
 
 // ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
+// ---------- LOAD USER — FINAL FIXED VERSION ----------
 async function loadCurrentUserForGame() {
   try {
+    console.log("%cStarting loadCurrentUserForGame()", "color:#ff6600;font-weight:bold");
+
     const vipRaw = localStorage.getItem("vipUser");
     console.log("vipUser raw:", vipRaw);
+
     const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
 
-    // FIXED CHECK
+    // FIXED CHECK — accepts uid or email
     if (!storedUser?.uid && !storedUser?.email) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
       persistentBonusLevel = 1;
+      console.log("%cGuest mode — no login found", "color:#ff6600");
       return;
     }
 
-    // BUILD UID
+    // BUILD UID — from uid or email
     let uid = storedUser.uid || storedUser.email
       .trim()
       .toLowerCase()
@@ -309,7 +314,7 @@ async function loadCurrentUserForGame() {
 
     console.log("%cLoading profile:", "color:#00ffaa", uid);
 
-  const userRef = doc(db, "users", uid);
+    const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
@@ -323,7 +328,7 @@ async function loadCurrentUserForGame() {
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
-      email: storedUser.email,
+      email: storedUser.email || uid.replace(/_/g, "@"),
       stars: Number(data.stars || 0),
       cash: Number(data.cash || 0),
       totalTaps: Number(data.totalTaps || 0),
