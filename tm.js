@@ -285,26 +285,30 @@ function updateInfoTab() {
 
 
 
-async function loadUserFromToken(token) {
+async function loadUserFromTokenOnce(token) {
   if (!token) return null;
 
+  const vipRaw = localStorage.getItem("vipUser");
+  if (vipRaw?.uid) return vipRaw.uid; // Skip token read if already logged in
+
   try {
+    // Clean expired tokens before using
+    await cleanupExpiredTokens();
+
     const tokenRef = doc(db, "loginTokens", token);
     const snap = await getDoc(tokenRef);
-
     if (!snap.exists()) throw new Error("Invalid or expired token");
 
     const data = snap.data();
-
     if (Date.now() > data.expiresAt) {
       await deleteDoc(tokenRef);
       throw new Error("Token expired");
     }
 
-    // Valid token — store UID in localStorage for reload safety
+    // Store UID for reload safety
     localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
 
-    // Delete the token for security (optional — still works on reload)
+    // Delete token after first use
     await deleteDoc(tokenRef);
 
     return data.uid;
@@ -315,37 +319,26 @@ async function loadUserFromToken(token) {
   }
 }
 
-
 // ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
+    const token = new URLSearchParams(window.location.search).get("t");
+    uid = await loadUserFromTokenOnce(token);
 
-    // 1️⃣ Try token from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("t");
-    if (token) {
-      uid = await loadUserFromToken(token);
-      if (uid) console.log("%cLogged in via token", "color:#ff6600", uid);
-    }
-
-    // 2️⃣ Fallback to localStorage
+    // Fallback to localStorage
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
-      const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
-      if (storedUser?.uid) {
-        uid = storedUser.uid;
-        console.log("%cLoaded from localStorage", "color:#00ffaa");
-      }
+      uid = vipRaw?.uid || null;
     }
 
-    // 3️⃣ Guest mode
+    // Guest mode
     if (!uid) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined; // prevents flashing 1
+      persistentBonusLevel = undefined;
       return;
     }
 
@@ -355,16 +348,13 @@ async function loadCurrentUserForGame() {
     // Load user data from Firestore
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
-
     if (!snap.exists()) {
-      alert("Profile not found");
       currentUser = null;
       persistentBonusLevel = undefined;
       return;
     }
 
     const data = snap.data();
-
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
@@ -375,9 +365,7 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    // Set bonus level only after data loads
-    persistentBonusLevel = currentUser.bonusLevel;
-    if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
+    persistentBonusLevel = currentUser.bonusLevel || 1;
 
     // Update UI
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
@@ -387,7 +375,6 @@ async function loadCurrentUserForGame() {
 
   } catch (err) {
     console.warn("Load error:", err);
-    alert("Failed to load");
     currentUser = null;
     persistentBonusLevel = undefined;
   }
