@@ -283,17 +283,25 @@ function updateInfoTab() {
   }
 }
 
+// ---------- CLEANUP EXPIRED TOKENS ----------
+async function cleanupExpiredTokens() {
+  const tokensRef = collection(db, "loginTokens");
+  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
+  const snap = await getDocs(q);
 
+  snap.forEach(async docSnap => {
+    await deleteDoc(docSnap.ref);
+  });
+}
 
 async function loadUserFromTokenOnce(token) {
   if (!token) return null;
 
   const vipRaw = localStorage.getItem("vipUser");
-  if (vipRaw?.uid) return vipRaw.uid; // Skip token read if already logged in
+  if (vipRaw?.uid) return vipRaw.uid;
 
   try {
-    // Clean expired tokens before using
-    await cleanupExpiredTokens();
+    await cleanupExpiredTokens(); // ← now this exists
 
     const tokenRef = doc(db, "loginTokens", token);
     const snap = await getDoc(tokenRef);
@@ -305,12 +313,8 @@ async function loadUserFromTokenOnce(token) {
       throw new Error("Token expired");
     }
 
-    // Store UID for reload safety
     localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
-
-    // Delete token after first use
     await deleteDoc(tokenRef);
-
     return data.uid;
 
   } catch (err) {
