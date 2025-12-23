@@ -926,6 +926,7 @@ async function createLoginToken(uid) {
   return randomToken;
 }
 
+
   // ------------------------------
   // BUTTONS LOGIN
   // ------------------------------
