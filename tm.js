@@ -1,4 +1,37 @@
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+async function loginWithToken(token) {
+  if (!token) return null;
+
+  const vipRaw = localStorage.getItem("vipUser");
+  if (vipRaw?.uid) return vipRaw.uid; // Already logged in via localStorage
+
+  try {
+    // Optional cleanup
+    await cleanupExpiredTokens();
+
+    const tokenRef = doc(db, "loginTokens", token);
+    const snap = await getDoc(tokenRef);
+    if (!snap.exists()) throw new Error("Invalid or expired token");
+
+    const data = snap.data();
+    if (Date.now() > data.expiresAt) {
+      await deleteDoc(tokenRef);
+      throw new Error("Token expired");
+    }
+
+    // Store UID for reloads
+    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
+
+    // Delete token after first use
+    await deleteDoc(tokenRef);
+
+    return data.uid;
+
+  } catch (err) {
+    console.warn("Token login error:", err);
+    return null;
+  }
+}
+lo  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   
   // AUTH — onAuthStateChanged lives here
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
@@ -294,14 +327,15 @@ async function cleanupExpiredTokens() {
   });
 }
 
-async function loadUserFromTokenOnce(token) {
+async function loginWithToken(token) {
   if (!token) return null;
 
   const vipRaw = localStorage.getItem("vipUser");
-  if (vipRaw?.uid) return vipRaw.uid;
+  if (vipRaw?.uid) return vipRaw.uid; // Already logged in via localStorage
 
   try {
-    await cleanupExpiredTokens(); // ← now this exists
+    // Optional cleanup
+    await cleanupExpiredTokens();
 
     const tokenRef = doc(db, "loginTokens", token);
     const snap = await getDoc(tokenRef);
@@ -313,8 +347,12 @@ async function loadUserFromTokenOnce(token) {
       throw new Error("Token expired");
     }
 
+    // Store UID for reloads
     localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
+
+    // Delete token after first use
     await deleteDoc(tokenRef);
+
     return data.uid;
 
   } catch (err) {
@@ -327,16 +365,18 @@ async function loadUserFromTokenOnce(token) {
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
-    const token = new URLSearchParams(window.location.search).get("t");
-    uid = await loadUserFromTokenOnce(token);
 
-    // Fallback to localStorage
+    // 1️⃣ Check localStorage first — reload-safe
+    const vipRaw = localStorage.getItem("vipUser");
+    uid = vipRaw?.uid || null;
+
+    // 2️⃣ If not logged in, try token from URL
     if (!uid) {
-      const vipRaw = localStorage.getItem("vipUser");
-      uid = vipRaw?.uid || null;
+      const token = new URLSearchParams(window.location.search).get("t");
+      if (token) uid = await loginWithToken(token);
     }
 
-    // Guest mode
+    // 3️⃣ Guest mode
     if (!uid) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
@@ -346,10 +386,7 @@ async function loadCurrentUserForGame() {
       return;
     }
 
-    // Store UID for persistence
-    localStorage.setItem("vipUser", JSON.stringify({ uid }));
-
-    // Load user data from Firestore
+    // 4️⃣ Load user from Firestore
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
     if (!snap.exists()) {
@@ -371,7 +408,7 @@ async function loadCurrentUserForGame() {
 
     persistentBonusLevel = currentUser.bonusLevel || 1;
 
-    // Update UI
+    // 5️⃣ Update UI
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
@@ -383,7 +420,6 @@ async function loadCurrentUserForGame() {
     persistentBonusLevel = undefined;
   }
 }
-
 
 // ---------- DEDUCT ANIMATION ----------
 function animateDeduct(el, from, to, duration = 600) {
