@@ -911,20 +911,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Generate a secure random token and store in Firestore
+// Create a secure token
 async function createLoginToken(uid) {
-  const randomToken = crypto.getRandomValues(new Uint8Array(16))
-                            .reduce((str, byte) => str + byte.toString(16).padStart(2,'0'), '');
+  const token = crypto.getRandomValues(new Uint8Array(16))
+                     .reduce((s, b) => s + b.toString(16).padStart(2,'0'), '');
 
-  const tokenRef = doc(db, "loginTokens", randomToken);
+  const tokenRef = doc(db, "loginTokens", token);
   await setDoc(tokenRef, {
-    uid: uid,
+    uid,
     createdAt: serverTimestamp(),
-    expiresAt: Date.now() + 15 * 60 * 1000 // 15 min expiry
+    expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes
   });
 
-  return randomToken;
+  return token;
 }
+
+// Cleanup expired tokens automatically
+async function cleanupExpiredTokens() {
+  const tokensRef = collection(db, "loginTokens");
+  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
+  const snap = await getDocs(q);
+
+  snap.forEach(async docSnap => {
+    await deleteDoc(docSnap.ref);
+  });
+}
+
 
 
   // ------------------------------
