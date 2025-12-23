@@ -910,7 +910,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-
 // Create a secure token
 async function createLoginToken(uid) {
   const token = crypto.getRandomValues(new Uint8Array(16))
@@ -936,8 +935,6 @@ async function cleanupExpiredTokens() {
     await deleteDoc(docSnap.ref);
   });
 }
-
-
 
   // ------------------------------
   // BUTTONS LOGIN
