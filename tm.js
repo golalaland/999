@@ -282,7 +282,6 @@ function updateInfoTab() {
   }
 }
 
-// ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
 // ---------- LOAD USER — PERSISTENT FROM CHAT ONLY ----------
 async function loadCurrentUserForGame() {
   try {
@@ -301,15 +300,15 @@ async function loadCurrentUserForGame() {
       return;
     }
 
-    // BUILD UID FROM EMAIL
+    // BUILD UID FROM EMAIL — FIXED WITH '_' NOT '*'
     const uid = storedUser.email
       .trim()
       .toLowerCase()
-      .replace(/[@.]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
+      .replace(/[@.]/g, '_')   // ← '_' not '*'
+      .replace(/_+/g, '_')     // ← remove duplicate _
+      .replace(/^_|_$/g, '');  // ← remove leading/trailing _
 
-    console.log("%cLoading your profile from chat login", "color:#00ffaa");
+    console.log("%cLoading your profile from chat login", "color:#00ffaa", uid);
 
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
