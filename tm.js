@@ -344,7 +344,7 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    persistentBonusLevel = currentUser.bonusLevel || 1;
+    persistentBonusLevel = currentUser.bonusLevel || ;
     if (persistentBonusLevel < 1) persistentBonusLevel = 1;
 
     // UPDATE UI
