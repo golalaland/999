@@ -55,6 +55,7 @@ const firebaseConfig = {
 
 /* ---------- Firebase Initialization ---------- */
 const app = initializeApp(firebaseConfig);
+console.log("🔥 FIREBASE PROJECT:", firebaseConfig.projectId);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const rtdb = getDatabase(app); // RTDB now properly initialized
