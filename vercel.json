@@ -1,7 +1,7 @@
 {
   "rewrites": [
     { "source": "/tm", "destination": "/tm.html" },
-    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/su", "destination": "/su.html" },
     { "source": "/chat", "destination": "/chat.html" },
         { "source": "/shop", "destination": "/shop.html" },
         { "source": "/game", "destination": "/game.html" },
