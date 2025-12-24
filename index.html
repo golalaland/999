@@ -1,0 +1,1214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUBE • UNLOCK YOUR EDGE</title>
+<link href="https://fonts.googleapis.com/css2?
+family=Rajdhani:wght@500;600;700
+&family=Poppins:wght@300;500;700
+&family=Dancing+Script:wght@600;700
+&family=Satisfy
+&family=Great+Vibes
+&family=Parisienne
+&family=Caveat:wght@600;700
+&family=Pacifico
+&family=Sacramento
+&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>AOS.init({once: true});</script>
+<style>
+  :root {
+    --neon: #c3f60c;
+    --neon-glow: rgba(195,246,12,0.6);
+    --deep-bg: #0a1400;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a1400, #111900, #000000);
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    overflow-x: hidden;
+  }
+  .hero-video {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: -3;
+    opacity: 0.35;
+    filter: brightness(0.6) contrast(1.3);
+  }
+  .hero-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, transparent 0%, #000 90%);
+    z-index: -2;
+  }
+  .particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .particle {
+    position: absolute;
+    width: 5px; height: 5px;
+    background: var(--neon);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--neon);
+    animation: float 15s infinite linear;
+  }
+  @keyframes float {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100px) translateX(120px); opacity: 0; }
+  }
+  header {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+    position: relative;
+    z-index: 2;
+  }
+/* ===== MAIN LOGO — FUTURISTIC HEADER FONT ===== */
+.logo {
+  font-family: 'Rajdhani', sans-serif; /* ← Main choice: sharp, modern, elite */
+  /* Alternatives (uncomment to switch):
+  font-family: 'Exo 2', sans-serif;
+  font-family: 'Audiowide', cursive;
+  font-family: 'Quantico', sans-serif;
+  font-family: 'Michroma', sans-serif;
+  */
+  font-size: clamp(4.5rem, 12vw, 7.5rem);
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--neon), #e0ff4a, var(--neon));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 60px var(--neon-glow);
+  letter-spacing: 12px;
+  margin-bottom: 0.5rem;
+}
+
+/* ===== TAGLINE — PLAYFUL HANDWRITING OPTION ===== */
+.tagline {
+  font-family: 'Dancing Script', cursive; /* ← Elegant flowing script */
+  /* Alternatives (uncomment to switch):
+  font-family: 'Satisfy', cursive;         /* Playful brush */
+  font-family: 'Pacifico', cursive;        /* Retro beach vibe */
+  font-family: 'Parisienne', cursive;      /* Romantic French */
+  font-family: 'Caveat', cursive;          /* Casual marker */
+  */
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 600;
+  color: #e0ff80;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px #c3f60c;
+  margin: 1.5rem 0 2.5rem;
+}
+
+/* ===== CTA BUTTON — CLEAN & BOLD ===== */
+.cta-btn {
+  font-family: 'Rajdhani', sans-serif; /* Keeps it sharp and readable */
+  /* Alternative: more playful button text
+  font-family: 'Satisfy', cursive;
+  */
+  display: inline-block;
+  padding: 1.2rem 3.5rem;
+  font-size: 1.4rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--neon), #a0d00a);
+  color: #000;
+  border-radius: 60px;
+  text-decoration: none;
+  box-shadow: 0 10px 40px var(--neon-glow);
+  transition: all 0.4s;
+}
+
+.cta-btn:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 20px 60px var(--neon-glow);
+}
+
+/* ===== SECTION TITLES (e.g. Cutie of the Month) ===== */
+.section-title {
+  font-family: 'Great Vibes', cursive; /* ← Luxurious calligraphy — perfect for "Cutie" */
+  /* Alternatives:
+  font-family: 'Sacramento', cursive;      /* Beautiful signature style */
+  font-family: 'Parisienne', cursive;      /* Romantic & light */
+  font-family: 'Audiowide', cursive;       /* Cyberpunk wide */
+  font-family: 'Rajdhani', sans-serif;     /* Keep clean futuristic */
+  */
+  font-size: clamp(2.8rem, 9vw, 4.5rem);
+  margin-bottom: 2rem;
+  background: linear-gradient(90deg, var(--neon), #e0ff4a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 40px var(--neon-glow);
+}
+
+/* ===== CUTIE NAME / SIGNATURE STYLE ===== */
+.cutie-name {
+  font-family: 'Sacramento', cursive; /* ← Gorgeous handwritten signature */
+  /* Alternatives:
+  font-family: 'Great Vibes', cursive;
+  font-family: 'Dancing Script', cursive;
+  */
+  font-size: clamp(3rem, 10vw, 5rem);
+  color: #e0ff80;
+  text-shadow: 0 0 30px #c3f60c;
+  margin: 1rem 0;
+}
+
+/* ===== CUTIE BIO / QUOTE (Extra Small & Light) ===== */
+.cutie-bio {
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  font-size: 0.85rem;       /* ↓ smaller font */
+  line-height: 1.4;         /* ↓ tighter spacing */
+  color: #ddd;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 300;          /* ↓ lighter weight */
+}
+
+/* ===== QUOTES OR PERSONAL MESSAGES ===== */
+.cutie-quote {
+  font-family: 'Caveat', cursive; /* ← Feels like real handwriting */
+  font-size: 1.6rem;
+  font-style: italic;
+  color: #ffff;
+  opacity: 0.9;
+  margin: 2rem 0;
+}
+.cutie-slider {
+  position: relative;
+  max-width: 620px;                 /* ← Smaller overall frame (was 900px) */
+  margin: 0 auto 4rem;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 
+    0 20px 60px rgba(0,0,0,0.6),
+    0 0 50px rgba(195,246,12,0.3);   /* ← Soft neon halo */
+  border: 1px solid rgba(195,246,12,0.2);
+  background: #000;
+  transition: all 0.6s ease;
+}
+
+.cutie-slider:hover {
+  box-shadow: 
+    0 30px 80px rgba(0,0,0,0.7),
+    0 0 70px rgba(195,246,12,0.5);
+  transform: translateY(-8px);
+}
+
+.slides {
+  display: flex;
+  transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.slide {
+  min-width: 100%;
+  position: relative;
+}
+
+.slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;                /* ← Clean crop, fills frame elegantly */
+  aspect-ratio: 3 / 4;              /* ← Consistent portrait ratio */
+}
+
+/* Subtle dark overlay for premium feel */
+.slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+
+/* Prev/Next Buttons — Smaller & Classier */
+.prev, .next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  color: #c3f60c;
+  border: 1px solid rgba(195,246,12,0.4);
+  width: 50px;                      /* ← Smaller */
+  height: 50px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prev:hover, .next:hover {
+  background: rgba(195,246,12,0.2);
+  box-shadow: 0 0 30px rgba(195,246,12,0.6);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.prev { left: 16px; }
+.next { right: 16px; }
+  .prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: var(--neon);
+    border: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .prev { left: 20px; }
+  .next { right: 20px; }
+  /* Features Grid */
+  .features {
+    padding: 4rem 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+  .feature-card {
+    background: rgba(10,25,0,0.6);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(195,246,12,0.3);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.4s;
+  }
+  .feature-card:hover {
+    transform: translateY(-15px);
+    border-color: var(--neon);
+    box-shadow: 0 20px 50px var(--neon-glow);
+  }
+  .feature-card h3 {
+    font-size: 1.6rem;
+    margin: 1.5rem 0;
+    color: var(--neon);
+    text-shadow: 0 0 20px var(--neon-glow);
+  }
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .cutie-bio { font-size: 1.1rem; padding: 0 1rem; }
+    .prev, .next { width: 50px; height: 50px; font-size: 1.5rem; }
+  }
+  /* Reduce ALL font sizes by ~15% */
+html {
+  font-size: 90%;   /* ← try 85% for even smaller */
+}
+
+/* Or target only body text */
+body {
+  font-size: 0.95rem;  /* base size */
+}
+</style>
+</head>
+<body>
+  <video class="hero-video" autoplay muted loop playsinline>
+    <source src="https://cdn.shopify.com/videos/c/o/v/e5d9d2c38f48413fbcfa4b2e0e5500c2.mp4" type="video/mp4">
+  </video>
+  <div class="hero-overlay"></div>
+  <div class="particles">
+    <div class="particle" style="left:10%;animation-delay:0s;"></div>
+    <div class="particle" style="left:25%;animation-delay:2s;"></div>
+    <div class="particle" style="left:40%;animation-delay:4s;"></div>
+    <div class="particle" style="left:60%;animation-delay:1s;"></div>
+    <div class="particle" style="left:80%;animation-delay:3s;"></div>
+    <div class="particle" style="left:90%;animation-delay:5s;"></div>
+  </div>
+  
+<!-- REFINED HAMBURGER MENU -->
+<div class="hamburger-container">
+  <button class="hamburger-btn" aria-label="Menu">
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  </button>
+</div>
+
+<nav class="mobile-menu">
+  <!-- Logo instead of text -->
+  <div class="menu-header">
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
+         alt="CUBE"
+         class="menu-logo">
+  </div>
+
+  <!-- Scrollable links -->
+  <ul class="menu-links">
+    <li><a href="#cutie">Cutie of the Month</a></li>
+    <li><a href="#tapmaster">Games</a></li>
+    <li><a href="#cuties">Livestreams</a></li>
+    <li><a href="#siphouse">SipHouse</a></li>
+    <li><a href="#lounge">TV Shows</a></li>
+    <li><a href="#rewards">WIN $STRZ</a></li>
+    <li><a href="#events">Visit CUBE</a></li>
+  </ul>
+</nav>
+
+<style>
+  /* Hamburger Button */
+  .hamburger-container {
+    position: fixed;
+    top: 24px;
+    left: 20px;
+    z-index: 9999;
+  }
+ .hamburger-btn {
+  background: rgba(10, 25, 0, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(195, 246, 12, 0.5);
+  border-radius: 50%;
+  width: 56px;                    /* ← smaller, more elegant */
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;                       /* ← tighter spacing */
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 0 30px rgba(195, 246, 12, 0.35);
+  position: relative;
+  z-index: 1;
+}
+
+.hamburger-btn:hover {
+  box-shadow: 0 0 50px rgba(195, 246, 12, 0.7);
+  transform: scale(1.08);         /* ← subtle hover grow */
+}
+
+.hamburger-btn:active {
+  transform: scale(0.95);         /* ← nice tap feedback */
+}
+
+.hamburger-line {
+  width: 28px;                    /* ← shorter lines for balance */
+  height: 3px;
+  background: #c3f60c;
+  border-radius: 2px;
+  transition: all 0.4s ease;
+  box-shadow: 0 0 12px #c3f60c;
+}
+
+/* Morph to X — adjusted for smaller size */
+.hamburger-btn.active .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(7px, 7px);
+}
+.hamburger-btn.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+.hamburger-btn.active .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+  /* Mobile Menu */
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 85%;
+    max-width: 360px;
+    height: 100vh;
+    background: rgba(10,20,0,0.95);
+    backdrop-filter: blur(20px);
+    border-right: 2px solid rgba(195,246,12,0.5);
+    box-shadow: 0 0 100px rgba(195,246,12,0.4);
+    transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+  }
+  .mobile-menu.active {
+    left: 0;
+  }
+
+  /* Logo in Header */
+  .menu-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(195,246,12,0.2);
+  }
+  .menu-logo {
+    height: 120px;
+    width: auto;
+    filter: drop-shadow(0 0 30px #c3f60c);
+  }
+
+  /* Scrollable Links */
+  .menu-links {
+    list-style: none;
+    flex: 1;
+    overflow-y: auto;                 /* ← Internal scroller */
+    -webkit-overflow-scrolling: touch; /* Smooth on iOS */
+    padding-right: 10px;
+  }
+  .menu-links::-webkit-scrollbar {
+    width: 6px;
+  }
+  .menu-links::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+  }
+  .menu-links::-webkit-scrollbar-thumb {
+    background: rgba(195,246,12,0.6);
+    border-radius: 10px;
+  }
+  .menu-links li {
+    margin: 1.2rem 0;
+  }
+  .menu-links a {
+    color: #ccc;
+    font-size: 1.3rem;           /* ← Smaller, not bold */
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.4s;
+    display: block;
+    padding: 0.8rem 0;
+  }
+  .menu-links a:hover {
+    color: #c3f60c;
+    text-shadow: 0 0 20px #c3f60c;
+    transform: translateX(10px);
+  }
+  .menu-cta {
+    display: inline-block;
+    margin: 2rem auto 0;
+    padding: 1rem 3rem;
+    background: linear-gradient(135deg, #c3f60c, #a0d00a);
+    color: #000;
+    border-radius: 60px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(195,246,12,0.6);
+  }
+
+ /* CENTERED SECTION HEADERS — "What's Your Edge" & "Featured" */
+.edge-header,
+.featured-header {
+  text-align: center;
+  margin: 2.5rem 0 1.8rem;
+  padding: 0 1rem;
+}
+
+.edge-header h2,
+.featured-header h2 {
+  font-family: 'Rajdhani', sans-serif; /* Change to any handwriting font if you want */
+  font-size: clamp(2.2rem, 6.5vw, 3.6rem);   /* ← REDUCED: smaller on all screens */
+  font-weight: 700;
+  background: linear-gradient(90deg, #c3f60c, #e0ff4a, #c3f60c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 40px rgba(195,246,12,0.5); /* ← slightly softer glow */
+  letter-spacing: 6px;                       /* ← reduced spacing for tighter look */
+  display: inline-block;
+  position: relative;
+}
+
+/* Optional subtle underline glow — made thinner & shorter */
+.edge-header h2::after,
+.featured-header h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;                    /* ← shorter line */
+  height: 2px;                   /* ← thinner */
+  background: linear-gradient(90deg, transparent, #c3f60c, transparent);
+  box-shadow: 0 0 15px #c3f60c;
+  border-radius: 2px;
+}
+
+</style>
+
+ <header style="
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  position: relative;
+  z-index: 2;
+">
+  <!-- MAIN LOGO IMAGE (replaces text "CUBE") -->
+  <div style="margin-bottom: 1rem;">
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
+         alt="CUBE"
+         style="
+           height: clamp(180px, 35vw, 320px);
+           width: auto;
+           max-width: 96vw;
+           object-fit: contain;
+           filter: drop-shadow(0 0 45px #c3f60c)
+                   drop-shadow(0 0 90px rgba(195,246,12,0.7));
+           animation: logoPulse 4s infinite alternate;
+         ">
+  </div>
+   
+<!-- COMPACT LANDSCAPE BANNER – SLIDING PHOTOS + SMALL CTA -->
+<section class="hero-banner">
+  <!-- Background Slideshow -->
+  <div class="banner-slides">
+    <div class="slide active">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Untitled_design_5.jpg?v=1766499157">
+    </div>
+    <div class="slide">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544">
+    </div>
+    <div class="slide">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Untitled_design_5.jpg?v=1766499157">
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div class="banner-overlay"></div>
+
+  <!-- Content -->
+  <div class="banner-content">
+    <h2 class="banner-title">UNLOCK YOUR EXPERIENCE!</h2>
+    <p class="banner-subtitle">Watch exclusive livestreams, meet cuties, get paid, and level up + MORE.</p>
+    
+    <a href="/su" class="banner-cta">
+      Start Now
+    </a>
+  </div>
+</section>
+
+<style>
+.hero-banner {
+  position: relative;
+  width: 100%;
+  height: 35vh;              /* ← smaller & landscape-friendly */
+  min-height: 250px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.banner-slides {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+  z-index: 2;
+}
+
+.banner-content {
+  position: relative;
+  z-index: 3;
+  max-width: 90%;
+  padding: 0 1rem;
+}
+
+.banner-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.8rem, 6vw, 3rem); /* slightly smaller */
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 20px rgba(0,0,0,0.7);
+  background: linear-gradient(90deg, #c3f60c, #e0ff4a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.banner-subtitle {
+  font-size: clamp(0.9rem, 3.5vw, 1.2rem);
+  color: #e0ff80;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 12px rgba(195,246,12,0.4);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.banner-cta {
+  display: inline-block;
+  padding: 0.6rem 2rem;           /* smaller, cute */
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #c3f60c, #a0d00a);
+  color: #000;
+  border-radius: 40px;
+  text-decoration: none;
+  box-shadow: 0 5px 15px rgba(195,246,12,0.3); /* less glow */
+  transition: all 0.3s ease;
+}
+
+.banner-cta:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(195,246,12,0.5); /* subtle hover glow */
+}
+</style>
+</header>
+
+<style>
+  @keyframes logoPulse {
+    0% { filter: drop-shadow(0 0 45px #c3f60c) drop-shadow(0 0 90px rgba(195,246,12,0.7)); }
+    100% { filter: drop-shadow(0 0 60px #c3f60c) drop-shadow(0 0 120px rgba(195,246,12,1)); }
+  }
+
+  a:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 20px 60px rgba(195,246,12,0.8);
+  }
+</style>
+ 
+<!-- WHAT'S YOUR EDGE -->
+<div class="edge-header">
+  <h2>WHAT’S YOUR EDGE?</h2>
+</div>
+
+<div class="cutie-bio" style="text-align:center; max-width:720px; margin:0 auto;">
+  
+  <p>
+    In a world drowning in noise<br>
+    endless scrolls, fleeting validation, hollow promises<br>
+    most are just getting by...
+  </p>
+
+  <p>
+    <strong>You’re built different.</strong>
+  </p>
+
+  <p>
+    Cube is a private, invite-only platform, where real ambition meets effortless allure.<br>
+    Where presence becomes power.<br>
+    And every connection you make, sharpens your edge.
+  </p>
+  
+  <p>
+    This isn’t about being seen by everyone.<br>
+    It’s about being chosen by the few who matter.
+  </p>
+
+</div>
+  
+<!-- UNLOCK YOUR EDGE -->
+<div class="edge-header">
+  <h2>UNLOCK YOUR EDGE</h2>
+</div>
+
+<div class="cutie-bio" style="text-align:center; max-width:720px; margin:0 auto;">
+  
+  <p>
+    Cube gives you the freedom to earn on your own terms<br>
+    no pressure, no exposure you don’t want, just real money flowing your way.
+  </p>
+
+  <p>
+    <strong>Choose your side. Or all of them. You win either way.</strong>
+  </p>
+
+  <p>
+    Stay completely invisible and still stack serious cash.<br>
+  </p>
+
+  <p>
+    Want the spotlight? Step forward when you’re ready.<br>
+    Get hand-picked for weekly Tv shows, pro photoshoots, and premium features.<br>
+    Earn tips, grow your popularity, and turn admiration into even bigger earnings.
+  </p>
+  <p>
+    This isn’t about grinding for exposure.<br>
+    It’s about building power that pays, quietly or boldly.
+  </p>
+  <p>
+    <strong>Unlock your edge.</strong><br>
+    Join the cuties who earn smarter, live freer, and win for real.
+  </p>
+
+</div>
+<!-- FEATURES GRID — PLAYBOY VIBES, CLEAN FOCUS -->
+<section class="features">
+  <div class="features-grid">
+
+    <div class="feature-card">
+      <h3>LIVESTREAMS</h3>
+      <p>High-energy battles, zero lag, and real STRZ rewards. Climb the ranks, own the stage, and make every move count.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>CUTIES</h3>
+      <p>The hottest girls lighting up streams. Electric energy, undeniable vibes, this is where the world watches and the elite gather.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>SIPHOUSE</h3>
+      <p>Drink unlocks, real deliveries, and wild party games. Every sip, every move, a chance to turn the night into legend.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>LOUNGE</h3>
+      <p>Elite chat, voice rooms, and shared energy. Connect, vibe, and immerse yourself in the moments that matter.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>REWARDS</h3>
+      <p>Daily quests, leaderboard prizes, Ripple earnings. Your skill and presence translate into real recognition and value.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>EXCLUSIVE PARTIES</h3>
+      <p>Invite-only nights, celebrity drops, and unforgettable energy. Not everyone gets in — only the ones who move differently.</p>
+    </div>
+
+  </div>
+</section>
+
+
+  <footer class="cube-footer">
+  <div class="footer-glow-top"></div>
+
+  <!-- MAIN FOOTER CONTENT -->
+  <div class="footer-container">
+    <div class="footer-grid">
+
+      <!-- BRANDING + LOGO -->
+      <div class="footer-brand">
+        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
+             alt="CUBE"
+             class="footer-logo-img">
+        <p class="footer-tagline">UNLOCK YOUR EDGE</p>
+        <p class="footer-subtitle">Elite Experience • Real Rewards • Real Connections</p>
+      </div>
+
+      <!-- EXPLORE -->
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="#cutie">Cutie of the Month</a>
+        <a href="#tapmaster">Games</a>
+        <a href="#cuties">Livestreams/a>
+        <a href="#siphouse">SipHouse</a>
+          <a href="#lounge">Quests</a>
+      </div>
+
+      <!-- COMMUNITY -->
+      <div class="footer-col">
+        <h4>Community</h4>
+        <a href="#rewards">Rewards</a>
+        <a href="#events">Secret Events</a>
+        <a href="#leaderboard">Leaderboard</a>
+        <a href="#terms">Terms & Privacy</a>
+      </div>
+
+<!-- JOIN THE VIBE — TELEGRAM ICON (MAX ZOOMED-OUT, MICRO CIRCLE) -->
+<div class="footer-col social-col">
+  <h4>Get Notified!</h4>
+
+  <div class="social-icons">
+    <a href="https://t.me/unlockye" aria-label="Telegram"
+       style="
+         width: 56px;                 /* 🔽 VERY small circle */
+         height: 56px;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         border-radius: 50%;
+         border: 1px solid rgba(195,246,12,0.7); /* thinner border */
+         background: rgba(10,20,0,0.85);
+         box-shadow: 0 0 14px rgba(195,246,12,0.35); /* subtle, classy glow */
+         transition: transform 0.3s ease, box-shadow 0.3s ease;
+       ">
+
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/telegram.png?v=1766429753"
+           alt="Telegram"
+           style="
+             width: 36%;              /* 🔽 MAX zoomed-out logo */
+             height: 36%;
+             object-fit: contain;
+             border-radius: 0;
+           ">
+    </a>
+  </div>
+</div>
+
+  <!-- BOTTOM BAR -->
+  <div class="footer-bottom">
+    <div class="scanline"></div>
+    <p>© 2025 CUBE • All rights reserved • XIXI.LIVE #UYE™</p>
+  </div>
+</footer>
+
+<style>
+  .cube-footer {
+    margin-top: auto;
+    background: linear-gradient(to top, #000000, #0a1400);
+    border-top: 1px solid rgba(195,246,12,0.2);
+    padding: 4rem 1.5rem 2rem;
+    color: #aaa;
+    position: relative;
+    overflow: hidden;
+  }
+  .footer-glow-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #c3f60c, transparent);
+    box-shadow: 0 0 40px #c3f60c;
+  }
+  .footer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+  .footer-brand {
+    text-align: center;
+  }
+  .footer-logo-img {
+    height: 180px;
+    width: auto;
+    filter: drop-shadow(0 0 40px #c3f60c);
+    margin-bottom: 1rem;
+  }
+  .footer-tagline {
+    font-size: 1.6rem;
+    color: #e0ff80;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px #c3f60c;
+    margin: 0.5rem 0;
+  }
+  .footer-subtitle {
+    font-size: 1rem;
+    opacity: 0.8;
+  }
+  .footer-col h4 {
+    font-size: 1.3rem;
+    color: #c3f60c;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 20px rgba(195,246,12,0.5);
+  }
+  .footer-col a {
+    display: block;
+    color: #bbb;
+    text-decoration: none;
+    margin: 0.8rem 0;
+    transition: all 0.4s;
+  }
+  .footer-col a:hover {
+    color: #c3f60c;
+    text-shadow: 0 0 15px #c3f60c;
+    transform: translateX(8px);
+  }
+  .social-icons {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1.5rem 0;
+  }
+  .social-icons a {
+    width: 60px;
+    height: 60px;
+    background: rgba(195,246,12,0.15);
+    border: 2px solid #c3f60c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #c3f60c;
+    box-shadow: 0 0 30px rgba(195,246,12,0.4);
+    transition: all 0.4s;
+  }
+  .social-icons a:hover {
+    background: #c3f60c;
+    color: #000;
+    transform: translateY(-8px) scale(1.1);
+    box-shadow: 0 0 50px rgba(195,246,12,0.8);
+  }
+  .footer-cta {
+    display: block;
+    margin: 2rem auto 0;
+    padding: 1rem 3rem;
+    background: linear-gradient(135deg, #c3f60c, #a0d00a);
+    color: #000;
+    border-radius: 60px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-align: center;
+    max-width: 220px;
+    box-shadow: 0 10px 40px rgba(195,246,12,0.6);
+    transition: all 0.4s;
+  }
+  .footer-cta:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(195,246,12,0.8);
+  }
+  .footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(195,246,12,0.1);
+    position: relative;
+  }
+  .scanline {
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%;
+    height: 2px;
+    background: #c3f60c;
+    box-shadow: 0 0 30px #c3f60c;
+    animation: scanFooter 8s linear infinite;
+  }
+  @keyframes scanFooter {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+  .footer-bottom p {
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  /* Mobile Adjustments */
+  @media (max-width: 768px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    .social-icons {
+      justify-content: center;
+    }
+    .footer-logo-img {
+      height: 140px;
+    }
+  }
+</style>
+
+<!-- AOS for Scroll Animations -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  
+<style>
+  .features {
+    padding: 4rem 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Smaller cards */
+    gap: 2rem;
+  }
+  .feature-card {
+    background: rgba(10, 20, 0, 0.65);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(195,246,12,0.2);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Scroll Animation (AOS) */
+  .feature-card[data-aos="fade-up"] {
+    opacity: 0;
+    transform: translateY(60px) scale(0.9);
+  }
+  .feature-card[data-aos="fade-up"].aos-animate {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  /* Hover Lift + Glow */
+  .feature-card:hover {
+    transform: translateY(-20px) scale(1.05);
+    border-color: #c3f60c;
+    box-shadow: 0 30px 80px rgba(195,246,12,0.4);
+  }
+  /* Tap Glow (Mobile Touch) */
+  .feature-card:active {
+    transform: translateY(-10px) scale(1.03);
+    box-shadow: 
+      0 0 60px rgba(195,246,12,0.8),
+      0 0 100px rgba(195,246,12,0.5);
+    border-color: #c3f60c;
+    animation: tapPulse 0.6s ease-out;
+  }
+  @keyframes tapPulse {
+    0% { box-shadow: 0 0 0 0 rgba(195,246,12,0.7); }
+    70% { box-shadow: 0 0 0 40px rgba(195,246,12,0); }
+    100% { box-shadow: 0 0 0 0 rgba(195,246,12,0); }
+  }
+  .feature-card h3 {
+    font-size: 1.6rem;
+    margin: 1rem 0;
+    background: linear-gradient(90deg, #c3f60c, #e0ff4a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(195,246,12,0.5);
+    transition: all 0.4s;
+  }
+  .feature-card:hover h3,
+  .feature-card:active h3 {
+    text-shadow: 0 0 40px rgba(195,246,12,0.9);
+    transform: translateY(-5px);
+  }
+  .feature-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #ddd;
+    opacity: 0.9;
+    transition: opacity 0.4s;
+  }
+  .feature-card:hover p {
+    opacity: 1;
+  }
+</style>
+
+<!-- AOS Library (Add to <head>) -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<style>
+  .feature-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+    overflow: hidden;
+    border-radius: 50%;
+    border: 3px solid var(--neon);
+    box-shadow: 0 0 40px var(--neon-glow);
+    transition: all 0.6s;
+  }
+  .feature-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s;
+  }
+  .feature-card:hover .feature-icon {
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 0 60px var(--neon-glow);
+  }
+  .feature-card:hover .feature-icon img {
+    transform: scale(1.2);
+  }
+  .feature-card h3 {
+    font-size: 1.8rem;
+    margin: 1rem 0;
+    background: linear-gradient(90deg, var(--neon), #e0ff4a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px var(--neon-glow);
+    transition: all 0.4s;
+  }
+  .feature-card:hover h3 {
+    transform: translateY(-5px);
+  }
+  .feature-card p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    opacity: 0.9;
+    transition: opacity 0.4s;
+  }
+  .feature-card:hover p {
+    opacity: 1;
+  }
+</style>
+
+  <script>
+  
+  const hamburgerBtn = document.querySelector('.hamburger-btn');
+  const mobileMenu = document.querySelector('.mobile-menu');
+
+  hamburgerBtn.addEventListener('click', () => {
+    hamburgerBtn.classList.toggle('active');
+    mobileMenu.classList.toggle('active');
+  });
+
+  // Close on link tap
+  document.querySelectorAll('.menu-links a').forEach(link => {
+    link.addEventListener('click', () => {
+      hamburgerBtn.classList.remove('active');
+      mobileMenu.classList.remove('active');
+    });
+  });
+  AOS.init({
+    duration: 900,
+    easing: 'ease-out-back',
+    once: false,     // Animate every time they scroll past
+    mirror: true     // Animate back out when scrolling up
+  });
+  AOS.init({
+    duration: 800,
+    easing: 'ease-out-cubic',
+    once: true,
+    offset: 100
+  });
+  /* Auto-Slide JS */
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+  }
+
+  setInterval(() => {
+    current = (current + 1) % slides.length;
+    showSlide(current);
+  }, 6000); // Change every 6 seconds
+
+  showSlide(0); // Start with first
+  </script>
+</body>
+</html>
