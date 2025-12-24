@@ -403,6 +403,15 @@
 .hidden {
   display: none;
 }
+  
+#chatId {
+  transition: border-color 0.3s ease;
+}
+
+#chatId.invalid {
+  border-color: #ff4444 !important;
+  box-shadow: 0 0 15px rgba(255,68,68,0.5);
+}
 </style>
 
 
@@ -755,6 +764,95 @@ vipToggle.onclick = () => {
         return;
       }
 
+
+  // Real-time username availability check
+const usernameInput = document.getElementById('chatId');
+let usernameTimeout = null;
+
+usernameInput.addEventListener('input', () => {
+  clearTimeout(usernameTimeout);
+  usernameTimeout = setTimeout(async () => {
+    const chatId = cleanChatId(usernameInput.value.trim());
+    if (chatId.length < 5 || chatId.length > 15) {
+      usernameInput.style.borderColor = '#ff4444';
+      showPopup('Username must be 5–15 characters');
+      return;
+    }
+
+    usernameInput.style.borderColor = '#c3f60c'; // reset
+    try {
+      const taken = await isChatIdTaken(chatId);
+      if (taken) {
+        usernameInput.style.borderColor = '#ff4444';
+        showPopup('Username already taken – choose another!');
+      } else {
+        usernameInput.style.borderColor = '#c3f60c';
+        // Optional: green success message
+        // showPopup('Username available! 🎉', 1500);
+      }
+    } catch (err) {
+      console.error("Username check failed:", err);
+    }
+  }, 600); // debounce 600ms – only check after user stops typing
+});
+
+// Optional: also check on blur (when user clicks away)
+usernameInput.addEventListener('blur', async () => {
+  const chatId = cleanChatId(usernameInput.value.trim());
+  if (chatId.length >= 5 && chatId.length <= 15) {
+    const taken = await isChatIdTaken(chatId);
+    if (taken) {
+      usernameInput.style.borderColor = '#ff4444';
+      showPopup('Username already taken');
+    }
+  }
+});
+
+
+// Real-time username availability check
+const usernameInput = document.getElementById('chatId');
+let usernameTimeout = null;
+
+usernameInput.addEventListener('input', () => {
+  clearTimeout(usernameTimeout);
+  usernameTimeout = setTimeout(async () => {
+    const chatId = cleanChatId(usernameInput.value.trim());
+    if (chatId.length < 5 || chatId.length > 15) {
+      usernameInput.style.borderColor = '#ff4444';
+      showPopup('Username must be 5–15 characters');
+      return;
+    }
+
+    usernameInput.style.borderColor = '#c3f60c'; // reset
+    try {
+      const taken = await isChatIdTaken(chatId);
+      if (taken) {
+        usernameInput.style.borderColor = '#ff4444';
+        showPopup('Username already taken – choose another!');
+      } else {
+        usernameInput.style.borderColor = '#c3f60c';
+        // Optional: green success message
+        // showPopup('Username available! 🎉', 1500);
+      }
+    } catch (err) {
+      console.error("Username check failed:", err);
+    }
+  }, 600); // debounce 600ms – only check after user stops typing
+});
+
+// Optional: also check on blur (when user clicks away)
+usernameInput.addEventListener('blur', async () => {
+  const chatId = cleanChatId(usernameInput.value.trim());
+  if (chatId.length >= 5 && chatId.length <= 15) {
+    const taken = await isChatIdTaken(chatId);
+    if (taken) {
+      usernameInput.style.borderColor = '#ff4444';
+      showPopup('Username already taken');
+    }
+  }
+});
+
+      
      // === REFERRAL CHECK + LIMIT (MAX 5 VIPs ONLY) ===
 let inviterDocId = null;
 let hiveName = '';
