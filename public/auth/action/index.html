@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=0.85, maximum-scale=0.85, user-scalable=no" />
+<title>Reset Password • CUBE</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --neon: #c3f60c;
+  --neon-dark: #a0d00a;
+  --deep: #0a1400;
+  --glow: rgba(195, 246, 12, 0.6);
+  --input-bg: rgba(10, 25, 0, 0.65);
+  --input-border: rgba(195, 246, 12, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #142400, #050900);
+  color: #eaffc7;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 420px;
+  background: rgba(5, 10, 0, 0.9);
+  border: 1px solid var(--input-border);
+  border-radius: 16px;
+  padding: 36px;
+  box-shadow: 0 0 40px var(--glow);
+}
+
+.logo {
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  color: var(--neon);
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+p {
+  font-size: 14px;
+  opacity: 0.9;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: #fff;
+  outline: none;
+  margin-bottom: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--neon), var(--neon-dark));
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #000;
+  box-shadow: 0 0 25px var(--glow);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+.error {
+  color: #ff5c5c;
+  text-align: center;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.success {
+  color: var(--neon);
+  text-align: center;
+  font-size: 15px;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="logo">CUBE</div>
+  <h1>Reset Your Password</h1>
+  <p>Choose a new password to regain access.</p>
+
+  <input type="password" id="password" placeholder="New password" />
+  <button id="resetBtn">Reset Password</button>
+
+  <div id="message"></div>
+</div>
+
+<!-- 🔌 Firebase CDN -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+/* 🔥 YOUR FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
+  authDomain: "dettyverse.firebaseapp.com",
+  projectId: "dettyverse",
+  storageBucket: "dettyverse.firebasestorage.app",
+  messagingSenderId: "1036459652488",
+  appId: "1:1036452488:web:e8910172ed16e9cac9b63d",
+  databaseURL: "https://dettyverse-default-rtdb.firebaseio.com/"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+/* 🔍 Get URL params */
+const params = new URLSearchParams(window.location.search);
+const mode = params.get('mode');
+const oobCode = params.get('oobCode');
+
+const msg = document.getElementById('message');
+const btn = document.getElementById('resetBtn');
+
+if (mode !== 'resetPassword' || !oobCode) {
+  msg.innerHTML = `<div class="error">Invalid or expired reset link.</div>`;
+  btn.disabled = true;
+}
+
+btn.onclick = async () => {
+  const password = document.getElementById('password').value;
+  if (password.length < 6) {
+    msg.innerHTML = `<div class="error">Password must be at least 6 characters.</div>`;
+    return;
+  }
+
+  try {
+    await confirmPasswordReset(auth, oobCode, password);
+    msg.innerHTML = `<div class="success">Password reset successful. You can now log in.</div>`;
+    btn.disabled = true;
+
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 2500);
+  } catch (e) {
+    msg.innerHTML = `<div class="error">${e.message}</div>`;
+  }
+};
+</script>
+
+</body>
+</html>
