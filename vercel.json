@@ -5,6 +5,7 @@
     { "source": "/chat", "destination": "/chat.html" },
         { "source": "/shop", "destination": "/shop.html" },
         { "source": "/game", "destination": "/game.html" },
+   { "source": "/forgot", "destination": "/forgot.html" },
      { "source": "/menu", "destination": "/menu.html" }
   ]
 }
