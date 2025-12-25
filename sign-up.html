@@ -938,8 +938,8 @@ if (inviterDocId) {
       await addDoc(collection(db, "notifications"), {
         recipientId: inviterDocId,
         type: "new_vip_pending",
-        title: "New VIP in Your Network!",
-        message: `@${chatId} just signed up as VIP!\nRewards on payment 💎`,
+        title: "A VIP in Your Cube!",
+        message: `@${chatId} just signed up as VIP!\nRewards on payment`,
         vipUserId: userCredential.user.uid,
         vipUserName: chatId,
         read: false,
@@ -976,8 +976,8 @@ if (inviterDocId) {
       await addDoc(collection(db, "notifications"), {
         recipientId: inviterDocId,
         type: "new_host_join",
-        title: "New Host Joined Your Network!",
-        message: `@${chatId} just joined as a Host using your link!\n+${hostInviteBonus} STRZ ✨`,
+        title: "A Host Joined Your Cube!",
+        message: `@${chatId} just joined as a Host using your link!\n+${hostInviteBonus} STRZ `,
         newUserId: userCredential.user.uid,
         newUserName: chatId,
         read: false,
@@ -999,7 +999,7 @@ if (inviterDocId) {
         vipPayBtn.classList.remove('hidden');
         messageEl.textContent = "Your VIP slot is reserved 🔒";
       } else {
-        setTimeout(() => window.location.href = "shop.html", 1800);
+        setTimeout(() => window.location.href = "/chat.html", 1800);
       }
 
     } catch (err) {
@@ -1043,7 +1043,7 @@ vipPayBtn.onclick = () => {
         if (!userSnap.exists()) {
           console.error("User not found after payment");
           // Still redirect — payment went through
-          setTimeout(() => window.location.href = "ep.html", 1800);
+          setTimeout(() => window.location.href = "/chat.html", 1800);
           return;
         }
 
@@ -1106,7 +1106,7 @@ try {
 }
         // Success redirect
         setTimeout(() => {
-          window.location.href = "chat.html";
+          window.location.href = "/chat.html";
         }, 1800);
 
       } catch (err) {
