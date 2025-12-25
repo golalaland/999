@@ -1,7 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
+ <!-- Put this in <head> -->
+<link rel="icon" href="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE_LOGO.png?v=1766647893" type="image/x-icon">
+<link rel="icon" type="image/svg+xml" href="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE_LOGO.png?v=1766647893">
+<link rel="apple-touch-icon" sizes="180x180" href="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE_LOGO.png?v=1766647893">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CUBE • UNLOCK YOUR EDGE</title>
@@ -172,10 +175,10 @@ family=Rajdhani:wght@500;600;700
   max-width: 800px;
   margin: 0 auto 3rem;
   font-size: 0.85rem;       /* ↓ smaller font */
-  line-height: 1.4;         /* ↓ tighter spacing */
+  line-height: 1.3;         /* ↓ tighter spacing */
   color: #ddd;
   font-family: 'Poppins', sans-serif;
-  font-weight: 300;          /* ↓ lighter weight */
+  font-weight: 210;          /* ↓ lighter weight */
 }
 
 /* ===== QUOTES OR PERSONAL MESSAGES ===== */
@@ -341,7 +344,7 @@ body {
     <div class="particle" style="left:90%;animation-delay:5s;"></div>
   </div>
   
-<!-- REFINED HAMBURGER MENU -->
+<!-- REFINED HAMBURGER MENU – NO CTA, CLASSY & MINIMAL -->
 <div class="hamburger-container">
   <button class="hamburger-btn" aria-label="Menu">
     <span class="hamburger-line"></span>
@@ -351,7 +354,7 @@ body {
 </div>
 
 <nav class="mobile-menu">
-  <!-- Logo instead of text -->
+  <!-- Logo at top -->
   <div class="menu-header">
     <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
          alt="CUBE"
@@ -368,46 +371,42 @@ body {
     <li><a href="#rewards">WIN $STRZ</a></li>
     <li><a href="#events">Visit CUBE</a></li>
   </ul>
+  </div>
 </nav>
-
+  
 <style>
-  /* Hamburger Button */
-  .hamburger-container {
-    position: fixed;
-    top: 24px;
-    left: 20px;
-    z-index: 9999;
-  }
- .hamburger-btn {
+/* Hamburger Button */
+.hamburger-container {
+  position: fixed;
+  top: 24px;
+  left: 20px;
+  z-index: 9999;
+}
+
+.hamburger-btn {
   background: rgba(10, 25, 0, 0.85);
   backdrop-filter: blur(14px);
   border: 1px solid rgba(195, 246, 12, 0.5);
   border-radius: 50%;
-  width: 56px;                    /* ← smaller, more elegant */
+  width: 56px;
   height: 56px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 6px;                       /* ← tighter spacing */
+  gap: 6px;
   cursor: pointer;
   transition: all 0.4s ease;
   box-shadow: 0 0 30px rgba(195, 246, 12, 0.35);
-  position: relative;
-  z-index: 1;
 }
 
 .hamburger-btn:hover {
-  box-shadow: 0 0 50px rgba(195, 246, 12, 0.7);
-  transform: scale(1.08);         /* ← subtle hover grow */
-}
-
-.hamburger-btn:active {
-  transform: scale(0.95);         /* ← nice tap feedback */
+  box-shadow: 0 0 45px rgba(195, 246, 12, 0.6);
+  transform: scale(1.05);
 }
 
 .hamburger-line {
-  width: 28px;                    /* ← shorter lines for balance */
+  width: 28px;
   height: 3px;
   background: #c3f60c;
   border-radius: 2px;
@@ -415,7 +414,7 @@ body {
   box-shadow: 0 0 12px #c3f60c;
 }
 
-/* Morph to X — adjusted for smaller size */
+/* X morph */
 .hamburger-btn.active .hamburger-line:nth-child(1) {
   transform: rotate(45deg) translate(7px, 7px);
 }
@@ -426,90 +425,69 @@ body {
   transform: rotate(-45deg) translate(7px, -7px);
 }
 
-  /* Mobile Menu */
-  .mobile-menu {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    width: 85%;
-    max-width: 360px;
-    height: 100vh;
-    background: rgba(10,20,0,0.95);
-    backdrop-filter: blur(20px);
-    border-right: 2px solid rgba(195,246,12,0.5);
-    box-shadow: 0 0 100px rgba(195,246,12,0.4);
-    transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 9998;
-    display: flex;
-    flex-direction: column;
-    padding: 2rem;
-  }
-  .mobile-menu.active {
-    left: 0;
-  }
+/* Mobile Menu */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 85%;
+  max-width: 360px;
+  height: 100vh;
+  background: rgba(10,20,0,0.95);
+  backdrop-filter: blur(20px);
+  border-right: 2px solid rgba(195,246,12,0.5);
+  box-shadow: 0 0 100px rgba(195,246,12,0.4);
+  transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
 
-  /* Logo in Header */
-  .menu-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(195,246,12,0.2);
-  }
-  .menu-logo {
-    height: 120px;
-    width: auto;
-    filter: drop-shadow(0 0 30px #c3f60c);
-  }
+.mobile-menu.active {
+  left: 0;
+}
 
-  /* Scrollable Links */
-  .menu-links {
-    list-style: none;
-    flex: 1;
-    overflow-y: auto;                 /* ← Internal scroller */
-    -webkit-overflow-scrolling: touch; /* Smooth on iOS */
-    padding-right: 10px;
-  }
-  .menu-links::-webkit-scrollbar {
-    width: 6px;
-  }
-  .menu-links::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-  }
-  .menu-links::-webkit-scrollbar-thumb {
-    background: rgba(195,246,12,0.6);
-    border-radius: 10px;
-  }
-  .menu-links li {
-    margin: 1.2rem 0;
-  }
-  .menu-links a {
-    color: #ccc;
-    font-size: 1.3rem;           /* ← Smaller, not bold */
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.4s;
-    display: block;
-    padding: 0.8rem 0;
-  }
-  .menu-links a:hover {
-    color: #c3f60c;
-    text-shadow: 0 0 20px #c3f60c;
-    transform: translateX(10px);
-  }
-  .menu-cta {
-    display: inline-block;
-    margin: 2rem auto 0;
-    padding: 1rem 3rem;
-    background: linear-gradient(135deg, #c3f60c, #a0d00a);
-    color: #000;
-    border-radius: 60px;
-    font-weight: 800;
-    font-size: 1.2rem;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(195,246,12,0.6);
-  }
+/* Logo */
+.menu-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
 
+.menu-logo {
+  height: 100px;
+  width: auto;
+  filter: drop-shadow(0 0 30px #c3f60c);
+}
+
+/* Scrollable Links */
+.menu-links {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.menu-links li {
+  margin: 1.2rem 0;
+}
+
+.menu-links a {
+  color: #ccc;
+  font-size: 1.2rem;        /* Smaller & lighter */
+  font-weight: 400;         /* Not bold */
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: block;
+  padding: 0.6rem 0;
+}
+
+.menu-links a:hover {
+  color: #e0ff80;
+  text-shadow: 0 0 10px rgba(195,246,12,0.6);
+  transform: translateX(8px);
+}
+  
  /* CENTERED SECTION HEADERS — "What's Your Edge" & "Featured" */
 .edge-header,
 .featured-header {
@@ -571,30 +549,29 @@ body {
          ">
   </div>
    
-<!-- COMPACT LANDSCAPE BANNER – SLIDING PHOTOS + SMALL CTA -->
+<!-- ULTRA-WIDE LANDSCAPE BANNER – 4800x1800 FRAME -->
 <section class="hero-banner">
   <!-- Background Slideshow -->
   <div class="banner-slides">
     <div class="slide active">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Untitled_design_5.jpg?v=1766499157">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/3.jpg?v=1766610714">
     </div>
     <div class="slide">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/2.jpg?v=1766610701">
     </div>
     <div class="slide">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Untitled_design_5.jpg?v=1766499157">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/3.jpg?v=1766610714">
     </div>
   </div>
 
-  <!-- Overlay -->
+  <!-- Pure Black Translucent Overlay -->
   <div class="banner-overlay"></div>
 
   <!-- Content -->
   <div class="banner-content">
     <h2 class="banner-title">UNLOCK YOUR EXPERIENCE!</h2>
     <p class="banner-subtitle">Watch exclusive livestreams, meet cuties, get paid, and level up + MORE.</p>
-    
-    <a href="/su" class="banner-cta">
+    <a href="https://cube.xixi.live/signup.html" class="banner-cta">
       Start Now
     </a>
   </div>
@@ -604,27 +581,29 @@ body {
 .hero-banner {
   position: relative;
   width: 100%;
-  height: 35vh;              /* ← smaller & landscape-friendly */
-  min-height: 250px;
+  max-width: 100vw;
+  height: 56.25vw; /* Maintains exact 4800:1800 ratio → 1800/4800 = 0.375 → 37.5vh avg, but responsive */
+  min-height: 300px;
+  max-height: 80vh;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   margin: 2rem 0;
+  background: #000; /* Pure black fallback */
 }
 
 .banner-slides {
   position: absolute;
   inset: 0;
-  display: flex;
 }
 
 .slide {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 1.2s ease-in-out;
+  transition: opacity 1.4s ease-in-out;
 }
 
 .slide.active {
@@ -635,12 +614,22 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  display: block;
+  border: none; /* No outlines */
+  outline: none;
 }
 
+/* Pure black translucent overlay — no white anywhere */
 .banner-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.65) 50%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
   z-index: 2;
 }
 
@@ -648,16 +637,16 @@ body {
   position: relative;
   z-index: 3;
   max-width: 90%;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
 }
 
 .banner-title {
   font-family: 'Poppins', sans-serif;
-  font-size: clamp(1.8rem, 6vw, 3rem); /* slightly smaller */
-  font-weight: 700;
+  font-size: clamp(2rem, 7vw, 4.5rem);
+  font-weight: 800;
   color: #fff;
   margin-bottom: 0.8rem;
-  text-shadow: 0 0 20px rgba(0,0,0,0.7);
+  text-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
   background: linear-gradient(90deg, #c3f60c, #e0ff4a);
   -webkit-background-clip: text;
   background-clip: text;
@@ -665,32 +654,32 @@ body {
 }
 
 .banner-subtitle {
-  font-size: clamp(0.9rem, 3.5vw, 1.2rem);
+  font-size: clamp(1rem, 4vw, 1.5rem);
   color: #e0ff80;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 0 12px rgba(195,246,12,0.4);
-  max-width: 600px;
+  margin-bottom: 1.8rem;
+  text-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .banner-cta {
   display: inline-block;
-  padding: 0.6rem 2rem;           /* smaller, cute */
-  font-size: 1rem;
+  padding: 0.7rem 2.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
   text-transform: uppercase;
   background: linear-gradient(135deg, #c3f60c, #a0d00a);
   color: #000;
-  border-radius: 40px;
+  border-radius: 50px;
   text-decoration: none;
-  box-shadow: 0 5px 15px rgba(195,246,12,0.3); /* less glow */
+  box-shadow: 0 6px 20px rgba(195, 246, 12, 0.35);
   transition: all 0.3s ease;
 }
 
 .banner-cta:hover {
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 0 10px 25px rgba(195,246,12,0.5); /* subtle hover glow */
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(195, 246, 12, 0.55);
 }
 </style>
 </header>
@@ -717,24 +706,15 @@ body {
   <p>
     In a world drowning in noise<br>
     endless scrolls, fleeting validation, hollow promises<br>
-    most are just getting by...
   </p>
-
   <p>
     <strong>You’re built different.</strong>
   </p>
-
   <p>
-    Cube is a private, invite-only platform, where real ambition meets effortless allure.<br>
+    CUBE is a private, invite-only platform, where real ambition meets effortless allure.<br>
     Where presence becomes power.<br>
     And every connection you make, sharpens your edge.
   </p>
-  
-  <p>
-    This isn’t about being seen by everyone.<br>
-    It’s about being chosen by the few who matter.
-  </p>
-
 </div>
   
 <!-- UNLOCK YOUR EDGE -->
@@ -745,7 +725,7 @@ body {
 <div class="cutie-bio" style="text-align:center; max-width:720px; margin:0 auto;">
   
   <p>
-    Cube gives you the freedom to earn on your own terms<br>
+    CUBE gives you the freedom to earn on your own terms<br>
     no pressure, no exposure you don’t want, just real money flowing your way.
   </p>
 
@@ -754,17 +734,9 @@ body {
   </p>
 
   <p>
-    Stay completely invisible and still stack serious cash.<br>
-  </p>
-
-  <p>
     Want the spotlight? Step forward when you’re ready.<br>
     Get hand-picked for weekly Tv shows, pro photoshoots, and premium features.<br>
-    Earn tips, grow your popularity, and turn admiration into even bigger earnings.
-  </p>
-  <p>
-    This isn’t about grinding for exposure.<br>
-    It’s about building power that pays, quietly or boldly.
+    Earn rewards, grow your popularity, and turn admiration into even bigger earnings.
   </p>
   <p>
     <strong>Unlock your edge.</strong><br>
