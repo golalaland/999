@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=0.85, maximum-scale=0.85, user-scalable=no">
-<title>CUBE VIP #UYE</title>
+<title>CUBE • #UYE™</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -565,7 +565,9 @@ function showPopup(message, duration = 3500) {
 
 document.getElementById('dob').max = new Date().toISOString().split('T')[0];
   
-function TriggerSprayConfetti() {
+// === CONFETTI SPRAY EFFECT ===
+function triggerSprayConfetti() {
+  // Simple built-in confetti using canvas (no external library needed)
   const canvas = document.createElement('canvas');
   canvas.style.position = 'fixed';
   canvas.style.top = '0';
@@ -581,19 +583,17 @@ function TriggerSprayConfetti() {
   canvas.height = window.innerHeight;
 
   const confetti = [];
-  const colors = ['#FFD700', '#FFC700', '#FFB800', '#FFAA00', '#FFF8DC']; // gold tones
-  const count = 400;
+  const colors = ['#c3f60c', '#e0ff4a', '#a0d00a', '#ffffff'];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < 300; i++) {
     confetti.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height - canvas.height,
-      r: Math.random() * 8 + 2, // size
-      d: Math.random() * 10 + 5, // speed
+      r: Math.random() * 6 + 2,
+      d: Math.random() * 10 + 5,
       color: colors[Math.floor(Math.random() * colors.length)],
       tilt: Math.random() * 10 - 5,
-      tiltAngle: 0,
-      alpha: Math.random() * 0.5 + 0.5
+      tiltAngle: 0
     });
   }
 
@@ -609,16 +609,11 @@ function TriggerSprayConfetti() {
       ctx.beginPath();
       ctx.lineWidth = c.r;
       ctx.strokeStyle = c.color;
-      ctx.globalAlpha = c.alpha;
       ctx.moveTo(c.x + c.tilt + c.r, c.y);
       ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r);
       ctx.stroke();
 
-      // Slight shimmer effect
-      c.alpha += Math.random() * 0.02 - 0.01;
-      if (c.alpha > 1) c.alpha = 1;
-      if (c.alpha < 0.5) c.alpha = 0.5;
-
+      // Remove if off screen
       if (c.y > canvas.height) confetti.splice(i, 1);
     });
 
@@ -632,12 +627,12 @@ function TriggerSprayConfetti() {
 
   draw();
 
-  // Auto cleanup after 6 seconds
+  // Auto cleanup after 5 seconds
   setTimeout(() => {
     canvas.remove();
-  }, 6000);
+  }, 5000);
 }
-
+  
 document.addEventListener('DOMContentLoaded', () => {
   let isVIP = false;
   let gender = '';
@@ -767,7 +762,7 @@ vipToggle.onclick = () => {
     }
 
     submitBtn.classList.add('loading');
-    messageEl.textContent = 'Creating your empire...';
+    messageEl.textContent = 'Creating your account...';
 
     const docId = sanitizeKey(email);
     const userRef = doc(db, "users", docId);
