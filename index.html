@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE_LOGO.png?v=1766647893">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUBE • UNLOCK YOUR EDGE</title>
+<title>CUBE</title>
 <link href="https://fonts.googleapis.com/css2?
 family=Rajdhani:wght@500;600;700
 &family=Poppins:wght@300;500;700
@@ -1137,6 +1137,122 @@ body {
   }
 </style>
 
+
+
+
+     <!-- Add this at the end of <body> -->
+<div id="add-to-home-screen" class="aths-popup" style="display: none;">
+  <div class="aths-content">
+    <div class="aths-icon">🚀</div>
+    <h3>Add to Home Screen</h3>
+    <p>Unlock the full CUBE experience — faster access, works offline, pure edge.</p>
+    
+    <div class="aths-steps">
+      <div class="step">1. Tap <strong>Share</strong> <img src="https://img.icons8.com/ios-filled/20/ffffff/share.png" alt="share icon" style="vertical-align: middle;"></div>
+      <div class="step">2. Choose <strong>Add to Home Screen</strong></div>
+      <div class="step">3. Tap <strong>Add</strong> — done! 🔥</div>
+    </div>
+
+    <button class="aths-close">Got it, thanks</button>
+  </div>
+</div>
+
+<style>
+  .aths-popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 20, 0, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .aths-popup.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .aths-content {
+    background: rgba(28, 38, 20, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(195, 246, 12, 0.25);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 340px;
+    padding: 28px 24px;
+    text-align: center;
+    color: #f0f0f0;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(195,246,12,0.15) inset;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .aths-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 12px var(--neon-glow));
+  }
+
+  .aths-content h3 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    color: var(--neon);
+    text-shadow: 0 0 10px var(--neon-glow);
+    font-weight: 700;
+  }
+
+  .aths-content p {
+    margin: 0 0 20px;
+    font-size: 15px;
+    opacity: 0.9;
+  }
+
+  .aths-steps {
+    text-align: left;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+
+  .step {
+    margin: 12px 0;
+    padding-left: 28px;
+    position: relative;
+  }
+
+  .step::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--neon);
+    font-weight: bold;
+  }
+
+  .aths-close {
+    background: transparent;
+    border: 2px solid var(--neon);
+    color: var(--neon);
+    padding: 10px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px var(--neon-glow);
+  }
+
+  .aths-close:hover {
+    background: var(--neon);
+    color: #0a1400;
+    box-shadow: 0 0 25px var(--neon-glow);
+    transform: translateY(-2px);
+  }
+</style>
+
   <script>
   
   const hamburgerBtn = document.querySelector('.hamburger-btn');
@@ -1181,6 +1297,53 @@ body {
   }, 6000); // Change every 6 seconds
 
   showSlide(0); // Start with first
+
+// Show only once per user (or every X days)
+const ATHS_KEY = 'cube_aths_dismissed';
+const DAYS_TO_RESHOW = 14;
+
+function shouldShowATHS() {
+  const dismissed = localStorage.getItem(ATHS_KEY);
+  if (!dismissed) return true;
+  
+  const time = parseInt(dismissed);
+  const daysPassed = (Date.now() - time) / (1000 * 60 * 60 * 24);
+  return daysPassed > DAYS_TO_RESHOW;
+}
+
+function dismissATHS() {
+  localStorage.setItem(ATHS_KEY, Date.now());
+  document.getElementById('add-to-home-screen').classList.remove('visible');
+}
+
+function showATHSPopup() {
+  if (!shouldShowATHS()) return;
+  
+  const popup = document.getElementById('add-to-home-screen');
+  popup.style.display = 'flex';
+  setTimeout(() => popup.classList.add('visible'), 100);
+
+  // Auto-hide after 12 seconds if user ignores
+  setTimeout(() => {
+    if (popup.classList.contains('visible')) {
+      dismissATHS();
+    }
+  }, 12000);
+}
+
+// Trigger on page load (you can also trigger after user has been on site 30s+)
+window.addEventListener('load', () => {
+  // Optional: delay a bit so it doesn't feel too aggressive
+  setTimeout(showATHSPopup, 8000);
+});
+// Close button
+document.querySelector('.aths-close')?.addEventListener('click', dismissATHS);
+   let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Now you can show your custom button: "Install App"
+});
   </script>
 </body>
 </html>
