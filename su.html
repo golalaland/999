@@ -457,7 +457,7 @@
   font-size: 0.92rem;
 ">
   <div style="line-height: 1.7; margin-bottom: 20px;">
-    By creating an account or using Cube, you agree to our
+    By creating an account or using CUBE, you agree to our
     <a href="/terms" style="
       color: #c3f60c;
       text-decoration: none;
@@ -484,7 +484,7 @@
     color: #666;
     margin-top: 20px;
   ">
-    © 2025 CUBE. All rights reserved. • #UYE • 21+
+    © 2025 CUBE. All rights reserved. • #UYE™
   </div>
 </footer>
   </div>
@@ -565,9 +565,7 @@ function showPopup(message, duration = 3500) {
 
 document.getElementById('dob').max = new Date().toISOString().split('T')[0];
   
-// === CONFETTI SPRAY EFFECT ===
-function triggerSprayConfetti() {
-  // Simple built-in confetti using canvas (no external library needed)
+function triggerGoldConfetti() {
   const canvas = document.createElement('canvas');
   canvas.style.position = 'fixed';
   canvas.style.top = '0';
@@ -583,17 +581,19 @@ function triggerSprayConfetti() {
   canvas.height = window.innerHeight;
 
   const confetti = [];
-  const colors = ['#c3f60c', '#e0ff4a', '#a0d00a', '#ffffff'];
+  const colors = ['#FFD700', '#FFC700', '#FFB800', '#FFAA00', '#FFF8DC']; // gold tones
+  const count = 400;
 
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < count; i++) {
     confetti.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height - canvas.height,
-      r: Math.random() * 6 + 2,
-      d: Math.random() * 10 + 5,
+      r: Math.random() * 8 + 2, // size
+      d: Math.random() * 10 + 5, // speed
       color: colors[Math.floor(Math.random() * colors.length)],
       tilt: Math.random() * 10 - 5,
-      tiltAngle: 0
+      tiltAngle: 0,
+      alpha: Math.random() * 0.5 + 0.5
     });
   }
 
@@ -609,11 +609,16 @@ function triggerSprayConfetti() {
       ctx.beginPath();
       ctx.lineWidth = c.r;
       ctx.strokeStyle = c.color;
+      ctx.globalAlpha = c.alpha;
       ctx.moveTo(c.x + c.tilt + c.r, c.y);
       ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r);
       ctx.stroke();
 
-      // Remove if off screen
+      // Slight shimmer effect
+      c.alpha += Math.random() * 0.02 - 0.01;
+      if (c.alpha > 1) c.alpha = 1;
+      if (c.alpha < 0.5) c.alpha = 0.5;
+
       if (c.y > canvas.height) confetti.splice(i, 1);
     });
 
@@ -627,12 +632,12 @@ function triggerSprayConfetti() {
 
   draw();
 
-  // Auto cleanup after 5 seconds
+  // Auto cleanup after 6 seconds
   setTimeout(() => {
     canvas.remove();
-  }, 5000);
+  }, 6000);
 }
-  
+
 document.addEventListener('DOMContentLoaded', () => {
   let isVIP = false;
   let gender = '';
