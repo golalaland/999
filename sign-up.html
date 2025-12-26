@@ -484,7 +484,7 @@
     color: #666;
     margin-top: 20px;
   ">
-    © 2025 CUBE. All rights reserved. • #UYE™
+    © 2025 CUBE. All rights reserved. • UYE™
   </div>
 </footer>
   </div>
@@ -753,7 +753,7 @@ vipToggle.onclick = () => {
       return;
     }
     if (calculateAge(dob) < 18) {
-      showPopup('You must be 18 or older');
+      showPopup('You must be 18 or older to join');
       return;
     }
     if (!/@(gmail|yahoo|icloud|proton|hotmail|outlook)\.(com|me)$/.test(email)) {
@@ -939,7 +939,7 @@ if (inviterDocId) {
         recipientId: inviterDocId,
         type: "new_vip_pending",
         title: "A VIP in Your Cube!",
-        message: `@${chatId} just signed up as VIP!\nRewards on payment`,
+        message: `@${chatId} just signed up as VIP using your invite link!`,
         vipUserId: userCredential.user.uid,
         vipUserName: chatId,
         read: false,
@@ -1005,7 +1005,7 @@ if (inviterDocId) {
     } catch (err) {
       console.error(err);
       const errorMsg = err.code === 'auth/email-already-in-use'
-        ? 'Email already registered'
+        ? 'This Email is already registered'
         : 'Signup failed — please try again';
       showPopup(errorMsg);
       submitBtn.classList.remove('loading');
@@ -1032,7 +1032,7 @@ vipPayBtn.onclick = () => {
 
     callback: async function(response) {
       vipPayBtn.classList.remove('loading');
-      messageEl.textContent = "VIP Activated ✌︎㋡";
+      messageEl.textContent = "VIP Activated!! ✌︎㋡";
 
       const docId = sanitizeKey(email);
       const userRef = doc(db, "users", docId);
@@ -1078,8 +1078,8 @@ if (inviterId) {
     await addDoc(collection(db, "notifications"), {
       recipientId: inviterId,                  // ← Same as ripple
       type: "vip_activated",
-      title: "VIP Activated in Your Network!",
-      message: `@${userData.chatId} just went VIP!\nYou earned +250 STRZ 💎`,
+      title: "A VIP Activated in Your Cube!",
+      message: `@${userData.chatId} just went VIP!\nYou earned +250 STRZ `,
       vipUserId: userData.uid,
       vipUserName: userData.chatId,
       read: false,
@@ -1095,8 +1095,8 @@ try {
   await addDoc(collection(db, "notifications"), {
     recipientId: userData.uid,                 // ← Same as ripple
     type: "vip_bonus",
-    title: "Welcome to VIP! 🎉",
-    message: "You received 2,500 STRZ as a welcome bonus!\nEnjoy your elite status 🪩",
+    title: "Welcome to cube VIP! 🎉",
+    message: "You received 2,500 STRZ as a welcome bonus!\nEnjoy your elite status",
     read: false,
     createdAt: serverTimestamp()               // ← Same as ripple
   });
@@ -1114,7 +1114,7 @@ try {
         console.error("VIP activation processing failed:", err);
         // Payment already succeeded → safe to redirect
         setTimeout(() => {
-          window.location.href = "ep.html";
+          window.location.href = "/index.html";
         }, 1800);
       }
     },
