@@ -793,6 +793,128 @@ body {
     font-size: 0.95rem;
   }
 }
+
+.earnings-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+}
+
+.earnings-content {
+  background: #111;
+  padding: 40px;
+  border-radius: 24px;
+  max-width: 90%;
+  width: 500px;
+  text-align: center;
+  color: #fff;
+  border: 2px solid #ff006e;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+.earnings-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 40px;
+  color: #ff006e;
+  cursor: pointer;
+}
+
+.earnings-content h2 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #ff006e, #ff6600);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.calc-section {
+  margin: 30px 0;
+}
+
+.calc-section label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #ccc;
+}
+
+#vipCount {
+  width: 100%;
+  height: 8px;
+  border-radius: 50px;
+  background: #333;
+  outline: none;
+}
+
+#vipCount::-webkit-slider-thumb {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ff006e;
+  cursor: pointer;
+  border: 3px solid #000;
+}
+
+#vipDisplay {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ff006e;
+  margin-top: 10px;
+  display: block;
+}
+
+#hostCount {
+  width: 100%;
+  padding: 16px;
+  background: #222;
+  border: 2px solid #ff006e;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 20px;
+  text-align: center;
+}
+
+.earnings-results {
+  margin: 40px 0;
+  padding: 20px;
+  background: rgba(255,0,110,0.1);
+  border-radius: 20px;
+  border: 1px solid #ff006e;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-size: 18px;
+}
+
+.result-item.total {
+  border-top: 2px solid #ff006e;
+  padding-top: 20px;
+  margin-top: 20px;
+  font-size: 24px;
+}
+
+.result-item strong {
+  color: #00ff9d;
+  font-weight: 800;
+}
+
+.disclaimer {
+  font-size: 14px;
+  color: #888;
+  margin-top: 30px;
+  line-height: 1.6;
+}
 </style>
 </header>
 
@@ -929,10 +1051,50 @@ body {
       <!-- COMMUNITY -->
       <div class="footer-col">
         <h4>Community</h4>
-        <a href="#rewards">Rewards</a>
+        <a href="#rewards">Earnings Calculator</a>
         <a href="#events">Visit CUBE</a>
         <a href="/terms">Terms & Privacy</a>
       </div>
+
+      <!-- EARNINGS CALCULATOR POP-UP -->
+<div id="earningsCalcModal" class="earnings-modal">
+  <div class="earnings-content">
+    <span class="earnings-close">&times;</span>
+    <h2>Earnings Calculator</h2>
+    <p>See your potential as a Cube Queen 👑</p>
+
+    <div class="calc-section">
+      <label>How many VIP guys will you invite? (max 5)</label>
+      <input type="range" id="vipCount" min="1" max="5" value="3" step="1">
+      <span id="vipDisplay">3 VIPs</span>
+    </div>
+
+    <div class="calc-section">
+      <label>How many hosts will you onboard?</label>
+      <input type="number" id="hostCount" min="0" value="50" placeholder="e.g. 50">
+    </div>
+
+    <div class="earnings-results">
+      <div class="result-item">
+        <span>Passive from your VIPs (₦2,000 per win)</span>
+        <strong id="vipEarnings">₦60,000/month</strong>
+      </div>
+      <div class="result-item">
+        <span>Cut from your hosts' wins (₦500 per win)</span>
+        <strong id="hostEarnings">₦75,000/month</strong>
+      </div>
+      <div class="result-item total">
+        <span>Total Estimated Earnings</span>
+        <strong id="totalEarnings">₦135,000/month</strong>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      *Based on average performance: 10 wins/month per VIP, 3 wins/month per host.<br>
+      Top queens earn ₦200k+ — your results depend on your squad!
+    </p>
+  </div>
+</div>
 
 <!-- JOIN THE VIBE — TELEGRAM ICON (MAX ZOOMED-OUT, MICRO CIRCLE) -->
 <div class="footer-col social-col">
@@ -1298,6 +1460,49 @@ body {
   }, 6000); // Change every 6 seconds
 
   showSlide(0); // Start with first
+    // EARNINGS CALCULATOR
+const calcModal = document.getElementById("earningsCalcModal");
+const openCalc = document.getElementById("openEarningsCalc");
+const closeCalc = document.querySelector(".earnings-close");
+
+openCalc.onclick = (e) => {
+  e.preventDefault();
+  calcModal.style.display = "flex";
+  updateCalculator();
+};
+
+closeCalc.onclick = () => {
+  calcModal.style.display = "none";
+};
+
+calcModal.onclick = (e) => {
+  if (e.target === calcModal) calcModal.style.display = "none";
+};
+
+// UPDATE CALC
+function updateCalculator() {
+  const vipCount = Number(document.getElementById("vipCount").value);
+  const hostCount = Number(document.getElementById("hostCount").value || 0);
+
+  document.getElementById("vipDisplay").textContent = `${vipCount} VIP${vipCount > 1 ? 's' : ''}`;
+
+  // Assumptions (make attractive but realistic)
+  const vipWinsPerMonth = 10; // average
+  const hostWinsPerMonth = 3; // average
+
+  const vipEarnings = vipCount * vipWinsPerMonth * 2000;
+  const hostEarnings = hostCount * hostWinsPerMonth * 500;
+
+  const total = vipEarnings + hostEarnings;
+
+  document.getElementById("vipEarnings").textContent = `₦${vipEarnings.toLocaleString()}/month`;
+  document.getElementById("hostEarnings").textContent = `₦${hostEarnings.toLocaleString()}/month`;
+  document.getElementById("totalEarnings").textContent = `₦${total.toLocaleString()}/month`;
+}
+
+// Live update
+document.getElementById("vipCount").oninput = updateCalculator;
+document.getElementById("hostCount").oninput = updateCalculator;
   </script>
 </body>
 </html>
