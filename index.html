@@ -803,48 +803,64 @@ body {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(12px);
+  padding: 20px; /* adds breathing room on mobile */
 }
 
 .earnings-content {
   background: var(--deep-bg);
-  padding: 32px 28px;
+  padding: 28px 24px 32px; /* tighter top/bottom */
   border-radius: 20px;
   width: 90%;
-  max-width: 420px;
+  max-width: 380px; /* smaller max width */
   text-align: center;
   border: 2px solid var(--neon);
   box-shadow: 0 0 40px var(--neon-glow);
+  position: relative; /* for close X */
+  box-sizing: border-box;
 }
 
 .earnings-close {
   position: absolute;
-  top: 16px;
-  right: 24px;
-  font-size: 40px;
+  top: 12px;
+  right: 16px; /* closer to edge but safe */
+  font-size: 36px;
   color: var(--neon);
   cursor: pointer;
   font-weight: 300;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.earnings-close:hover {
+  background: rgba(195,246,12,0.2);
+  transform: scale(1.1);
 }
 
 .earnings-content h2 {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--neon);
-  margin-bottom: 24px;
+  margin: 0 0 16px 0;
   text-shadow: 0 0 20px var(--neon-glow);
 }
 
 .calc-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
-  margin: 20px 0;
+  gap: 20px;
+  margin: 16px 0;
 }
 
 .calc-item label {
   display: block;
-  font-size: 16px;
+  font-size: 15px;
   color: #aaa;
   margin-bottom: 8px;
   font-weight: 600;
@@ -852,7 +868,7 @@ body {
 
 #vipCount {
   width: 100%;
-  height: 10px;
+  height: 8px;
   border-radius: 50px;
   background: #222;
   outline: none;
@@ -861,8 +877,8 @@ body {
 
 #vipCount::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--neon);
   cursor: pointer;
@@ -871,28 +887,27 @@ body {
 }
 
 #vipDisplay {
-  display: block;
-  margin-top: 10px;
-  font-size: 24px;
+  margin-top: 8px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--neon);
 }
 
 #hostCount {
   width: 100%;
-  padding: 16px;
+  padding: 14px;
   background: #111;
   border: 2px solid var(--neon);
   border-radius: 16px;
   color: var(--neon);
-  font-size: 20px;
+  font-size: 18px;
   text-align: center;
   font-weight: 600;
 }
 
 .earnings-results {
-  margin: 32px 0;
-  padding: 20px;
+  margin: 24px 0;
+  padding: 18px;
   background: rgba(195,246,12,0.1);
   border-radius: 16px;
   border: 1px solid var(--neon);
@@ -902,30 +917,30 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  font-size: 17px;
+  padding: 10px 0;
+  font-size: 16px;
   color: #ddd;
 }
 
 .result-row.total {
   border-top: 2px solid var(--neon);
-  padding-top: 20px;
-  margin-top: 16px;
-  font-size: 22px;
+  padding-top: 16px;
+  margin-top: 12px;
+  font-size: 20px;
   font-weight: 700;
 }
 
 .result-row strong {
   color: var(--neon);
   font-weight: 800;
-  font-size: 20px;
+  font-size: 19px;
 }
 
 .disclaimer {
   font-size: 13px;
   color: #777;
-  line-height: 1.6;
-  margin-top: 20px;
+  line-height: 1.5;
+  margin-top: 16px;
 }
 </style>
 </header>
@@ -1103,8 +1118,8 @@ body {
     </div>
 
     <p class="disclaimer">
-      *Average: 10 wins/month per VIP · 3 wins/month per host<br>
-      Top queens earn ₦300k+ — build your squad!
+      *Earnings are based on average calculations, your earnings could be more.<br>
+       cuties can earn up ₦500k+ monthly — The sky is the limit!
     </p>
   </div>
 </div>
@@ -1480,7 +1495,7 @@ function updateCalculator() {
 
   // Realistic averages
   const vipWinsPerMonth = 15;
-  const hostWinsPerMonth = 3;
+  const hostWinsPerMonth = 10;
 
   const vipEarnings = vipCount * vipWinsPerMonth * 2000;
   const hostEarnings = hostCount * hostWinsPerMonth * 500;
