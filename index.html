@@ -806,15 +806,14 @@ body {
 }
 
 .earnings-content {
-  background: #111;
-  padding: 40px 28px;
+  background: var(--deep-bg);
+  padding: 32px 28px;
   border-radius: 20px;
   width: 90%;
-  max-width: 440px;
+  max-width: 420px;
   text-align: center;
-  border: 2px solid #ff006e;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-  position: relative; /* for close button */
+  border: 2px solid var(--neon);
+  box-shadow: 0 0 40px var(--neon-glow);
 }
 
 .earnings-close {
@@ -822,14 +821,11 @@ body {
   top: 16px;
   right: 24px;
   font-size: 40px;
-  color: #ff006e;
+  color: var(--neon);
   cursor: pointer;
   font-weight: 300;
 }
 
-.earnings-close:hover {
-  color: #ff3366;
-}
 .earnings-content h2 {
   font-family: 'Rajdhani', sans-serif;
   font-size: 28px;
@@ -1071,27 +1067,22 @@ body {
   <a href="#events">Visit CUBE</a>
   <a href="/terms">Terms & Privacy</a>
 </div>
+
+      <!-- EARNINGS CALCULATOR POP-UP -->
 <div id="earningsCalcModal" class="earnings-modal">
   <div class="earnings-content">
-    <!-- CLOSE X INSIDE — TOP RIGHT -->
-    <span class="earnings-close" style="position:absolute;top:16px;right:24px;font-size:36px;color:#ff006e;cursor:pointer;">×</span>
-
+    <span class="earnings-close">&times;</span>
     <h2>Earnings Calculator</h2>
-
-    <p style="color:#ccc;margin-bottom:20px;font-size:16px;">
-      See your potential as a Cube Cutie br>
-      <strong style="color:#ff006e;">On Averge, cuties earn ₦100k–₦300k/month</strong>
-    </p>
 
     <div class="calc-grid">
       <div class="calc-item">
-        <label>VIP Invites (max 5)</label>
+        <label>VIPs Invite (max 5)</label>
         <input type="range" id="vipCount" min="1" max="5" value="3">
         <span id="vipDisplay">3 VIPs</span>
       </div>
 
       <div class="calc-item">
-        <label>Onboarded Hosts (Your Female Friends)</label>
+        <label>Onboarded Hosts (Your Circle) </label>
         <input type="number" id="hostCount" min="0" value="100" placeholder="e.g. 100">
       </div>
     </div>
@@ -1102,18 +1093,18 @@ body {
         <strong id="vipEarnings">₦60,000</strong>
       </div>
       <div class="result-row">
-        <span>From your hosts</span>
+        <span>From your Hosts</span>
         <strong id="hostEarnings">₦150,000</strong>
       </div>
       <div class="result-row total">
-        <span>Monthly Potential</span>
+        <span>Total Monthly</span>
         <strong id="totalEarnings">₦210,000</strong>
       </div>
     </div>
 
-    <p class="disclaimer" style="color:#ff006e;font-weight:700;margin-top:24px;">
-      These calculations are averages, cuties can earn ₦500k+ monthly!<br>
-      Your results depend on your circle — the sky's the limit!
+    <p class="disclaimer">
+      *Average: 10 wins/month per VIP · 3 wins/month per host<br>
+      Top queens earn ₦300k+ — build your squad!
     </p>
   </div>
 </div>
@@ -1481,25 +1472,6 @@ body {
   }, 6000); // Change every 6 seconds
 
   showSlide(0); // Start with first
-    // EARNINGS CALCULATOR
-const calcModal = document.getElementById("earningsCalcModal");
-const openCalc = document.getElementById("openEarningsCalc");
-const closeCalc = document.querySelector(".earnings-close");
-
-openCalc.onclick = (e) => {
-  e.preventDefault();
-  calcModal.style.display = "flex";
-  updateCalculator();
-};
-
-closeCalc.onclick = () => {
-  calcModal.style.display = "none";
-};
-
-calcModal.onclick = (e) => {
-  if (e.target === calcModal) calcModal.style.display = "none";
-};
-
 function updateCalculator() {
   const vipCount = Number(document.getElementById("vipCount").value);
   const hostCount = Number(document.getElementById("hostCount").value || 0);
@@ -1507,7 +1479,7 @@ function updateCalculator() {
   document.getElementById("vipDisplay").textContent = `${vipCount} VIP${vipCount > 1 ? 's' : ''}`;
 
   // Realistic averages
-  const vipWinsPerMonth = 10;
+  const vipWinsPerMonth = 15;
   const hostWinsPerMonth = 3;
 
   const vipEarnings = vipCount * vipWinsPerMonth * 2000;
