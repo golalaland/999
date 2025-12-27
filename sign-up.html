@@ -1028,27 +1028,36 @@ vipPayBtn.onclick = () => {
     currency: 'NGN',
     ref: 'VIP_' + Date.now(),
     metadata: { type: 'vip_activation' },
-    callback: async function(response) {
-      vipPayBtn.classList.remove('loading');
+  callback: async function(response) {
+  vipPayBtn.classList.remove('loading');
 
-      // IMPORTANT: Only show success message after server verification
-      messageEl.textContent = "Verifying payment...";
+  console.log('Paystack callback received:', response);  // ← VERY IMPORTANT
 
-      // === Send to your Render backend for secure verification ===
-      try {
-        const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            reference: response.reference,
-            email: email
-          })
-        });
+  if (response.status !== 'success' || !response.reference) {
+    showPopup('Payment completed but no reference received');
+    return;
+  }
 
-        const verifyData = await verifyRes.json();
+  console.log('Sending verification with:', {
+    reference: response.reference,
+    email: email,                    // make sure this prints a real email
+    emailType: typeof email
+  });
 
+  try {
+    const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reference: response.reference,
+        email: email
+      })
+    });
+
+    console.log('Server status code:', verifyRes.status);  // ← should be 400 in your case
+
+    const verifyData = await verifyRes.json();
+    console.log('Server full response:', verifyData);
         if (!verifyData.success) {
           showPopup('Payment verification failed: ' + (verifyData.message || 'Unknown error'));
           messageEl.textContent = "";
