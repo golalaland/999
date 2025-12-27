@@ -1091,13 +1091,13 @@ body {
 
     <div class="calc-grid">
       <div class="calc-item">
-        <label>VIPs Invite (max 5)</label>
+        <label>VIP Invites (max 10)</label>
         <input type="range" id="vipCount" min="1" max="5" value="3">
-        <span id="vipDisplay">3 VIPs</span>
+        <span id="vipDisplay">5 VIPs</span>
       </div>
 
       <div class="calc-item">
-        <label>Onboarded Hosts (Your Circle) </label>
+        <label>Onboarded Hosts (Your Friends) </label>
         <input type="number" id="hostCount" min="0" value="100" placeholder="e.g. 100">
       </div>
     </div>
@@ -1118,7 +1118,7 @@ body {
     </div>
 
     <p class="disclaimer">
-      * Earnings are based on average calculations, your earnings could be more.<br>
+      * Earnings are based on average calculations, earnings may be more.<br>
        cuties can earn up ₦500k+ monthly —The sky is the limit!
     </p>
   </div>
@@ -1497,7 +1497,7 @@ function updateCalculator() {
   const vipWinsPerMonth = 9;
   const hostWinsPerMonth = 6;
 
-  const vipEarnings = vipCount * vipWinsPerMonth * 2000;
+  const vipEarnings = vipCount * vipWinsPerMonth * 1500;
   const hostEarnings = hostCount * hostWinsPerMonth * 500;
   const total = vipEarnings + hostEarnings;
 
