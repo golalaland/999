@@ -1012,46 +1012,31 @@ if (inviterDocId) {
     }
   };
 
-// === VIP PAYSTACK PAYMENT – SECURE SERVER-VERIFIED VERSION (December 2025) ===
-// IMPORTANT: NEVER activate VIP or update Firestore directly in the browser anymore!
-
-vipPayBtn.onclick = async () => {
+// === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE) ===
+vipPayBtn.onclick = () => {
   const email = emailInput.value.trim().toLowerCase();
-
   if (!email || !/@/.test(email)) {
-    showPopup('Please enter a valid email before paying');
+    showPopup('Enter a valid email before paying');
     return;
   }
-
   vipPayBtn.classList.add('loading');
-  messageEl.textContent = "Initiating payment...";
 
-  try {
-    const handler = PaystackPop.setup({
-      key: 'pk_live_b1f53de46eded7175f91c345548365902b4b6d67', // ← Live public key
-      // key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxx', // ← Use test key during development
-      email: email,
-      amount: 10000 * 100, // Paystack expects amount in kobo (10000 NGN → 1,000,000)
-      currency: 'NGN',
-      ref: `VIP_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`, // More unique ref
-      metadata: {
-        type: 'vip_activation',
-        email: email // Helps with debugging
-      },
-      callback: async function(response) {
-        // Payment popup closed successfully → verify on backend
-        vipPayBtn.classList.remove('loading');
+  const handler = PaystackPop.setup({
+    key: 'pk_live_b1f53de46eded7175f91c345548365902b4b6d67',
+    email: email,
+    amount: 10000 * 100, // ← better to send in kobo
+    currency: 'NGN',
+    ref: 'VIP_' + Date.now(),
+    metadata: { type: 'vip_activation' },
+    callback: async function(response) {
+      vipPayBtn.classList.remove('loading');
 
-        if (response.status !== 'success') {
-          showPopup('Payment was not successful');
-          messageEl.textContent = "";
-          return;
-        }
+      // IMPORTANT: Only show success message after server verification
+      messageEl.textContent = "Verifying payment...";
 
-        messageEl.textContent = "Verifying payment...";
-
-        // === Step 1: Verify payment with your secure backend ===
-        const verifyResult = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
+      // === Send to your Render backend for secure verification ===
+      try {
+        const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1062,16 +1047,15 @@ vipPayBtn.onclick = async () => {
           })
         });
 
-        const verifyData = await verifyResult.json();
+        const verifyData = await verifyRes.json();
 
         if (!verifyData.success) {
-          showPopup(verifyData.message || 'Payment verification failed');
+          showPopup('Payment verification failed: ' + (verifyData.message || 'Unknown error'));
           messageEl.textContent = "";
-          console.error('Backend verification failed:', verifyData);
           return;
         }
 
-        // === Step 2: Payment is confirmed → safe to update Firestore ===
+        // === Only if server confirmed payment → proceed with VIP logic ===
         messageEl.textContent = "VIP Activated!! ✌︎㋡";
 
         const docId = sanitizeKey(email);
@@ -1079,96 +1063,92 @@ vipPayBtn.onclick = async () => {
 
         try {
           const userSnap = await getDoc(userRef);
-
           if (!userSnap.exists()) {
-            console.warn("User document not found after successful payment");
-            // Still proceed (payment is real)
-          } else {
-            const userData = userSnap.data();
-            const inviterId = userData.invitedBy;
+            console.error("User not found after payment");
+            setTimeout(() => window.location.href = "/chat.html", 1800);
+            return;
+          }
 
-            // Update the paying user
-            await updateDoc(userRef, {
-              isVIP: true,
-              hasPaid: true,
-              vipActivatedAt: serverTimestamp(),
-              vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000), // 31 days
-              stars: increment(2500),
+          const userData = userSnap.data();
+          const inviterId = userData.invitedBy;
+
+          await updateDoc(userRef, {
+            isVIP: true,
+            hasPaid: true,
+            vipActivatedAt: serverTimestamp(),
+            vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000), // +31 days
+            stars: increment(2500),
+            lastUpdated: serverTimestamp()
+          });
+
+          // 2. Reward inviter 250 STRZ if exists
+          if (inviterId) {
+            await updateDoc(doc(db, "users", inviterId), {
+              stars: increment(250),
+              vipCount: increment(1),
               lastUpdated: serverTimestamp()
             });
 
-            // === Reward inviter if exists ===
-            if (inviterId) {
-              const inviterRef = doc(db, "users", inviterId);
-
-              await updateDoc(inviterRef, {
-                stars: increment(250),
-                vipCount: increment(1),
-                lastUpdated: serverTimestamp()
-              });
-
-              // Inviter notification
-              try {
-                await addDoc(collection(db, "notifications"), {
-                  recipientId: inviterId,
-                  type: "vip_activated",
-                  title: "A VIP Activated in Your Cube!",
-                  message: `@${userData.chatId || 'Someone'} just went VIP!\nYou earned +250 STRZ`,
-                  vipUserId: userData.uid || docId,
-                  vipUserName: userData.chatId || 'New VIP',
-                  read: false,
-                  createdAt: serverTimestamp()
-                });
-              } catch (notifyErr) {
-                console.warn("Failed to send inviter notification:", notifyErr);
-              }
-            }
-
-            // === Welcome notification to the new VIP ===
+            // === INVITER NOTIFICATION — VISIBLE LIKE RIPPLE ===
             try {
               await addDoc(collection(db, "notifications"), {
-                recipientId: userData.uid || docId,
-                type: "vip_bonus",
-                title: "Welcome to Cube VIP! 🎉",
-                message: "You received 2,500 STRZ as a welcome bonus!\nEnjoy your elite status",
+                recipientId: inviterId,
+                type: "vip_activated",
+                title: "A VIP Activated in Your Cube!",
+                message: `@${userData.chatId} just went VIP!\nYou earned +250 STRZ `,
+                vipUserId: userData.uid,
+                vipUserName: userData.chatId,
                 read: false,
                 createdAt: serverTimestamp()
               });
-            } catch (welcomeErr) {
-              console.warn("Failed to send welcome notification:", welcomeErr);
+            } catch (err) {
+              console.warn("Inviter VIP notification failed:", err);
             }
           }
 
-          // Success → redirect
+          // === WELCOME NOTIFICATION TO NEW VIP — VISIBLE LIKE RIPPLE ===
+          try {
+            await addDoc(collection(db, "notifications"), {
+              recipientId: userData.uid,
+              type: "vip_bonus",
+              title: "Welcome to cube VIP! 🎉",
+              message: "You received 2,500 STRZ as a welcome bonus!\nEnjoy your elite status",
+              read: false,
+              createdAt: serverTimestamp()
+            });
+          } catch (err) {
+            console.warn("VIP welcome notification failed:", err);
+          }
+
+          // Success redirect
           setTimeout(() => {
             window.location.href = "/chat.html";
           }, 1800);
 
-        } catch (firestoreErr) {
-          console.error("Firestore update error after verified payment:", firestoreErr);
-          showPopup("Payment successful! But profile update failed. Contact support.");
-          // Still redirect after delay
+        } catch (err) {
+          console.error("VIP activation processing failed:", err);
+          // Payment succeeded → still redirect
           setTimeout(() => {
             window.location.href = "/chat.html";
-          }, 3000);
+          }, 1800);
         }
-      },
 
-      onClose: function() {
-        vipPayBtn.classList.remove('loading');
-        messageEl.textContent = "Payment cancelled";
+      } catch (fetchError) {
+        console.error("Failed to contact verification server:", fetchError);
+        showPopup("Could not verify payment. Please contact support.");
+        messageEl.textContent = "";
       }
-    });
+    },
 
-    handler.openIframe(); // or handler.openPopup() based on your UI preference
+    onClose: function() {
+      vipPayBtn.classList.remove('loading');
+      messageEl.textContent = "Payment cancelled";
+    }
+  });
 
-  } catch (setupError) {
-    vipPayBtn.classList.remove('loading');
-    messageEl.textContent = "";
-    console.error("Payment initialization failed:", setupError);
-    showPopup("Failed to start payment process. Please try again.");
-  }
+  handler.openIframe();
 };
+});
 </script>
 </body>
 </html>
