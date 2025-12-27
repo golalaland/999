@@ -798,7 +798,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.95);
+  background: rgba(10,20,0,0.95);
   z-index: 9999;
   align-items: center;
   justify-content: center;
@@ -806,114 +806,126 @@ body {
 }
 
 .earnings-content {
-  background: #111;
-  padding: 40px;
-  border-radius: 24px;
-  max-width: 90%;
-  width: 500px;
+  background: var(--deep-bg);
+  padding: 32px 28px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 420px;
   text-align: center;
-  color: #fff;
-  border: 2px solid #ff006e;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  border: 2px solid var(--neon);
+  box-shadow: 0 0 40px var(--neon-glow);
 }
 
 .earnings-close {
   position: absolute;
-  top: 20px;
-  right: 30px;
+  top: 16px;
+  right: 24px;
   font-size: 40px;
-  color: #ff006e;
+  color: var(--neon);
   cursor: pointer;
+  font-weight: 300;
 }
 
 .earnings-content h2 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  background: linear-gradient(90deg, #ff006e, #ff6600);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--neon);
+  margin-bottom: 24px;
+  text-shadow: 0 0 20px var(--neon-glow);
 }
 
-.calc-section {
-  margin: 30px 0;
+.calc-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin: 20px 0;
 }
 
-.calc-section label {
+.calc-item label {
   display: block;
-  margin-bottom: 10px;
-  font-size: 18px;
-  color: #ccc;
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 #vipCount {
   width: 100%;
-  height: 8px;
+  height: 10px;
   border-radius: 50px;
-  background: #333;
+  background: #222;
   outline: none;
+  -webkit-appearance: none;
 }
 
 #vipCount::-webkit-slider-thumb {
-  appearance: none;
-  width: 30px;
-  height: 30px;
+  -webkit-appearance: none;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: #ff006e;
+  background: var(--neon);
   cursor: pointer;
+  box-shadow: 0 0 20px var(--neon-glow);
   border: 3px solid #000;
 }
 
 #vipDisplay {
-  font-size: 24px;
-  font-weight: 800;
-  color: #ff006e;
-  margin-top: 10px;
   display: block;
+  margin-top: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--neon);
 }
 
 #hostCount {
   width: 100%;
   padding: 16px;
-  background: #222;
-  border: 2px solid #ff006e;
+  background: #111;
+  border: 2px solid var(--neon);
   border-radius: 16px;
-  color: #fff;
+  color: var(--neon);
   font-size: 20px;
   text-align: center;
+  font-weight: 600;
 }
 
 .earnings-results {
-  margin: 40px 0;
+  margin: 32px 0;
   padding: 20px;
-  background: rgba(255,0,110,0.1);
-  border-radius: 20px;
-  border: 1px solid #ff006e;
+  background: rgba(195,246,12,0.1);
+  border-radius: 16px;
+  border: 1px solid var(--neon);
 }
 
-.result-item {
+.result-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 12px 0;
-  font-size: 18px;
+  font-size: 17px;
+  color: #ddd;
 }
 
-.result-item.total {
-  border-top: 2px solid #ff006e;
+.result-row.total {
+  border-top: 2px solid var(--neon);
   padding-top: 20px;
-  margin-top: 20px;
-  font-size: 24px;
+  margin-top: 16px;
+  font-size: 22px;
+  font-weight: 700;
 }
 
-.result-item strong {
-  color: #00ff9d;
+.result-row strong {
+  color: var(--neon);
   font-weight: 800;
+  font-size: 20px;
 }
 
 .disclaimer {
-  font-size: 14px;
-  color: #888;
-  margin-top: 30px;
+  font-size: 13px;
+  color: #777;
   line-height: 1.6;
+  margin-top: 20px;
 }
 </style>
 </header>
@@ -1055,46 +1067,46 @@ body {
   <a href="#events">Visit CUBE</a>
   <a href="/terms">Terms & Privacy</a>
 </div>
-      <!-- EARNINGS CALCULATOR POP-UP -->
+<!-- EARNINGS CALCULATOR POP-UP -->
 <div id="earningsCalcModal" class="earnings-modal">
   <div class="earnings-content">
     <span class="earnings-close">&times;</span>
     <h2>Earnings Calculator</h2>
-    <p>See your potential as a Cube Queen 👑</p>
 
-    <div class="calc-section">
-      <label>How many VIP guys will you invite? (max 5)</label>
-      <input type="range" id="vipCount" min="1" max="5" value="3" step="1">
-      <span id="vipDisplay">3 VIPs</span>
-    </div>
+    <div class="calc-grid">
+      <div class="calc-item">
+        <label>VIP Guys (max 5)</label>
+        <input type="range" id="vipCount" min="1" max="5" value="3">
+        <span id="vipDisplay">3 VIPs</span>
+      </div>
 
-    <div class="calc-section">
-      <label>How many hosts will you onboard?</label>
-      <input type="number" id="hostCount" min="0" value="50" placeholder="e.g. 50">
+      <div class="calc-item">
+        <label>Onboarded Hosts</label>
+        <input type="number" id="hostCount" min="0" value="100" placeholder="e.g. 100">
+      </div>
     </div>
 
     <div class="earnings-results">
-      <div class="result-item">
-        <span>Passive from your VIPs (₦2,000 per win)</span>
-        <strong id="vipEarnings">₦60,000/month</strong>
+      <div class="result-row">
+        <span>From your VIP wins (₦2,000 each)</span>
+        <strong id="vipEarnings">₦60,000</strong>
       </div>
-      <div class="result-item">
-        <span>Cut from your hosts' wins (₦500 per win)</span>
-        <strong id="hostEarnings">₦75,000/month</strong>
+      <div class="result-row">
+        <span>From your hosts' wins (₦500 each)</span>
+        <strong id="hostEarnings">₦150,000</strong>
       </div>
-      <div class="result-item total">
-        <span>Total Estimated Earnings</span>
-        <strong id="totalEarnings">₦135,000/month</strong>
+      <div class="result-row total">
+        <span>Total Monthly</span>
+        <strong id="totalEarnings">₦210,000</strong>
       </div>
     </div>
 
     <p class="disclaimer">
-      *Based on average performance: 10 wins/month per VIP, 3 wins/month per host.<br>
-      Top queens earn ₦200k+ — your results depend on your squad!
+      *Average: 10 wins/month per VIP · 3 wins/month per host<br>
+      Top queens earn ₦300k+ — build your squad!
     </p>
   </div>
 </div>
-
 <!-- JOIN THE VIBE — TELEGRAM ICON (MAX ZOOMED-OUT, MICRO CIRCLE) -->
 <div class="footer-col social-col">
   <h4>Get Notified!</h4>
@@ -1478,30 +1490,44 @@ calcModal.onclick = (e) => {
   if (e.target === calcModal) calcModal.style.display = "none";
 };
 
-// UPDATE CALC
 function updateCalculator() {
   const vipCount = Number(document.getElementById("vipCount").value);
   const hostCount = Number(document.getElementById("hostCount").value || 0);
 
   document.getElementById("vipDisplay").textContent = `${vipCount} VIP${vipCount > 1 ? 's' : ''}`;
 
-  // Assumptions (make attractive but realistic)
-  const vipWinsPerMonth = 10; // average
-  const hostWinsPerMonth = 3; // average
+  // Realistic averages
+  const vipWinsPerMonth = 10;
+  const hostWinsPerMonth = 3;
 
   const vipEarnings = vipCount * vipWinsPerMonth * 2000;
   const hostEarnings = hostCount * hostWinsPerMonth * 500;
-
   const total = vipEarnings + hostEarnings;
 
-  document.getElementById("vipEarnings").textContent = `₦${vipEarnings.toLocaleString()}/month`;
-  document.getElementById("hostEarnings").textContent = `₦${hostEarnings.toLocaleString()}/month`;
-  document.getElementById("totalEarnings").textContent = `₦${total.toLocaleString()}/month`;
+  document.getElementById("vipEarnings").textContent = `₦${vipEarnings.toLocaleString()}`;
+  document.getElementById("hostEarnings").textContent = `₦${hostEarnings.toLocaleString()}`;
+  document.getElementById("totalEarnings").textContent = `₦${total.toLocaleString()}`;
 }
 
-// Live update
 document.getElementById("vipCount").oninput = updateCalculator;
 document.getElementById("hostCount").oninput = updateCalculator;
+
+// Open/Close
+document.getElementById("openEarningsCalc").onclick = (e) => {
+  e.preventDefault();
+  document.getElementById("earningsCalcModal").style.display = "flex";
+  updateCalculator();
+};
+
+document.querySelector(".earnings-close").onclick = () => {
+  document.getElementById("earningsCalcModal").style.display = "none";
+};
+
+window.onclick = (e) => {
+  if (e.target.id === "earningsCalcModal") {
+    document.getElementById("earningsCalcModal").style.display = "none";
+  }
+};
   </script>
 </body>
 </html>
