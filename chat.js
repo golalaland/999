@@ -2804,76 +2804,114 @@ refs.sendBtn?.addEventListener("click", async () => {
 // =============================
 // BUZZ MESSAGE — SUPER STICKER STYLE, CLASSY NON-NEON GRADIENTS
 // =============================
-if (refs.buzzBtn) {
-  refs.buzzBtn.addEventListener("click", async function() {
-    if (!currentUser || !currentUser.uid) {
-      showStarPopup("Sign in to BUZZ.");
-      return;
-    }
+const buzzSound = document.getElementById("buzz-sound");
 
-    var text = "";
-    if (refs.messageInputEl && refs.messageInputEl.value) {
-      text = refs.messageInputEl.value.trim();
-    }
+if (!refs.buzzBtn) return;
 
-    if (!text) {
-      showStarPopup("Write something to make the chat SHAKE");
-      return;
-    }
+refs.buzzBtn.addEventListener("click", async () => {
+  // ─────────────────────────────────────
+  // AUTH CHECK
+  // ─────────────────────────────────────
+  if (!currentUser?.uid) {
+    showStarPopup("Sign in to BUZZ.");
+    return;
+  }
 
-    // ←←← 50 CHARACTER LIMIT FOR BUZZ MESSAGES ←←←
-    if (text.length > 50) {
-      showStarPopup("BUZZ messages are limited to 50 characters!", { type: "error" });
-      return;
-    }
+  // ─────────────────────────────────────
+  // MESSAGE VALIDATION
+  // ─────────────────────────────────────
+  const text = refs.messageInputEl?.value?.trim() || "";
 
-    var userStars = currentUser.stars || 0;
-    if (userStars < BUZZ_COST) {
-      showStarPopup("BUZZ costs " + BUZZ_COST.toLocaleString() + " stars!", { type: "error" });
-      return;
-    }
+  if (!text) {
+    showStarPopup("Write something to make the chat SHAKE");
+    return;
+  }
 
-    try {
-      var gradient = randomStickerGradient();
-      var newMsgRef = doc(collection(db, CHAT_COLLECTION));
+  if (text.length > 50) {
+    showStarPopup("BUZZ messages are limited to 50 characters!", {
+      type: "error"
+    });
+    return;
+  }
 
-      await runTransaction(db, async function(transaction) {
-        transaction.update(doc(db, "users", currentUser.uid), {
-          stars: increment(-BUZZ_COST)
-        });
-        transaction.set(newMsgRef, {
-          content: text,
-          uid: currentUser.uid,
-          chatId: currentUser.chatId,
-          usernameColor: currentUser.usernameColor || "#ff69b4",
-          timestamp: serverTimestamp(),
-          highlight: true,
-          stickerGradient: gradient,
-          type: "buzz",
-          buzzLevel: "epic",
-          screenShake: true,
-          sound: "buzz_sound"
-        });
+  // ─────────────────────────────────────
+  // STAR CHECK
+  // ─────────────────────────────────────
+  const userStars = currentUser.stars || 0;
+
+  if (userStars < BUZZ_COST) {
+    showStarPopup(
+      `BUZZ costs ${BUZZ_COST.toLocaleString()} stars!`,
+      { type: "error" }
+    );
+    return;
+  }
+
+  // ─────────────────────────────────────
+  // TRANSACTION
+  // ─────────────────────────────────────
+  try {
+    const gradient = randomStickerGradient();
+    const newMsgRef = doc(collection(db, CHAT_COLLECTION));
+
+    await runTransaction(db, async (transaction) => {
+      transaction.update(doc(db, "users", currentUser.uid), {
+        stars: increment(-BUZZ_COST)
       });
 
-      // Local feedback
-      currentUser.stars -= BUZZ_COST;
-      if (refs.starCountEl) {
-        refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-      }
-      if (refs.messageInputEl) {
-        refs.messageInputEl.value = "";
-      }
-      cancelReply();
+      transaction.set(newMsgRef, {
+        content: text,
+        uid: currentUser.uid,
+        chatId: currentUser.chatId,
+        usernameColor: currentUser.usernameColor || "#ff69b4",
+        timestamp: serverTimestamp(),
 
-      triggerStickerBuzz(gradient, text, currentUser.chatId);
-      showStarPopup("STICKER BUZZ DROPPED — CONFETTI INSIDE!", { type: "success", duration: 5000 });
-    } catch (err) {
-      console.error("BUZZ failed:", err);
-      showStarPopup("BUZZ failed — stars refunded", { type: "error" });
+        type: "buzz",
+        buzzLevel: "epic",
+        highlight: true,
+        screenShake: true,
+        stickerGradient: gradient,
+        sound: "buzz_sound"
+      });
+    });
+
+    // ─────────────────────────────────────
+    // LOCAL UI FEEDBACK
+    // ─────────────────────────────────────
+    currentUser.stars -= BUZZ_COST;
+
+    if (refs.starCountEl) {
+      refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
-  });
-}
+
+    if (refs.messageInputEl) {
+      refs.messageInputEl.value = "";
+    }
+
+    cancelReply();
+
+    // 🔊 PLAY BUZZ SOUND
+    if (buzzSound) {
+      buzzSound.currentTime = 0;
+      buzzSound.play().catch(() => {});
+    }
+
+    triggerStickerBuzz(gradient, text, currentUser.chatId);
+
+    showStarPopup(
+      "STICKER BUZZ DROPPED — CONFETTI INSIDE!",
+      { type: "success", duration: 5000 }
+    );
+
+  } catch (err) {
+    console.error("BUZZ failed:", err);
+    showStarPopup(
+      "BUZZ failed — stars refunded",
+      { type: "error" }
+    );
+  }
+});
+
 // =============================
 // MILDER APOCALYPSE — STICKER-FOCUSED (Flash + Confetti + Shake)
 // =============================
