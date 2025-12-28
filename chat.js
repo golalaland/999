@@ -1454,52 +1454,63 @@ wrapper.appendChild(metaEl);
       wrapper.appendChild(preview);
     }
 
+  
     // CONTENT SPAN — ALWAYS CREATED
-    var content = document.createElement("span");
-    content.className = "content";
-    content.textContent = " " + (m.content || "");
+var content = document.createElement("span");
+content.className = "content";
+content.textContent = " " + (m.content || "");
 
-    // SUPER STICKER BUZZ — ONLY WHEN NEEDED
-    if (m.type === "buzz" && m.stickerGradient) {
-      wrapper.className += " super-sticker";
-      wrapper.style.cssText = `
-        display: inline-block;
-        max-width: 85%;
-        margin: 14px 10px;
-        padding: 18px 24px;
-        border-radius: 28px;
-        background: ${m.stickerGradient};
-        box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
-        position: relative;
-        overflow: hidden;
-        border: 3px solid rgba(255,255,255,0.25);
-        animation: stickerPop 0.7s ease-out;
-        backdrop-filter: blur(4px);
-      `;
+// SUPER STICKER BUZZ — ONLY WHEN NEEDED
+if (m.type === "buzz" && m.stickerGradient) {
+  wrapper.className += " super-sticker";
+  wrapper.style.cssText = `
+    display: inline-block;
+    max-width: 85%;
+    margin: 14px 10px;
+    padding: 18px 24px;
+    border-radius: 28px;
+    background: ${m.stickerGradient};
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
+    position: relative;
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.25);
+    animation: stickerPop 0.7s ease-out;
+    backdrop-filter: blur(4px);
+  `;
 
-      // CONFETTI INSIDE
-      var confettiContainer = document.createElement("div");
-      confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
-      createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
-      wrapper.appendChild(confettiContainer);
+  // CONFETTI INSIDE
+  var confettiContainer = document.createElement("div");
+  confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
+  createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
+  wrapper.appendChild(confettiContainer);
 
-      // Make text pop on hover
-      wrapper.style.transition = "transform 0.2s";
-      wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
-      wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+  // Make text pop on hover
+  wrapper.style.transition = "transform 0.2s";
+  wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
+  wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
 
-      // Fade after 20s
-      setTimeout(function() {
-        wrapper.style.background = "rgba(255,255,255,0.06)";
-        wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-        wrapper.style.border = "none";
-        confettiContainer.remove();
-      }, 20000);
-    }
+  // Fade after 20s
+  setTimeout(function() {
+    wrapper.style.background = "rgba(255,255,255,0.06)";
+    wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    wrapper.style.border = "none";
+    confettiContainer.remove();
+  }, 20000);
 
-    // ALWAYS APPEND CONTENT — THIS WAS THE MAIN BUG
-    wrapper.appendChild(content);
+  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
+  content.style.cssText = `
+    font-weight: 900 !important;     /* Ultra bold */
+    font-size: 1.4em !important;     /* Slightly larger */
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6); /* Depth and pop */
+    letter-spacing: 0.5px;
+    display: block;
+    margin-top: 8px;                 /* Centers it nicely in the bubble */
+  `;
+}
 
+// ALWAYS APPEND CONTENT
+wrapper.appendChild(content);
+    
     // TAP FOR MENU
     wrapper.onclick = function(e) {
       e.stopPropagation();
@@ -2770,10 +2781,6 @@ refs.sendBtn?.addEventListener("click", async () => {
   }
 });
   
-
-// =============================
-// BUZZ MESSAGE — GOD TIER, WORKS ON EVERY DEVICE (NO ?. ALLOWED)
-// =============================
 // =============================
 // BUZZ MESSAGE — SUPER STICKER STYLE, CLASSY NON-NEON GRADIENTS
 // =============================
@@ -2788,8 +2795,15 @@ if (refs.buzzBtn) {
     if (refs.messageInputEl && refs.messageInputEl.value) {
       text = refs.messageInputEl.value.trim();
     }
+
     if (!text) {
       showStarPopup("Write something to make the chat SHAKE");
+      return;
+    }
+
+    // ←←← 50 CHARACTER LIMIT FOR BUZZ MESSAGES ←←←
+    if (text.length > 50) {
+      showStarPopup("BUZZ messages are limited to 50 characters!", { type: "error" });
       return;
     }
 
@@ -2800,16 +2814,13 @@ if (refs.buzzBtn) {
     }
 
     try {
-      // RANDOM CLASSY GRADIENT (non-neon: warm/cool/soft vibes)
       var gradient = randomStickerGradient();
       var newMsgRef = doc(collection(db, CHAT_COLLECTION));
 
-      // ATOMIC: deduct stars + send sticker buzz
       await runTransaction(db, async function(transaction) {
         transaction.update(doc(db, "users", currentUser.uid), {
           stars: increment(-BUZZ_COST)
         });
-
         transaction.set(newMsgRef, {
           content: text,
           uid: currentUser.uid,
@@ -2817,7 +2828,7 @@ if (refs.buzzBtn) {
           usernameColor: currentUser.usernameColor || "#ff69b4",
           timestamp: serverTimestamp(),
           highlight: true,
-          stickerGradient: gradient,  // ← For backdrop
+          stickerGradient: gradient,
           type: "buzz",
           buzzLevel: "epic",
           screenShake: true,
@@ -2825,7 +2836,7 @@ if (refs.buzzBtn) {
         });
       });
 
-      // INSTANT LOCAL FEEDBACK
+      // Local feedback
       currentUser.stars -= BUZZ_COST;
       if (refs.starCountEl) {
         refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
@@ -2835,18 +2846,14 @@ if (refs.buzzBtn) {
       }
       cancelReply();
 
-      // UNLEASH (milder apocalypse — focuses on sticker fun)
       triggerStickerBuzz(gradient, text, currentUser.chatId);
-
       showStarPopup("STICKER BUZZ DROPPED — CONFETTI INSIDE!", { type: "success", duration: 5000 });
-
     } catch (err) {
       console.error("BUZZ failed:", err);
       showStarPopup("BUZZ failed — stars refunded", { type: "error" });
     }
   });
 }
-
 // =============================
 // MILDER APOCALYPSE — STICKER-FOCUSED (Flash + Confetti + Shake)
 // =============================
