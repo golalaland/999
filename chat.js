@@ -967,27 +967,28 @@ function showGiftAlert(text) {
 }
 
 // ---------------------- AUTO-SCROLL + TWITCH-STYLE MIDDLE DRAG BUTTON ----------------------
+let scrollPending = false;
 let scrollArrow = null;
 let middleDragBtn = null;
 
-function setupChatAutoScroll() {
+function handleChatAutoScroll() {
   if (!refs.messagesEl) return;
 
-  // Create bottom arrow (shows when scrolled up)
+  // BOTTOM ARROW (your existing one)
   scrollArrow = document.getElementById("scrollToBottomBtn");
   if (!scrollArrow) {
     scrollArrow = document.createElement("div");
     scrollArrow.id = "scrollToBottomBtn";
-    scrollArrow.innerHTML = "↓";
+    scrollArrow.textContent = "Down Arrow";
     scrollArrow.style.cssText = `
       position: fixed;
       bottom: 90px;
       right: 20px;
-      padding: 12px 16px;
+      padding: 10px 16px;
       background: rgba(255,20,147,0.95);
       color: #fff;
-      border-radius: 50%;
-      font-size: 22px;
+      border-radius: 50px;
+      font-size: 18px;
       font-weight: 900;
       cursor: pointer;
       opacity: 0;
@@ -997,7 +998,6 @@ function setupChatAutoScroll() {
       box-shadow: 0 0 20px rgba(255,0,147,0.6);
     `;
     document.body.appendChild(scrollArrow);
-
     scrollArrow.addEventListener("click", () => {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
       scrollArrow.style.opacity = 0;
@@ -1005,7 +1005,7 @@ function setupChatAutoScroll() {
     });
   }
 
-  // Create middle drag button (Twitch-style)
+  // TWITCH-STYLE MIDDLE DRAG BUTTON
   middleDragBtn = document.getElementById("middleScrollDrag");
   if (!middleDragBtn) {
     middleDragBtn = document.createElement("div");
@@ -1016,8 +1016,8 @@ function setupChatAutoScroll() {
       right: 10px;
       top: 50%;
       transform: translateY(-50%);
-      width: 40px;
-      height: 90px;
+      width: 36px;
+      height: 80px;
       background: rgba(255,20,147,0.7);
       color: #fff;
       border-radius: 50px;
@@ -1035,10 +1035,10 @@ function setupChatAutoScroll() {
       writing-mode: vertical-rl;
       text-orientation: mixed;
     `;
-    refs.messagesEl.style.position = "relative";
+    refs.messagesEl.style.position = "relative"; // important
     refs.messagesEl.appendChild(middleDragBtn);
 
-    // Drag logic
+    // DRAG FUNCTIONALITY
     let isDragging = false;
     let startY = 0;
     let startScroll = 0;
@@ -1065,28 +1065,9 @@ function setupChatAutoScroll() {
     });
   }
 
-  // Smart auto-scroll: only scroll if user is near bottom
-  const observer = new MutationObserver(() => {
-    const distanceFromBottom =
-      refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
-
-    // If user is close to bottom (within ~300px), scroll to new message
-    if (distanceFromBottom < 300) {
-      requestAnimationFrame(() => {
-        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-      });
-    }
-  });
-
-  observer.observe(refs.messagesEl, {
-    childList: true,
-    subtree: true
-  });
-
-  // Show/hide scroll arrow and middle button
+  // SHOW/HIDE LOGIC
   refs.messagesEl.addEventListener("scroll", () => {
-    const distanceFromBottom =
-      refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
     const distanceFromTop = refs.messagesEl.scrollTop;
 
     // Bottom arrow
@@ -1098,7 +1079,7 @@ function setupChatAutoScroll() {
       scrollArrow.style.pointerEvents = "none";
     }
 
-    // Middle drag button
+    // Middle drag button — show when not at bottom
     if (distanceFromBottom > 100 && distanceFromTop > 100) {
       middleDragBtn.style.opacity = 0.8;
       middleDragBtn.style.pointerEvents = "auto";
@@ -1108,14 +1089,31 @@ function setupChatAutoScroll() {
     }
   });
 
-  // Initial scroll to bottom
-  requestAnimationFrame(() => {
-    refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-  });
+  // Auto-scroll on new messages (robust version)
+const observer = new MutationObserver(() => {
+  const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+  if (distanceFromBottom < 200) {
+    refs.messagesEl.scrollTo({
+      top: refs.messagesEl.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+});
+  
+observer.observe(refs.messagesEl, { childList: true, subtree: true });
+
+  // AUTO SCROLL TO BOTTOM ON NEW MESSAGES
+  if (!scrollPending) {
+    scrollPending = true;
+    requestAnimationFrame(() => {
+      refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+      scrollPending = false;
+    });
+  }
 }
 
-// Call this once when the chat loads
-setupChatAutoScroll();
+// CALL IT
+handleChatAutoScroll();
 
 // Cancel reply
 function cancelReply() {
@@ -1514,14 +1512,14 @@ if (m.type === "buzz" && m.stickerGradient) {
 
   // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
 content.style.cssText = `
-    font-weight: 900 !important;
-    font-size: 1.25em !important;           /* Big but safe for inline */
-    text-transform: uppercase !important;   /* ALL CAPS = INSTANT IMPACT */
-    letter-spacing: 1.8px !important;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.7);
-    display: inline !important;
-    vertical-align: middle;
-  `;
+  font-weight: 900 !important;           /* Ultra bold */
+  font-size: 1.35em !important;          /* Big but not too big for inline */
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  letter-spacing: 0.8px;
+  display: inline !important;            /* ←←← Forces it back inline */
+  vertical-align: middle;                /* Perfect alignment with username */
+  line-height: 1.4;
+`;
 }
 
 // ALWAYS APPEND CONTENT
@@ -1543,6 +1541,15 @@ wrapper.appendChild(content);
 
     refs.messagesEl.appendChild(wrapper);
   });
+
+  // Auto-scroll only if user is near bottom (within 200px)
+const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+if (distanceFromBottom < 200) {
+  refs.messagesEl.scrollTo({
+    top: refs.messagesEl.scrollHeight,
+    behavior: "smooth"  // Smooth scroll for better UX
+  });
+}
 
   // AUTO-SCROLL
   if (!scrollPending) {
@@ -2745,23 +2752,19 @@ function clearReplyAfterSend() {
 refs.sendBtn?.addEventListener("click", async () => {
   try {
     if (!currentUser) return showStarPopup("Sign in to chat.");
-
     const txt = refs.messageInputEl?.value.trim();
     if (!txt) return showStarPopup("Type a message first.");
-
-    if ((currentUser.stars || 0) < SEND_COST) {
+    if ((currentUser.stars || 0) < SEND_COST)
       return showStarPopup("Not enough stars to send message.");
-    }
 
-    // Deduct stars locally (optimistic UI)
+    // Deduct stars
     currentUser.stars -= SEND_COST;
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-
     await updateDoc(doc(db, "users", currentUser.uid), {
       stars: increment(-SEND_COST)
     });
 
-    // Reply data
+    // REPLY DATA
     const replyData = currentReplyTarget
       ? {
           replyTo: currentReplyTarget.id,
@@ -2771,13 +2774,11 @@ refs.sendBtn?.addEventListener("click", async () => {
         }
       : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-    // Clear input and cancel reply
+    // RESET INPUT + CANCEL REPLY
     refs.messageInputEl.value = "";
     cancelReply();
 
-    // NO scrollToBottom here — we handle it properly when the message appears
-
-    // Send to Firestore
+    // SEND TO FIRESTORE (NO LOCAL ECHO = NO DOUBLES)
     await addDoc(collection(db, CHAT_COLLECTION), {
       content: txt,
       uid: currentUser.uid,
@@ -2789,12 +2790,12 @@ refs.sendBtn?.addEventListener("click", async () => {
       ...replyData
     });
 
+    // SUCCESS — Auto-scroll happens automatically in onSnapshot (see below)
     console.log("Message sent to Firestore");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
-
-    // Refund stars on error
+    // Refund stars
     currentUser.stars += SEND_COST;
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
