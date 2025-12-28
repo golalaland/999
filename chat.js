@@ -1357,39 +1357,41 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-  // USERNAME — WITH COLON INHERITING THE SAME COLOR
+
+// USERNAME — FULL REWRITE: ORIGINAL BEHAVIOR + SAME-COLOR COLON + TIGHTER SPACING
 const metaEl = document.createElement("span");
 metaEl.className = "meta";
 
 const nameSpan = document.createElement("span");
 nameSpan.className = "chat-username";
+nameSpan.textContent = m.chatId || "Guest";
 
-// Username + colon together so they share the same color
-nameSpan.textContent = (m.chatId || "Guest") + ": ";
-
+// Generate safe user ID (same as original)
 const realUid = (m.uid || 
                 (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || 
                 "unknown")
                 .replace(/[.@/\\]/g, '_');
-
 nameSpan.dataset.userId = realUid;
 
-// Apply styles — custom color if available, fallback to white
+// Get user color (original logic preserved exactly)
 const usernameColor = refs.userColors && refs.userColors[m.uid] 
                       ? refs.userColors[m.uid] 
                       : "#ffffff";
 
+// Username styling — restored original look + tighter right padding
 nameSpan.style.cssText = `
   cursor: pointer;
-  font-weight: 500;
-padding: 0 4px 0 2px;    // keeps some visual "button" highlight on click, but tighter
+  font-weight: 700;              /* Original bold weight restored */
+  padding: 0 4px 0 2px;           /* Reduced right padding → message closer */
   border-radius: 4px;
   user-select: none;
   color: ${usernameColor} !important;
+  display: inline-block;
 `;
 
-// Visual feedback on press
-nameSpan.addEventListener("pointerdown", () => {
+// Original press/tap visual feedback (yellow background)
+nameSpan.addEventListener("pointerdown", (e) => {
+  e.stopPropagation();  // Prevents triggering message long-tap
   nameSpan.style.background = "rgba(255,204,0,0.4)";
 });
 
@@ -1397,8 +1399,29 @@ nameSpan.addEventListener("pointerup", () => {
   setTimeout(() => { nameSpan.style.background = ""; }, 200);
 });
 
-// Add the span (with username + colon) to meta and then to wrapper
+nameSpan.addEventListener("pointercancel", () => {
+  nameSpan.style.background = "";
+});
+
+// This ensures any other username click/tap handlers you have elsewhere still work
+// (e.g. mentioning user, opening profile, etc.) — because class and structure are intact
+
+// Colon: separate text node (like original), but now colored to match username
+const colonNode = document.createTextNode(": ");
+colonNode.parentNode; // dummy to allow style (we'll style via wrapper)
+
+// Better: use a span for colon so we can color it reliably
+const colonSpan = document.createElement("span");
+colonSpan.textContent = ": ";
+colonSpan.style.cssText = `
+  color: ${usernameColor};
+  user-select: none;
+`;
+
+// Append: username + colored colon
 metaEl.appendChild(nameSpan);
+metaEl.appendChild(colonSpan);
+
 wrapper.appendChild(metaEl);
 
     // REPLY PREVIEW
