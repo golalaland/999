@@ -1359,6 +1359,7 @@ function renderMessagesFromArray(messages) {
 
 
 // USERNAME — FULL REWRITE: ORIGINAL BEHAVIOR + SAME-COLOR COLON + TIGHTER SPACING
+// USERNAME — FINAL VERSION: SHORT TAP = USERNAME ACTION, LONG PRESS = REPLY/REPORT MODAL
 const metaEl = document.createElement("span");
 metaEl.className = "meta";
 
@@ -1366,32 +1367,30 @@ const nameSpan = document.createElement("span");
 nameSpan.className = "chat-username";
 nameSpan.textContent = m.chatId || "Guest";
 
-// Generate safe user ID (same as original)
+// Safe user ID for data attributes
 const realUid = (m.uid || 
                 (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || 
                 "unknown")
                 .replace(/[.@/\\]/g, '_');
 nameSpan.dataset.userId = realUid;
 
-// Get user color (original logic preserved exactly)
+// User color logic (exactly like original)
 const usernameColor = refs.userColors && refs.userColors[m.uid] 
                       ? refs.userColors[m.uid] 
                       : "#ffffff";
 
-// Username styling — restored original look + tighter right padding
 nameSpan.style.cssText = `
   cursor: pointer;
-  font-weight: 700;              /* Original bold weight restored */
-  padding: 0 4px 0 2px;           /* Reduced right padding → message closer */
+  font-weight: 700;
+  padding: 0 4px 0 2px;           /* Tight spacing to message */
   border-radius: 4px;
   user-select: none;
   color: ${usernameColor} !important;
   display: inline-block;
 `;
 
-// Original press/tap visual feedback (yellow background)
-nameSpan.addEventListener("pointerdown", (e) => {
-  e.stopPropagation();  // Prevents triggering message long-tap
+// Visual feedback when pressing username
+nameSpan.addEventListener("pointerdown", () => {
   nameSpan.style.background = "rgba(255,204,0,0.4)";
 });
 
@@ -1403,27 +1402,35 @@ nameSpan.addEventListener("pointercancel", () => {
   nameSpan.style.background = "";
 });
 
-// This ensures any other username click/tap handlers you have elsewhere still work
-// (e.g. mentioning user, opening profile, etc.) — because class and structure are intact
+// SHORT TAP ON USERNAME → YOUR CUSTOM ACTION (e.g. open modal, mention user)
+nameSpan.addEventListener("click", (e) => {
+  e.stopPropagation();  // Prevents triggering message-level click if any
 
-// Colon: separate text node (like original), but now colored to match username
-const colonNode = document.createTextNode(": ");
-colonNode.parentNode; // dummy to allow style (we'll style via wrapper)
+  // ←←← PUT YOUR USERNAME MODAL / ACTION HERE ←←←
+  // Examples:
+  
+  // Option 1: Mention user in input
+  refs.messageInputEl.value += `@${m.chatId} `;
+  refs.messageInputEl.focus();
 
-// Better: use a span for colon so we can color it reliably
+  // Option 2: Open a user profile/info modal
+  // showUserModal(m.uid || m.chatId, m.chatId);
+
+  // Option 3: Custom modal just for username tap
+  // showUsernameTapModal(m);  // create your own modal here
+
+  // Replace the above with whatever you originally had!
+});
+
+// Colon — matches username color perfectly
 const colonSpan = document.createElement("span");
 colonSpan.textContent = ": ";
-colonSpan.style.cssText = `
-  color: ${usernameColor};
-  user-select: none;
-`;
+colonSpan.style.color = usernameColor;
 
-// Append: username + colored colon
 metaEl.appendChild(nameSpan);
 metaEl.appendChild(colonSpan);
-
 wrapper.appendChild(metaEl);
-
+    
     // REPLY PREVIEW
     if (m.replyTo) {
       var preview = document.createElement("div");
