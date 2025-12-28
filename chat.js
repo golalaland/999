@@ -1498,14 +1498,15 @@ if (m.type === "buzz" && m.stickerGradient) {
   }, 20000);
 
   // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
-  content.style.cssText = `
-    font-weight: 900 !important;     /* Ultra bold */
-    font-size: 1.4em !important;     /* Slightly larger */
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6); /* Depth and pop */
-    letter-spacing: 0.5px;
-    display: block;
-    margin-top: 8px;                 /* Centers it nicely in the bubble */
-  `;
+content.style.cssText = `
+  font-weight: 900 !important;           /* Ultra bold */
+  font-size: 1.35em !important;          /* Big but not too big for inline */
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  letter-spacing: 0.8px;
+  display: inline !important;            /* ←←← Forces it back inline */
+  vertical-align: middle;                /* Perfect alignment with username */
+  line-height: 1.4;
+`;
 }
 
 // ALWAYS APPEND CONTENT
