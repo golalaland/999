@@ -1163,14 +1163,14 @@ async function reportMessage(msgData) {
   }
 }
 
-// Tap modal for Reply / Report — FINAL FIXED VERSION
 // Tap modal for Reply / Report — MINIMAL PLAIN BLACK VERSION
 function showTapModal(targetEl, msgData) {
-  // Remove any existing modal first
+  // Remove any existing modal
   if (tapModalEl) {
     tapModalEl.remove();
     tapModalEl = null;
   }
+
   tapModalEl = document.createElement("div");
   tapModalEl.className = "tap-modal";
 
@@ -1208,24 +1208,26 @@ function showTapModal(targetEl, msgData) {
   document.body.appendChild(tapModalEl);
 
   const rect = targetEl.getBoundingClientRect();
+
+  // Minimal, plain black styling
   tapModalEl.style.cssText = `
     position: absolute;
     top: ${rect.top - 50 + window.scrollY}px;
     left: ${rect.left}px;
-    background: #000000;                    /* Pure black */
-    color: #ffffff;                         /* White text */
-    padding: 6px 10px;                      /* Much smaller padding */
-    border-radius: 8px;                     /* Smaller roundness */
-    font-size: 13px;                        /* Slightly smaller text */
+    background: #000000;              /* Pure black */
+    color: #ffffff;                   /* White text */
+    padding: 7px 11px;                /* Much smaller */
+    border-radius: 8px;               /* Gentle corners */
+    font-size: 13px;
     display: flex;
-    gap: 12px;                              /* Reduced space between buttons */
+    gap: 12px;                        /* Tighter spacing */
     align-items: center;
     z-index: 99999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);  /* Subtle shadow, no inset glow */
-    border: none;                           /* No colored outline */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);  /* Subtle shadow only */
+    border: none;                     /* No outline */
   `;
 
-  // Minimal button styles — no colors, no borders
+  // Plain, unstyled buttons
   replyBtn.style.cssText = `
     background: transparent;
     color: #ffffff;
@@ -1248,14 +1250,17 @@ function showTapModal(targetEl, msgData) {
     background: transparent;
     color: #aaaaaa;
     font-size: 18px;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
 
-  // Auto-remove after 4 seconds (unchanged)
+  // Auto-remove after 4 seconds
   setTimeout(() => {
     if (tapModalEl) {
       tapModalEl.remove();
@@ -1263,7 +1268,6 @@ function showTapModal(targetEl, msgData) {
     }
   }, 4000);
 }
-
 // =============================
 // EXTRACT COLORS FROM GRADIENT — USED FOR CONFETTI
 // =============================
