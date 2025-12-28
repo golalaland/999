@@ -1368,31 +1368,49 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // USERNAME — YOUR ORIGINAL COLORS ALWAYS WIN
-    var metaEl = document.createElement("span");
-    metaEl.className = "meta";
+  // USERNAME — WITH COLON INHERITING THE SAME COLOR
+const metaEl = document.createElement("span");
+metaEl.className = "meta";
 
-    var nameSpan = document.createElement("span");
-    nameSpan.className = "chat-username";
-    nameSpan.textContent = m.chatId || "Guest";
+const nameSpan = document.createElement("span");
+nameSpan.className = "chat-username";
 
-    var realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown").replace(/[.@/\\]/g, '_');
-    nameSpan.dataset.userId = realUid;
+// Username + colon together so they share the same color
+nameSpan.textContent = (m.chatId || "Guest") + ": ";
 
-    nameSpan.style.cssText = `
-      cursor:pointer;
-      font-weight:700;
-      padding:0 4px;
-      border-radius:4px;
-      user-select:none;
-      color: ${refs.userColors && refs.userColors[m.uid] ? refs.userColors[m.uid] : "#ffffff"} !important;
-    `;
+const realUid = (m.uid || 
+                (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || 
+                "unknown")
+                .replace(/[.@/\\]/g, '_');
 
-    nameSpan.addEventListener("pointerdown", function() { nameSpan.style.background = "rgba(255,204,0,0.4)"; });
-    nameSpan.addEventListener("pointerup", function() { setTimeout(function() { nameSpan.style.background = ""; }, 200); });
+nameSpan.dataset.userId = realUid;
 
-    metaEl.append(nameSpan, document.createTextNode(": "));
-    wrapper.appendChild(metaEl);
+// Apply styles — custom color if available, fallback to white
+const usernameColor = refs.userColors && refs.userColors[m.uid] 
+                      ? refs.userColors[m.uid] 
+                      : "#ffffff";
+
+nameSpan.style.cssText = `
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0 4px;
+  border-radius: 4px;
+  user-select: none;
+  color: ${usernameColor} !important;
+`;
+
+// Visual feedback on press
+nameSpan.addEventListener("pointerdown", () => {
+  nameSpan.style.background = "rgba(255,204,0,0.4)";
+});
+
+nameSpan.addEventListener("pointerup", () => {
+  setTimeout(() => { nameSpan.style.background = ""; }, 200);
+});
+
+// Add the span (with username + colon) to meta and then to wrapper
+metaEl.appendChild(nameSpan);
+wrapper.appendChild(metaEl);
 
     // REPLY PREVIEW
     if (m.replyTo) {
