@@ -2852,7 +2852,7 @@ if (refs.buzzBtn) {
           type: "buzz",
           buzzLevel: "epic",
           screenShake: true,
-          sound: "buzz_explosion"
+          sound: "buzz_sound"
         });
       });
 
@@ -2901,7 +2901,7 @@ function triggerStickerBuzz(gradient, text, name) {
 
   // 4. SOUND
   if (typeof playSound === "function") {
-    playSound("buzz_explosion");
+    playSound("buzz_sound");
   }
 
   // 5. STICKER ANNOUNCE (smaller text)
