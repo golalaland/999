@@ -1164,23 +1164,23 @@ async function reportMessage(msgData) {
 }
 
 // Tap modal for Reply / Report — FINAL FIXED VERSION
+// Tap modal for Reply / Report — MINIMAL PLAIN BLACK VERSION
 function showTapModal(targetEl, msgData) {
   // Remove any existing modal first
   if (tapModalEl) {
     tapModalEl.remove();
     tapModalEl = null;
   }
-
   tapModalEl = document.createElement("div");
   tapModalEl.className = "tap-modal";
 
   const replyBtn = document.createElement("button");
-  replyBtn.textContent = "Reply ⤿";
+  replyBtn.textContent = "Reply";
   replyBtn.onclick = () => {
-    currentReplyTarget = { 
-      id: msgData.id, 
-      chatId: msgData.chatId, 
-      content: msgData.content 
+    currentReplyTarget = {
+      id: msgData.id,
+      chatId: msgData.chatId,
+      content: msgData.content
     };
     refs.messageInputEl.placeholder = `Replying to ${msgData.chatId}: ${msgData.content.substring(0, 30)}...`;
     refs.messageInputEl.focus();
@@ -1190,7 +1190,7 @@ function showTapModal(targetEl, msgData) {
   };
 
   const reportBtn = document.createElement("button");
-  reportBtn.textContent = "Report ⚠";
+  reportBtn.textContent = "Report";
   reportBtn.onclick = async () => {
     await reportMessage(msgData);
     tapModalEl.remove();
@@ -1204,66 +1204,58 @@ function showTapModal(targetEl, msgData) {
     tapModalEl = null;
   };
 
-
   tapModalEl.append(replyBtn, reportBtn, cancelBtn);
   document.body.appendChild(tapModalEl);
- const rect = targetEl.getBoundingClientRect();
- tapModalEl.style.cssText = `
-  position: absolute;
-  top: ${rect.top - 50 + window.scrollY}px;
-  left: ${rect.left}px;
-  background: rgba(10,10,20,0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  color: #fff;
-  padding: 12px 18px;
-  border-radius: 16px;
-  font-size: 14px;
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  z-index: 99999;
-  box-shadow: 
-    0 12px 40px rgba(0,0,0,0.7),
-    inset 0 1px 0 rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,0,110,0.4); /* THIN NEON PINK OUTLINE */
-  animation: popIn 0.25s ease-out;
-`;
 
+  const rect = targetEl.getBoundingClientRect();
+  tapModalEl.style.cssText = `
+    position: absolute;
+    top: ${rect.top - 50 + window.scrollY}px;
+    left: ${rect.left}px;
+    background: #000000;                    /* Pure black */
+    color: #ffffff;                         /* White text */
+    padding: 6px 10px;                      /* Much smaller padding */
+    border-radius: 8px;                     /* Smaller roundness */
+    font-size: 13px;                        /* Slightly smaller text */
+    display: flex;
+    gap: 12px;                              /* Reduced space between buttons */
+    align-items: center;
+    z-index: 99999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);  /* Subtle shadow, no inset glow */
+    border: none;                           /* No colored outline */
+  `;
 
-  // Inside showTapModal — update button styles
-replyBtn.style.cssText = `
-  background: rgba(255,255,255,0.1);
-  color: #00ffea;
-  border: 1px solid rgba(0,255,234,0.3);
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-`;
+  // Minimal button styles — no colors, no borders
+  replyBtn.style.cssText = `
+    background: transparent;
+    color: #ffffff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+  `;
 
-reportBtn.style.cssText = `
-  background: rgba(255,255,255,0.1);
-  color: #ff6600;
-  border: 1px solid rgba(255,102,0,0.3);
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-`;
+  reportBtn.style.cssText = `
+    background: transparent;
+    color: #ffffff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+  `;
 
-cancelBtn.style.cssText = `
-  background: transparent;
-  color: #ccc;
-  font-size: 20px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-`;
+  cancelBtn.style.cssText = `
+    background: transparent;
+    color: #aaaaaa;
+    font-size: 18px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+  `;
 
-  // Auto-remove after 4 seconds
+  // Auto-remove after 4 seconds (unchanged)
   setTimeout(() => {
     if (tapModalEl) {
       tapModalEl.remove();
@@ -1271,7 +1263,6 @@ cancelBtn.style.cssText = `
     }
   }, 4000);
 }
-
 
 // =============================
 // EXTRACT COLORS FROM GRADIENT — USED FOR CONFETTI
@@ -1309,8 +1300,6 @@ document.addEventListener("click", (e) => {
     return;
   }
 });
-
-
 
 // =============================
 // CREATE CONFETTI INSIDE STICKER — DEFINED ONCE, OUTSIDE LOOP
@@ -1393,7 +1382,7 @@ const usernameColor = refs.userColors && refs.userColors[m.uid]
 nameSpan.style.cssText = `
   cursor: pointer;
   font-weight: 500;
-  padding: 0 4px;
+padding: 0 4px 0 2px;    // keeps some visual "button" highlight on click, but tighter
   border-radius: 4px;
   user-select: none;
   color: ${usernameColor} !important;
