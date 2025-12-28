@@ -1395,7 +1395,7 @@ nameSpan.style.cssText = `
 
 // Visual feedback when pressing username
 nameSpan.addEventListener("pointerdown", () => {
-  nameSpan.style.background = "rgba(255,204,0,0.4)";
+  nameSpan.style.background = "rgba(255, 255, 255, 0.15)";  // Clean pressed look
 });
 
 nameSpan.addEventListener("pointerup", () => {
@@ -1405,7 +1405,7 @@ nameSpan.addEventListener("pointerup", () => {
 nameSpan.addEventListener("pointercancel", () => {
   nameSpan.style.background = "";
 });
-
+    
 // SHORT TAP ON USERNAME → YOUR CUSTOM ACTION (e.g. open modal, mention user)
 nameSpan.addEventListener("click", (e) => {
   e.stopPropagation();  // Prevents triggering message-level click if any
