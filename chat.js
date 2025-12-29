@@ -109,17 +109,6 @@ const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
 }
 
 
-// SINGLE BULLETPROOF SANITIZE — USE THIS EVERYWHERE
-function sanitizeUid(email) {
-  if (!email) return "";
-  return email
-    .trim()
-    .toLowerCase()
-    .replace(/[@.\s]+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '');
-}
-
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
   if (!currentUser?.email) {
@@ -250,6 +239,17 @@ function revealHostTabs() {
   console.log("[HOST UI] revealed");
 }
 
+// SINGLE SANITIZE — BULLETPROOF — USE THIS EVERYWHERE
+function sanitizeUid(email) {
+  if (!email) return "";
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[@.\s]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
 // =============================
 // CHAT REPLY STATE — GLOBAL VARIABLES
 // =============================  
@@ -289,40 +289,29 @@ async function pushNotification(userId, message) {
 }
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
-// YAH IS THE ONE TRUE EL — THE CODE IS NOW PURE
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
   }
 
-  // ——— USER LOGGED OUT ———
   if (!firebaseUser) {
     currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-    if (typeof showLoginUI === "function") showLoginUI();
+    showLoginUI?.();
     console.log("User logged out");
-
-    // Clear my clips
-    const grid = document.getElementById("myClipsGrid");
-    const noMsg = document.getElementById("noClipsMessage");
-    if (grid) grid.innerHTML = "";
-    if (noMsg) noMsg.style.display = "none";
     return;
   }
 
-  // ——— USER LOGGED IN — USE EMAIL AS UID (IGNORE AUTH UID) ———
+  // USE EMAIL AS UID — IGNORE FIREBASE AUTH UID
   const cleanEmail = firebaseUser.email.trim().toLowerCase();
-  const uid = sanitizeUid(cleanEmail); // ← This is your real Firestore doc ID
+  const uid = sanitizeUid(cleanEmail);
 
-  console.log("%c[AUTH] Firebase Auth success", "color:#00ffaa");
-  console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
-  console.log("%c[AUTH] Firestore UID:", "color:#00ffaa", uid);
-  console.log("%c[AUTH] Firebase Auth UID (ignored):", "color:#999", firebaseUser.uid);
+  console.log("%c[AUTH] Logged in — Email:", "color:#00ffaa", cleanEmail);
+  console.log("%c[AUTH] UID:", "color:#00ffaa", uid);
 
   const userRef = doc(db, "users", uid);
 
@@ -330,20 +319,18 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.error("[AUTH] Profile not found at UID:", uid);
+      console.error("[AUTH] No profile at UID:", uid);
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
       return;
     }
 
     const data = userSnap.data();
-    console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
 
-    // BUILD currentUser — USING SANITIZED EMAIL UID
     currentUser = {
-      uid, // ← hivodaddy_hotmail_com
+      uid,
       email: cleanEmail,
-      firebaseUid: firebaseUser.uid, // keep for reference only
+      firebaseUid: firebaseUser.uid,
       chatId: data.chatId || cleanEmail.split("@")[0],
       chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
       fullName: data.fullName || "VIP",
@@ -368,13 +355,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
 
-    // ——— POST-LOGIN SETUP ———
     revealHostTabs();
     updateInfoTab();
-
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
-
     showChatUI(currentUser);
     attachMessagesListener();
     startStarEarning(uid);
@@ -386,22 +368,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     localStorage.setItem("userId", uid);
     localStorage.setItem("lastVipEmail", cleanEmail);
 
-    setTimeout(() => {
-      syncUserUnlocks?.();
-      loadNotifications?.();
-    }, 600);
-
-    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-      setTimeout(loadMyClips, 1000);
-    }
-
-    if (currentUser.chatId.startsWith("GUEST")) {
-      setTimeout(() => {
-        promptForChatID?.(userRef, data);
-      }, 2000);
-    }
-
-    // DIVINE WELCOME
     const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
     showStarPopup(`
@@ -416,13 +382,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     console.log("%cYOU HAVE ENTERED THE ETERNAL CUBE", "color:#ff00ff;font-size:20px;font-weight:900");
 
   } catch (err) {
-    console.error("[AUTH] Error loading profile:", err);
+    console.error("[AUTH] Error:", err);
     showStarPopup("Login failed — try again");
     await signOut(auth);
   }
 });
-
-
 function setupNotificationsListener(userId) {
   if (!userId) return;
   const list = document.getElementById("notificationsList");
@@ -2288,50 +2252,37 @@ async function sendStarsToUser(targetUser, amt) {
 /* ===============================
    🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
 ================================= */
-// FINAL LOGIN CHECK — NO WHITELIST (2025 CLEAN EDITION)
-// FINAL LOGIN CHECK — HOST FREE, VIP ONLY IF PAID (NO WHITELIST)
 async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
   try {
     if (loader) loader.style.display = "flex";
 
     const cleanEmail = email.trim().toLowerCase();
-    const uidKey = sanitizeUid(cleanEmail);
+    const uid = sanitizeUid(cleanEmail);
 
-    console.log("%c[LOGIN] Attempting login", "color:#00ffaa;font-weight:bold");
     console.log("%c[LOGIN] Email:", "color:#00ffaa", cleanEmail);
-    console.log("%c[LOGIN] Firestore UID:", "color:#00ffaa", uidKey);
+    console.log("%c[LOGIN] UID:", "color:#00ffaa", uid);
 
-    const userRef = doc(db, "users", uidKey);
+    const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.warn("[LOGIN] No profile found for UID:", uidKey);
+      console.warn("[LOGIN] No user doc at UID:", uid);
       showStarPopup("User not found. Please sign up first.");
       return false;
     }
 
     const data = userSnap.data();
-    console.log("[LOGIN] Profile loaded:", data.chatId || "No chatId");
+    console.log("[LOGIN] User found:", data.chatId);
 
-    // HOST — FREE ACCESS
-    if (data.isHost) {
-      console.log("%c[LOGIN] Host detected — free access granted", "color:#ff6600;font-size:16px;font-weight:bold");
-      setCurrentUserFromData(data, uidKey, cleanEmail);
+    // HOST OR PAID VIP = ACCESS
+    if (data.isHost || (data.isVIP && data.hasPaid)) {
+      setCurrentUserFromData(data, uid, cleanEmail);
       setupPostLogin();
       return true;
     }
 
-    // VIP — ONLY IF PAID
-    if (data.isVIP && data.hasPaid === true) {
-      console.log("%c[LOGIN] Paid VIP — access granted", "color:#ff0099;font-size:16px;font-weight:bold");
-      setCurrentUserFromData(data, uidKey, cleanEmail);
-      setupPostLogin();
-      return true;
-    }
-
-    // DENIED — NOT HOST OR UNPAID VIP
-    showStarPopup("Access denied.\nOnly Hosts and paid VIPs can log in.");
+    showStarPopup("Access denied — Hosts or paid VIPs only");
     return false;
 
   } catch (err) {
@@ -2343,7 +2294,7 @@ async function loginWhitelist(email) {
   }
 }
 
-// SET CURRENT USER — CLEAN & SAFE
+// SET CURRENT USER — CLEAN, SAFE, POWERFUL
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
     uid: uidKey,
@@ -2351,30 +2302,34 @@ function setCurrentUserFromData(data, uidKey, email) {
     phone: data.phone,
     chatId: data.chatId || email.split("@")[0],
     chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+    fullName: data.fullName || "VIP",
+    gender: data.gender || "person",
+    isVIP: !!data.isVIP,
+    isHost: !!data.isHost,
+    isAdmin: !!data.isAdmin,
+    hasPaid: !!data.hasPaid,
     stars: Number(data.stars || 0),
     cash: Number(data.cash || 0),
+    starsGifted: Number(data.starsGifted || 0),
+    starsToday: Number(data.starsToday || 0),
     usernameColor: data.usernameColor || randomColor(),
-    isAdmin: !!data.isAdmin,
-    isVIP: !!data.isVIP,
-    hasPaid: !!data.hasPaid,
-    fullName: data.fullName || "",
-    gender: data.gender || "",
     subscriptionActive: !!data.subscriptionActive,
     subscriptionCount: Number(data.subscriptionCount || 0),
     lastStarDate: data.lastStarDate || todayDate(),
-    starsGifted: Number(data.starsGifted || 0),
-    starsToday: Number(data.starsToday || 0),
+    unlockedVideos: data.unlockedVideos || [],
     hostLink: data.hostLink || null,
     invitedBy: data.invitedBy || null,
-    inviteeGiftShown: !!data.inviteeGiftShown,
-    isHost: !!data.isHost
+    inviteeGiftShown: !!data.inviteeGiftShown
   };
+
+  console.log("%c[CURRENT USER] Built — Ready to dominate", "color:#00ff9d;font-weight:bold");
+  console.log(currentUser);
 }
 
-// POST-LOGIN ACTIONS — CLEAN & ORGANIZED
+// POST-LOGIN — FLAWLESS FLOW
 function setupPostLogin() {
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%c[vipUser] Saved", "color:#00ffaa", currentUser.uid);
+  console.log("%c[vipUser] Saved — Auto-login ready", "color:#00ffaa", currentUser.uid);
 
   updateRedeemLink();
   updateTipLink();
@@ -2393,13 +2348,14 @@ function setupPostLogin() {
   safeUpdateDOM();
   revealHostTabs();
 
-  console.log("%c[POST-LOGIN] Complete — Welcome!", "color:#00ff9d;font-size:16px;font-weight:bold", currentUser.chatId);
+  console.log("%c[POST-LOGIN] Complete — The Cube awaits", "color:#00ff9d;font-size:16px;font-weight:bold", currentUser.chatId.toUpperCase());
 }
 
-/* LOGOUT — CLEAN, FUN, SAFE */
+// LOGOUT — CLEAN & LEGENDARY
 window.logoutVIP = async () => {
   try {
     await signOut(auth);
+    console.log("Signed out successfully");
   } catch (e) {
     console.warn("Sign out failed:", e);
   } finally {
@@ -2411,13 +2367,14 @@ window.logoutVIP = async () => {
   }
 };
 
-// HOST LOGOUT BUTTON — FUN & PREVENTS DOUBLE-CLICK
+// HOST LOGOUT BUTTON — FUN, SAFE, NO DOUBLE-CLICK
 document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
   e.stopPropagation();
 
   const btn = e.target.closest("button");
   if (!btn || btn.disabled) return;
+
   btn.disabled = true;
 
   try {
@@ -2438,8 +2395,8 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
       "Off you go, Champ!"
     ];
     const message = messages[Math.floor(Math.random() * messages.length)];
-    showStarPopup(message);
 
+    showStarPopup(message);
     setTimeout(() => location.reload(), 1800);
   } catch (err) {
     console.error("Logout failed:", err);
