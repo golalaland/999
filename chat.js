@@ -2014,31 +2014,18 @@ function sanitizeKey(email) {
   • No video, no gift slider for Hosts
   • Meet button centered
   • bioPick + typewriter effect for both
+/* ======================================================
+  SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
+  • SAFE: No reading all users — on-demand load only
+  • Works with your doc ID format (example_yahoo_com)
+  • Fast, secure, no permission errors
 ====================================================== */
 (async function initSocialCardSystem() {
-  const allUsers = [];
-  const usersByChatId = {};
-
-  // Load all users
-  try {
-    const snaps = await getDocs(collection(db, "users"));
-    snaps.forEach(doc => {
-      const data = doc.data();
-      data._docId = doc.id;
-      data.chatIdLower = (data.chatId || "").toString().toLowerCase();
-      allUsers.push(data);
-      usersByChatId[data.chatIdLower] = data;
-    });
-    console.log("Social card: loaded", allUsers.length, "users");
-  } catch (err) {
-    console.error("Failed to load users:", err);
-  }
+  const usersByChatId = {}; // Cache loaded users
 
   function showSocialCard(user) {
     if (!user) return;
     document.getElementById('socialCard')?.remove();
-
-    // Both isHost and isVIP (and others) now use the same clean compact card
     showUnifiedCard(user);
   }
 
@@ -2046,7 +2033,6 @@ function sanitizeKey(email) {
   function showUnifiedCard(user) {
     const card = document.createElement("div");
     card.id = "socialCard";
-
     Object.assign(card.style, {
       position: "fixed",
       top: "50%",
@@ -2100,12 +2086,10 @@ function sanitizeKey(email) {
     const nature = user.naturePick || "cool";
     const city = user.location || user.city || "Lagos";
     const country = user.country || "Nigeria";
-
     let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
     if (user.isHost || user.isVIP) {
       detailsText = `A ${fruit} ${nature} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
     }
-
     const detailsEl = document.createElement("p");
     detailsEl.textContent = detailsText;
     detailsEl.style.cssText = "margin:0 0 10px;font-size:14px;line-height:1.4;color:#ccc;";
@@ -2118,42 +2102,39 @@ function sanitizeKey(email) {
     card.appendChild(bioEl);
     typeWriterEffect(bioEl, user.bioPick || "Nothing shared yet...");
 
-// Meet button — centered (only for Hosts) — Only color changed to dark glossy black
-if (user.isHost) {
-  const meetBtn = document.createElement("div");
-  meetBtn.style.cssText = `
-    width:50px;height:50px;border-radius:50%;
-    background:rgba(20,20,25,0.9);
-    display:flex;align-items:center;justify-content:center;
-    margin:20px auto 10px auto; /* Extra top margin for breathing room */
-    cursor:pointer;
-    border:2px solid rgba(255,255,255,0.12);
-    transition:all 0.3s ease;
-    box-shadow:0 0 15px rgba(0,0,0,0.6);
-  `;
-  meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
+    // Meet button — centered (only for Hosts)
+    if (user.isHost) {
+      const meetBtn = document.createElement("div");
+      meetBtn.style.cssText = `
+        width:50px;height:50px;border-radius:50%;
+        background:rgba(20,20,25,0.9);
+        display:flex;align-items:center;justify-content:center;
+        margin:20px auto 10px auto;
+        cursor:pointer;
+        border:2px solid rgba(255,255,255,0.12);
+        transition:all 0.3s ease;
+        box-shadow:0 0 15px rgba(0,0,0,0.6);
+      `;
+      meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
+      meetBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof showMeetModal === 'function') showMeetModal(user);
+      };
+      meetBtn.onmouseenter = () => {
+        meetBtn.style.transform = "scale(1.15)";
+        meetBtn.style.background = "rgba(35,35,40,0.95)";
+        meetBtn.style.boxShadow = "0 0 25px rgba(0,0,0,0.8)";
+      };
+      meetBtn.onmouseleave = () => {
+        meetBtn.style.transform = "scale(1)";
+        meetBtn.style.background = "rgba(20,20,25,0.9)";
+        meetBtn.style.boxShadow = "0 0 15px rgba(0,0,0,0.6)";
+      };
+      card.appendChild(meetBtn);
+    }
 
-  meetBtn.onclick = (e) => {
-    e.stopPropagation();
-    if (typeof showMeetModal === 'function') showMeetModal(user);
-  };
+    document.body.appendChild(card);
 
-  meetBtn.onmouseenter = () => {
-    meetBtn.style.transform = "scale(1.15)";
-    meetBtn.style.background = "rgba(35,35,40,0.95)";
-    meetBtn.style.boxShadow = "0 0 25px rgba(0,0,0,0.8)";
-  };
-
-  meetBtn.onmouseleave = () => {
-    meetBtn.style.transform = "scale(1)";
-    meetBtn.style.background = "rgba(20,20,25,0.9)";
-    meetBtn.style.boxShadow = "0 0 15px rgba(0,0,0,0.6)";
-  };
-
-  card.appendChild(meetBtn);
-}
-  document.body.appendChild(card);
-    
     // Fade in
     requestAnimationFrame(() => {
       card.style.opacity = "1";
@@ -2180,21 +2161,54 @@ if (user.isHost) {
     }, speed);
   }
 
-  // Click listener to open card
-  document.addEventListener("pointerdown", e => {
+  // Click listener — load user on demand
+  document.addEventListener("pointerdown", async (e) => {
     const el = e.target.closest("[data-user-id]") || e.target;
     if (!el.textContent) return;
     const text = el.textContent.trim();
     if (!text || text.includes(":")) return;
-    const chatId = text.split(" ")[0].toLowerCase();
-    const u = usersByChatId[chatId] || allUsers.find(u => u.chatIdLower === chatId);
-    if (!u || u._docId === currentUser?.uid) return;
-    el.style.background = "#ffcc00";
-    setTimeout(() => el.style.background = "", 200);
-    showSocialCard(u);
+
+    let chatIdLower = text.split(" ")[0].toLowerCase().replace(/^@/, "");
+
+    // Check cache first
+    if (usersByChatId[chatIdLower]) {
+      showSocialCard(usersByChatId[chatIdLower]);
+      return;
+    }
+
+    // Try common doc ID patterns
+    const possibleIds = [
+      chatIdLower,
+      `${chatIdLower}_gmail_com`,
+      `${chatIdLower}_yahoo_com`,
+      `${chatIdLower}_hotmail_com`,
+      `${chatIdLower}_outlook_com`
+    ];
+
+    let foundUser = null;
+    for (const id of possibleIds) {
+      try {
+        const snap = await getDoc(doc(db, "users", id));
+        if (snap.exists()) {
+          foundUser = { _docId: id, ...snap.data() };
+          usersByChatId[chatIdLower] = foundUser;
+          break;
+        }
+      } catch (err) {
+        // Silent fail — try next
+      }
+    }
+
+    if (foundUser && foundUser._docId !== currentUser?.uid) {
+      el.style.background = "#ffcc00";
+      setTimeout(() => el.style.background = "", 200);
+      showSocialCard(foundUser);
+    } else {
+      showStarPopup("User not found");
+    }
   });
 
-  console.log("Social Card System — Unified clean style for Hosts & VIPs ♡");
+  console.log("Social Card System — Unified & Secure (on-demand load)");
   window.showSocialCard = showSocialCard;
   window.typeWriterEffect = typeWriterEffect;
 })();
