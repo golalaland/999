@@ -2306,67 +2306,63 @@ async function sendStarsToUser(targetUser, amt) {
     showGoldAlert("Failed — try again", 4000);
   }
 }
-/* ===============================
-   FINAL VIP LOGIN SYSTEM — 100% WORKING
-   Google disabled | VIP button works | Safe auto-login
-================================= */
-document.addEventListener("DOMContentLoaded", () => {
-  const googleBtn = document.getElementById("googleSignInBtn");
-  if (!googleBtn) return;
+// FINAL LOGIN CHECK — NO WHITELIST NEEDED (2025 EDITION)
+async function loginWhitelist(email) {
+  const loader = document.getElementById("postLoginLoader");
+  try {
+    if (loader) loader.style.display = "flex";
 
-  // Reset any previous styles / states
-  googleBtn.style.cssText = "";
-  googleBtn.disabled = false;
+    const cleanEmail = email.trim().toLowerCase();
+    const uidKey = sanitizeUid(cleanEmail);
 
-  // Remove old listeners (safe way)
-  const newBtn = googleBtn.cloneNode(true);
-  googleBtn.parentNode.replaceChild(newBtn, googleBtn);
+    console.log("%c[LOGIN] Attempting login for:", "color:#00ffaa", cleanEmail);
+    console.log("%c[LOGIN] UID:", "color:#00ffaa", uidKey);
 
-  // Add your block handler
-  newBtn.addEventListener("click", e => {
-    e.preventDefault();
-    e.stopPropagation();
-    showStarPopup("Google Sign-Up is not available at the moment.<br>Use VIP Email Login instead.");
-  });
-});
+    const userRef = doc(db, "users", uidKey);
+    const userSnap = await getDoc(userRef);
 
+    if (!userSnap.exists()) {
+      console.warn("[LOGIN] User document not found");
+      showStarPopup("User not found. Please sign up first.");
+      return false;
+    }
 
-// FINAL: WORKING LOGIN BUTTON — THIS MAKES SIGN IN ACTUALLY WORK
-document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
-  const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
-  const password = document.getElementById("passwordInput")?.value;
+    const data = userSnap.data();
+    console.log("[LOGIN] User data:", { isHost: data.isHost, isVIP: data.isVIP, hasPaid: data.hasPaid });
 
-  if (!email || !password) {
-    showStarPopup("Enter email and password");
-    return;
-  }
+    // HOSTS — ALWAYS FREE
+    if (data.isHost) {
+      console.log("%c[LOGIN] Host detected — free access", "color:#ff6600");
+      setCurrentUserFromData(data, uidKey, cleanEmail);
+      setupPostLogin();
+      return true;
+    }
 
- // STEP 1: Whitelist check
-const allowed = await loginWhitelist(email);
-if (!allowed) return;
+    // VIPs — ONLY IF hasPaid === true
+    if (data.isVIP) {
+      if (data.hasPaid === true) {
+        console.log("%c[LOGIN] VIP with hasPaid — access granted", "color:#ff0099");
+        setCurrentUserFromData(data, uidKey, cleanEmail);
+        setupPostLogin();
+        return true;
+      } else {
+        showStarPopup("Payment not confirmed.\nContact admin to activate your VIP.");
+        return false;
+      }
+    }
 
-// STEP 2: ONLY NOW do Firebase Auth login
-try {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const firebaseUser = userCredential.user;
-  console.log("Firebase Auth Success:", firebaseUser.uid);
+    // EVERYONE ELSE — DENIED (no whitelist fallback)
+    showStarPopup("Access denied.\nOnly Hosts and paid VIPs can log in.");
+    return false;
 
-  // NO MANUAL currentUser SETTING
-  // NO WELCOME POPUP — YOU ALREADY HAVE ONE
-  // onAuthStateChanged will handle everything perfectly
-
-} catch (err) {
-  console.error("Firebase Auth failed:", err.code);
-
-  if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-    showStarPopup("Wrong password or email");
-  } else if (err.code === "auth/too-many-requests") {
-    showStarPopup("Too many attempts. Wait a minute.");
-  } else {
-    showStarPopup("Login failed");
+  } catch (err) {
+    console.error("[LOGIN] Error:", err);
+    showStarPopup("Login error — try again");
+    return false;
+  } finally {
+    if (loader) loader.style.display = "none";
   }
 }
-});
 
 // Call this exact line after successful login
 // document.body.classList.add('logged-in');
