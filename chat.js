@@ -2019,7 +2019,6 @@ function sanitizeUid(email) {
     .replace(/^_|_$/g, '');    // remove leading/trailing _
 }
 
-const getUserId = sanitizeUid; // for old code
 /* ======================================================
   SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
   • Hosts now use exact same compact VIP card style
