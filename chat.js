@@ -262,7 +262,10 @@ let currentReplyTarget = null;
    NO ERRORS — NO RANDOM MODALS — NO MISSING BUTTONS
 ================================= */
 
+// ——— GLOBAL VARIABLES ———
 let currentUser = null;
+let notificationsUnsubscribe = null; // ← Declare at top
+
 
 // UNIVERSAL ID SANITIZER — RESTORED & FINAL
 const sanitizeId = (input) => {
@@ -299,9 +302,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-    showLoginUI?.();
+    showLoginUI(); // ← Now defined
     console.log("User logged out");
     return;
   }
@@ -440,6 +441,32 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
 });
 
 
+// ——— SHOW LOGIN UI ———
+function showLoginUI() {
+  console.log("[UI] Showing login screen");
+
+  // Hide chat
+  document.getElementById('chatContainer')?.style.setProperty('display', 'none');
+  document.getElementById('sendArea')?.style.setProperty('display', 'none');
+  document.getElementById('profileBox')?.style.setProperty('display', 'none');
+
+  // Show login
+  document.getElementById('authBox')?.style.setProperty('display', 'block');
+  document.getElementById('emailAuthWrapper')?.style.setProperty('display', 'block');
+  document.getElementById('googleSignInBtn')?.style.setProperty('display', 'block');
+  document.getElementById('vipAccessBtn')?.style.setProperty('display', 'block');
+
+  // Clear inputs
+  document.getElementById('emailInput')?.value = '';
+  document.getElementById('passwordInput')?.value = '';
+}
+
+// ——— ON PAGE LOAD — SHOW LOGIN IF NEEDED ———
+document.addEventListener("DOMContentLoaded", () => {
+  if (!currentUser) {
+    showLoginUI();
+  }
+});
 
 function showStarPopup(text) {
   const popup = document.getElementById("starPopup");
@@ -1592,8 +1619,6 @@ function attachMessagesListener() {
   });
 }
 
-/* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
-let notificationsUnsubscribe = null; // ← one true source of truth
 
 async function setupNotifications() {
   // Prevent double setup
