@@ -483,6 +483,7 @@ window.formatNumberWithCommas = formatNumberWithCommas;
 /* ---------- User Colors ---------- */ 
 function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { refs.userColors = refs.userColors || {}; snap.forEach(docSnap => { refs.userColors[docSnap.id] = docSnap.data()?.usernameColor || "#ffffff"; }); if (lastMessagesArray.length) renderMessagesFromArray(lastMessagesArray); }); }
   
+ showLoginUI();
 
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
@@ -490,7 +491,6 @@ function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { re
 ----------------------------- */
 async function showGiftModal(targetUid, targetData) {
   if (!currentUser) {
-    showLoginUI();
     showStarPopup("You must be logged in");
     return;
   }
