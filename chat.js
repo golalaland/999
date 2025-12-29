@@ -109,6 +109,16 @@ const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
 }
 
 
+// SINGLE SOURCE OF TRUTH — BULLETPROOF SANITIZE
+function sanitizeUid(email) {
+  if (!email) return "";
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[@.\s]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
 
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
@@ -308,9 +318,9 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     return;
   }
 
-  // ——— USER LOGGED IN ———
+// ——— USER LOGGED IN ———
 const cleanEmail = firebaseUser.email.trim().toLowerCase();
-const uid = sanitizeUid(cleanEmail);  // ← Use the new bulletproof sanitize
+const uid = sanitizeUid(cleanEmail); // ← Bulletproof sanitize
 
 console.log("%c[AUTH] Firebase user logged in", "color:#00ffaa");
 console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
@@ -330,112 +340,101 @@ try {
 
   const data = userSnap.data();
   console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
-// ——— BUILD CURRENT USER OBJECT ———
-currentUser = {
-  uid,
-  email,
-  firebaseUid: firebaseUser.uid,
-  chatId: data.chatId || email.split("@")[0],
-  chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-  fullName: data.fullName || "VIP",
-  gender: data.gender || "person",
-  isVIP: !!data.isVIP,
-  isHost: !!data.isHost,
-  isAdmin: !!data.isAdmin,
-  hasPaid: !!data.hasPaid,  // ← VIP payment status
-  stars: data.stars || 0,
-  cash: data.cash || 0,
-  starsGifted: data.starsGifted || 0,
-  starsToday: data.starsToday || 0,
-  usernameColor: data.usernameColor || "#ff69b4",
-  subscriptionActive: !!data.subscriptionActive,
-  subscriptionCount: data.subscriptionCount || 0,
-  lastStarDate: data.lastStarDate || todayDate(),
-  unlockedVideos: data.unlockedVideos || [],
-  invitedBy: data.invitedBy || null,
-  inviteeGiftShown: !!data.inviteeGiftShown,
-  hostLink: data.hostLink || null
-};
 
-console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-console.log("[USER STATUS]", {
-  uid: currentUser.uid,
-  isHost: currentUser.isHost,
-  isVIP: currentUser.isVIP,
-  hasPaid: currentUser.hasPaid,
-  stars: currentUser.stars,
-  cash: currentUser.cash
-});
+  // ——— BUILD CURRENT USER OBJECT ———
+  currentUser = {
+    uid,
+    email: cleanEmail,
+    firebaseUid: firebaseUser.uid,
+    chatId: data.chatId || cleanEmail.split("@")[0],
+    chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
+    fullName: data.fullName || "VIP",
+    gender: data.gender || "person",
+    isVIP: !!data.isVIP,
+    isHost: !!data.isHost,
+    isAdmin: !!data.isAdmin,
+    hasPaid: !!data.hasPaid,
+    stars: Number(data.stars || 0),
+    cash: Number(data.cash || 0),
+    starsGifted: Number(data.starsGifted || 0),
+    starsToday: Number(data.starsToday || 0),
+    usernameColor: data.usernameColor || "#ff69b4",
+    subscriptionActive: !!data.subscriptionActive,
+    subscriptionCount: Number(data.subscriptionCount || 0),
+    lastStarDate: data.lastStarDate || todayDate(),
+    unlockedVideos: data.unlockedVideos || [],
+    invitedBy: data.invitedBy || null,
+    inviteeGiftShown: !!data.inviteeGiftShown,
+    hostLink: data.hostLink || null
+  };
 
-// AFTER currentUser IS BUILT
-revealHostTabs();
-updateInfoTab();  // Info tab balance shows
+  console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
+  console.log("[USER STATUS]", {
+    uid: currentUser.uid,
+    isHost: currentUser.isHost,
+    isVIP: currentUser.isVIP,
+    hasPaid: currentUser.hasPaid,
+    stars: currentUser.stars,
+    cash: currentUser.cash
+  });
 
-// BLOCK NON-HOSTS FROM INFO TAB (TOOLS)
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest('.tab-btn[data-tab="infoTab"]');
-  if (!btn) return;
+  // ——— POST-LOGIN SETUP ———
+  revealHostTabs();
+  updateInfoTab();
 
-  if (!currentUser?.isHost) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.warn("[BLOCKED] Non-host tried to open Info/Tools tab");
-    showStarPopup("Host only — nice try! 😏");
+  // UI STATE
+  document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+  document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+
+  localStorage.setItem("userId", uid);
+  localStorage.setItem("lastVipEmail", cleanEmail);
+
+  // CORE SYSTEMS
+  showChatUI(currentUser);
+  attachMessagesListener();
+  startStarEarning(uid);
+  setupPresence(currentUser);
+  setupNotificationsListener(uid);
+  updateRedeemLink();
+  updateTipLink();
+
+  // BACKGROUND TASKS
+  setTimeout(() => {
+    syncUserUnlocks?.();
+    loadNotifications?.();
+  }, 600);
+
+  if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
+    setTimeout(loadMyClips, 1000);
   }
-});
 
-
-    // ——— UI STATE ———
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
-
-    localStorage.setItem("userId", uid);
-    localStorage.setItem("lastVipEmail", email);
-
-    // ——— CORE SYSTEMS ———
-    if (typeof showChatUI === "function") showChatUI(currentUser);
-    if (typeof attachMessagesListener === "function") attachMessagesListener();
-    if (typeof startStarEarning === "function") startStarEarning(uid);
-    if (typeof setupPresence === "function") setupPresence(currentUser);
-    if (typeof setupNotificationsListener === "function") setupNotificationsListener(uid);
-
-    updateRedeemLink();
-    updateTipLink();
-
-    // ——— BACKGROUND TASKS ———
+  // GUEST NAME PROMPT
+  if (currentUser.chatId.startsWith("GUEST")) {
     setTimeout(() => {
-      if (typeof syncUserUnlocks === "function") syncUserUnlocks();
-      if (typeof loadNotifications === "function") loadNotifications(); // Badge update
-    }, 600);
-
-    // ——— MY CLIPS ———
-    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-      setTimeout(loadMyClips, 1000);
-    }
-
-    // ——— GUEST → PROMPT FOR NAME ———
-    if (currentUser.chatId.startsWith("GUEST")) {
-      setTimeout(() => {
-        if (typeof promptForChatID === "function") {
-          promptForChatID(userRef, data);
-        }
-      }, 2000);
-    }
-
-    // ——— DIVINE WELCOME POPUP ———
-    const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
-    const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-
-   showStarPopup(`<div style="text-align:center;font-size:13px;">Welcome back, <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">${currentUser.chatId.toUpperCase()}</b></div>`);
-
-    console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
-
-  } catch (err) {
-    console.error("Auth state error:", err);
-    showStarPopup("Login failed — please try again");
-    await signOut(auth);
+      promptForChatID?.(userRef, data);
+    }, 2000);
   }
-});
+
+  // DIVINE WELCOME POPUP
+  const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
+  const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+  showStarPopup(`
+    <div style="text-align:center;font-size:13px;">
+      Welcome back, 
+      <b style="font-size:15px;color:${glow};text-shadow:0 0 20px ${glow}88;">
+        ${currentUser.chatId.toUpperCase()}
+      </b>
+    </div>
+  `);
+
+  console.log("%cYOU HAVE ENTERED THE ETERNAL CUBE", "color:#ff00ff;font-size:16px;font-weight:900");
+
+} catch (err) {
+  console.error("[AUTH] Error loading profile:", err);
+  showStarPopup("Login failed — please try again");
+  await signOut(auth);
+}
+ });
 
 function setupNotificationsListener(userId) {
   if (!userId) return;
