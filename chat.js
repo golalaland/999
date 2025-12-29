@@ -2003,21 +2003,6 @@ async function promptForChatID(userRef, userData) {
   });
 }
 
-
-/* ======================================================
-   SANITIZE FIRESTORE KEYS — REQUIRED FOR LOGIN & SOCIAL CARD
-   YAH DEMANDS CLEAN KEYS
-====================================================== */
-function sanitizeUid(email) {
-  if (!email) return "";
-  return email
-    .trim()
-    .toLowerCase()
-    .replace(/[@.\s]+/g, '_')  // replace @ . and spaces with _
-    .replace(/_+/g, '_')       // collapse multiple _ to one
-    .replace(/^_|_$/g, '');    // remove leading/trailing _
-}
-
 /* ======================================================
   SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
   • Hosts now use exact same compact VIP card style
