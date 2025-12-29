@@ -441,27 +441,38 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
 });
 
 
-// ——— SHOW LOGIN UI ———
+// ——— SHOW LOGIN UI — CLEAN & SAFE ———
 function showLoginUI() {
   console.log("[UI] Showing login screen");
 
-  // Hide chat
-  document.getElementById('chatContainer')?.style.setProperty('display', 'none');
-  document.getElementById('sendArea')?.style.setProperty('display', 'none');
-  document.getElementById('profileBox')?.style.setProperty('display', 'none');
+  // Hide chat elements safely
+  const chatContainer = document.getElementById('chatContainer');
+  const sendArea = document.getElementById('sendArea');
+  const profileBox = document.getElementById('profileBox');
 
-  // Show login
-  document.getElementById('authBox')?.style.setProperty('display', 'block');
-  document.getElementById('emailAuthWrapper')?.style.setProperty('display', 'block');
-  document.getElementById('googleSignInBtn')?.style.setProperty('display', 'block');
-  document.getElementById('vipAccessBtn')?.style.setProperty('display', 'block');
+  if (chatContainer) chatContainer.style.display = 'none';
+  if (sendArea) sendArea.style.display = 'none';
+  if (profileBox) profileBox.style.display = 'none';
 
-  // Clear inputs
-  document.getElementById('emailInput')?.value = '';
-  document.getElementById('passwordInput')?.value = '';
+  // Show login elements safely
+  const authBox = document.getElementById('authBox');
+  const emailAuthWrapper = document.getElementById('emailAuthWrapper');
+  const googleSignInBtn = document.getElementById('googleSignInBtn');
+  const vipAccessBtn = document.getElementById('vipAccessBtn');
+
+  if (authBox) authBox.style.display = 'block';
+  if (emailAuthWrapper) emailAuthWrapper.style.display = 'block';
+  if (googleSignInBtn) googleSignInBtn.style.display = 'block';
+  if (vipAccessBtn) vipAccessBtn.style.display = 'block';
+
+  // Clear input fields
+  const emailInput = document.getElementById('emailInput');
+  const passwordInput = document.getElementById('passwordInput');
+  if (emailInput) emailInput.value = '';
+  if (passwordInput) passwordInput.value = '';
 }
 
-// ——— ON PAGE LOAD — SHOW LOGIN IF NEEDED ———
+// ——— ON PAGE LOAD — SHOW LOGIN IF NOT LOGGED IN ———
 document.addEventListener("DOMContentLoaded", () => {
   if (!currentUser) {
     showLoginUI();
