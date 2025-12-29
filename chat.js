@@ -109,7 +109,7 @@ const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
 }
 
 
-// SINGLE SOURCE OF TRUTH — BULLETPROOF SANITIZE
+// SINGLE BULLETPROOF SANITIZE — USE THIS EVERYWHERE
 function sanitizeUid(email) {
   if (!email) return "";
   return email
@@ -320,11 +320,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
 // ——— USER LOGGED IN ———
 const cleanEmail = firebaseUser.email.trim().toLowerCase();
-const uid = sanitizeUid(cleanEmail); // ← This is your real UID
+const uid = sanitizeUid(cleanEmail);
 
 console.log("%c[AUTH] Firebase Auth success", "color:#00ffaa");
 console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
-console.log("%c[AUTH] Custom UID (for Firestore):", "color:#00ffaa", uid);
+console.log("%c[AUTH] Generated UID:", "color:#00ffaa", uid);
 
 const userRef = doc(db, "users", uid);
 
@@ -332,8 +332,9 @@ try {
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
-    console.error("[AUTH] No profile found at UID:", uid);
-    showStarPopup("No profile found. Contact support.");
+    console.error("[AUTH] No profile found for UID:", uid);
+    console.log("Expected doc ID format: hivodaddy_hotmail_com");
+    showStarPopup("Profile not found. Contact support.");
     await signOut(auth);
     return;
   }
@@ -341,11 +342,10 @@ try {
   const data = userSnap.data();
   console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
 
-  // BUILD currentUser using your custom UID
   currentUser = {
-    uid, // ← sanitized email
+    uid,
     email: cleanEmail,
-    firebaseUid: firebaseUser.uid, // ← keep for reference
+    firebaseUid: firebaseUser.uid,
     chatId: data.chatId || cleanEmail.split("@")[0],
     chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
     fullName: data.fullName || "VIP",
@@ -368,9 +368,9 @@ try {
     hostLink: data.hostLink || null
   };
 
-  // POST-LOGIN SETUP
-  console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px", currentUser.chatId.toUpperCase());
+  console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
 
+  // POST-LOGIN
   revealHostTabs();
   updateInfoTab();
   showChatUI(currentUser);
@@ -2270,7 +2270,18 @@ async function sendStarsToUser(targetUser, amt) {
 /* ===============================
    🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
 ================================= */
-// WHITELIST LOGIN — FINAL 2025 EDITION (WITH DEBUG)
+// BULLETPROOF SANITIZE — SINGLE SOURCE OF TRUTH
+function sanitizeUid(email) {
+  if (!email) return "";
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[@.\s]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+// FINAL LOGIN CHECK — NO WHITELIST (2025 CLEAN EDITION)
 async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
   try {
@@ -2279,8 +2290,9 @@ async function loginWhitelist(email) {
     const cleanEmail = email.trim().toLowerCase();
     const uidKey = sanitizeUid(cleanEmail);
 
-    console.log("%c[LOGIN] Attempting login for email:", "color:#00ffaa", cleanEmail);
-    console.log("%c[LOGIN] Generated UID:", "color:#00ffaa", uidKey);
+    console.log("%c[LOGIN] Attempting login", "color:#00ffaa");
+    console.log("%c[LOGIN] Email:", "color:#00ffaa", cleanEmail);
+    console.log("%c[LOGIN] UID:", "color:#00ffaa", uidKey);
 
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
@@ -2291,48 +2303,33 @@ async function loginWhitelist(email) {
       return false;
     }
 
-    const data = userSnap.data() || {};
+    const data = userSnap.data();
     console.log("[LOGIN] User data loaded:", data.chatId || "No chatId");
 
-    // HOSTS — ALWAYS FREE
+    // HOST — FREE ACCESS
     if (data.isHost) {
-      console.log("%c[LOGIN] Host detected — free access granted", "color:#ff6600");
+      console.log("%c[LOGIN] Host — free access granted", "color:#ff6600;font-weight:bold");
       setCurrentUserFromData(data, uidKey, cleanEmail);
       setupPostLogin();
       return true;
     }
 
-    // VIPs — ONLY NEED hasPaid
+    // VIP — ONLY IF PAID
     if (data.isVIP) {
       if (data.hasPaid === true) {
-        console.log("%c[LOGIN] VIP with hasPaid — access granted", "color:#ff0099");
+        console.log("%c[LOGIN] Paid VIP — access granted", "color:#ff0099;font-weight:bold");
         setCurrentUserFromData(data, uidKey, cleanEmail);
         setupPostLogin();
         return true;
       } else {
-        showStarPopup("You're VIP but payment not confirmed.\nContact admin to activate.");
+        showStarPopup("Payment not confirmed.\nContact admin to activate VIP.");
         return false;
       }
     }
 
-    // NORMAL USERS — CHECK WHITELIST
-    console.log("[LOGIN] Normal user — checking whitelist...");
-    const whitelistQuery = query(
-      collection(db, "whitelist"),
-      where("email", "==", cleanEmail)
-    );
-    const whitelistSnap = await getDocs(whitelistQuery);
-
-    if (whitelistSnap.empty) {
-      console.warn("[LOGIN] Not on whitelist");
-      showStarPopup("You’re not on the whitelist.");
-      return false;
-    }
-
-    console.log("%c[LOGIN] Whitelist approved — access granted", "color:#00ffaa");
-    setCurrentUserFromData(data, uidKey, cleanEmail);
-    setupPostLogin();
-    return true;
+    // EVERYONE ELSE — DENIED
+    showStarPopup("Access denied.\nOnly Hosts and paid VIPs can log in.");
+    return false;
 
   } catch (err) {
     console.error("[LOGIN] Error:", err);
@@ -2343,7 +2340,7 @@ async function loginWhitelist(email) {
   }
 }
 
-// SET CURRENT USER — CLEAN
+// SET CURRENT USER — CLEAN & SAFE
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
     uid: uidKey,
@@ -2351,8 +2348,8 @@ function setCurrentUserFromData(data, uidKey, email) {
     phone: data.phone,
     chatId: data.chatId || email.split("@")[0],
     chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-    stars: data.stars || 0,
-    cash: data.cash || 0,
+    stars: Number(data.stars || 0),
+    cash: Number(data.cash || 0),
     usernameColor: data.usernameColor || randomColor(),
     isAdmin: !!data.isAdmin,
     isVIP: !!data.isVIP,
@@ -2360,10 +2357,10 @@ function setCurrentUserFromData(data, uidKey, email) {
     fullName: data.fullName || "",
     gender: data.gender || "",
     subscriptionActive: !!data.subscriptionActive,
-    subscriptionCount: data.subscriptionCount || 0,
+    subscriptionCount: Number(data.subscriptionCount || 0),
     lastStarDate: data.lastStarDate || todayDate(),
-    starsGifted: data.starsGifted || 0,
-    starsToday: data.starsToday || 0,
+    starsGifted: Number(data.starsGifted || 0),
+    starsToday: Number(data.starsToday || 0),
     hostLink: data.hostLink || null,
     invitedBy: data.invitedBy || null,
     inviteeGiftShown: !!data.inviteeGiftShown,
@@ -2371,10 +2368,10 @@ function setCurrentUserFromData(data, uidKey, email) {
   };
 }
 
-// POST-LOGIN — MOVED CALL TO setupPostLogin() INTO SUCCESS PATHS ABOVE
+// POST-LOGIN ACTIONS — CLEAN & ORGANIZED
 function setupPostLogin() {
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%c[vipUser] Saved to localStorage", "color:#00ffaa", currentUser.uid);
+  console.log("%c[vipUser] Saved", "color:#00ffaa", currentUser.uid);
 
   updateRedeemLink();
   updateTipLink();
@@ -2393,9 +2390,8 @@ function setupPostLogin() {
   safeUpdateDOM();
   revealHostTabs();
 
-  console.log("%c[POST-LOGIN] Complete — Welcome!", "color:#00ff9d", currentUser.chatId);
+  console.log("%c[POST-LOGIN] Complete — Welcome!", "color:#00ff9d;font-size:16px;font-weight:bold", currentUser.chatId);
 }
-
 
 /* LOGOUT — CLEAN, FUN, SAFE */
 window.logoutVIP = async () => {
@@ -2448,8 +2444,6 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
     showStarPopup("Logout failed — try again!");
   }
 });
-
-
 
 
 /* ===============================
