@@ -3581,28 +3581,37 @@ function showSocialRedirectModal(modalContent, host) {
   }
 }
 
-/* ---------- Gift Slider ---------- */
+/* ---------- Fiery Gift Slider — Single & Perfect ---------- */
+
+// Fiery color pairs — pure heat
 const fieryColors = [
-  ["#ff0000", "#ff8c00"], // red to orange
-  ["#ff4500", "#ffd700"], // orange to gold
-  ["#ff1493", "#ff6347"], // pinkish red
-  ["#ff0055", "#ff7a00"], // magenta to orange
-  ["#ff5500", "#ffcc00"], // deep orange to yellow
-  ["#ff3300", "#ff0066"], // neon red to hot pink
+  ["#ff0000", "#ff8c00"], // red → orange
+  ["#ff4500", "#ffd700"], // orange → gold
+  ["#ff1493", "#ff6347"], // deep pink → tomato
+  ["#ff0055", "#ff7a00"], // magenta → orange
+  ["#ff5500", "#ffcc00"], // deep orange → yellow
+  ["#ff3300", "#ff0066"]  // neon red → hot pink
 ];
 
-// Generate a random fiery gradient
+// Generate random fiery gradient
 function randomFieryGradient() {
   const [c1, c2] = fieryColors[Math.floor(Math.random() * fieryColors.length)];
   return `linear-gradient(90deg, ${c1}, ${c2})`;
 }
 
-/* ---------- Gift Slider ---------- */
-giftSlider.addEventListener("input", () => {
-  giftAmountEl.textContent = giftSlider.value;
-  giftSlider.style.background = randomFieryGradient(); // change fiery color as it slides
-});
+// Gift Slider — Safe, smooth, fiery
+if (giftSlider && giftAmountEl) {
+  giftSlider.addEventListener("input", () => {
+    // Update amount display
+    giftAmountEl.textContent = giftSlider.value;
 
+    // Apply fiery gradient to slider track
+    giftSlider.style.background = randomFieryGradient();
+  });
+
+  // Optional: Initial fiery look on load
+  giftSlider.style.background = randomFieryGradient();
+}
 
 // SHOW LOGIN UI — CLEAN & SAFE
 function showLoginUI() {
