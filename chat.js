@@ -293,6 +293,7 @@ async function pushNotification(userId, message) {
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
 onAuthStateChanged(auth, async (firebaseUser) => {
+  // Cleanup
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -302,17 +303,17 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-    showLoginUI(); // ← Now defined
+    showLoginUI();
     console.log("User logged out");
     return;
   }
 
-  // USE EMAIL AS UID — IGNORE FIREBASE AUTH UID
+  // USE EMAIL AS UID — IGNORE AUTH UID
   const cleanEmail = firebaseUser.email.trim().toLowerCase();
-  const uid = sanitizeUid(cleanEmail);
+  const uid = sanitizeUid(cleanEmail); // ← this is your real doc ID
 
-  console.log("%c[AUTH] Logged in — Email:", "color:#00ffaa", cleanEmail);
-  console.log("%c[AUTH] UID:", "color:#00ffaa", uid);
+  console.log("%c[AUTH] Logged in with email:", "color:#00ffaa", cleanEmail);
+  console.log("%c[AUTH] Using UID:", "color:#00ffaa", uid);
 
   const userRef = doc(db, "users", uid);
 
@@ -320,7 +321,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.error("[AUTH] No profile at UID:", uid);
+      console.error("[AUTH] No profile found for email-based UID:", uid);
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
       return;
@@ -328,10 +329,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
+    // BUILD currentUser
     currentUser = {
-      uid,
+      uid, // sanitized email
       email: cleanEmail,
-      firebaseUid: firebaseUser.uid,
+      firebaseUid: firebaseUser.uid, // keep but never use for Firestore
       chatId: data.chatId || cleanEmail.split("@")[0],
       chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
       fullName: data.fullName || "VIP",
@@ -356,6 +358,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
 
+    // POST-LOGIN
     revealHostTabs();
     updateInfoTab();
     showChatUI(currentUser);
@@ -369,6 +372,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     localStorage.setItem("userId", uid);
     localStorage.setItem("lastVipEmail", cleanEmail);
 
+    // Divine welcome
     const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
     showStarPopup(`
@@ -388,6 +392,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     await signOut(auth);
   }
 });
+
 function setupNotificationsListener(userId) {
   if (!userId) return;
   const list = document.getElementById("notificationsList");
