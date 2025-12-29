@@ -490,6 +490,7 @@ function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { re
 ----------------------------- */
 async function showGiftModal(targetUid, targetData) {
   if (!currentUser) {
+    showLoginUI();
     showStarPopup("You must be logged in");
     return;
   }
@@ -3602,21 +3603,35 @@ giftSlider.addEventListener("input", () => {
   giftSlider.style.background = randomFieryGradient(); // change fiery color as it slides
 });
 
-/*
-=========================================
-🚫 COMMENTED OUT: Duplicate modal opener
-=========================================
-openBtn.addEventListener("click", () => {
-  modal.style.display = "flex";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
 
-  // Give it a fiery flash on open
-  giftSlider.style.background = randomFieryGradient();
-  console.log("📺 Modal opened");
-});
-*/
+// SHOW LOGIN UI — CLEAN & SAFE
+function showLoginUI() {
+  // Hide chat elements
+  const chatContainer = document.getElementById('chatContainer');
+  const sendArea = document.getElementById('sendArea');
+  const profileBox = document.getElementById('profileBox');
 
+  if (chatContainer) chatContainer.style.display = 'none';
+  if (sendArea) sendArea.style.display = 'none';
+  if (profileBox) profileBox.style.display = 'none';
+
+  // Show login elements
+  const authBox = document.getElementById('authBox');
+  const emailAuthWrapper = document.getElementById('emailAuthWrapper');
+  const googleSignInBtn = document.getElementById('googleSignInBtn');
+  const vipAccessBtn = document.getElementById('vipAccessBtn');
+
+  if (authBox) authBox.style.display = 'block';
+  if (emailAuthWrapper) emailAuthWrapper.style.display = 'block';
+  if (googleSignInBtn) googleSignInBtn.style.display = 'block';
+  if (vipAccessBtn) vipAccessBtn.style.display = 'block';
+
+  // Optional: clear input fields
+  document.getElementById('emailInput')?.value = '';
+  document.getElementById('passwordInput')?.value = '';
+
+  console.log("[UI] Login screen shown");
+}
 
 /* ===============================
    SEND GIFT + DUAL NOTIFICATION — FINAL 2025 GOD-TIER EDITION
