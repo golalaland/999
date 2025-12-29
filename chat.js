@@ -302,10 +302,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-
     if (typeof showLoginUI === "function") showLoginUI();
     console.log("User logged out");
 
@@ -314,97 +312,116 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
     if (noMsg) noMsg.style.display = "none";
-
     return;
   }
 
-// ——— USER LOGGED IN ———
-const cleanEmail = firebaseUser.email.trim().toLowerCase();
-const uid = sanitizeUid(cleanEmail); // ← ALWAYS use sanitized email as UID
+  // ——— USER LOGGED IN — USE EMAIL AS UID (IGNORE AUTH UID) ———
+  const cleanEmail = firebaseUser.email.trim().toLowerCase();
+  const uid = sanitizeUid(cleanEmail); // ← This is your real Firestore doc ID
 
-console.log("%c[AUTH] Firebase Auth success", "color:#00ffaa");
-console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
-console.log("%c[AUTH] Custom UID (Firestore):", "color:#00ffaa", uid);
-console.log("%c[AUTH] Firebase Auth UID (ignored):", "color:#999", firebaseUser.uid);
+  console.log("%c[AUTH] Firebase Auth success", "color:#00ffaa");
+  console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
+  console.log("%c[AUTH] Firestore UID:", "color:#00ffaa", uid);
+  console.log("%c[AUTH] Firebase Auth UID (ignored):", "color:#999", firebaseUser.uid);
 
-const userRef = doc(db, "users", uid);
+  const userRef = doc(db, "users", uid);
 
-try {
-  const userSnap = await getDoc(userRef);
+  try {
+    const userSnap = await getDoc(userRef);
 
-  if (!userSnap.exists()) {
-    console.error("[AUTH] No profile found at custom UID:", uid);
-    showStarPopup("Profile not found — contact support");
+    if (!userSnap.exists()) {
+      console.error("[AUTH] Profile not found at UID:", uid);
+      showStarPopup("Profile not found — contact support");
+      await signOut(auth);
+      return;
+    }
+
+    const data = userSnap.data();
+    console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
+
+    // BUILD currentUser — USING SANITIZED EMAIL UID
+    currentUser = {
+      uid, // ← hivodaddy_hotmail_com
+      email: cleanEmail,
+      firebaseUid: firebaseUser.uid, // keep for reference only
+      chatId: data.chatId || cleanEmail.split("@")[0],
+      chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
+      fullName: data.fullName || "VIP",
+      gender: data.gender || "person",
+      isVIP: !!data.isVIP,
+      isHost: !!data.isHost,
+      isAdmin: !!data.isAdmin,
+      hasPaid: !!data.hasPaid,
+      stars: Number(data.stars || 0),
+      cash: Number(data.cash || 0),
+      starsGifted: Number(data.starsGifted || 0),
+      starsToday: Number(data.starsToday || 0),
+      usernameColor: data.usernameColor || "#ff69b4",
+      subscriptionActive: !!data.subscriptionActive,
+      subscriptionCount: Number(data.subscriptionCount || 0),
+      lastStarDate: data.lastStarDate || todayDate(),
+      unlockedVideos: data.unlockedVideos || [],
+      invitedBy: data.invitedBy || null,
+      inviteeGiftShown: !!data.inviteeGiftShown,
+      hostLink: data.hostLink || null
+    };
+
+    console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
+
+    // ——— POST-LOGIN SETUP ———
+    revealHostTabs();
+    updateInfoTab();
+
+    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+
+    showChatUI(currentUser);
+    attachMessagesListener();
+    startStarEarning(uid);
+    setupPresence(currentUser);
+    setupNotificationsListener(uid);
+    updateRedeemLink();
+    updateTipLink();
+
+    localStorage.setItem("userId", uid);
+    localStorage.setItem("lastVipEmail", cleanEmail);
+
+    setTimeout(() => {
+      syncUserUnlocks?.();
+      loadNotifications?.();
+    }, 600);
+
+    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
+      setTimeout(loadMyClips, 1000);
+    }
+
+    if (currentUser.chatId.startsWith("GUEST")) {
+      setTimeout(() => {
+        promptForChatID?.(userRef, data);
+      }, 2000);
+    }
+
+    // DIVINE WELCOME
+    const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
+    const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+    showStarPopup(`
+      <div style="text-align:center;">
+        Welcome back,<br>
+        <b style="font-size:18px;color:${glow};text-shadow:0 0 20px ${glow}88;">
+          ${currentUser.chatId.toUpperCase()}
+        </b>
+      </div>
+    `);
+
+    console.log("%cYOU HAVE ENTERED THE ETERNAL CUBE", "color:#ff00ff;font-size:20px;font-weight:900");
+
+  } catch (err) {
+    console.error("[AUTH] Error loading profile:", err);
+    showStarPopup("Login failed — try again");
     await signOut(auth);
-    return;
   }
+});
 
-  const data = userSnap.data();
-  console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
-
-  // BUILD currentUser using custom UID
-  currentUser = {
-    uid, // ← sanitized email
-    email: cleanEmail,
-    firebaseUid: firebaseUser.uid, // keep for reference
-    chatId: data.chatId || cleanEmail.split("@")[0],
-    chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
-    fullName: data.fullName || "VIP",
-    gender: data.gender || "person",
-    isVIP: !!data.isVIP,
-    isHost: !!data.isHost,
-    isAdmin: !!data.isAdmin,
-    hasPaid: !!data.hasPaid,
-    stars: Number(data.stars || 0),
-    cash: Number(data.cash || 0),
-    starsGifted: Number(data.starsGifted || 0),
-    starsToday: Number(data.starsToday || 0),
-    usernameColor: data.usernameColor || "#ff69b4",
-    subscriptionActive: !!data.subscriptionActive,
-    subscriptionCount: Number(data.subscriptionCount || 0),
-    lastStarDate: data.lastStarDate || todayDate(),
-    unlockedVideos: data.unlockedVideos || [],
-    invitedBy: data.invitedBy || null,
-    inviteeGiftShown: !!data.inviteeGiftShown,
-    hostLink: data.hostLink || null
-  };
-
-  console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
-
-  // POST-LOGIN
-  revealHostTabs();
-  updateInfoTab();
-  showChatUI(currentUser);
-  attachMessagesListener();
-  startStarEarning(uid);
-  setupPresence(currentUser);
-  setupNotificationsListener(uid);
-  updateRedeemLink();
-  updateTipLink();
-
-  localStorage.setItem("userId", uid);
-  localStorage.setItem("lastVipEmail", cleanEmail);
-
-  // Divine welcome
-  const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
-  const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-  showStarPopup(`
-    <div style="text-align:center;">
-      Welcome back,<br>
-      <b style="font-size:18px;color:${glow};text-shadow:0 0 20px ${glow}88;">
-        ${currentUser.chatId.toUpperCase()}
-      </b>
-    </div>
-  `);
-
-  console.log("%cYOU HAVE ENTERED THE ETERNAL CUBE", "color:#ff00ff;font-size:20px;font-weight:900");
-
-} catch (err) {
-  console.error("[AUTH] Error:", err);
-  showStarPopup("Login failed — try again");
-  await signOut(auth);
-}
- });
 
 function setupNotificationsListener(userId) {
   if (!userId) return;
@@ -2272,6 +2289,7 @@ async function sendStarsToUser(targetUser, amt) {
    🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
 ================================= */
 // FINAL LOGIN CHECK — NO WHITELIST (2025 CLEAN EDITION)
+// FINAL LOGIN CHECK — HOST FREE, VIP ONLY IF PAID (NO WHITELIST)
 async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
   try {
@@ -2280,44 +2298,39 @@ async function loginWhitelist(email) {
     const cleanEmail = email.trim().toLowerCase();
     const uidKey = sanitizeUid(cleanEmail);
 
-    console.log("%c[LOGIN] Attempting login", "color:#00ffaa");
+    console.log("%c[LOGIN] Attempting login", "color:#00ffaa;font-weight:bold");
     console.log("%c[LOGIN] Email:", "color:#00ffaa", cleanEmail);
-    console.log("%c[LOGIN] UID:", "color:#00ffaa", uidKey);
+    console.log("%c[LOGIN] Firestore UID:", "color:#00ffaa", uidKey);
 
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.warn("[LOGIN] User document not found for UID:", uidKey);
+      console.warn("[LOGIN] No profile found for UID:", uidKey);
       showStarPopup("User not found. Please sign up first.");
       return false;
     }
 
     const data = userSnap.data();
-    console.log("[LOGIN] User data loaded:", data.chatId || "No chatId");
+    console.log("[LOGIN] Profile loaded:", data.chatId || "No chatId");
 
     // HOST — FREE ACCESS
     if (data.isHost) {
-      console.log("%c[LOGIN] Host — free access granted", "color:#ff6600;font-weight:bold");
+      console.log("%c[LOGIN] Host detected — free access granted", "color:#ff6600;font-size:16px;font-weight:bold");
       setCurrentUserFromData(data, uidKey, cleanEmail);
       setupPostLogin();
       return true;
     }
 
     // VIP — ONLY IF PAID
-    if (data.isVIP) {
-      if (data.hasPaid === true) {
-        console.log("%c[LOGIN] Paid VIP — access granted", "color:#ff0099;font-weight:bold");
-        setCurrentUserFromData(data, uidKey, cleanEmail);
-        setupPostLogin();
-        return true;
-      } else {
-        showStarPopup("Payment not confirmed.\nContact admin to activate VIP.");
-        return false;
-      }
+    if (data.isVIP && data.hasPaid === true) {
+      console.log("%c[LOGIN] Paid VIP — access granted", "color:#ff0099;font-size:16px;font-weight:bold");
+      setCurrentUserFromData(data, uidKey, cleanEmail);
+      setupPostLogin();
+      return true;
     }
 
-    // EVERYONE ELSE — DENIED
+    // DENIED — NOT HOST OR UNPAID VIP
     showStarPopup("Access denied.\nOnly Hosts and paid VIPs can log in.");
     return false;
 
