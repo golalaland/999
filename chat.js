@@ -526,7 +526,7 @@ window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
 /* ---------- User Colors ---------- */ 
-function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { refs.userColors = refs.userColors || {}; snap.forEach(docSnap => { refs.userColors[docSnap.id] = docSnap.data()?.usernameColor || "#ffffff"; }); if (lastMessagesArray.length) renderMessagesFromArray(lastMessagesArray); }); } setupUsersListener();
+function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { refs.userColors = refs.userColors || {}; snap.forEach(docSnap => { refs.userColors[docSnap.id] = docSnap.data()?.usernameColor || "#ffffff"; }); if (lastMessagesArray.length) renderMessagesFromArray(lastMessagesArray); }); }
   
 
 /* ----------------------------
