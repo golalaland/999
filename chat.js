@@ -309,22 +309,27 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 
   // ——— USER LOGGED IN ———
-  const email = firebaseUser.email.toLowerCase().trim();
-  const uid = sanitizeKey(email);
-  const userRef = doc(db, "users", uid);
+const cleanEmail = firebaseUser.email.trim().toLowerCase();
+const uid = sanitizeUid(cleanEmail);  // ← Use the new bulletproof sanitize
 
-  try {
-    const userSnap = await getDoc(userRef);
-    
-    if (!userSnap.exists()) {
-      console.error("Profile not found for:", uid);
-      showStarPopup("Profile missing — contact support");
-      await signOut(auth);
-      return;
-    }
+console.log("%c[AUTH] Firebase user logged in", "color:#00ffaa");
+console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
+console.log("%c[AUTH] Generated UID:", "color:#00ffaa", uid);
 
-    const data = userSnap.data();
+const userRef = doc(db, "users", uid);
 
+try {
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    console.error("[AUTH] Profile not found for UID:", uid);
+    showStarPopup("Profile missing — contact support");
+    await signOut(auth);
+    return;
+  }
+
+  const data = userSnap.data();
+  console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
 // ——— BUILD CURRENT USER OBJECT ———
 currentUser = {
   uid,
@@ -2004,10 +2009,17 @@ async function promptForChatID(userRef, userData) {
    SANITIZE FIRESTORE KEYS — REQUIRED FOR LOGIN & SOCIAL CARD
    YAH DEMANDS CLEAN KEYS
 ====================================================== */
-function sanitizeKey(email) {
+function sanitizeUid(email) {
   if (!email) return "";
-  return email.toLowerCase().replace(/[@.]/g, "_").trim();
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[@.\s]+/g, '_')  // replace @ . and spaces with _
+    .replace(/_+/g, '_')       // collapse multiple _ to one
+    .replace(/^_|_$/g, '');    // remove leading/trailing _
 }
+
+const getUserId = sanitizeUid; // for old code
 /* ======================================================
   SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
   • Hosts now use exact same compact VIP card style
@@ -2366,63 +2378,75 @@ try {
 /* ===============================
    🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
 ================================= */
+// Use this everywhere
+const getUserId = sanitizeUid;
+
+// WHITELIST LOGIN — FINAL 2025 EDITION (WITH DEBUG)
 async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
   try {
     if (loader) loader.style.display = "flex";
-    await sleep(50);
 
-    const uidKey = sanitizeKey(email);
+    const cleanEmail = email.trim().toLowerCase();
+    const uidKey = sanitizeUid(cleanEmail);
+
+    console.log("%c[LOGIN] Attempting login for email:", "color:#00ffaa", cleanEmail);
+    console.log("%c[LOGIN] Generated UID:", "color:#00ffaa", uidKey);
+
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
+      console.warn("[LOGIN] User document not found for UID:", uidKey);
       showStarPopup("User not found. Please sign up first.");
       return false;
     }
 
     const data = userSnap.data() || {};
+    console.log("[LOGIN] User data loaded:", data.chatId || "No chatId");
 
-    // HOSTS — ALWAYS FREE ACCESS
+    // HOSTS — ALWAYS FREE
     if (data.isHost) {
-      console.log("Host login — free access");
-      setCurrentUserFromData(data, uidKey, email);
+      console.log("%c[LOGIN] Host detected — free access granted", "color:#ff6600");
+      setCurrentUserFromData(data, uidKey, cleanEmail);
+      setupPostLogin();
       return true;
     }
 
-    // VIPs — ONLY NEED hasPaid: true (NO WHITELIST CHECK)
+    // VIPs — ONLY NEED hasPaid
     if (data.isVIP) {
       if (data.hasPaid === true) {
-        console.log("VIP with hasPaid — access granted");
-        setCurrentUserFromData(data, uidKey, email);
+        console.log("%c[LOGIN] VIP with hasPaid — access granted", "color:#ff0099");
+        setCurrentUserFromData(data, uidKey, cleanEmail);
+        setupPostLogin();
         return true;
       } else {
         showStarPopup("You're VIP but payment not confirmed.\nContact admin to activate.");
         return false;
       }
     }
-    // NORMAL USERS — MUST BE IN WHITELIST
+
+    // NORMAL USERS — CHECK WHITELIST
+    console.log("[LOGIN] Normal user — checking whitelist...");
     const whitelistQuery = query(
       collection(db, "whitelist"),
-      where("email", "==", email)
+      where("email", "==", cleanEmail)
     );
     const whitelistSnap = await getDocs(whitelistQuery);
 
     if (whitelistSnap.empty) {
+      console.warn("[LOGIN] Not on whitelist");
       showStarPopup("You’re not on the whitelist.");
       return false;
     }
 
-    // BUILD CURRENT USER (normal user)
-    setCurrentUserFromData(data, uidKey, email);
-
-    // POST-LOGIN SETUP
-    setupPostLogin(email);
-
+    console.log("%c[LOGIN] Whitelist approved — access granted", "color:#00ffaa");
+    setCurrentUserFromData(data, uidKey, cleanEmail);
+    setupPostLogin();
     return true;
 
   } catch (err) {
-    console.error("Login check failed:", err);
+    console.error("[LOGIN] Error:", err);
     showStarPopup("Login error — try again");
     return false;
   } finally {
@@ -2430,14 +2454,14 @@ async function loginWhitelist(email) {
   }
 }
 
-// HELPER — SET CURRENT USER
+// SET CURRENT USER — CLEAN
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
     uid: uidKey,
     email,
     phone: data.phone,
-    chatId: data.chatId,
-    chatIdLower: data.chatIdLower,
+    chatId: data.chatId || email.split("@")[0],
+    chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
     stars: data.stars || 0,
     cash: data.cash || 0,
     usernameColor: data.usernameColor || randomColor(),
@@ -2458,33 +2482,31 @@ function setCurrentUserFromData(data, uidKey, email) {
   };
 }
 
-// HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
+// POST-LOGIN — MOVED CALL TO setupPostLogin() INTO SUCCESS PATHS ABOVE
 function setupPostLogin() {
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
-  console.log("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
-
+  console.log("%c[vipUser] Saved to localStorage", "color:#00ffaa", currentUser.uid);
 
   updateRedeemLink();
+  updateTipLink();
   setupPresence(currentUser);
   attachMessagesListener();
   startStarEarning(currentUser.uid);
 
-  // Prompt GUEST users for permanent chatID (non-blocking)
   if (currentUser.chatId?.startsWith("GUEST")) {
     promptForChatID(doc(db, "users", currentUser.uid), currentUser).catch(e => {
       console.warn("ChatID prompt cancelled:", e);
     });
   }
 
-  // UI & BALANCE UPDATES
   showChatUI(currentUser);
-  updateInfoTab();     // Info tab balance
-  safeUpdateDOM();     // Header balances
-  revealHostTabs();    // Host features
+  updateInfoTab();
+  safeUpdateDOM();
+  revealHostTabs();
 
-  console.log("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
+  console.log("%c[POST-LOGIN] Complete — Welcome!", "color:#00ff9d", currentUser.chatId);
 }
+
 
 /* LOGOUT — CLEAN, FUN, SAFE */
 window.logoutVIP = async () => {
