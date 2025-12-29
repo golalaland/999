@@ -2282,66 +2282,96 @@ async function sendStarsToUser(targetUser, amt) {
   }
 }
 /* ===============================
-   FINAL VIP LOGIN SYSTEM — 100% WORKING
-   Google disabled | VIP button works | Safe auto-login
+   FINAL VIP LOGIN SYSTEM — AUTH FIRST
+   Firestore-safe | VIP / Host logic preserved
 ================================= */
+
+/* ---------- Disable Google Button ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const googleBtn = document.getElementById("googleSignInBtn");
   if (!googleBtn) return;
 
-  // Reset any previous styles / states
   googleBtn.style.cssText = "";
   googleBtn.disabled = false;
 
-  // Remove old listeners (safe way)
   const newBtn = googleBtn.cloneNode(true);
   googleBtn.parentNode.replaceChild(newBtn, googleBtn);
 
-  // Add your block handler
   newBtn.addEventListener("click", e => {
     e.preventDefault();
     e.stopPropagation();
-    showStarPopup("Google Sign-Up is not available at the moment.<br>Use VIP Email Login instead.");
+    showStarPopup(
+      "Google Sign-Up is not available at the moment.<br>Use VIP Email Login instead."
+    );
   });
 });
 
 
-// FINAL: WORKING LOGIN BUTTON — THIS MAKES SIGN IN ACTUALLY WORK
-document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
-  const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
-  const password = document.getElementById("passwordInput")?.value;
+/* ---------- VIP EMAIL LOGIN (AUTH FIRST) ---------- */
+document
+  .getElementById("whitelistLoginBtn")
+  ?.addEventListener("click", async () => {
 
-  if (!email || !password) {
-    showStarPopup("Enter email and password");
-    return;
-  }
+    const email = document.getElementById("emailInput")?.value
+      ?.trim()
+      .toLowerCase();
+    const password = document.getElementById("passwordInput")?.value;
 
- // STEP 1: Whitelist check
-const allowed = await loginWhitelist(email);
-if (!allowed) return;
+    if (!email || !password) {
+      showStarPopup("Enter email and password");
+      return;
+    }
 
-// STEP 2: ONLY NOW do Firebase Auth login
-try {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const firebaseUser = userCredential.user;
-  console.log("Firebase Auth Success:", firebaseUser.uid);
+    const loader = document.getElementById("postLoginLoader");
 
-  // NO MANUAL currentUser SETTING
-  // NO WELCOME POPUP — YOU ALREADY HAVE ONE
-  // onAuthStateChanged will handle everything perfectly
+    try {
+      if (loader) loader.style.display = "flex";
 
-} catch (err) {
-  console.error("Firebase Auth failed:", err.code);
+      /* ===============================
+         STEP 1 — FIREBASE AUTH (REQUIRED)
+      ============================== */
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-  if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-    showStarPopup("Wrong password or email");
-  } else if (err.code === "auth/too-many-requests") {
-    showStarPopup("Too many attempts. Wait a minute.");
-  } else {
-    showStarPopup("Login failed");
-  }
-}
-});
+      const firebaseUser = userCredential.user;
+      console.log("Firebase Auth Success:", firebaseUser.uid);
+
+      /* ===============================
+         STEP 2 — ACCESS CHECK (SAFE NOW)
+      ============================== */
+      const allowed = await loginWhitelistPostAuth(email);
+
+      if (!allowed) {
+        // Not allowed → clean exit
+        await signOut(auth);
+        return;
+      }
+
+      // SUCCESS
+      // onAuthStateChanged + post-login setup handles the rest
+
+    } catch (err) {
+      console.error("Login failed:", err);
+
+      if (
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found"
+      ) {
+        showStarPopup("Wrong email or password");
+      } else if (err.code === "auth/too-many-requests") {
+        showStarPopup("Too many attempts. Please wait.");
+      } else {
+        showStarPopup("Login failed — try again");
+      }
+
+    } finally {
+      if (loader) loader.style.display = "none";
+    }
+  });
+
 
 // Call this exact line after successful login
 // document.body.classList.add('logged-in');
@@ -2349,15 +2379,50 @@ try {
 // Call this on logout
 // document.body.classList.remove('logged-in');
 
-/* ===============================
-   🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
-================================= */
-async function loginWhitelist(email) {
-  const loader = document.getElementById("postLoginLoader");
-  try {
-    if (loader) loader.style.display = "flex";
-    await sleep(50);
+document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
+  const email = document.getElementById("emailInput")?.value?.trim().toLowerCase();
+  const password = document.getElementById("passwordInput")?.value;
 
+  if (!email || !password) {
+    showStarPopup("Enter email and password");
+    return;
+  }
+
+  const loader = document.getElementById("postLoginLoader");
+  if (loader) loader.style.display = "flex";
+
+  try {
+    // 🔑 Step 1 — Firebase Auth first
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Firebase Auth Success:", userCredential.user.uid);
+
+    // 🔑 Step 2 — Post-auth whitelist/VIP/host check
+    const allowed = await loginWhitelistPostAuth(email);
+    if (!allowed) {
+      await signOut(auth); // rollback login if not allowed
+      return;
+    }
+
+  } catch (err) {
+    console.error("Login failed:", err);
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      showStarPopup("Wrong email or password");
+    } else if (err.code === "auth/too-many-requests") {
+      showStarPopup("Too many attempts. Please wait.");
+    } else {
+      showStarPopup("Login failed — try again");
+    }
+  } finally {
+    if (loader) loader.style.display = "none";
+  }
+});
+
+/* --- Post-auth access check ---
+   Runs AFTER signInWithEmailAndPassword succeeds
+   Reads Firestore safely with auth context
+*/
+async function loginWhitelistPostAuth(email) {
+  try {
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
@@ -2369,29 +2434,14 @@ async function loginWhitelist(email) {
 
     const data = userSnap.data() || {};
 
-    // HOSTS — ALWAYS FREE ACCESS
-    if (data.isHost) {
-      console.log("Host login — free access");
+    if (data.isHost || (data.isVIP && data.hasPaid)) {
       setCurrentUserFromData(data, uidKey, email);
+      setupPostLogin();
       return true;
     }
 
-    // VIPs — ONLY NEED hasPaid: true (NO WHITELIST CHECK)
-    if (data.isVIP) {
-      if (data.hasPaid === true) {
-        console.log("VIP with hasPaid — access granted");
-        setCurrentUserFromData(data, uidKey, email);
-        return true;
-      } else {
-        showStarPopup("You're VIP but payment not confirmed.\nContact admin to activate.");
-        return false;
-      }
-    }
-    // NORMAL USERS — MUST BE IN WHITELIST
-    const whitelistQuery = query(
-      collection(db, "whitelist"),
-      where("email", "==", email)
-    );
+    // Normal users — must be whitelisted
+    const whitelistQuery = query(collection(db, "whitelist"), where("email", "==", email));
     const whitelistSnap = await getDocs(whitelistQuery);
 
     if (whitelistSnap.empty) {
@@ -2399,132 +2449,16 @@ async function loginWhitelist(email) {
       return false;
     }
 
-    // BUILD CURRENT USER (normal user)
     setCurrentUserFromData(data, uidKey, email);
-
-    // POST-LOGIN SETUP
-    setupPostLogin(email);
-
+    setupPostLogin();
     return true;
 
   } catch (err) {
-    console.error("Login check failed:", err);
+    console.error("Post-auth access check failed:", err);
     showStarPopup("Login error — try again");
     return false;
-  } finally {
-    if (loader) loader.style.display = "none";
   }
 }
-
-// HELPER — SET CURRENT USER
-function setCurrentUserFromData(data, uidKey, email) {
-  currentUser = {
-    uid: uidKey,
-    email,
-    phone: data.phone,
-    chatId: data.chatId,
-    chatIdLower: data.chatIdLower,
-    stars: data.stars || 0,
-    cash: data.cash || 0,
-    usernameColor: data.usernameColor || randomColor(),
-    isAdmin: !!data.isAdmin,
-    isVIP: !!data.isVIP,
-    hasPaid: !!data.hasPaid,
-    fullName: data.fullName || "",
-    gender: data.gender || "",
-    subscriptionActive: !!data.subscriptionActive,
-    subscriptionCount: data.subscriptionCount || 0,
-    lastStarDate: data.lastStarDate || todayDate(),
-    starsGifted: data.starsGifted || 0,
-    starsToday: data.starsToday || 0,
-    hostLink: data.hostLink || null,
-    invitedBy: data.invitedBy || null,
-    inviteeGiftShown: !!data.inviteeGiftShown,
-    isHost: !!data.isHost
-  };
-}
-
-// HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
-function setupPostLogin() {
-  localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
-  console.log("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
-
-
-  updateRedeemLink();
-  setupPresence(currentUser);
-  attachMessagesListener();
-  startStarEarning(currentUser.uid);
-
-  // Prompt GUEST users for permanent chatID (non-blocking)
-  if (currentUser.chatId?.startsWith("GUEST")) {
-    promptForChatID(doc(db, "users", currentUser.uid), currentUser).catch(e => {
-      console.warn("ChatID prompt cancelled:", e);
-    });
-  }
-
-  // UI & BALANCE UPDATES
-  showChatUI(currentUser);
-  updateInfoTab();     // Info tab balance
-  safeUpdateDOM();     // Header balances
-  revealHostTabs();    // Host features
-
-  console.log("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
-}
-
-/* LOGOUT — CLEAN, FUN, SAFE */
-window.logoutVIP = async () => {
-  try {
-    await signOut(auth);
-  } catch (e) {
-    console.warn("Sign out failed:", e);
-  } finally {
-    localStorage.removeItem("vipUser");
-    localStorage.removeItem("lastVipEmail");
-    sessionStorage.setItem("justLoggedOut", "true");
-    currentUser = null;
-    location.reload();
-  }
-};
-
-// HOST LOGOUT BUTTON — FUN & PREVENTS DOUBLE-CLICK
-document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const btn = e.target.closest("button");
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-
-  try {
-    await signOut(auth);
-    localStorage.removeItem("vipUser");
-    localStorage.removeItem("lastVipEmail");
-    sessionStorage.setItem("justLoggedOut", "true");
-    currentUser = null;
-
-    const messages = [
-      "See ya later, Alligator!",
-      "Off you go — $STRZ waiting when you return!",
-      "Catch you on the flip side!",
-      "Adios, Amigo!",
-      "Peace out, Player!",
-      "Hasta la vista, Baby!",
-      "Hmmm, now why'd you do that...",
-      "Off you go, Champ!"
-    ];
-    const message = messages[Math.floor(Math.random() * messages.length)];
-    showStarPopup(message);
-
-    setTimeout(() => location.reload(), 1800);
-  } catch (err) {
-    console.error("Logout failed:", err);
-    btn.disabled = false;
-    showStarPopup("Logout failed — try again!");
-  }
-});
-
-
 
 
 /* ===============================
