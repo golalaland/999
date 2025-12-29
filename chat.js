@@ -109,6 +109,7 @@ const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
 }
 
 
+
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
   if (!currentUser?.email) {
@@ -239,17 +240,6 @@ function revealHostTabs() {
   console.log("[HOST UI] revealed");
 }
 
-// SINGLE SANITIZE — BULLETPROOF — USE THIS EVERYWHERE
-function sanitizeUid(email) {
-  if (!email) return "";
-  return email
-    .trim()
-    .toLowerCase()
-    .replace(/[@.\s]+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '');
-}
-
 // =============================
 // CHAT REPLY STATE — GLOBAL VARIABLES
 // =============================  
@@ -262,10 +252,7 @@ let currentReplyTarget = null;
    NO ERRORS — NO RANDOM MODALS — NO MISSING BUTTONS
 ================================= */
 
-// ——— GLOBAL VARIABLES ———
 let currentUser = null;
-let notificationsUnsubscribe = null; // ← Declare at top
-
 
 // UNIVERSAL ID SANITIZER — RESTORED & FINAL
 const sanitizeId = (input) => {
@@ -292,36 +279,45 @@ async function pushNotification(userId, message) {
 }
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
+// YAH IS THE ONE TRUE EL — THE CODE IS NOW PURE
 onAuthStateChanged(auth, async (firebaseUser) => {
+  // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
   }
 
+  // ——— USER LOGGED OUT ———
   if (!firebaseUser) {
     currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-    showLoginUI();
+
+    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
+
+    if (typeof showLoginUI === "function") showLoginUI();
     console.log("User logged out");
+
+    // Clear my clips
+    const grid = document.getElementById("myClipsGrid");
+    const noMsg = document.getElementById("noClipsMessage");
+    if (grid) grid.innerHTML = "";
+    if (noMsg) noMsg.style.display = "none";
+
     return;
   }
 
-  // USE EMAIL TO GET DOC ID
-  const cleanEmail = firebaseUser.email.trim().toLowerCase();
-  const uid = cleanEmail.replace(/[@.]/g, '_');
-
-  console.log("%c[AUTH] Logged in", "color:#00ffaa");
-  console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
-  console.log("%c[AUTH] Doc ID:", "color:#00ffaa", uid);
-
+  // ——— USER LOGGED IN ———
+  const email = firebaseUser.email.toLowerCase().trim();
+  const uid = sanitizeKey(email);
   const userRef = doc(db, "users", uid);
 
   try {
     const userSnap = await getDoc(userRef);
-
+    
     if (!userSnap.exists()) {
-      console.error("[AUTH] Profile not found for:", uid);
+      console.error("Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
       await signOut(auth);
       return;
@@ -329,62 +325,109 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-    currentUser = {
-      uid,
-      email: cleanEmail,
-      firebaseUid: firebaseUser.uid,
-      chatId: data.chatId || cleanEmail.split("@")[0],
-      chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
-      fullName: data.fullName || "VIP",
-      gender: data.gender || "person",
-      isVIP: !!data.isVIP,
-      isHost: !!data.isHost,
-      isAdmin: !!data.isAdmin,
-      hasPaid: !!data.hasPaid,
-      stars: Number(data.stars || 0),
-      cash: Number(data.cash || 0),
-      starsGifted: Number(data.starsGifted || 0),
-      starsToday: Number(data.starsToday || 0),
-      usernameColor: data.usernameColor || "#ff69b4",
-      subscriptionActive: !!data.subscriptionActive,
-      subscriptionCount: Number(data.subscriptionCount || 0),
-      lastStarDate: data.lastStarDate || todayDate(),
-      unlockedVideos: data.unlockedVideos || [],
-      invitedBy: data.invitedBy || null,
-      inviteeGiftShown: !!data.inviteeGiftShown,
-      hostLink: data.hostLink || null
-    };
+// ——— BUILD CURRENT USER OBJECT ———
+currentUser = {
+  uid,
+  email,
+  firebaseUid: firebaseUser.uid,
+  chatId: data.chatId || email.split("@")[0],
+  chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+  fullName: data.fullName || "VIP",
+  gender: data.gender || "person",
+  isVIP: !!data.isVIP,
+  isHost: !!data.isHost,
+  isAdmin: !!data.isAdmin,
+  hasPaid: !!data.hasPaid,  // ← VIP payment status
+  stars: data.stars || 0,
+  cash: data.cash || 0,
+  starsGifted: data.starsGifted || 0,
+  starsToday: data.starsToday || 0,
+  usernameColor: data.usernameColor || "#ff69b4",
+  subscriptionActive: !!data.subscriptionActive,
+  subscriptionCount: data.subscriptionCount || 0,
+  lastStarDate: data.lastStarDate || todayDate(),
+  unlockedVideos: data.unlockedVideos || [],
+  invitedBy: data.invitedBy || null,
+  inviteeGiftShown: !!data.inviteeGiftShown,
+  hostLink: data.hostLink || null
+};
 
-    console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
+console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
+console.log("[USER STATUS]", {
+  uid: currentUser.uid,
+  isHost: currentUser.isHost,
+  isVIP: currentUser.isVIP,
+  hasPaid: currentUser.hasPaid,
+  stars: currentUser.stars,
+  cash: currentUser.cash
+});
 
-    // POST-LOGIN
-    revealHostTabs();
-    updateInfoTab();
-    showChatUI(currentUser);
-    attachMessagesListener();
-    startStarEarning(uid);
-    setupPresence(currentUser);
-    setupNotificationsListener(uid);
+// AFTER currentUser IS BUILT
+revealHostTabs();
+updateInfoTab();  // Info tab balance shows
+
+// BLOCK NON-HOSTS FROM INFO TAB (TOOLS)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest('.tab-btn[data-tab="infoTab"]');
+  if (!btn) return;
+
+  if (!currentUser?.isHost) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.warn("[BLOCKED] Non-host tried to open Info/Tools tab");
+    showStarPopup("Host only — nice try! 😏");
+  }
+});
+
+
+    // ——— UI STATE ———
+    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+
+    localStorage.setItem("userId", uid);
+    localStorage.setItem("lastVipEmail", email);
+
+    // ——— CORE SYSTEMS ———
+    if (typeof showChatUI === "function") showChatUI(currentUser);
+    if (typeof attachMessagesListener === "function") attachMessagesListener();
+    if (typeof startStarEarning === "function") startStarEarning(uid);
+    if (typeof setupPresence === "function") setupPresence(currentUser);
+    if (typeof setupNotificationsListener === "function") setupNotificationsListener(uid);
+
     updateRedeemLink();
     updateTipLink();
 
-    localStorage.setItem("userId", uid);
-    localStorage.setItem("lastVipEmail", cleanEmail);
+    // ——— BACKGROUND TASKS ———
+    setTimeout(() => {
+      if (typeof syncUserUnlocks === "function") syncUserUnlocks();
+      if (typeof loadNotifications === "function") loadNotifications(); // Badge update
+    }, 600);
 
+    // ——— MY CLIPS ———
+    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
+      setTimeout(loadMyClips, 1000);
+    }
+
+    // ——— GUEST → PROMPT FOR NAME ———
+    if (currentUser.chatId.startsWith("GUEST")) {
+      setTimeout(() => {
+        if (typeof promptForChatID === "function") {
+          promptForChatID(userRef, data);
+        }
+      }, 2000);
+    }
+
+    // ——— DIVINE WELCOME POPUP ———
     const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-    showStarPopup(`
-      <div style="text-align:center;">
-        Welcome back,<br>
-        <b style="font-size:18px;color:${glow};text-shadow:0 0 20px ${glow}88;">
-          ${currentUser.chatId.toUpperCase()}
-        </b>
-      </div>
-    `);
+
+   showStarPopup(`<div style="text-align:center;font-size:13px;">Welcome back, <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">${currentUser.chatId.toUpperCase()}</b></div>`);
+
+    console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
 
   } catch (err) {
-    console.error("[AUTH] Error:", err);
-    showStarPopup("Login failed — try again");
+    console.error("Auth state error:", err);
+    showStarPopup("Login failed — please try again");
     await signOut(auth);
   }
 });
@@ -442,43 +485,6 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
 });
 
 
-// ——— SHOW LOGIN UI — CLEAN & SAFE ———
-function showLoginUI() {
-  console.log("[UI] Showing login screen");
-
-  // Hide chat elements safely
-  const chatContainer = document.getElementById('chatContainer');
-  const sendArea = document.getElementById('sendArea');
-  const profileBox = document.getElementById('profileBox');
-
-  if (chatContainer) chatContainer.style.display = 'none';
-  if (sendArea) sendArea.style.display = 'none';
-  if (profileBox) profileBox.style.display = 'none';
-
-  // Show login elements safely
-  const authBox = document.getElementById('authBox');
-  const emailAuthWrapper = document.getElementById('emailAuthWrapper');
-  const googleSignInBtn = document.getElementById('googleSignInBtn');
-  const vipAccessBtn = document.getElementById('vipAccessBtn');
-
-  if (authBox) authBox.style.display = 'block';
-  if (emailAuthWrapper) emailAuthWrapper.style.display = 'block';
-  if (googleSignInBtn) googleSignInBtn.style.display = 'block';
-  if (vipAccessBtn) vipAccessBtn.style.display = 'block';
-
-  // Clear input fields
-  const emailInput = document.getElementById('emailInput');
-  const passwordInput = document.getElementById('passwordInput');
-  if (emailInput) emailInput.value = '';
-  if (passwordInput) passwordInput.value = '';
-}
-
-// ——— ON PAGE LOAD — SHOW LOGIN IF NOT LOGGED IN ———
-document.addEventListener("DOMContentLoaded", () => {
-  if (!currentUser) {
-    showLoginUI();
-  }
-});
 
 function showStarPopup(text) {
   const popup = document.getElementById("starPopup");
@@ -520,9 +526,8 @@ window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
 /* ---------- User Colors ---------- */ 
-function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { refs.userColors = refs.userColors || {}; snap.forEach(docSnap => { refs.userColors[docSnap.id] = docSnap.data()?.usernameColor || "#ffffff"; }); if (lastMessagesArray.length) renderMessagesFromArray(lastMessagesArray); }); }
+function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { refs.userColors = refs.userColors || {}; snap.forEach(docSnap => { refs.userColors[docSnap.id] = docSnap.data()?.usernameColor || "#ffffff"; }); if (lastMessagesArray.length) renderMessagesFromArray(lastMessagesArray); }); } setupUsersListener();
   
- showLoginUI();
 
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
@@ -1631,6 +1636,8 @@ function attachMessagesListener() {
   });
 }
 
+/* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
+let notificationsUnsubscribe = null; // ← one true source of truth
 
 async function setupNotifications() {
   // Prevent double setup
@@ -1992,24 +1999,46 @@ async function promptForChatID(userRef, userData) {
   });
 }
 
+
+/* ======================================================
+   SANITIZE FIRESTORE KEYS — REQUIRED FOR LOGIN & SOCIAL CARD
+   YAH DEMANDS CLEAN KEYS
+====================================================== */
+function sanitizeKey(email) {
+  if (!email) return "";
+  return email.toLowerCase().replace(/[@.]/g, "_").trim();
+}
 /* ======================================================
   SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
   • Hosts now use exact same compact VIP card style
   • No video, no gift slider for Hosts
   • Meet button centered
   • bioPick + typewriter effect for both
-/* ======================================================
-  SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
-  • SAFE: No reading all users — on-demand load only
-  • Works with your doc ID format (example_yahoo_com)
-  • Fast, secure, no permission errors
 ====================================================== */
 (async function initSocialCardSystem() {
-  const usersByChatId = {}; // Cache loaded users
+  const allUsers = [];
+  const usersByChatId = {};
+
+  // Load all users
+  try {
+    const snaps = await getDocs(collection(db, "users"));
+    snaps.forEach(doc => {
+      const data = doc.data();
+      data._docId = doc.id;
+      data.chatIdLower = (data.chatId || "").toString().toLowerCase();
+      allUsers.push(data);
+      usersByChatId[data.chatIdLower] = data;
+    });
+    console.log("Social card: loaded", allUsers.length, "users");
+  } catch (err) {
+    console.error("Failed to load users:", err);
+  }
 
   function showSocialCard(user) {
     if (!user) return;
     document.getElementById('socialCard')?.remove();
+
+    // Both isHost and isVIP (and others) now use the same clean compact card
     showUnifiedCard(user);
   }
 
@@ -2017,6 +2046,7 @@ async function promptForChatID(userRef, userData) {
   function showUnifiedCard(user) {
     const card = document.createElement("div");
     card.id = "socialCard";
+
     Object.assign(card.style, {
       position: "fixed",
       top: "50%",
@@ -2070,10 +2100,12 @@ async function promptForChatID(userRef, userData) {
     const nature = user.naturePick || "cool";
     const city = user.location || user.city || "Lagos";
     const country = user.country || "Nigeria";
+
     let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
     if (user.isHost || user.isVIP) {
       detailsText = `A ${fruit} ${nature} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
     }
+
     const detailsEl = document.createElement("p");
     detailsEl.textContent = detailsText;
     detailsEl.style.cssText = "margin:0 0 10px;font-size:14px;line-height:1.4;color:#ccc;";
@@ -2086,39 +2118,42 @@ async function promptForChatID(userRef, userData) {
     card.appendChild(bioEl);
     typeWriterEffect(bioEl, user.bioPick || "Nothing shared yet...");
 
-    // Meet button — centered (only for Hosts)
-    if (user.isHost) {
-      const meetBtn = document.createElement("div");
-      meetBtn.style.cssText = `
-        width:50px;height:50px;border-radius:50%;
-        background:rgba(20,20,25,0.9);
-        display:flex;align-items:center;justify-content:center;
-        margin:20px auto 10px auto;
-        cursor:pointer;
-        border:2px solid rgba(255,255,255,0.12);
-        transition:all 0.3s ease;
-        box-shadow:0 0 15px rgba(0,0,0,0.6);
-      `;
-      meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
-      meetBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (typeof showMeetModal === 'function') showMeetModal(user);
-      };
-      meetBtn.onmouseenter = () => {
-        meetBtn.style.transform = "scale(1.15)";
-        meetBtn.style.background = "rgba(35,35,40,0.95)";
-        meetBtn.style.boxShadow = "0 0 25px rgba(0,0,0,0.8)";
-      };
-      meetBtn.onmouseleave = () => {
-        meetBtn.style.transform = "scale(1)";
-        meetBtn.style.background = "rgba(20,20,25,0.9)";
-        meetBtn.style.boxShadow = "0 0 15px rgba(0,0,0,0.6)";
-      };
-      card.appendChild(meetBtn);
-    }
+// Meet button — centered (only for Hosts) — Only color changed to dark glossy black
+if (user.isHost) {
+  const meetBtn = document.createElement("div");
+  meetBtn.style.cssText = `
+    width:50px;height:50px;border-radius:50%;
+    background:rgba(20,20,25,0.9);
+    display:flex;align-items:center;justify-content:center;
+    margin:20px auto 10px auto; /* Extra top margin for breathing room */
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.12);
+    transition:all 0.3s ease;
+    box-shadow:0 0 15px rgba(0,0,0,0.6);
+  `;
+  meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
 
-    document.body.appendChild(card);
+  meetBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (typeof showMeetModal === 'function') showMeetModal(user);
+  };
 
+  meetBtn.onmouseenter = () => {
+    meetBtn.style.transform = "scale(1.15)";
+    meetBtn.style.background = "rgba(35,35,40,0.95)";
+    meetBtn.style.boxShadow = "0 0 25px rgba(0,0,0,0.8)";
+  };
+
+  meetBtn.onmouseleave = () => {
+    meetBtn.style.transform = "scale(1)";
+    meetBtn.style.background = "rgba(20,20,25,0.9)";
+    meetBtn.style.boxShadow = "0 0 15px rgba(0,0,0,0.6)";
+  };
+
+  card.appendChild(meetBtn);
+}
+  document.body.appendChild(card);
+    
     // Fade in
     requestAnimationFrame(() => {
       card.style.opacity = "1";
@@ -2145,54 +2180,21 @@ async function promptForChatID(userRef, userData) {
     }, speed);
   }
 
-  // Click listener — load user on demand
-  document.addEventListener("pointerdown", async (e) => {
+  // Click listener to open card
+  document.addEventListener("pointerdown", e => {
     const el = e.target.closest("[data-user-id]") || e.target;
     if (!el.textContent) return;
     const text = el.textContent.trim();
     if (!text || text.includes(":")) return;
-
-    let chatIdLower = text.split(" ")[0].toLowerCase().replace(/^@/, "");
-
-    // Check cache first
-    if (usersByChatId[chatIdLower]) {
-      showSocialCard(usersByChatId[chatIdLower]);
-      return;
-    }
-
-    // Try common doc ID patterns
-    const possibleIds = [
-      chatIdLower,
-      `${chatIdLower}_gmail_com`,
-      `${chatIdLower}_yahoo_com`,
-      `${chatIdLower}_hotmail_com`,
-      `${chatIdLower}_outlook_com`
-    ];
-
-    let foundUser = null;
-    for (const id of possibleIds) {
-      try {
-        const snap = await getDoc(doc(db, "users", id));
-        if (snap.exists()) {
-          foundUser = { _docId: id, ...snap.data() };
-          usersByChatId[chatIdLower] = foundUser;
-          break;
-        }
-      } catch (err) {
-        // Silent fail — try next
-      }
-    }
-
-    if (foundUser && foundUser._docId !== currentUser?.uid) {
-      el.style.background = "#ffcc00";
-      setTimeout(() => el.style.background = "", 200);
-      showSocialCard(foundUser);
-    } else {
-      showStarPopup("User not found");
-    }
+    const chatId = text.split(" ")[0].toLowerCase();
+    const u = usersByChatId[chatId] || allUsers.find(u => u.chatIdLower === chatId);
+    if (!u || u._docId === currentUser?.uid) return;
+    el.style.background = "#ffcc00";
+    setTimeout(() => el.style.background = "", 200);
+    showSocialCard(u);
   });
 
-  console.log("Social Card System — Unified & Secure (on-demand load)");
+  console.log("Social Card System — Unified clean style for Hosts & VIPs ♡");
   window.showSocialCard = showSocialCard;
   window.typeWriterEffect = typeWriterEffect;
 })();
@@ -2279,7 +2281,67 @@ async function sendStarsToUser(targetUser, amt) {
     showGoldAlert("Failed — try again", 4000);
   }
 }
+/* ===============================
+   FINAL VIP LOGIN SYSTEM — 100% WORKING
+   Google disabled | VIP button works | Safe auto-login
+================================= */
+document.addEventListener("DOMContentLoaded", () => {
+  const googleBtn = document.getElementById("googleSignInBtn");
+  if (!googleBtn) return;
 
+  // Reset any previous styles / states
+  googleBtn.style.cssText = "";
+  googleBtn.disabled = false;
+
+  // Remove old listeners (safe way)
+  const newBtn = googleBtn.cloneNode(true);
+  googleBtn.parentNode.replaceChild(newBtn, googleBtn);
+
+  // Add your block handler
+  newBtn.addEventListener("click", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    showStarPopup("Google Sign-Up is not available at the moment.<br>Use VIP Email Login instead.");
+  });
+});
+
+
+// FINAL: WORKING LOGIN BUTTON — THIS MAKES SIGN IN ACTUALLY WORK
+document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
+  const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
+  const password = document.getElementById("passwordInput")?.value;
+
+  if (!email || !password) {
+    showStarPopup("Enter email and password");
+    return;
+  }
+
+ // STEP 1: Whitelist check
+const allowed = await loginWhitelist(email);
+if (!allowed) return;
+
+// STEP 2: ONLY NOW do Firebase Auth login
+try {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  const firebaseUser = userCredential.user;
+  console.log("Firebase Auth Success:", firebaseUser.uid);
+
+  // NO MANUAL currentUser SETTING
+  // NO WELCOME POPUP — YOU ALREADY HAVE ONE
+  // onAuthStateChanged will handle everything perfectly
+
+} catch (err) {
+  console.error("Firebase Auth failed:", err.code);
+
+  if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+    showStarPopup("Wrong password or email");
+  } else if (err.code === "auth/too-many-requests") {
+    showStarPopup("Too many attempts. Wait a minute.");
+  } else {
+    showStarPopup("Login failed");
+  }
+}
+});
 
 // Call this exact line after successful login
 // document.body.classList.add('logged-in');
@@ -2294,37 +2356,59 @@ async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
   try {
     if (loader) loader.style.display = "flex";
+    await sleep(50);
 
-    const cleanEmail = email.trim().toLowerCase();
-    const uid = sanitizeUid(cleanEmail);
-
-    console.log("%c[LOGIN] Email:", "color:#00ffaa", cleanEmail);
-    console.log("%c[LOGIN] UID:", "color:#00ffaa", uid);
-
-    const userRef = doc(db, "users", uid);
+    const uidKey = sanitizeKey(email);
+    const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.warn("[LOGIN] No user doc at UID:", uid);
       showStarPopup("User not found. Please sign up first.");
       return false;
     }
 
-    const data = userSnap.data();
-    console.log("[LOGIN] User found:", data.chatId);
+    const data = userSnap.data() || {};
 
-    // HOST OR PAID VIP = ACCESS
-    if (data.isHost || (data.isVIP && data.hasPaid)) {
-      setCurrentUserFromData(data, uid, cleanEmail);
-      setupPostLogin();
+    // HOSTS — ALWAYS FREE ACCESS
+    if (data.isHost) {
+      console.log("Host login — free access");
+      setCurrentUserFromData(data, uidKey, email);
       return true;
     }
 
-    showStarPopup("Access denied — Hosts or paid VIPs only");
-    return false;
+    // VIPs — ONLY NEED hasPaid: true (NO WHITELIST CHECK)
+    if (data.isVIP) {
+      if (data.hasPaid === true) {
+        console.log("VIP with hasPaid — access granted");
+        setCurrentUserFromData(data, uidKey, email);
+        return true;
+      } else {
+        showStarPopup("You're VIP but payment not confirmed.\nContact admin to activate.");
+        return false;
+      }
+    }
+    // NORMAL USERS — MUST BE IN WHITELIST
+    const whitelistQuery = query(
+      collection(db, "whitelist"),
+      where("email", "==", email)
+    );
+    const whitelistSnap = await getDocs(whitelistQuery);
+
+    if (whitelistSnap.empty) {
+      showStarPopup("You’re not on the whitelist.");
+      return false;
+    }
+
+    // BUILD CURRENT USER (normal user)
+    setCurrentUserFromData(data, uidKey, email);
+
+    // POST-LOGIN SETUP
+    setupPostLogin(email);
+
+    return true;
 
   } catch (err) {
-    console.error("[LOGIN] Error:", err);
+    console.error("Login check failed:", err);
     showStarPopup("Login error — try again");
     return false;
   } finally {
@@ -2332,68 +2416,66 @@ async function loginWhitelist(email) {
   }
 }
 
-// SET CURRENT USER — CLEAN, SAFE, POWERFUL
+// HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
     uid: uidKey,
     email,
     phone: data.phone,
-    chatId: data.chatId || email.split("@")[0],
-    chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-    fullName: data.fullName || "VIP",
-    gender: data.gender || "person",
-    isVIP: !!data.isVIP,
-    isHost: !!data.isHost,
-    isAdmin: !!data.isAdmin,
-    hasPaid: !!data.hasPaid,
-    stars: Number(data.stars || 0),
-    cash: Number(data.cash || 0),
-    starsGifted: Number(data.starsGifted || 0),
-    starsToday: Number(data.starsToday || 0),
+    chatId: data.chatId,
+    chatIdLower: data.chatIdLower,
+    stars: data.stars || 0,
+    cash: data.cash || 0,
     usernameColor: data.usernameColor || randomColor(),
+    isAdmin: !!data.isAdmin,
+    isVIP: !!data.isVIP,
+    hasPaid: !!data.hasPaid,
+    fullName: data.fullName || "",
+    gender: data.gender || "",
     subscriptionActive: !!data.subscriptionActive,
-    subscriptionCount: Number(data.subscriptionCount || 0),
+    subscriptionCount: data.subscriptionCount || 0,
     lastStarDate: data.lastStarDate || todayDate(),
-    unlockedVideos: data.unlockedVideos || [],
+    starsGifted: data.starsGifted || 0,
+    starsToday: data.starsToday || 0,
     hostLink: data.hostLink || null,
     invitedBy: data.invitedBy || null,
-    inviteeGiftShown: !!data.inviteeGiftShown
+    inviteeGiftShown: !!data.inviteeGiftShown,
+    isHost: !!data.isHost
   };
-
-  console.log("%c[CURRENT USER] Built — Ready to dominate", "color:#00ff9d;font-weight:bold");
-  console.log(currentUser);
 }
 
-// POST-LOGIN — FLAWLESS FLOW
+// HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
 function setupPostLogin() {
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%c[vipUser] Saved — Auto-login ready", "color:#00ffaa", currentUser.uid);
+  console.log("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
+  console.log("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
+
 
   updateRedeemLink();
-  updateTipLink();
   setupPresence(currentUser);
   attachMessagesListener();
   startStarEarning(currentUser.uid);
 
+  // Prompt GUEST users for permanent chatID (non-blocking)
   if (currentUser.chatId?.startsWith("GUEST")) {
     promptForChatID(doc(db, "users", currentUser.uid), currentUser).catch(e => {
       console.warn("ChatID prompt cancelled:", e);
     });
   }
 
+  // UI & BALANCE UPDATES
   showChatUI(currentUser);
-  updateInfoTab();
-  safeUpdateDOM();
-  revealHostTabs();
+  updateInfoTab();     // Info tab balance
+  safeUpdateDOM();     // Header balances
+  revealHostTabs();    // Host features
 
-  console.log("%c[POST-LOGIN] Complete — The Cube awaits", "color:#00ff9d;font-size:16px;font-weight:bold", currentUser.chatId.toUpperCase());
+  console.log("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
 }
 
-// LOGOUT — CLEAN & LEGENDARY
+/* LOGOUT — CLEAN, FUN, SAFE */
 window.logoutVIP = async () => {
   try {
     await signOut(auth);
-    console.log("Signed out successfully");
   } catch (e) {
     console.warn("Sign out failed:", e);
   } finally {
@@ -2405,14 +2487,13 @@ window.logoutVIP = async () => {
   }
 };
 
-// HOST LOGOUT BUTTON — FUN, SAFE, NO DOUBLE-CLICK
+// HOST LOGOUT BUTTON — FUN & PREVENTS DOUBLE-CLICK
 document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
   e.stopPropagation();
 
   const btn = e.target.closest("button");
   if (!btn || btn.disabled) return;
-
   btn.disabled = true;
 
   try {
@@ -2433,8 +2514,8 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
       "Off you go, Champ!"
     ];
     const message = messages[Math.floor(Math.random() * messages.length)];
-
     showStarPopup(message);
+
     setTimeout(() => location.reload(), 1800);
   } catch (err) {
     console.error("Logout failed:", err);
@@ -2442,6 +2523,8 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
     showStarPopup("Logout failed — try again!");
   }
 });
+
+
 
 
 /* ===============================
@@ -3618,37 +3701,48 @@ function showSocialRedirectModal(modalContent, host) {
   }
 }
 
-/* ---------- Fiery Gift Slider — Single & Perfect ---------- */
-
-// Fiery color pairs — pure heat
+/* ---------- Gift Slider ---------- */
 const fieryColors = [
-  ["#ff0000", "#ff8c00"], // red → orange
-  ["#ff4500", "#ffd700"], // orange → gold
-  ["#ff1493", "#ff6347"], // deep pink → tomato
-  ["#ff0055", "#ff7a00"], // magenta → orange
-  ["#ff5500", "#ffcc00"], // deep orange → yellow
-  ["#ff3300", "#ff0066"]  // neon red → hot pink
+  ["#ff0000", "#ff8c00"], // red to orange
+  ["#ff4500", "#ffd700"], // orange to gold
+  ["#ff1493", "#ff6347"], // pinkish red
+  ["#ff0055", "#ff7a00"], // magenta to orange
+  ["#ff5500", "#ffcc00"], // deep orange to yellow
+  ["#ff3300", "#ff0066"], // neon red to hot pink
 ];
 
-// Generate random fiery gradient
+// Generate a random fiery gradient
 function randomFieryGradient() {
   const [c1, c2] = fieryColors[Math.floor(Math.random() * fieryColors.length)];
   return `linear-gradient(90deg, ${c1}, ${c2})`;
 }
 
-// Gift Slider — Safe, smooth, fiery
-if (giftSlider && giftAmountEl) {
-  giftSlider.addEventListener("input", () => {
-    // Update amount display
-    giftAmountEl.textContent = giftSlider.value;
+/* ---------- Gift Slider ---------- */
+giftSlider.addEventListener("input", () => {
+  giftAmountEl.textContent = giftSlider.value;
+  giftSlider.style.background = randomFieryGradient(); // change fiery color as it slides
+});
 
-    // Apply fiery gradient to slider track
-    giftSlider.style.background = randomFieryGradient();
-  });
+/*
+=========================================
+🚫 COMMENTED OUT: Duplicate modal opener
+=========================================
+openBtn.addEventListener("click", () => {
+  modal.style.display = "flex";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
 
-  // Optional: Initial fiery look on load
+  // Give it a fiery flash on open
   giftSlider.style.background = randomFieryGradient();
-}
+  console.log("📺 Modal opened");
+});
+*/
+
+
+/* ===============================
+   SEND GIFT + DUAL NOTIFICATION — FINAL 2025 GOD-TIER EDITION
+   CLEAN, SAFE, ELEGANT — WORKS FOREVER
+================================= */
 async function sendGift() {
   const receiver = hosts[currentIndex];
   if (!receiver?.id) return showGiftAlert("No host selected.");
@@ -3657,7 +3751,7 @@ async function sendGift() {
   const giftStars = parseInt(giftSlider.value, 10);
   if (!giftStars || giftStars <= 0) return showGiftAlert("Invalid star amount");
 
-  const giftBtn = document.getElementById("featuredGiftBtn");
+  const giftBtn = document.getElementById("featuredGiftBtn"); // ← correct ID
   if (!giftBtn) return;
 
   const originalText = giftBtn.textContent;
@@ -3676,7 +3770,7 @@ async function sendGift() {
       ]);
 
       if (!senderSnap.exists()) throw new Error("Your profile not found");
-
+      
       const senderData = senderSnap.data();
       if ((senderData.stars || 0) < giftStars) {
         throw new Error("Not enough stars");
@@ -3688,7 +3782,7 @@ async function sendGift() {
         starsGifted: increment(giftStars)
       });
 
-      // Update receiver
+      // Update receiver (create if missing)
       if (receiverSnap.exists()) {
         tx.update(receiverRef, { stars: increment(giftStars) });
       } else {
@@ -3698,14 +3792,13 @@ async function sendGift() {
       // Update featured host stats
       tx.set(featuredRef, { stars: increment(giftStars) }, { merge: true });
 
-      // Track last gift — FIXED LINE
-      const giftKey = currentUser.chatId || currentUser.uid;
+      // Track last gift from this user
       tx.update(receiverRef, {
-        [`lastGiftSeen.${giftKey}`]: giftStars
+        [`lastGiftSeen.${currentUser.chatId || currentUser.uid}`]: giftStars
       });
     });
 
-    // Dual notifications
+    // DUAL NOTIFICATIONS — BOTH SIDES
     const senderName = currentUser.chatId || "Someone";
     const receiverName = receiver.chatId || receiver.username || "Host";
 
@@ -3714,8 +3807,10 @@ async function sendGift() {
       pushNotification(currentUser.uid, `You gifted ${giftStars} stars to ${receiverName}!`)
     ]);
 
+    // Success feedback
     showGiftAlert(`Sent ${giftStars} stars to ${receiverName}!`);
 
+    // If user gifted themselves (rare but possible)
     if (currentUser.uid === receiver.id) {
       setTimeout(() => {
         showGiftAlert(`${senderName} gifted you ${giftStars} stars!`);
@@ -3726,9 +3821,12 @@ async function sendGift() {
 
   } catch (err) {
     console.error("Gift failed:", err);
-    const msg = err.message?.includes("enough") ? "Not enough stars" : "Gift failed — try again";
+    const msg = err.message.includes("enough")
+      ? "Not enough stars"
+      : "Gift failed — try again";
     showGiftAlert(msg);
   } finally {
+    // Always restore button
     giftBtn.innerHTML = originalText;
     giftBtn.disabled = false;
   }
