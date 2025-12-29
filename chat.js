@@ -320,11 +320,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
 // ——— USER LOGGED IN ———
 const cleanEmail = firebaseUser.email.trim().toLowerCase();
-const uid = sanitizeUid(cleanEmail);
+const uid = sanitizeUid(cleanEmail); // ← ALWAYS use sanitized email as UID
 
 console.log("%c[AUTH] Firebase Auth success", "color:#00ffaa");
 console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
-console.log("%c[AUTH] Generated UID:", "color:#00ffaa", uid);
+console.log("%c[AUTH] Custom UID (Firestore):", "color:#00ffaa", uid);
+console.log("%c[AUTH] Firebase Auth UID (ignored):", "color:#999", firebaseUser.uid);
 
 const userRef = doc(db, "users", uid);
 
@@ -332,9 +333,8 @@ try {
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
-    console.error("[AUTH] No profile found for UID:", uid);
-    console.log("Expected doc ID format: hivodaddy_hotmail_com");
-    showStarPopup("Profile not found. Contact support.");
+    console.error("[AUTH] No profile found at custom UID:", uid);
+    showStarPopup("Profile not found — contact support");
     await signOut(auth);
     return;
   }
@@ -342,10 +342,11 @@ try {
   const data = userSnap.data();
   console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
 
+  // BUILD currentUser using custom UID
   currentUser = {
-    uid,
+    uid, // ← sanitized email
     email: cleanEmail,
-    firebaseUid: firebaseUser.uid,
+    firebaseUid: firebaseUser.uid, // keep for reference
     chatId: data.chatId || cleanEmail.split("@")[0],
     chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
     fullName: data.fullName || "VIP",
