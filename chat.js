@@ -2306,63 +2306,7 @@ async function sendStarsToUser(targetUser, amt) {
     showGoldAlert("Failed — try again", 4000);
   }
 }
-// FINAL LOGIN CHECK — NO WHITELIST NEEDED (2025 EDITION)
-async function loginWhitelist(email) {
-  const loader = document.getElementById("postLoginLoader");
-  try {
-    if (loader) loader.style.display = "flex";
 
-    const cleanEmail = email.trim().toLowerCase();
-    const uidKey = sanitizeUid(cleanEmail);
-
-    console.log("%c[LOGIN] Attempting login for:", "color:#00ffaa", cleanEmail);
-    console.log("%c[LOGIN] UID:", "color:#00ffaa", uidKey);
-
-    const userRef = doc(db, "users", uidKey);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      console.warn("[LOGIN] User document not found");
-      showStarPopup("User not found. Please sign up first.");
-      return false;
-    }
-
-    const data = userSnap.data();
-    console.log("[LOGIN] User data:", { isHost: data.isHost, isVIP: data.isVIP, hasPaid: data.hasPaid });
-
-    // HOSTS — ALWAYS FREE
-    if (data.isHost) {
-      console.log("%c[LOGIN] Host detected — free access", "color:#ff6600");
-      setCurrentUserFromData(data, uidKey, cleanEmail);
-      setupPostLogin();
-      return true;
-    }
-
-    // VIPs — ONLY IF hasPaid === true
-    if (data.isVIP) {
-      if (data.hasPaid === true) {
-        console.log("%c[LOGIN] VIP with hasPaid — access granted", "color:#ff0099");
-        setCurrentUserFromData(data, uidKey, cleanEmail);
-        setupPostLogin();
-        return true;
-      } else {
-        showStarPopup("Payment not confirmed.\nContact admin to activate your VIP.");
-        return false;
-      }
-    }
-
-    // EVERYONE ELSE — DENIED (no whitelist fallback)
-    showStarPopup("Access denied.\nOnly Hosts and paid VIPs can log in.");
-    return false;
-
-  } catch (err) {
-    console.error("[LOGIN] Error:", err);
-    showStarPopup("Login error — try again");
-    return false;
-  } finally {
-    if (loader) loader.style.display = "none";
-  }
-}
 
 // Call this exact line after successful login
 // document.body.classList.add('logged-in');
