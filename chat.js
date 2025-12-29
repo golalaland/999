@@ -2270,17 +2270,6 @@ async function sendStarsToUser(targetUser, amt) {
 /* ===============================
    🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
 ================================= */
-// BULLETPROOF SANITIZE — SINGLE SOURCE OF TRUTH
-function sanitizeUid(email) {
-  if (!email) return "";
-  return email
-    .trim()
-    .toLowerCase()
-    .replace(/[@.\s]+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '');
-}
-
 // FINAL LOGIN CHECK — NO WHITELIST (2025 CLEAN EDITION)
 async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
