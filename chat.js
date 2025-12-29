@@ -320,11 +320,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
 // ——— USER LOGGED IN ———
 const cleanEmail = firebaseUser.email.trim().toLowerCase();
-const uid = sanitizeUid(cleanEmail); // ← Bulletproof sanitize
+const uid = sanitizeUid(cleanEmail); // ← This is your real UID
 
-console.log("%c[AUTH] Firebase user logged in", "color:#00ffaa");
+console.log("%c[AUTH] Firebase Auth success", "color:#00ffaa");
 console.log("%c[AUTH] Email:", "color:#00ffaa", cleanEmail);
-console.log("%c[AUTH] Generated UID:", "color:#00ffaa", uid);
+console.log("%c[AUTH] Custom UID (for Firestore):", "color:#00ffaa", uid);
 
 const userRef = doc(db, "users", uid);
 
@@ -332,8 +332,8 @@ try {
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
-    console.error("[AUTH] Profile not found for UID:", uid);
-    showStarPopup("Profile missing — contact support");
+    console.error("[AUTH] No profile found at UID:", uid);
+    showStarPopup("No profile found. Contact support.");
     await signOut(auth);
     return;
   }
@@ -341,11 +341,11 @@ try {
   const data = userSnap.data();
   console.log("[AUTH] Profile loaded:", data.chatId || "No chatId");
 
-  // ——— BUILD CURRENT USER OBJECT ———
+  // BUILD currentUser using your custom UID
   currentUser = {
-    uid,
+    uid, // ← sanitized email
     email: cleanEmail,
-    firebaseUid: firebaseUser.uid,
+    firebaseUid: firebaseUser.uid, // ← keep for reference
     chatId: data.chatId || cleanEmail.split("@")[0],
     chatIdLower: (data.chatId || cleanEmail.split("@")[0]).toLowerCase(),
     fullName: data.fullName || "VIP",
@@ -368,28 +368,11 @@ try {
     hostLink: data.hostLink || null
   };
 
-  console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px;font-weight:800", currentUser.chatId.toUpperCase());
-  console.log("[USER STATUS]", {
-    uid: currentUser.uid,
-    isHost: currentUser.isHost,
-    isVIP: currentUser.isVIP,
-    hasPaid: currentUser.hasPaid,
-    stars: currentUser.stars,
-    cash: currentUser.cash
-  });
+  // POST-LOGIN SETUP
+  console.log("%cWELCOME BACK:", "color:#00ff9d;font-size:18px", currentUser.chatId.toUpperCase());
 
-  // ——— POST-LOGIN SETUP ———
   revealHostTabs();
   updateInfoTab();
-
-  // UI STATE
-  document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-  document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
-
-  localStorage.setItem("userId", uid);
-  localStorage.setItem("lastVipEmail", cleanEmail);
-
-  // CORE SYSTEMS
   showChatUI(currentUser);
   attachMessagesListener();
   startStarEarning(uid);
@@ -398,40 +381,26 @@ try {
   updateRedeemLink();
   updateTipLink();
 
-  // BACKGROUND TASKS
-  setTimeout(() => {
-    syncUserUnlocks?.();
-    loadNotifications?.();
-  }, 600);
+  localStorage.setItem("userId", uid);
+  localStorage.setItem("lastVipEmail", cleanEmail);
 
-  if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-    setTimeout(loadMyClips, 1000);
-  }
-
-  // GUEST NAME PROMPT
-  if (currentUser.chatId.startsWith("GUEST")) {
-    setTimeout(() => {
-      promptForChatID?.(userRef, data);
-    }, 2000);
-  }
-
-  // DIVINE WELCOME POPUP
+  // Divine welcome
   const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
   const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
   showStarPopup(`
-    <div style="text-align:center;font-size:13px;">
-      Welcome back, 
-      <b style="font-size:15px;color:${glow};text-shadow:0 0 20px ${glow}88;">
+    <div style="text-align:center;">
+      Welcome back,<br>
+      <b style="font-size:18px;color:${glow};text-shadow:0 0 20px ${glow}88;">
         ${currentUser.chatId.toUpperCase()}
       </b>
     </div>
   `);
 
-  console.log("%cYOU HAVE ENTERED THE ETERNAL CUBE", "color:#ff00ff;font-size:16px;font-weight:900");
+  console.log("%cYOU HAVE ENTERED THE ETERNAL CUBE", "color:#ff00ff;font-size:20px;font-weight:900");
 
 } catch (err) {
-  console.error("[AUTH] Error loading profile:", err);
-  showStarPopup("Login failed — please try again");
+  console.error("[AUTH] Error:", err);
+  showStarPopup("Login failed — try again");
   await signOut(auth);
 }
  });
