@@ -2378,9 +2378,6 @@ try {
 /* ===============================
    🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
 ================================= */
-// Use this everywhere
-const getUserId = sanitizeUid;
-
 // WHITELIST LOGIN — FINAL 2025 EDITION (WITH DEBUG)
 async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
