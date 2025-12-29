@@ -3612,40 +3612,6 @@ if (giftSlider && giftAmountEl) {
   // Optional: Initial fiery look on load
   giftSlider.style.background = randomFieryGradient();
 }
-
-// SHOW LOGIN UI — CLEAN & SAFE
-function showLoginUI() {
-  // Hide chat elements
-  const chatContainer = document.getElementById('chatContainer');
-  const sendArea = document.getElementById('sendArea');
-  const profileBox = document.getElementById('profileBox');
-
-  if (chatContainer) chatContainer.style.display = 'none';
-  if (sendArea) sendArea.style.display = 'none';
-  if (profileBox) profileBox.style.display = 'none';
-
-  // Show login elements
-  const authBox = document.getElementById('authBox');
-  const emailAuthWrapper = document.getElementById('emailAuthWrapper');
-  const googleSignInBtn = document.getElementById('googleSignInBtn');
-  const vipAccessBtn = document.getElementById('vipAccessBtn');
-
-  if (authBox) authBox.style.display = 'block';
-  if (emailAuthWrapper) emailAuthWrapper.style.display = 'block';
-  if (googleSignInBtn) googleSignInBtn.style.display = 'block';
-  if (vipAccessBtn) vipAccessBtn.style.display = 'block';
-
-  // Optional: clear input fields
-  document.getElementById('emailInput')?.value = '';
-  document.getElementById('passwordInput')?.value = '';
-
-  console.log("[UI] Login screen shown");
-}
-
-/* ===============================
-   SEND GIFT + DUAL NOTIFICATION — FINAL 2025 GOD-TIER EDITION
-   CLEAN, SAFE, ELEGANT — WORKS FOREVER
-================================= */
 async function sendGift() {
   const receiver = hosts[currentIndex];
   if (!receiver?.id) return showGiftAlert("No host selected.");
@@ -3654,7 +3620,7 @@ async function sendGift() {
   const giftStars = parseInt(giftSlider.value, 10);
   if (!giftStars || giftStars <= 0) return showGiftAlert("Invalid star amount");
 
-  const giftBtn = document.getElementById("featuredGiftBtn"); // ← correct ID
+  const giftBtn = document.getElementById("featuredGiftBtn");
   if (!giftBtn) return;
 
   const originalText = giftBtn.textContent;
@@ -3673,7 +3639,7 @@ async function sendGift() {
       ]);
 
       if (!senderSnap.exists()) throw new Error("Your profile not found");
-      
+
       const senderData = senderSnap.data();
       if ((senderData.stars || 0) < giftStars) {
         throw new Error("Not enough stars");
@@ -3685,7 +3651,7 @@ async function sendGift() {
         starsGifted: increment(giftStars)
       });
 
-      // Update receiver (create if missing)
+      // Update receiver
       if (receiverSnap.exists()) {
         tx.update(receiverRef, { stars: increment(giftStars) });
       } else {
@@ -3695,13 +3661,14 @@ async function sendGift() {
       // Update featured host stats
       tx.set(featuredRef, { stars: increment(giftStars) }, { merge: true });
 
-      // Track last gift from this user
+      // Track last gift — FIXED LINE
+      const giftKey = currentUser.chatId || currentUser.uid;
       tx.update(receiverRef, {
-        [`lastGiftSeen.${currentUser.chatId || currentUser.uid}`]: giftStars
+        [`lastGiftSeen.${giftKey}`]: giftStars
       });
     });
 
-    // DUAL NOTIFICATIONS — BOTH SIDES
+    // Dual notifications
     const senderName = currentUser.chatId || "Someone";
     const receiverName = receiver.chatId || receiver.username || "Host";
 
@@ -3710,10 +3677,8 @@ async function sendGift() {
       pushNotification(currentUser.uid, `You gifted ${giftStars} stars to ${receiverName}!`)
     ]);
 
-    // Success feedback
     showGiftAlert(`Sent ${giftStars} stars to ${receiverName}!`);
 
-    // If user gifted themselves (rare but possible)
     if (currentUser.uid === receiver.id) {
       setTimeout(() => {
         showGiftAlert(`${senderName} gifted you ${giftStars} stars!`);
@@ -3724,12 +3689,9 @@ async function sendGift() {
 
   } catch (err) {
     console.error("Gift failed:", err);
-    const msg = err.message.includes("enough")
-      ? "Not enough stars"
-      : "Gift failed — try again";
+    const msg = err.message?.includes("enough") ? "Not enough stars" : "Gift failed — try again";
     showGiftAlert(msg);
   } finally {
-    // Always restore button
     giftBtn.innerHTML = originalText;
     giftBtn.disabled = false;
   }
