@@ -2306,7 +2306,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// FINAL: WORKING LOGIN BUTTON — THIS MAKES SIGN IN ACTUALLY WORK
+// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
@@ -2316,106 +2316,50 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     return;
   }
 
- // STEP 1: Whitelist check
-const allowed = await loginWhitelist(email);
-if (!allowed) return;
-
-// STEP 2: ONLY NOW do Firebase Auth login
-try {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const firebaseUser = userCredential.user;
-  console.log("Firebase Auth Success:", firebaseUser.uid);
-
-  // NO MANUAL currentUser SETTING
-  // NO WELCOME POPUP — YOU ALREADY HAVE ONE
-  // onAuthStateChanged will handle everything perfectly
-
-} catch (err) {
-  console.error("Firebase Auth failed:", err.code);
-
-  if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-    showStarPopup("Wrong password or email");
-  } else if (err.code === "auth/too-many-requests") {
-    showStarPopup("Too many attempts. Wait a minute.");
-  } else {
-    showStarPopup("Login failed");
-  }
-}
-});
-
-// Call this exact line after successful login
-// document.body.classList.add('logged-in');
-
-// Call this on logout
-// document.body.classList.remove('logged-in');
-
-/* ===============================
-   🔐 VIP/Host Login — VIPs FREE WITH hasPaid, Hosts Always Free
-================================= */
-async function loginWhitelist(email) {
   const loader = document.getElementById("postLoginLoader");
-  try {
-    if (loader) loader.style.display = "flex";
-    await sleep(50);
+  if (loader) loader.style.display = "flex";
 
+  try {
+    // STEP 1: Firebase Auth login
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    console.log("Firebase Auth Success:", firebaseUser.uid);
+
+    // STEP 2: Check if allowed (Host or paid VIP)
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      showStarPopup("User not found. Please sign up first.");
-      return false;
+      showStarPopup("Profile not found — contact support");
+      await signOut(auth);
+      return;
     }
 
-    const data = userSnap.data() || {};
+    const data = userSnap.data();
 
-    // HOSTS — ALWAYS FREE ACCESS
-    if (data.isHost) {
-      console.log("Host login — free access");
-      setCurrentUserFromData(data, uidKey, email);
-      return true;
+    if (data.isHost || (data.isVIP && data.hasPaid === true)) {
+      // Allowed — onAuthStateChanged will handle the rest
+      console.log("Access granted");
+    } else {
+      showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
+      await signOut(auth);
+      return;
     }
-
-    // VIPs — ONLY NEED hasPaid: true (NO WHITELIST CHECK)
-    if (data.isVIP) {
-      if (data.hasPaid === true) {
-        console.log("VIP with hasPaid — access granted");
-        setCurrentUserFromData(data, uidKey, email);
-        return true;
-      } else {
-        showStarPopup("You're VIP but payment not confirmed.\nContact admin to activate.");
-        return false;
-      }
-    }
-    // NORMAL USERS — MUST BE IN WHITELIST
-    const whitelistQuery = query(
-      collection(db, "whitelist"),
-      where("email", "==", email)
-    );
-    const whitelistSnap = await getDocs(whitelistQuery);
-
-    if (whitelistSnap.empty) {
-      showStarPopup("You’re not on the whitelist.");
-      return false;
-    }
-
-    // BUILD CURRENT USER (normal user)
-    setCurrentUserFromData(data, uidKey, email);
-
-    // POST-LOGIN SETUP
-    setupPostLogin(email);
-
-    return true;
 
   } catch (err) {
-    console.error("Login check failed:", err);
-    showStarPopup("Login error — try again");
-    return false;
+    console.error("Login failed:", err);
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      showStarPopup("Wrong password or email");
+    } else if (err.code === "auth/too-many-requests") {
+      showStarPopup("Too many attempts. Wait a minute.");
+    } else {
+      showStarPopup("Login failed — try again");
+    }
   } finally {
     if (loader) loader.style.display = "none";
   }
-}
-
+  
 // HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
