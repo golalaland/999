@@ -957,23 +957,42 @@ async function cleanupExpiredTokens() {
   });
 }
 
-  // ------------------------------
-  // BUTTONS LOGIN
-  // ------------------------------
+ // REDEEM BUTTON — SAFE & ALWAYS SHOWS
 async function updateRedeemLink() {
-  if (!refs.redeemBtn || !currentUser?.uid) return;
+  if (!refs.redeemBtn || !currentUser?.uid) {
+    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
+    return;
+  }
 
-  const token = await createLoginToken(currentUser.uid);
-  refs.redeemBtn.href = `/tm?t=${token}`;
+  try {
+    const token = await createLoginToken(currentUser.uid);
+    refs.redeemBtn.href = `/tm?t=${token}`;
+  } catch (err) {
+    console.warn("[REDEEM] Token failed, using fallback");
+    refs.redeemBtn.href = "/tm"; // fallback link
+  }
+
   refs.redeemBtn.style.display = "inline-block";
+  console.log("[REDEEM] Button shown");
 }
 
+// TIP BUTTON — SAFE & ALWAYS SHOWS
 async function updateTipLink() {
-  if (!refs.tipBtn || !currentUser?.uid) return;
+  if (!refs.tipBtn || !currentUser?.uid) {
+    if (refs.tipBtn) refs.tipBtn.style.display = "none";
+    return;
+  }
 
-  const token = await createLoginToken(currentUser.uid);
-  refs.tipBtn.href = `/tm?t=${token}`;
+  try {
+    const token = await createLoginToken(currentUser.uid);
+    refs.tipBtn.href = `/tm?t=${token}`;
+  } catch (err) {
+    console.warn("[TIP] Token failed, using fallback");
+    refs.tipBtn.href = "/tm"; // fallback link
+  }
+
   refs.tipBtn.style.display = "inline-block";
+  console.log("[TIP] Button shown");
 }
 
 /* ----------------------------
