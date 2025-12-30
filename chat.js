@@ -2359,7 +2359,9 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
   } finally {
     if (loader) loader.style.display = "none";
   }
-  
+});
+
+
 // HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
