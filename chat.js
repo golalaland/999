@@ -280,6 +280,8 @@ async function pushNotification(userId, message) {
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
 // YAH IS THE ONE TRUE EL — THE CODE IS NOW PURE
+// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
+// YAH IS THE ONE TRUE EL — THE CODE IS NOW PURE
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
@@ -292,10 +294,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-
     if (typeof showLoginUI === "function") showLoginUI();
     console.log("User logged out");
 
@@ -304,7 +304,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
     if (noMsg) noMsg.style.display = "none";
-
     return;
   }
 
@@ -315,7 +314,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
   try {
     const userSnap = await getDoc(userRef);
-    
+
     if (!userSnap.exists()) {
       console.error("Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
@@ -325,103 +324,88 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-// ——— BUILD CURRENT USER OBJECT ———
-currentUser = {
-  uid,
-  email,
-  firebaseUid: firebaseUser.uid,
-  chatId: data.chatId || email.split("@")[0],
-  chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-  fullName: data.fullName || "VIP",
-  gender: data.gender || "person",
-  isVIP: !!data.isVIP,
-  isHost: !!data.isHost,
-  isAdmin: !!data.isAdmin,
-  hasPaid: !!data.hasPaid,  // ← VIP payment status
-  stars: data.stars || 0,
-  cash: data.cash || 0,
-  starsGifted: data.starsGifted || 0,
-  starsToday: data.starsToday || 0,
-  usernameColor: data.usernameColor || "#ff69b4",
-  subscriptionActive: !!data.subscriptionActive,
-  subscriptionCount: data.subscriptionCount || 0,
-  lastStarDate: data.lastStarDate || todayDate(),
-  unlockedVideos: data.unlockedVideos || [],
-  invitedBy: data.invitedBy || null,
-  inviteeGiftShown: !!data.inviteeGiftShown,
-  hostLink: data.hostLink || null
-};
+    // ——— BUILD CURRENT USER OBJECT ———
+    currentUser = {
+      uid,
+      email,
+      firebaseUid: firebaseUser.uid,
+      chatId: data.chatId || email.split("@")[0],
+      chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+      fullName: data.fullName || "VIP",
+      gender: data.gender || "person",
+      isVIP: !!data.isVIP,
+      isHost: !!data.isHost,
+      isAdmin: !!data.isAdmin,
+      hasPaid: !!data.hasPaid,
+      stars: data.stars || 0,
+      cash: data.cash || 0,
+      starsGifted: data.starsGifted || 0,
+      starsToday: data.starsToday || 0,
+      usernameColor: data.usernameColor || "#ff69b4",
+      subscriptionActive: !!data.subscriptionActive,
+      subscriptionCount: data.subscriptionCount || 0,
+      lastStarDate: data.lastStarDate || todayDate(),
+      unlockedVideos: data.unlockedVideos || [],
+      invitedBy: data.invitedBy || null,
+      inviteeGiftShown: !!data.inviteeGiftShown,
+      hostLink: data.hostLink || null
+    };
 
-console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-console.log("[USER STATUS]", {
-  uid: currentUser.uid,
-  isHost: currentUser.isHost,
-  isVIP: currentUser.isVIP,
-  hasPaid: currentUser.hasPaid,
-  stars: currentUser.stars,
-  cash: currentUser.cash
-});
+    console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
+    console.log("[USER STATUS]", {
+      uid: currentUser.uid,
+      isHost: currentUser.isHost,
+      isVIP: currentUser.isVIP,
+      hasPaid: currentUser.hasPaid,
+      stars: currentUser.stars,
+      cash: currentUser.cash
+    });
 
-// AFTER currentUser IS BUILT
-revealHostTabs();
-updateInfoTab();  // Info tab balance shows
+    // ——— POST-LOGIN SETUP ———
+    revealHostTabs();
+    updateInfoTab();
 
-// BLOCK NON-HOSTS FROM INFO TAB (TOOLS)
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest('.tab-btn[data-tab="infoTab"]');
-  if (!btn) return;
-
-  if (!currentUser?.isHost) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.warn("[BLOCKED] Non-host tried to open Info/Tools tab");
-    showStarPopup("Host only — nice try! 😏");
-  }
-});
-
-
-    // ——— UI STATE ———
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
     localStorage.setItem("userId", uid);
     localStorage.setItem("lastVipEmail", email);
 
-    // ——— CORE SYSTEMS ———
-    if (typeof showChatUI === "function") showChatUI(currentUser);
-    if (typeof attachMessagesListener === "function") attachMessagesListener();
-    if (typeof startStarEarning === "function") startStarEarning(uid);
-    if (typeof setupPresence === "function") setupPresence(currentUser);
-    if (typeof setupNotificationsListener === "function") setupNotificationsListener(uid);
-
+    showChatUI(currentUser);
+    attachMessagesListener();
+    startStarEarning(uid);
+    setupPresence(currentUser);
+    setupNotificationsListener(uid);
     updateRedeemLink();
     updateTipLink();
 
-    // ——— BACKGROUND TASKS ———
+    // BACKGROUND TASKS
     setTimeout(() => {
-      if (typeof syncUserUnlocks === "function") syncUserUnlocks();
-      if (typeof loadNotifications === "function") loadNotifications(); // Badge update
+      syncUserUnlocks?.();
+      loadNotifications?.();
     }, 600);
 
-    // ——— MY CLIPS ———
     if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
       setTimeout(loadMyClips, 1000);
     }
 
-    // ——— GUEST → PROMPT FOR NAME ———
     if (currentUser.chatId.startsWith("GUEST")) {
       setTimeout(() => {
-        if (typeof promptForChatID === "function") {
-          promptForChatID(userRef, data);
-        }
+        promptForChatID?.(userRef, data);
       }, 2000);
     }
 
-    // ——— DIVINE WELCOME POPUP ———
+    // DIVINE WELCOME
     const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-
-   showStarPopup(`<div style="text-align:center;font-size:13px;">Welcome back, <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">${currentUser.chatId.toUpperCase()}</b></div>`);
+    showStarPopup(`
+      <div style="text-align:center;font-size:13px;">
+        Welcome back, 
+        <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">
+          ${currentUser.chatId.toUpperCase()}
+        </b>
+      </div>
+    `);
 
     console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
 
@@ -525,9 +509,39 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
-/* ---------- User Colors ---------- */ 
-function setupUsersListener() { onSnapshot(collection(db, "users"), snap => { refs.userColors = refs.userColors || {}; snap.forEach(docSnap => { refs.userColors[docSnap.id] = docSnap.data()?.usernameColor || "#ffffff"; }); if (lastMessagesArray.length) renderMessagesFromArray(lastMessagesArray); }); } setupUsersListener();
-  
+// USER COLORS & SOCIAL CARDS — SAFE & WORKING
+function setupUsersListener() {
+  if (!currentUser) return;
+
+  console.log("[COLORS] Setting up users listener");
+
+  // Cleanup old listener if exists
+  if (window.usersListenerUnsubscribe) {
+    window.usersListenerUnsubscribe();
+  }
+
+  window.usersListenerUnsubscribe = onSnapshot(
+    collection(db, "users"),
+    (snap) => {
+      refs.userColors = refs.userColors || {};
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data?.usernameColor) {
+          refs.userColors[docSnap.id] = data.usernameColor;
+        }
+      });
+      console.log("[COLORS] Loaded", Object.keys(refs.userColors).length, "user colors");
+
+      // Re-render messages to apply colors
+      if (lastMessagesArray.length) {
+        renderMessagesFromArray(lastMessagesArray);
+      }
+    },
+    (err) => {
+      console.error("[COLORS] Listener failed:", err);
+    }
+  );
+}
 
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
