@@ -371,6 +371,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     localStorage.setItem("userId", uid);
     localStorage.setItem("lastVipEmail", email);
 
+    // ——— USER COLORS & SOCIAL CARDS ———
+setupUsersListener();
     showChatUI(currentUser);
     attachMessagesListener();
     startStarEarning(uid);
@@ -509,36 +511,40 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
-// USER COLORS & SOCIAL CARDS — SAFE & WORKING
+// USER COLORS — FINAL & PERFECT
 function setupUsersListener() {
   if (!currentUser) return;
 
-  console.log("[COLORS] Setting up users listener");
+  console.log("[COLORS] Starting user colors listener");
 
-  // Cleanup old listener if exists
-  if (window.usersListenerUnsubscribe) {
-    window.usersListenerUnsubscribe();
+  // Cleanup old listener
+  if (window.userColorsUnsubscribe) {
+    window.userColorsUnsubscribe();
   }
 
-  window.usersListenerUnsubscribe = onSnapshot(
+  window.userColorsUnsubscribe = onSnapshot(
     collection(db, "users"),
     (snap) => {
       refs.userColors = refs.userColors || {};
+
+      let updated = false;
       snap.forEach(docSnap => {
         const data = docSnap.data();
-        if (data?.usernameColor) {
-          refs.userColors[docSnap.id] = data.usernameColor;
+        const color = data?.usernameColor;
+        if (color && refs.userColors[docSnap.id] !== color) {
+          refs.userColors[docSnap.id] = color;
+          updated = true;
         }
       });
-      console.log("[COLORS] Loaded", Object.keys(refs.userColors).length, "user colors");
 
-      // Re-render messages to apply colors
-      if (lastMessagesArray.length) {
-        renderMessagesFromArray(lastMessagesArray);
+      if (updated || Object.keys(refs.userColors).length === snap.size) {
+        console.log("[COLORS] Colors updated — re-rendering messages");
+        // Re-render all messages to apply new colors
+        renderMessagesFromArray(lastMessagesArray || []);
       }
     },
     (err) => {
-      console.error("[COLORS] Listener failed:", err);
+      console.error("[COLORS] Listener error:", err);
     }
   );
 }
