@@ -10,6 +10,7 @@
      { "source": "/terms", "destination": "/terms.html" },
      { "source": "/privacy", "destination": "/privacy.html" },
    { "source": "/forgot", "destination": "/forgot.html" },
+     { "source": "/quests", "destination": "/quests.html" },
      { "source": "/menu", "destination": "/menu.html" }
   ]
 }
