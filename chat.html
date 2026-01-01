@@ -2004,38 +2004,37 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 .live-close:hover { opacity: 1; transform: scale(1.1); }
 
-/* TABS - Smaller, tighter, no wrap on mobile, strong green highlight */
+/* TABS - Compact, horizontal on mobile, smooth scroll */
 .live-content-tabs {
   display: flex;
   justify-content: center;
   gap: 10px;
   padding: 0 12px;
-  overflow-x: auto;           /* Allows horizontal scroll on small screens */
-  scrollbar-width: none;      /* Hide scrollbar Firefox */
-  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-  flex-wrap: nowrap;          /* Critical: prevents stacking */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
   margin-bottom: 8px;
 }
-
-.live-content-tabs::-webkit-scrollbar {
-  display: none;              /* Hide scrollbar Chrome/Safari */
-}
+.live-content-tabs::-webkit-scrollbar { display: none; }
 
 .live-tab-btn {
-  flex: 0 0 auto;             /* Don't grow, fixed width based on content */
-  min-width: 110px;           /* Smaller than before */
-  padding: 10px 18px;         /* Tighter padding */
+  flex: 0 0 auto;
+  min-width: 110px;
+  padding: 10px 18px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
-  font-size: 16px;            /* Slightly smaller text */
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(12px);
-  white-space: nowrap;        /* Prevent text wrap */
+  white-space: nowrap;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  position: relative; /* Helps contain inner glow */
+  overflow: hidden;   /* Prevents glow from spilling out weirdly */
 }
 
 .live-tab-btn:hover {
@@ -2043,16 +2042,20 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   transform: translateY(-2px);
 }
 
-/* ACTIVE TAB - Bold, vibrant neon green #c3f60c, no faded bs */
+/* ACTIVE TAB - Strong neon green, clean contained glow */
 .live-tab-btn.active {
   background: #c3f60c;
   color: #000 !important;
   border-color: #c3f60c;
-  box-shadow: 
-    0 0 25px rgba(195, 246, 12, 0.8),
-    0 8px 20px rgba(195, 246, 12, 0.5);
-  transform: translateY(-3px);
   font-weight: 800;
+  transform: translateY(-3px);
+  /* Clean, vibrant glow that stays around the button */
+  box-shadow:
+    0 0 15px rgba(195, 246, 12, 0.9),     /* Bright outer glow */
+    0 0 30px rgba(195, 246, 12, 0.6),     /* Wider soft glow */
+    0 6px 16px rgba(195, 246, 12, 0.5),   /* Lifted shadow with green tint */
+    inset 0 0 20px rgba(255, 255, 255, 0.4); /* Inner highlight for depth */
+  z-index: 1;
 }
 
 /* Tab Contents */
@@ -2104,20 +2107,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   color: #fff;
 }
 
-/* Optional: Extra pop on mobile */
+/* Mobile tweaks */
 @media (max-width: 480px) {
   .live-tab-btn {
     min-width: 100px;
     padding: 9px 16px;
     font-size: 15.5px;
   }
-  
   .live-content-tabs {
     gap: 8px;
     padding: 0 8px;
   }
 }
-
     /* Reels Gallery Tab - TikTok/YouTube style grid */
     #reelsGallery {
       display: grid;
