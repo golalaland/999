@@ -2005,56 +2005,54 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 .live-close:hover { opacity: 1; transform: scale(1.1); }
 
-/* TABS - Compact, horizontal scroll on mobile */
+/* TABS - Ultra compact, fits perfectly on mobile */
 .live-content-tabs {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  padding: 0 12px;
+  gap: 8px;                    /* Even tighter gap */
+  padding: 0 10px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   flex-wrap: nowrap;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .live-content-tabs::-webkit-scrollbar { display: none; }
 
 .live-tab-btn {
   flex: 0 0 auto;
-  min-width: 110px;
-  padding: 10px 18px;
+  min-width: 90px;             /* Much smaller */
+  padding: 8px 14px;           /* Reduced padding = more compact */
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
-  font-size: 16px;
+  font-size: 14.5px;           /* Smaller, cleaner text */
   font-weight: 700;
   color: #fff;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(12px);
   white-space: nowrap;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow: hidden; /* Keeps inner glow contained cleanly */
+  overflow: hidden;
 }
 
 .live-tab-btn:hover {
   background: rgba(255, 255, 255, 0.18);
-  /* Removed upward lift on hover too for consistency */
 }
 
-/* ACTIVE TAB - Pure neon magic, no zoom/lift, full glow visibility */
+/* ACTIVE TAB - Pure neon glow, no movement, no clipping */
 .live-tab-btn.active {
   background: #c3f60c;
   color: #000 !important;
   border-color: #c3f60c;
   font-weight: 800;
-  /* No transform — stays in place so glow doesn't get cut */
   box-shadow:
-    0 0 20px rgba(195, 246, 12, 0.9),     /* Intense outer glow */
-    0 0 40px rgba(195, 246, 12, 0.6),     /* Wider halo */
-    0 8px 20px rgba(195, 246, 12, 0.4),   /* Subtle green-tinted shadow below */
-    inset 0 0 25px rgba(255, 255, 255, 0.5); /* Bright inner shine */
+    0 0 18px rgba(195, 246, 12, 0.9),
+    0 0 35px rgba(195, 246, 12, 0.6),
+    0 6px 16px rgba(195, 246, 12, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.5);
   z-index: 2;
 }
 
@@ -2107,16 +2105,16 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   color: #fff;
 }
 
-/* Mobile tweaks */
+/* Extra tight on small phones */
 @media (max-width: 480px) {
   .live-tab-btn {
-    min-width: 100px;
-    padding: 9px 16px;
-    font-size: 15.5px;
+    min-width: 85px;
+    padding: 7px 12px;
+    font-size: 14px;
   }
   .live-content-tabs {
-    gap: 8px;
-    padding: 0 8px;
+    gap: 6px;
+    padding: 0 6px;
   }
 }
     /* Reels Gallery Tab - TikTok/YouTube style grid */
@@ -2267,7 +2265,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <div class="live-content-tabs">
         <button class="live-tab-btn active" data-content="live">LiveShows</button>
         <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
-        <button class="live-tab-btn" data-content="reels">Reels</button>
+        <button class="live-tab-btn" data-content="reels">Reel</button>
       </div>
 
       <!-- Live Tab -->
@@ -2311,7 +2309,21 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
             </div>
           </div>
           <div class="reel-item">
-            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp44" muted loop playsinline></video>
+            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline></video>
+            <div class="play-icon">▶</div>
+            <div class="reel-overlay">
+              <div class="reel-title">Behind the Scenes</div>
+            </div>
+          </div>
+           <div class="reel-item">
+            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline></video>
+            <div class="play-icon">▶</div>
+            <div class="reel-overlay">
+              <div class="reel-title">Behind the Scenes</div>
+            </div>
+          </div>
+           <div class="reel-item">
+            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline></video>
             <div class="play-icon">▶</div>
             <div class="reel-overlay">
               <div class="reel-title">Behind the Scenes</div>
