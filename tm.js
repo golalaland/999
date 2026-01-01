@@ -1356,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener("DOMContentLoaded", () => {
 
   // URL of your custom star SVG hosted on Shopify
-  const customStarURL = "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px.png?v=1765644826";
+  const customStarURL = "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/starssvg.svg?v=1761770774";
 
   // Replace stars in text nodes with SVG + floating stars (invisible)
   function replaceStarsWithSVG(root = document.body) {
