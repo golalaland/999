@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detty Dice</title>
+    <!-- Add styles from Tapmaster, adapt for unique design: e.g., purple-green theme -->
+    <style>
+        /* Base styles from Tapmaster, change colors */
+        body { background-color: #0a0a0a; color: #fff; font-family: 'Poppins', sans-serif; }
+        /* Unique design: purple-green accents */
+        button { background: linear-gradient(90deg, #8e44ad, #27ae60); color: #fff; }
+        /* ... add more unique styles */
+        #threeCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        /* Other styles from provided code, adapted */
+    </style>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/cannon-es"></script>
+    <!-- Firebase scripts from provided -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <!-- HTML structure adapted from Tapmaster -->
+    <div id="startPage"> <!-- Start page UI --> </div>
+    <div id="gamePage" class="hidden">
+        <canvas id="threeCanvas"></canvas>
+        <button id="rollButton">ROLL</button>
+        <div id="rollsLeft">Rolls: 10</div>
+        <div id="score">Score: 0</div>
+        <div id="earnings">₦0</div>
+        <!-- Other UI elements -->
+    </div>
+    <!-- Modals from Tapmaster, adapt texts to dice/score -->
+    <div id="playModal"> <!-- Confirm play, cost stars --> </div>
+    <div id="endGameModal"> <!-- Show score and earnings --> </div>
+    <div id="leaderboardModal"> <!-- Leaderboard with high/low tabs --> 
+        <div class="lb-tab" data-type="high">High Scores</div>
+        <div class="lb-tab" data-type="low">Low Scores</div>
+        <!-- ... -->
+    </div>
+    <!-- Other elements -->
+
+    <script>
+        // Firebase config and imports same as provided
+        const firebaseConfig = { /* same */ };
+        // ...
+
+        // Three.js and Cannon setup
+        let scene, camera, renderer, physicsWorld, diceMesh, diceBody, mixer;
+        let diceModel;
+        let rollsLeft = 0;
+        let score = 0;
+        let earnings = 0;
+        let running = false;
+        let rollLocked = false;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('threeCanvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(0, 10, 0);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 0, 0);
+
+            physicsWorld = new CANNON.World({ gravity: new CANNON.Vec3(0, -50, 0), allowSleep: true }); // Gravity down
+            physicsWorld.defaultContactMaterial.restitution = 0.3;
+
+            // Floor
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.ShadowMaterial({ opacity: 0.1 }));
+            floor.receiveShadow = true;
+            floor.position.y = -0.5;
+            floor.quaternion.setFromAxisAngle(new THREE.Vector3(-1, 0, 0), Math.PI / 2); // Correct rotation
+            scene.add(floor);
+
+            const floorBody = new CANNON.Body({ type: CANNON.Body.STATIC, shape: new CANNON.Plane() });
+            floorBody.position.copy(floor.position);
+            floorBody.quaternion.copy(floor.quaternion);
+            physicsWorld.addBody(floorBody);
+
+            // Load GLB
+            const loader = new GLTFLoader();
+            loader.load('https://raw.githubusercontent.com/golalaland/999/main/assets/free_dice_model_d6_low_poly_4k.glb', (gltf) => {
+                diceModel = gltf.scene;
+                diceModel.scale.set(0.5, 0.5, 0.5); // Adjust scale if needed
+                diceModel.traverse((child) => {
+                    if (child.isMesh) child.castShadow = true;
+                });
+                if (gltf.animations.length) {
+                    mixer = new THREE.AnimationMixer(diceModel);
+                    mixer.clipAction(gltf.animations[0]).play();
+                }
+                createDice();
+            });
+
+            render();
+        }
+
+        function createDice() {
+            diceMesh = diceModel.clone();
+            scene.add(diceMesh);
+
+            diceBody = new CANNON.Body({
+                mass: 1,
+                shape: new CANNON.Box(new CANNON.Vec3(0.25, 0.25, 0.25)), // Half extents, adjust to model
+                sleepTimeLimit: 0.1
+            });
+            physicsWorld.addBody(diceBody);
+
+            addDiceEvents(diceBody);
+        }
+
+        function throwDice() {
+            if (rollLocked) return;
+            rollLocked = true;
+
+            diceBody.velocity.setZero();
+            diceBody.angularVelocity.setZero();
+            diceBody.position = new CANNON.Vec3(Math.random() * 2 - 1, 5, Math.random() * 2 - 1);
+            diceMesh.position.copy(diceBody.position);
+            diceMesh.rotation.set(2 * Math.PI * Math.random(), 2 * Math.PI * Math.random(), 2 * Math.PI * Math.random());
+            diceBody.quaternion.copy(diceMesh.quaternion);
+
+            const force = 3 + 5 * Math.random();
+            diceBody.applyImpulse(new CANNON.Vec3(-force, force, 0), new CANNON.Vec3(0, 0, 0.2));
+            diceBody.applyTorque(new CANNON.Vec3(500 * (Math.random() - 0.5), 500 * (Math.random() - 0.5), 500 * (Math.random() - 0.5)));
+
+            diceBody.allowSleep = true;
+        }
+
+        function addDiceEvents(body) {
+            body.addEventListener('sleep', (e) => {
+                body.allowSleep = false;
+                const euler = new CANNON.Vec3();
+                e.body.quaternion.toEuler(euler);
+                const eps = 0.1;
+                let result;
+                const isZero = (angle) => Math.abs(angle) < eps;
+                const isHalfPi = (angle) => Math.abs(angle - 0.5 * Math.PI) < eps;
+                const isMinusHalfPi = (angle) => Math.abs(0.5 * Math.PI + angle) < eps;
+                const isPiOrMinusPi = (angle) => (Math.abs(Math.PI - angle) < eps || Math.abs(Math.PI + angle) < eps);
+
+                if (isZero(euler.z)) {
+                    if (isZero(euler.x)) {
+                        result = 1;
+                    } else if (isHalfPi(euler.x)) {
+                        result = 4;
+                    } else if (isMinusHalfPi(euler.x)) {
+                        result = 3;
+                    } else if (isPiOrMinusPi(euler.x)) {
+                        result = 6;
+                    } else {
+                        body.allowSleep = true;
+                        return;
+                    }
+                } else if (isHalfPi(euler.z)) {
+                    result = 2;
+                } else if (isMinusHalfPi(euler.z)) {
+                    result = 5;
+                } else {
+                    body.allowSleep = true;
+                    return;
+                }
+
+                // Process result
+                score += result;
+                rollsLeft--;
+                // Cash award logic similar to Tapmaster
+                cashCounter += result;
+                if (cashCounter >= cashThreshold) {
+                    // award cash if pot >0
+                    // ...
+                }
+                // Progress for bonus
+                progress += result;
+                if (progress >= tapsForNext) {
+                    // level up
+                    // ...
+                }
+                updateUI();
+                if (rollsLeft === 0) {
+                    showEndGameModal();
+                    endSessionRecord();
+                } else {
+                    rollLocked = false;
+                }
+            });
+        }
+
+        function render() {
+            if (mixer) mixer.update(0.01);
+            physicsWorld.fixedStep();
+            diceMesh.position.copy(diceBody.position);
+            diceMesh.quaternion.copy(diceBody.quaternion);
+            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+        }
+
+        // Start session adapted
+        function startSession() {
+            rollsLeft = 10;
+            score = 0;
+            earnings = 0;
+            running = true;
+            rollLocked = false;
+            // Other init
+            updateUI();
+        }
+
+        // Roll handler
+        document.getElementById('rollButton').addEventListener('click', () => {
+            if (running && rollsLeft > 0 && !rollLocked) {
+                if (RedHotMode.active) {
+                    // punish
+                } else {
+                    throwDice();
+                }
+            }
+        });
+
+        // End session, save score
+        async function endSessionRecord() {
+            // Similar to provided, but save score
+            // Update scoreHighDaily, scoreLowDaily
+            const key = /* daily key */;
+            await runTransaction(db, async (t) => {
+                // Get user
+                // if sessionScore > data.scoreHighDaily[key] || 0, update
+                // if sessionScore < data.scoreLowDaily[key] || Infinity, update
+                // Also update cash, stars etc if any
+            });
+        }
+
+        // Leaderboard fetch adapted
+        async function fetchLeaderboard(period = "daily", type = "high") {
+            const key = getLeaderboardKey(period);
+            const fieldPath = `scoreHighDaily.${key}`; // Adapt for high/low
+            const order = type === "high" ? "desc" : "asc";
+            // Query orderBy(fieldPath, order)
+            // For low, perhaps where(fieldPath, ">", 0)
+            // ...
+        }
+
+        // Add tabs for high/low
+        // Event listeners for type tabs
+
+        // Other code from Tapmaster, adapted: load user, deduct stars, etc.
+        // Remove timer, add rollsLeft
+        // Update UI for score, rolls
+
+        // Init
+        document.addEventListener("DOMContentLoaded", () => {
+            initThree();
+            // Other init
+        });
+
+        // Note: Adjust face detection if model orientation differs
+    </script>
+</body>
+</html>
