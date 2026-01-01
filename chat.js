@@ -5646,7 +5646,8 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
       showStarPopup('Error', 'Could not copy link — try again', 3000);
     });
 });
-<script>
+
+
 // Reels data — easy to edit, add, or remove
 const reelsData = [
   {
