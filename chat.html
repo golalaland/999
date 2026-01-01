@@ -1971,124 +1971,152 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
   
 /* LIVE MODAL - Fullscreen, mobile-optimized */
-    .live-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: #000;
-      overflow-y: auto;
-    }
+.live-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  overflow-y: auto;
+}
+.live-modal.open { display: block; }
 
-    .live-modal.open { display: block; }
+.live-modal-content {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 60px 12px 80px;
+  gap: 20px;
+  box-sizing: border-box;
+}
 
-    .live-modal-content {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 60px 12px 80px;
-      gap: 20px;
-      box-sizing: border-box;
-    }
+.live-close {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  font-size: 48px;
+  font-weight: 200;
+  color: #fff;
+  opacity: 0.8;
+  cursor: pointer;
+  z-index: 30;
+  transition: all 0.3s ease;
+}
+.live-close:hover { opacity: 1; transform: scale(1.1); }
 
-    .live-close {
-      position: fixed;
-      top: 12px;
-      right: 16px;
-      font-size: 48px;
-      font-weight: 200;
-      color: #fff;
-      opacity: 0.8;
-      cursor: pointer;
-      z-index: 30;
-      transition: all 0.3s ease;
-    }
+/* TABS - Smaller, tighter, no wrap on mobile, strong green highlight */
+.live-content-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 12px;
+  overflow-x: auto;           /* Allows horizontal scroll on small screens */
+  scrollbar-width: none;      /* Hide scrollbar Firefox */
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+  flex-wrap: nowrap;          /* Critical: prevents stacking */
+  margin-bottom: 8px;
+}
 
-    .live-close:hover { opacity: 1; transform: scale(1.1); }
+.live-content-tabs::-webkit-scrollbar {
+  display: none;              /* Hide scrollbar Chrome/Safari */
+}
 
-    /* Tabs - 3 tabs, compact, neon green accent #c3f60c */
-    .live-content-tabs {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+.live-tab-btn {
+  flex: 0 0 auto;             /* Don't grow, fixed width based on content */
+  min-width: 110px;           /* Smaller than before */
+  padding: 10px 18px;         /* Tighter padding */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  font-size: 16px;            /* Slightly smaller text */
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  white-space: nowrap;        /* Prevent text wrap */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
 
-    .live-tab-btn {
-      min-width: 120px;
-      padding: 12px 20px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 50px;
-      font-size: 17px;
-      font-weight: 600;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.4s ease;
-      backdrop-filter: blur(12px);
-    }
+.live-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
 
-    .live-tab-btn.active {
-      background: #c3f60c;
-      color: #000;
-      box-shadow: 0 0 20px rgba(195,246,12,0.6);
-    }
+/* ACTIVE TAB - Bold, vibrant neon green #c3f60c, no faded bs */
+.live-tab-btn.active {
+  background: #c3f60c;
+  color: #000 !important;
+  border-color: #c3f60c;
+  box-shadow: 
+    0 0 25px rgba(195, 246, 12, 0.8),
+    0 8px 20px rgba(195, 246, 12, 0.5);
+  transform: translateY(-3px);
+  font-weight: 800;
+}
 
-    .live-tab-btn:hover { background: rgba(255,255,255,0.15); }
+/* Tab Contents */
+.live-tab-content {
+  display: none;
+  flex: 1;
+}
+.live-tab-content.active { display: block; }
 
-    /* Tab Contents */
-    .live-tab-content {
-      display: none;
-      flex: 1;
-    }
+/* Live Player Section */
+#livePlayerContainer {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  aspect-ratio: 9 / 16;
+  background: #111;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
 
-    .live-tab-content.active { display: block; }
+/* Upcoming Posters */
+.upcoming-posters {
+  width: 100%;
+  padding: 20px 0;
+}
+.poster-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 16px;
+  padding: 0 12px 16px;
+  scrollbar-width: none;
+}
+.poster-grid::-webkit-scrollbar { display: none; }
+.poster {
+  flex: 0 0 140px;
+}
+.poster img {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}
+.poster-title {
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: center;
+  color: #fff;
+}
 
-    /* Live Player Section */
-    #livePlayerContainer {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      aspect-ratio: 9 / 16;
-      background: #111;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    }
-
-    /* Upcoming Posters - horizontal scroll, compact */
-    .upcoming-posters {
-      width: 100%;
-      padding: 20px 0;
-    }
-
-    .poster-grid {
-      display: flex;
-      overflow-x: auto;
-      gap: 16px;
-      padding: 0 12px 16px;
-      scrollbar-width: none;
-    }
-
-    .poster-grid::-webkit-scrollbar { display: none; }
-
-    .poster {
-      flex: 0 0 140px;
-    }
-
-    .poster img {
-      width: 100%;
-      aspect-ratio: 9 / 16;
-      object-fit: cover;
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-    }
-
-    .poster-title {
-      margin-top: 8px;
-      font-size: 14px;
-      text-align: center;
-    }
+/* Optional: Extra pop on mobile */
+@media (max-width: 480px) {
+  .live-tab-btn {
+    min-width: 100px;
+    padding: 9px 16px;
+    font-size: 15.5px;
+  }
+  
+  .live-content-tabs {
+    gap: 8px;
+    padding: 0 8px;
+  }
+}
 
     /* Reels Gallery Tab - TikTok/YouTube style grid */
     #reelsGallery {
@@ -2295,24 +2323,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </div>
   </div>
 
-  <!-- Adult Content Consent Modal - nested inside the live-modal for proper scoping and no bleed -->
-  <div id="adultConsentModal" class="consent-modal">
-    <div class="consent-content">
-      <h2>Adult Content Warning</h2>
-      <p>You are about to view <strong>explicit adult content</strong>.</p>
-      <p>By proceeding, you confirm that:</p>
-      <ul>
-        <li>You are <strong>18 years of age or older</strong> (or the legal age in your jurisdiction)</li>
-        <li>You consent to viewing sexually explicit material</li>
-        <li>You will not expose minors to this content</li>
-      </ul>
-      <div class="consent-buttons">
-        <button id="consentAgree">I Agree</button>
-        <button id="consentCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
