@@ -5647,7 +5647,9 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
     });
 });
 
-// Reels data
+/*********************************
+ * REELS DATA
+ *********************************/
 const reelsData = [
   {
     videoUrl: "https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4",
@@ -5675,28 +5677,18 @@ const reelsData = [
   }
 ];
 
-// Format views
+/*********************************
+ * FORMAT VIEW COUNTS
+ *********************************/
 function formatViews(count) {
-  if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
-  if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
+  if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + 'M';
+  if (count >= 1_000) return (count / 1_000).toFixed(1) + 'K';
   return count.toString();
 }
 
-// SVG for views icon
-const viewsSvg = `
-<svg class="views-icon-svg" viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#ffffff">
-  <g id="SVGRepo_iconCarrier">
-    <title>play</title>
-    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-      <g id="Icon-Set" transform="translate(-417.000000, -569.000000)" fill="#ffffff">
-        <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" id="play"></path>
-      </g>
-    </g>
-  </g>
-</svg>
-`;
-
-// Main function to load reels
+/*********************************
+ * LOAD REELS
+ *********************************/
 function loadReels() {
   const gallery = document.getElementById('reelsGallery');
   if (!gallery) return;
@@ -5704,88 +5696,88 @@ function loadReels() {
   gallery.innerHTML = '';
 
   reelsData.forEach(reel => {
-    const reelHTML = `
+    gallery.insertAdjacentHTML('beforeend', `
       <div class="reel-item">
-        <video 
-          src="${reel.videoUrl}" 
-          muted 
-          loop 
-          playsinline 
-          preload="metadata"  <!-- Loads fast, shows poster instantly -->
-          poster="https://image.mux.com/thumbnail.jpg?width=640&height=1138&fit_mode=smartcrop"  <!-- Optional: add real poster if you have -->
+        <video
+          src="${reel.videoUrl}"
+          muted
+          preload="metadata"
+          controls
         ></video>
 
-        <!-- Big center play button -->
-        <div class="play-icon">▶</div>
+        <div class="play-overlay">▶</div>
 
         <div class="reel-overlay">
           <div class="reel-info">
             <div class="reel-views">
-              ${viewsSvg}
-              <span class="views-count">${formatViews(reel.views)}</span>
+              ▶ <span>${formatViews(reel.views)}</span>
             </div>
             <div class="reel-title">${reel.title}</div>
             <div class="reel-description">${reel.description}</div>
           </div>
         </div>
       </div>
-    `;
-    gallery.insertAdjacentHTML('beforeend', reelHTML);
+    `);
   });
 
-  // Attach interactions after DOM is updated
-  attachReelInteractions();
+  attachReelEvents();
 }
 
-// Fixed interactions: play icon tap works, hover preview works
-function attachReelInteractions() {
+/*********************************
+ * INTERACTIONS
+ *********************************/
+function attachReelEvents() {
   document.querySelectorAll('.reel-item').forEach(item => {
     const video = item.querySelector('video');
-    const playIcon = item.querySelector('.play-icon');
+    const playOverlay = item.querySelector('.play-overlay');
 
-    if (!video || !playIcon) return;
+    if (!video) return;
 
-    // Hover preview (desktop)
+    // Desktop preview
     item.addEventListener('mouseenter', () => {
+      video.muted = true;
       video.play().catch(() => {});
     });
 
     item.addEventListener('mouseleave', () => {
       video.pause();
       video.currentTime = 0;
-      playIcon.style.opacity = '1'; // Show play icon again
+      playOverlay.style.opacity = '1';
     });
 
-    // Tap anywhere (especially on play icon) → toggle play/pause
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
+    // Tap → native fullscreen
+    item.addEventListener('click', async () => {
+      try {
+        video.muted = false;
+        playOverlay.style.opacity = '0';
 
-      if (video.paused) {
-        video.play().catch(err => console.log("Play failed:", err));
-        playIcon.style.opacity = '0'; // Hide play icon when playing
-      } else {
-        video.pause();
-        playIcon.style.opacity = '1'; // Show play icon when paused
+        // iOS Safari
+        if (video.webkitEnterFullscreen) {
+          video.webkitEnterFullscreen();
+        }
+        // Android / Desktop
+        else if (video.requestFullscreen) {
+          await video.requestFullscreen();
+        }
+
+        await video.play();
+      } catch (err) {
+        console.log('Playback error:', err);
       }
     });
 
-    // Extra: ensure play icon is visible on load/pause
     video.addEventListener('pause', () => {
-      playIcon.style.opacity = '1';
+      playOverlay.style.opacity = '1';
     });
 
     video.addEventListener('play', () => {
-      playIcon.style.opacity = '0';
+      playOverlay.style.opacity = '0';
     });
   });
 }
 
-// Trigger when Reels tab is clicked
-document.querySelector('.live-tab-btn[data-content="reels"]')
-  ?.addEventListener('click', () => {
-    // Small delay to ensure tab is visible before loading
-    setTimeout(loadReels, 100);
-  });
-
-// Optional: load immediately if needed
+/*********************************
+ * INIT
+ *********************************/
 loadReels();
+
