@@ -1971,6 +1971,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
   
 /* LIVE MODAL - Fullscreen, mobile-optimized */
+/* LIVE MODAL - Fullscreen, mobile-optimized */
 .live-modal {
   display: none;
   position: fixed;
@@ -2004,7 +2005,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 .live-close:hover { opacity: 1; transform: scale(1.1); }
 
-/* TABS - Compact, horizontal on mobile, smooth scroll */
+/* TABS - Compact, horizontal scroll on mobile */
 .live-content-tabs {
   display: flex;
   justify-content: center;
@@ -2033,29 +2034,28 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   backdrop-filter: blur(12px);
   white-space: nowrap;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  position: relative; /* Helps contain inner glow */
-  overflow: hidden;   /* Prevents glow from spilling out weirdly */
+  position: relative;
+  overflow: hidden; /* Keeps inner glow contained cleanly */
 }
 
 .live-tab-btn:hover {
   background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-2px);
+  /* Removed upward lift on hover too for consistency */
 }
 
-/* ACTIVE TAB - Strong neon green, clean contained glow */
+/* ACTIVE TAB - Pure neon magic, no zoom/lift, full glow visibility */
 .live-tab-btn.active {
   background: #c3f60c;
   color: #000 !important;
   border-color: #c3f60c;
   font-weight: 800;
-  transform: translateY(-3px);
-  /* Clean, vibrant glow that stays around the button */
+  /* No transform — stays in place so glow doesn't get cut */
   box-shadow:
-    0 0 15px rgba(195, 246, 12, 0.9),     /* Bright outer glow */
-    0 0 30px rgba(195, 246, 12, 0.6),     /* Wider soft glow */
-    0 6px 16px rgba(195, 246, 12, 0.5),   /* Lifted shadow with green tint */
-    inset 0 0 20px rgba(255, 255, 255, 0.4); /* Inner highlight for depth */
-  z-index: 1;
+    0 0 20px rgba(195, 246, 12, 0.9),     /* Intense outer glow */
+    0 0 40px rgba(195, 246, 12, 0.6),     /* Wider halo */
+    0 8px 20px rgba(195, 246, 12, 0.4),   /* Subtle green-tinted shadow below */
+    inset 0 0 25px rgba(255, 255, 255, 0.5); /* Bright inner shine */
+  z-index: 2;
 }
 
 /* Tab Contents */
