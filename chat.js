@@ -4302,7 +4302,7 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
 document.addEventListener('DOMContentLoaded', () => {
   // === ELEMENTS ===
   const liveModal = document.getElementById('liveModal');
-  const liveConsentModal = document.getElementById('adultConsentModal'); // Keep if you still use adult tab
+  const liveConsentModal = document.getElementById('adultConsentModal'); // Optional: keep if using adult content
   const livePlayerContainer = document.getElementById('livePlayerContainer');
   const livePostersSection = document.getElementById('upcomingPosters');
   const liveCloseBtn = document.querySelector('.live-close');
@@ -4310,75 +4310,53 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabBtns = document.querySelectorAll('.live-tab-btn');
   const tabContents = document.querySelectorAll('.live-tab-content');
 
-  // Consent buttons (only if you keep the adult flow)
-  const liveAgreeBtn = document.getElementById('consentAgree');
-  const liveCancelBtn = document.getElementById('consentCancel');
+  const openHostsBtn = document.getElementById('openHostsBtn');
 
-  // Reels videos for preview/play on hover/tap
+  // Consent buttons (only relevant if adult tab exists)
+  const consentAgreeBtn = document.getElementById('consentAgree');
+  const consentCancelBtn = document.getElementById('consentCancel');
+
+  // Reels videos for preview/play interaction
   const reelVideos = document.querySelectorAll('.reel-item video');
 
   // === CONFIG ===
   let fadeTimer;
   const POSTER_FADE_DELAY = 8000;
 
-  // Mux Playback IDs (only used in LiveShows tab)
   const PLAYBACK_IDS = {
     regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q',
-    adult: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // optional different stream
+    adult: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // Change if different stream
   };
 
-  // === FUNCTIONS ===
-  function openModal() {
-    liveModal.classList.add('open'); // or style.display = 'block' if using display
-    showTab('live'); // Default to LiveShows tab
-    resetPosterFade();
-  }
-
-  function closeModal() {
-    liveModal.classList.remove('open');
-    if (liveConsentModal) liveConsentModal.style.display = 'none';
-
-    // Cleanup player
-    livePlayerContainer.innerHTML = '';
-    livePlayerContainer.classList.remove('portrait', 'landscape');
-
-    // Reset posters
-    livePostersSection?.classList.remove('fading');
-    clearTimeout(fadeTimer);
-  }
-
-  function showTab(tabId) {
-    // Update buttons
-    tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.content === tabId));
-    
-    // Update content
-    tabContents.forEach(content => content.classList.toggle('active', content.id === tabId));
-
-    // Tab-specific logic
-    if (tabId === 'live') {
-      startLiveStream('regular'); // or make it configurable
-      resetPosterFade();
-    } else if (tabId === 'upcoming') {
-      resetPosterFade();
-    } else if (tabId === 'reels') {
-      // Optional: preload or reset reel videos
-      reelVideos.forEach(video => {
-        video.pause();
-        video.currentTime = 0;
-      });
+  // === CORE FUNCTIONS (kept and improved from your original) ===
+  function switchContent(type) {
+    // Legacy support — maps old 'regular'/'adult' to new tab if needed
+    if (type === 'regular' || type === 'adult') {
+      showTab('live');
+      startStream(type);
     }
   }
 
-  function startLiveStream(type = 'regular') {
+  function startStream(type = 'regular') {
     const playbackId = PLAYBACK_IDS[type];
-    
-    livePlayerContainer.innerHTML = '<div style="color:#aaa;text-align:center;padding:60px;font-size:18px;">Loading stream...</div>';
+
+    // Show loading state
+    livePlayerContainer.innerHTML = `
+      <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
+        Loading stream...
+      </div>
+    `;
 
     if (!playbackId || playbackId.includes('YOUR_')) {
-      livePlayerContainer.innerHTML = '<div style="color:#ccc;text-align:center;padding:60px;font-size:18px;">Stream not configured</div>';
+      livePlayerContainer.innerHTML = `
+        <div style="color:#ccc; text-align:center; padding:80px 20px; font-size:18px;">
+          Stream not configured
+        </div>
+      `;
       return;
     }
 
+    // Clear and setup player
     livePlayerContainer.innerHTML = '';
     
     const player = document.createElement('mux-player');
@@ -4389,11 +4367,24 @@ document.addEventListener('DOMContentLoaded', () => {
     player.setAttribute('controls', 'true');
     player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.jpg?width=720&height=1280&fit_mode=preserve`);
 
-    // Mobile-first: prefer portrait
     player.style.width = '100%';
     player.style.height = '100%';
+    player.style.objectFit = 'contain';
 
     livePlayerContainer.appendChild(player);
+  }
+
+  function closeAllLiveModal() {
+    liveModal.style.display = 'none';
+    if (liveConsentModal) liveConsentModal.style.display = 'none';
+
+    livePlayerContainer.innerHTML = '';
+    livePlayerContainer.classList.remove('portrait', 'landscape');
+
+    livePostersSection?.classList.remove('fading');
+    clearTimeout(fadeTimer);
+
+    liveCloseBtn?.classList.remove('hidden');
   }
 
   function resetPosterFade() {
@@ -4404,91 +4395,134 @@ document.addEventListener('DOMContentLoaded', () => {
     }, POSTER_FADE_DELAY);
   }
 
-  // === REELS INTERACTION (TikTok-style preview & play) ===
+  function showTab(tabId) {
+    tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.content === tabId));
+    tabContents.forEach(content => content.classList.toggle('active', content.id === tabId));
+
+    // Tab-specific behavior
+    if (tabId === 'live') {
+      startStream('regular'); // Always load regular stream in Live tab
+      resetPosterFade();
+    } else if (tabId === 'upcoming') {
+      resetPosterFade();
+    } else if (tabId === 'reels') {
+      // Reset reel previews
+      reelVideos.forEach(video => {
+        video.pause();
+        video.currentTime = 0;
+      });
+    }
+  }
+
+  // === REELS INTERACTION (TikTok-style) ===
   reelVideos.forEach(video => {
     const reelItem = video.parentElement;
 
-    // Preview on hover (desktop)
-    reelItem.addEventListener('mouseenter', () => video.play());
+    // Desktop: hover preview
+    reelItem.addEventListener('mouseenter', () => video.play().catch(() => {}));
     reelItem.addEventListener('mouseleave', () => {
       video.pause();
       video.currentTime = 0;
     });
 
-    // Tap to play/pause + fullscreen attempt (mobile)
+    // Mobile: tap to play/pause + try fullscreen
     reelItem.addEventListener('click', (e) => {
       e.stopPropagation();
+
       if (video.paused) {
-        video.play();
+        video.play().catch(() => {});
       } else {
         video.pause();
       }
 
-      // Attempt fullscreen on second tap (common mobile pattern)
-      if (video.requestFullscreen) {
-        video.requestFullscreen();
-      } else if (video.webkitEnterFullscreen) { // iOS Safari
-        video.webkitEnterFullscreen();
+      // Optional: attempt fullscreen on play
+      if (!video.paused) {
+        if (video.requestFullscreen) video.requestFullscreen();
+        else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); // iOS
       }
     });
   });
 
   // === EVENT LISTENERS ===
-  document.getElementById('openHostsBtn')?.addEventListener('click', openModal);
+  // Open modal
+  if (openHostsBtn) {
+    openHostsBtn.onclick = () => {
+      liveModal.style.display = 'block';
+      showTab('live'); // Default to LiveShows tab
+      resetPosterFade();
+      liveCloseBtn?.classList.remove('hidden');
+    };
+  }
 
-  liveCloseBtn?.addEventListener('click', closeModal);
+  // Close button
+  if (liveCloseBtn) {
+    liveCloseBtn.onclick = closeAllLiveModal;
+  }
 
-  // Close modal when clicking backdrop
-  liveModal?.addEventListener('click', (e) => {
-    if (e.target === liveModal) closeModal();
-  });
+  // Backdrop close
+  if (liveModal) {
+    liveModal.onclick = (e) => {
+      if (e.target === liveModal) {
+        closeAllLiveModal();
+      }
+    };
+  }
 
   // Tab switching
   tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTab = btn.dataset.content;
+    btn.onclick = () => {
+      const target = btn.dataset.content;
 
-      // If you still have adult consent flow and want to gate "adult" content:
-      // Remove this block if you're only using the 3 clean tabs
-      if (targetTab === 'adult' && liveConsentModal) {
+      // Optional adult consent gate (remove if not using adult content)
+      if (target === 'adult' && liveConsentModal) {
         liveConsentModal.style.display = 'flex';
         liveCloseBtn?.classList.add('hidden');
         return;
       }
 
-      showTab(targetTab);
-    });
+      showTab(target);
+    };
   });
 
-  // Consent flow (only if you keep adult tab)
-  if (liveAgreeBtn) {
-    liveAgreeBtn.addEventListener('click', () => {
+  // Consent: Agree
+  if (consentAgreeBtn) {
+    consentAgreeBtn.onclick = () => {
       liveConsentModal.style.display = 'none';
       liveCloseBtn?.classList.remove('hidden');
-      showTab('adult'); // or load adult stream
-      startLiveStream('adult');
-    });
+
+      // If you have an adult tab, switch to it and load adult stream
+      const adultBtn = document.querySelector('.live-tab-btn[data-content="adult"]');
+      if (adultBtn) {
+        showTab('adult');
+        startStream('adult');
+      }
+    };
   }
 
-  if (liveCancelBtn) {
-    liveCancelBtn.addEventListener('click', () => {
+  // Consent: Cancel or backdrop
+  if (consentCancelBtn) {
+    consentCancelBtn.onclick = () => {
       liveConsentModal.style.display = 'none';
       liveCloseBtn?.classList.remove('hidden');
       showTab('live');
-    });
+    };
   }
 
   if (liveConsentModal) {
-    liveConsentModal.addEventListener('click', (e) => {
+    liveConsentModal.onclick = (e) => {
       if (e.target === liveConsentModal) {
         liveConsentModal.style.display = 'none';
         liveCloseBtn?.classList.remove('hidden');
         showTab('live');
       }
-    });
+    };
   }
+
+  // Legacy support for old tab buttons (if any still exist)
+  document.querySelectorAll('.live-tab-btn[data-content="regular"], .live-tab-btn[data-content="adult"]').forEach(oldBtn => {
+    oldBtn.onclick = () => switchContent(oldBtn.dataset.content);
+  });
 });
-  
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
   // Toggle this dynamically in your app
