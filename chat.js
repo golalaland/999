@@ -5647,8 +5647,7 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
     });
 });
 
-
-// Reels data — easy to edit, add, or remove
+// Reels data
 const reelsData = [
   {
     videoUrl: "https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4",
@@ -5674,21 +5673,18 @@ const reelsData = [
     description: "First look at tomorrow's surprise... you saw it here first 👀",
     views: 89100
   }
-  // Add more objects here — super easy!
 ];
 
-// Format views: 42300 → "42.3K"
+// Format views
 function formatViews(count) {
   if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
   if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
   return count.toString();
 }
 
-// Generate full SVG string (keeps it consistent)
+// SVG for views icon
 const viewsSvg = `
 <svg class="views-icon-svg" viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#ffffff">
-  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-  <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
   <g id="SVGRepo_iconCarrier">
     <title>play</title>
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -5700,20 +5696,28 @@ const viewsSvg = `
 </svg>
 `;
 
-// Load reels when the Reels tab becomes active
+// Main function to load reels
 function loadReels() {
   const gallery = document.getElementById('reelsGallery');
   if (!gallery) return;
 
-  gallery.innerHTML = ''; // Clear any old content
+  gallery.innerHTML = '';
 
   reelsData.forEach(reel => {
     const reelHTML = `
       <div class="reel-item">
-        <video src="${reel.videoUrl}" muted loop playsinline preload="metadata"></video>
-        
+        <video 
+          src="${reel.videoUrl}" 
+          muted 
+          loop 
+          playsinline 
+          preload="metadata"  <!-- Loads fast, shows poster instantly -->
+          poster="https://image.mux.com/thumbnail.jpg?width=640&height=1138&fit_mode=smartcrop"  <!-- Optional: add real poster if you have -->
+        ></video>
+
+        <!-- Big center play button -->
         <div class="play-icon">▶</div>
-        
+
         <div class="reel-overlay">
           <div class="reel-info">
             <div class="reel-views">
@@ -5729,35 +5733,59 @@ function loadReels() {
     gallery.insertAdjacentHTML('beforeend', reelHTML);
   });
 
-  // Re-attach hover/tap interactions
+  // Attach interactions after DOM is updated
   attachReelInteractions();
 }
 
-// Preview on hover + play on tap
+// Fixed interactions: play icon tap works, hover preview works
 function attachReelInteractions() {
-  document.querySelectorAll('.reel-item video').forEach(video => {
-    const item = video.parentElement;
+  document.querySelectorAll('.reel-item').forEach(item => {
+    const video = item.querySelector('video');
+    const playIcon = item.querySelector('.play-icon');
 
-    item.addEventListener('mouseenter', () => video.play().catch(() => {}));
+    if (!video || !playIcon) return;
+
+    // Hover preview (desktop)
+    item.addEventListener('mouseenter', () => {
+      video.play().catch(() => {});
+    });
+
     item.addEventListener('mouseleave', () => {
       video.pause();
       video.currentTime = 0;
+      playIcon.style.opacity = '1'; // Show play icon again
     });
 
+    // Tap anywhere (especially on play icon) → toggle play/pause
     item.addEventListener('click', (e) => {
       e.stopPropagation();
+
       if (video.paused) {
-        video.play().catch(() => {});
+        video.play().catch(err => console.log("Play failed:", err));
+        playIcon.style.opacity = '0'; // Hide play icon when playing
       } else {
         video.pause();
+        playIcon.style.opacity = '1'; // Show play icon when paused
       }
+    });
+
+    // Extra: ensure play icon is visible on load/pause
+    video.addEventListener('pause', () => {
+      playIcon.style.opacity = '1';
+    });
+
+    video.addEventListener('play', () => {
+      playIcon.style.opacity = '0';
     });
   });
 }
 
-// Call this when Reels tab is opened
-// Example: in your tab switcher code
-document.querySelector('.live-tab-btn[data-content="reels"]')?.addEventListener('click', loadReels);
+// Trigger when Reels tab is clicked
+document.querySelector('.live-tab-btn[data-content="reels"]')
+  ?.addEventListener('click', () => {
+    // Small delay to ensure tab is visible before loading
+    setTimeout(loadReels, 100);
+  });
 
-// Optional: Load immediately if Reels is default tab
-// loadReels();
+// Optional: load immediately if needed
+loadReels();
