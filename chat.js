@@ -4300,162 +4300,194 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  // === LIVESTREAM MODAL: VARIABLES & CONSTANTS ===
+  // === ELEMENTS ===
   const liveModal = document.getElementById('liveModal');
-  const liveConsentModal = document.getElementById('adultConsentModal');
+  const liveConsentModal = document.getElementById('adultConsentModal'); // Keep if you still use adult tab
   const livePlayerContainer = document.getElementById('livePlayerContainer');
   const livePostersSection = document.getElementById('upcomingPosters');
-  let liveTabBtns = document.querySelectorAll('.live-tab-btn');
   const liveCloseBtn = document.querySelector('.live-close');
+
+  const tabBtns = document.querySelectorAll('.live-tab-btn');
+  const tabContents = document.querySelectorAll('.live-tab-content');
+
+  // Consent buttons (only if you keep the adult flow)
   const liveAgreeBtn = document.getElementById('consentAgree');
   const liveCancelBtn = document.getElementById('consentCancel');
 
-  let currentContent = 'regular';
+  // Reels videos for preview/play on hover/tap
+  const reelVideos = document.querySelectorAll('.reel-item video');
+
+  // === CONFIG ===
   let fadeTimer;
+  const POSTER_FADE_DELAY = 8000;
 
-  const STREAM_ORIENTATION = 'portrait'; // or 'landscape'
-
-  // Fixed permanent playback IDs (replace with your real ones from Mux dashboard)
+  // Mux Playback IDs (only used in LiveShows tab)
   const PLAYBACK_IDS = {
     regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q',
-    adult: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // optional: same or different
+    adult: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // optional different stream
   };
 
   // === FUNCTIONS ===
-  function switchContent(type) {
-    currentContent = type;
-
-    liveTabBtns.forEach(btn => btn.classList.remove('active'));
-    const targetBtn = document.querySelector(`.live-tab-btn[data-content="${type}"]`);
-    if (targetBtn) targetBtn.classList.add('active');
-
-    startStream(type);
+  function openModal() {
+    liveModal.classList.add('open'); // or style.display = 'block' if using display
+    showTab('live'); // Default to LiveShows tab
+    resetPosterFade();
   }
 
-  function startStream(type) {
-    livePlayerContainer.innerHTML = '<div style="color:#aaa;text-align:center;padding:60px;">Loading stream...</div>';
+  function closeModal() {
+    liveModal.classList.remove('open');
+    if (liveConsentModal) liveConsentModal.style.display = 'none';
 
+    // Cleanup player
+    livePlayerContainer.innerHTML = '';
+    livePlayerContainer.classList.remove('portrait', 'landscape');
+
+    // Reset posters
+    livePostersSection?.classList.remove('fading');
+    clearTimeout(fadeTimer);
+  }
+
+  function showTab(tabId) {
+    // Update buttons
+    tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.content === tabId));
+    
+    // Update content
+    tabContents.forEach(content => content.classList.toggle('active', content.id === tabId));
+
+    // Tab-specific logic
+    if (tabId === 'live') {
+      startLiveStream('regular'); // or make it configurable
+      resetPosterFade();
+    } else if (tabId === 'upcoming') {
+      resetPosterFade();
+    } else if (tabId === 'reels') {
+      // Optional: preload or reset reel videos
+      reelVideos.forEach(video => {
+        video.pause();
+        video.currentTime = 0;
+      });
+    }
+  }
+
+  function startLiveStream(type = 'regular') {
     const playbackId = PLAYBACK_IDS[type];
+    
+    livePlayerContainer.innerHTML = '<div style="color:#aaa;text-align:center;padding:60px;font-size:18px;">Loading stream...</div>';
 
     if (!playbackId || playbackId.includes('YOUR_')) {
-      livePlayerContainer.innerHTML = '<div style="color:#ccc;text-align:center;padding:60px;">Stream not configured</div>';
+      livePlayerContainer.innerHTML = '<div style="color:#ccc;text-align:center;padding:60px;font-size:18px;">Stream not configured</div>';
       return;
     }
 
     livePlayerContainer.innerHTML = '';
-    livePlayerContainer.classList.add(STREAM_ORIENTATION);
-
+    
     const player = document.createElement('mux-player');
     player.setAttribute('playback-id', playbackId);
     player.setAttribute('stream-type', 'live');
     player.setAttribute('autoplay', 'muted');
     player.setAttribute('muted', 'true');
-    player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.jpg?width=720&height=1280&fit_mode=smartcrop`);
+    player.setAttribute('controls', 'true');
+    player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.jpg?width=720&height=1280&fit_mode=preserve`);
+
+    // Mobile-first: prefer portrait
+    player.style.width = '100%';
+    player.style.height = '100%';
 
     livePlayerContainer.appendChild(player);
   }
 
-  function closeAllLiveModal() {
-    liveModal.style.display = 'none';
-    liveConsentModal.style.display = 'none';
-    livePlayerContainer.innerHTML = '';
-    livePlayerContainer.classList.remove('portrait', 'landscape');
-    livePostersSection.classList.remove('fading');
+  function resetPosterFade() {
+    livePostersSection?.classList.remove('fading');
     clearTimeout(fadeTimer);
-    liveCloseBtn.classList.remove('hidden');
+    fadeTimer = setTimeout(() => {
+      livePostersSection?.classList.add('fading');
+    }, POSTER_FADE_DELAY);
   }
+
+  // === REELS INTERACTION (TikTok-style preview & play) ===
+  reelVideos.forEach(video => {
+    const reelItem = video.parentElement;
+
+    // Preview on hover (desktop)
+    reelItem.addEventListener('mouseenter', () => video.play());
+    reelItem.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+
+    // Tap to play/pause + fullscreen attempt (mobile)
+    reelItem.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+
+      // Attempt fullscreen on second tap (common mobile pattern)
+      if (video.requestFullscreen) {
+        video.requestFullscreen();
+      } else if (video.webkitEnterFullscreen) { // iOS Safari
+        video.webkitEnterFullscreen();
+      }
+    });
+  });
 
   // === EVENT LISTENERS ===
-  const openBtn = document.getElementById('openHostsBtn');
-  if (openBtn) {
-    openBtn.onclick = () => {
-      liveModal.style.display = 'block';
-      livePostersSection.classList.remove('fading');
-      liveCloseBtn.classList.remove('hidden');
+  document.getElementById('openHostsBtn')?.addEventListener('click', openModal);
 
-      liveTabBtns.forEach(b => b.classList.remove('active'));
-      const regularBtn = document.querySelector('.live-tab-btn[data-content="regular"]');
-      if (regularBtn) regularBtn.classList.add('active');
+  liveCloseBtn?.addEventListener('click', closeModal);
 
-      switchContent('regular');
+  // Close modal when clicking backdrop
+  liveModal?.addEventListener('click', (e) => {
+    if (e.target === liveModal) closeModal();
+  });
 
-      clearTimeout(fadeTimer);
-      fadeTimer = setTimeout(() => {
-        livePostersSection.classList.add('fading');
-      }, 8000);
-    };
-  }
+  // Tab switching
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.dataset.content;
 
-  liveTabBtns.forEach(btn => {
-    btn.onclick = () => {
-      const target = btn.dataset.content;
-
-      liveTabBtns.forEach(b => b.classList.remove('active'));
-
-      if (target === 'regular') {
-        btn.classList.add('active');
-        switchContent('regular');
+      // If you still have adult consent flow and want to gate "adult" content:
+      // Remove this block if you're only using the 3 clean tabs
+      if (targetTab === 'adult' && liveConsentModal) {
+        liveConsentModal.style.display = 'flex';
+        liveCloseBtn?.classList.add('hidden');
         return;
       }
 
-      const regularBtn = document.querySelector('.live-tab-btn[data-content="regular"]');
-      if (regularBtn) regularBtn.classList.add('active');
-
-      liveConsentModal.style.display = 'flex';
-      liveCloseBtn.classList.add('hidden');
-    };
+      showTab(targetTab);
+    });
   });
 
+  // Consent flow (only if you keep adult tab)
   if (liveAgreeBtn) {
-    liveAgreeBtn.onclick = () => {
+    liveAgreeBtn.addEventListener('click', () => {
       liveConsentModal.style.display = 'none';
-      liveCloseBtn.classList.remove('hidden');
-
-      liveTabBtns.forEach(b => b.classList.remove('active'));
-      const adultBtn = document.querySelector('.live-tab-btn[data-content="adult"]');
-      if (adultBtn) adultBtn.classList.add('active');
-
-      switchContent('adult');
-    };
+      liveCloseBtn?.classList.remove('hidden');
+      showTab('adult'); // or load adult stream
+      startLiveStream('adult');
+    });
   }
 
   if (liveCancelBtn) {
-    liveCancelBtn.onclick = () => {
+    liveCancelBtn.addEventListener('click', () => {
       liveConsentModal.style.display = 'none';
-      liveCloseBtn.classList.remove('hidden');
-
-      liveTabBtns.forEach(b => b.classList.remove('active'));
-      const regularBtn = document.querySelector('.live-tab-btn[data-content="regular"]');
-      if (regularBtn) regularBtn.classList.add('active');
-
-      switchContent('regular');
-    };
+      liveCloseBtn?.classList.remove('hidden');
+      showTab('live');
+    });
   }
 
   if (liveConsentModal) {
-    liveConsentModal.onclick = (e) => {
+    liveConsentModal.addEventListener('click', (e) => {
       if (e.target === liveConsentModal) {
         liveConsentModal.style.display = 'none';
-        liveCloseBtn.classList.remove('hidden');
-
-        liveTabBtns.forEach(b => b.classList.remove('active'));
-        const regularBtn = document.querySelector('.live-tab-btn[data-content="regular"]');
-        if (regularBtn) regularBtn.classList.add('active');
-
-        switchContent('regular');
+        liveCloseBtn?.classList.remove('hidden');
+        showTab('live');
       }
-    };
+    });
   }
-
-  if (liveCloseBtn) liveCloseBtn.onclick = closeAllLiveModal;
-
-  if (liveModal) {
-    liveModal.onclick = (e) => {
-      if (e.target === liveModal) closeAllLiveModal();
-    };
-  }
-}); // <-- This closing }); is critical — it was probably missing
-
+});
   
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
