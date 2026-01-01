@@ -1969,8 +1969,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   justify-content: center;
   text-align: center;
 }
-  
-/* LIVE MODAL - Fullscreen, mobile-optimized */
+
 /* LIVE MODAL - Fullscreen, mobile-optimized */
 .live-modal {
   display: none;
@@ -2005,28 +2004,29 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 .live-close:hover { opacity: 1; transform: scale(1.1); }
 
-/* TABS - Ultra compact, fits perfectly on mobile */
+/* TABS - Compact and giving glow space */
 .live-content-tabs {
   display: flex;
   justify-content: center;
-  gap: 8px;                    /* Even tighter gap */
-  padding: 0 10px;
+  gap: 8px;
+  padding: 16px 10px 10px;    /* Extra top padding = room for glow */
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   flex-wrap: nowrap;
   margin-bottom: 10px;
+  background: transparent;    /* Ensures no parent clipping */
 }
 .live-content-tabs::-webkit-scrollbar { display: none; }
 
 .live-tab-btn {
   flex: 0 0 auto;
-  min-width: 90px;             /* Much smaller */
-  padding: 8px 14px;           /* Reduced padding = more compact */
+  min-width: 90px;
+  padding: 8px 14px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
-  font-size: 14.5px;           /* Smaller, cleaner text */
+  font-size: 14.5px;
   font-weight: 700;
   color: #fff;
   cursor: pointer;
@@ -2035,24 +2035,26 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   white-space: nowrap;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow: hidden;
+  /* REMOVED overflow: hidden — this was cutting the glow! */
 }
 
 .live-tab-btn:hover {
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* ACTIVE TAB - Pure neon glow, no movement, no clipping */
+/* ACTIVE TAB - Full visible neon glow, no clipping */
 .live-tab-btn.active {
   background: #c3f60c;
   color: #000 !important;
   border-color: #c3f60c;
   font-weight: 800;
+  /* Tamed but still intense glow — fully visible */
   box-shadow:
-    0 0 18px rgba(195, 246, 12, 0.9),
-    0 0 35px rgba(195, 246, 12, 0.6),
-    0 6px 16px rgba(195, 246, 12, 0.4),
-    inset 0 0 20px rgba(255, 255, 255, 0.5);
+    0 0 12px rgba(195, 246, 12, 0.95),     /* Bright core glow */
+    0 0 24px rgba(195, 246, 12, 0.7),      /* Medium halo */
+    0 0 40px rgba(195, 246, 12, 0.5),      /* Wide soft glow */
+    0 6px 16px rgba(195, 246, 12, 0.4),    /* Green lift shadow */
+    inset 0 0 20px rgba(255, 255, 255, 0.6); /* Inner pop */
   z-index: 2;
 }
 
@@ -2117,70 +2119,110 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     padding: 0 6px;
   }
 }
-    /* Reels Gallery Tab - TikTok/YouTube style grid */
-    #reelsGallery {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr); /* 2 columns on small screens */
-      gap: 8px;
-      padding: 0 8px;
-    }
+ /* Reels Gallery */
+#reelsGallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 0 8px;
+}
 
-    .reel-item {
-      position: relative;
-      aspect-ratio: 9 / 16;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #111;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
+.reel-item {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
 
-    .reel-item video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+.reel-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-    .reel-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.7));
-      display: flex;
-      align-items: flex-end;
-      padding: 16px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+.play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: rgba(255,255,255,0.8);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
 
-    .reel-item:hover .reel-overlay,
-    .reel-item:active .reel-overlay { opacity: 1; }
+/* Overlay with title + views */
+.reel-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 
-    .reel-title {
-      font-size: 14px;
-      font-weight: 600;
-    }
+.reel-item:hover .reel-overlay,
+.reel-item:active .reel-overlay {
+  opacity: 1;
+}
 
-    .play-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 48px;
-      color: rgba(255,255,255,0.8);
-      pointer-events: none;
-    }
+.reel-item:hover .play-icon,
+.reel-item:active .play-icon {
+  opacity: 0.6;
+}
 
-    /* Desktop adjustments */
-    @media (min-width: 768px) {
-      .live-modal-content { padding: 80px 40px 60px; }
-      #livePlayerContainer { aspect-ratio: 16 / 9; }
-      #reelsGallery { grid-template-columns: repeat(3, 1fr); gap: 16px; }
-      .poster { flex: 0 0 180px; }
-    }
+.reel-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-    @media (min-width: 1024px) {
-      #reelsGallery { grid-template-columns: repeat(4, 1fr); }
-    }
+.reel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+.reel-views {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0.9;
+}
+
+.views-icon {
+  font-size: 16px;
+}
+
+.views-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  #reelsGallery {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .reel-title { font-size: 16px; }
+  .reel-views { font-size: 15px; }
+}
+
+@media (min-width: 1024px) {
+  #reelsGallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 .google-block { 
   width: 100%;  /* ← Matches wrapper width */
   text-align: center;  /* ← Centers text + inline elements */
@@ -2297,45 +2339,68 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
 
-      <!-- Reels Tab - TikTok-style vertical video gallery -->
-      <div id="reels" class="live-tab-content">
-        <div id="reelsGallery">
-          <!-- Example reel items - replace src with your uploaded videos -->
-          <div class="reel-item">
-            <video src="https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4" muted loop playsinline></video>
-            <div class="play-icon">▶</div>
-            <div class="reel-overlay">
-              <div class="reel-title">Hot Dance Reel</div>
-            </div>
+      <!-- Reels Tab - TikTok-style gallery with views count -->
+<div id="reels" class="live-tab-content">
+  <div id="reelsGallery">
+    <!-- Reel Item Example -->
+    <div class="reel-item">
+      <video src="https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4" muted loop playsinline preload="metadata"></video>
+      <div class="play-icon">▶</div>
+      <div class="reel-overlay">
+        <div class="reel-info">
+          <div class="reel-title">Hot Dance Reel</div>
+          <div class="reel-views">
+            <span class="views-icon">👁️</span>
+            <span class="views-count">42.3K</span>
           </div>
-          <div class="reel-item">
-            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline></video>
-            <div class="play-icon">▶</div>
-            <div class="reel-overlay">
-              <div class="reel-title">Behind the Scenes</div>
-            </div>
-          </div>
-           <div class="reel-item">
-            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline></video>
-            <div class="play-icon">▶</div>
-            <div class="reel-overlay">
-              <div class="reel-title">Behind the Scenes</div>
-            </div>
-          </div>
-           <div class="reel-item">
-            <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline></video>
-            <div class="play-icon">▶</div>
-            <div class="reel-overlay">
-              <div class="reel-title">Behind the Scenes</div>
-            </div>
-          </div>
-          <!-- Add as many as needed -->
         </div>
       </div>
-
     </div>
-  </div>
 
+    <div class="reel-item">
+      <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
+      <div class="play-icon">▶</div>
+      <div class="reel-overlay">
+        <div class="reel-info">
+          <div class="reel-title">Behind the Scenes</div>
+          <div class="reel-views">
+            <span class="views-icon">👁️</span>
+            <span class="views-count">18.7K</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reel-item">
+      <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
+      <div class="play-icon">▶</div>
+      <div class="reel-overlay">
+        <div class="reel-info">
+          <div class="reel-title">Late Night Vibes</div>
+          <div class="reel-views">
+            <span class="views-icon">👁️</span>
+            <span class="views-count">105.2K</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reel-item">
+      <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
+      <div class="play-icon">▶</div>
+      <div class="reel-overlay">
+        <div class="reel-info">
+          <div class="reel-title">Exclusive Drop</div>
+          <div class="reel-views">
+            <span class="views-icon">👁️</span>
+            <span class="views-count">89.1K</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Add more reels as needed -->
+  </div>
+</div>
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
