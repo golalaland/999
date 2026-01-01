@@ -5780,4 +5780,3 @@ function attachReelEvents() {
  * INIT
  *********************************/
 loadReels();
-
