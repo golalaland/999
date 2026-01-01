@@ -5678,7 +5678,7 @@ const reelsData = [
 ];
 
 /*********************************
- * FORMAT VIEW COUNTS
+ * FORMAT VIEWS
  *********************************/
 function formatViews(count) {
   if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + 'M';
@@ -5702,15 +5702,15 @@ function loadReels() {
           src="${reel.videoUrl}"
           muted
           preload="metadata"
-          controls
         ></video>
 
-        <div class="play-overlay">▶</div>
+        <!-- BIG PLAY BUTTON (UNCHANGED) -->
+        <div class="play-icon">▶</div>
 
         <div class="reel-overlay">
           <div class="reel-info">
             <div class="reel-views">
-              ▶ <span>${formatViews(reel.views)}</span>
+              ${formatViews(reel.views)} views
             </div>
             <div class="reel-title">${reel.title}</div>
             <div class="reel-description">${reel.description}</div>
@@ -5720,20 +5720,20 @@ function loadReels() {
     `);
   });
 
-  attachReelEvents();
+  attachReelInteractions();
 }
 
 /*********************************
  * INTERACTIONS
  *********************************/
-function attachReelEvents() {
+function attachReelInteractions() {
   document.querySelectorAll('.reel-item').forEach(item => {
     const video = item.querySelector('video');
-    const playOverlay = item.querySelector('.play-overlay');
+    const playIcon = item.querySelector('.play-icon');
 
-    if (!video) return;
+    if (!video || !playIcon) return;
 
-    // Desktop preview
+    /* Desktop hover preview */
     item.addEventListener('mouseenter', () => {
       video.muted = true;
       video.play().catch(() => {});
@@ -5742,16 +5742,17 @@ function attachReelEvents() {
     item.addEventListener('mouseleave', () => {
       video.pause();
       video.currentTime = 0;
-      playOverlay.style.opacity = '1';
+      playIcon.style.opacity = '1';
     });
 
-    // Tap → native fullscreen
-    item.addEventListener('click', async () => {
+    /* TAP PLAY ICON → FULLSCREEN + PLAY */
+    playIcon.addEventListener('click', async (e) => {
+      e.stopPropagation();
+
       try {
         video.muted = false;
-        playOverlay.style.opacity = '0';
 
-        // iOS Safari
+        // iOS Safari native fullscreen
         if (video.webkitEnterFullscreen) {
           video.webkitEnterFullscreen();
         }
@@ -5761,17 +5762,19 @@ function attachReelEvents() {
         }
 
         await video.play();
+        playIcon.style.opacity = '0';
       } catch (err) {
-        console.log('Playback error:', err);
+        console.log('Fullscreen play failed:', err);
       }
     });
 
+    /* Safety sync */
     video.addEventListener('pause', () => {
-      playOverlay.style.opacity = '1';
+      playIcon.style.opacity = '1';
     });
 
     video.addEventListener('play', () => {
-      playOverlay.style.opacity = '0';
+      playIcon.style.opacity = '0';
     });
   });
 }
