@@ -5646,3 +5646,118 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
       showStarPopup('Error', 'Could not copy link — try again', 3000);
     });
 });
+<script>
+// Reels data — easy to edit, add, or remove
+const reelsData = [
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4",
+    title: "Hot Dance Reel",
+    description: "Turning up the heat with this fire routine 🔥 Who's joining next?",
+    views: 42300
+  },
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4",
+    title: "Behind the Scenes",
+    description: "Day in the life — prep, laughs, and real moments backstage 🎥",
+    views: 18700
+  },
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4",
+    title: "Late Night Vibes",
+    description: "Chill session after hours — just vibes and good energy 🌙",
+    views: 105200
+  },
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4",
+    title: "Exclusive Drop",
+    description: "First look at tomorrow's surprise... you saw it here first 👀",
+    views: 89100
+  }
+  // Add more objects here — super easy!
+];
+
+// Format views: 42300 → "42.3K"
+function formatViews(count) {
+  if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+  if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
+  return count.toString();
+}
+
+// Generate full SVG string (keeps it consistent)
+const viewsSvg = `
+<svg class="views-icon-svg" viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#ffffff">
+  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+  <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+  <g id="SVGRepo_iconCarrier">
+    <title>play</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g id="Icon-Set" transform="translate(-417.000000, -569.000000)" fill="#ffffff">
+        <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" id="play"></path>
+      </g>
+    </g>
+  </g>
+</svg>
+`;
+
+// Load reels when the Reels tab becomes active
+function loadReels() {
+  const gallery = document.getElementById('reelsGallery');
+  if (!gallery) return;
+
+  gallery.innerHTML = ''; // Clear any old content
+
+  reelsData.forEach(reel => {
+    const reelHTML = `
+      <div class="reel-item">
+        <video src="${reel.videoUrl}" muted loop playsinline preload="metadata"></video>
+        
+        <div class="play-icon">▶</div>
+        
+        <div class="reel-overlay">
+          <div class="reel-info">
+            <div class="reel-views">
+              ${viewsSvg}
+              <span class="views-count">${formatViews(reel.views)}</span>
+            </div>
+            <div class="reel-title">${reel.title}</div>
+            <div class="reel-description">${reel.description}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    gallery.insertAdjacentHTML('beforeend', reelHTML);
+  });
+
+  // Re-attach hover/tap interactions
+  attachReelInteractions();
+}
+
+// Preview on hover + play on tap
+function attachReelInteractions() {
+  document.querySelectorAll('.reel-item video').forEach(video => {
+    const item = video.parentElement;
+
+    item.addEventListener('mouseenter', () => video.play().catch(() => {}));
+    item.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (video.paused) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  });
+}
+
+// Call this when Reels tab is opened
+// Example: in your tab switcher code
+document.querySelector('.live-tab-btn[data-content="reels"]')?.addEventListener('click', loadReels);
+
+// Optional: Load immediately if Reels is default tab
+// loadReels();
+</script>
