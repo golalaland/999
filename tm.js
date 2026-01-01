@@ -228,10 +228,10 @@ setTimeout(() => {
 
 
 // ---------- CONFIG ----------
-const STAR_COST = 10;
+const STAR_COST = 50;
 const DAILY_INITIAL_POT = 10000;
 const CASH_PER_AWARD = 1;
-const SESSION_DURATION = 60;
+const SESSION_DURATION = 90;
 
 // ---------- STATE ----------
 let currentUser = null;
