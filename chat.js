@@ -5760,4 +5760,3 @@ document.querySelector('.live-tab-btn[data-content="reels"]')?.addEventListener(
 
 // Optional: Load immediately if Reels is default tab
 // loadReels();
-</script>
