@@ -196,110 +196,119 @@ body {display:flex;justify-content:center;align-items:flex-start;padding:18px 0 
   50%      { opacity: 0.8; transform: scale(1.15); }
 }
 /* =================================================
-   ULTIMATE 3D GEM TITAN BUTTON – God-Tier Tap Energy
+   WORLD'S MOST ADDICTIVE TAP BUTTON – Clean & Irresistible
    ================================================= */
 #tapButton {
-  --gem: #00ff9d;           /* brighter, more luxurious emerald */
-  --glow: #00ffea;          /* cyan-electric glow */
-  --deep: #006633;          /* darker core for richer depth */
-  --shadow: rgba(0, 255, 170, 0.42);
-  --sparkle: #ffffff;
+  --gem: #00e676;           /* classic fresh green – most tempting color */
+  --glow: #00ffcc;          /* bright cyan-electric glow */
+  --deep: #008b47;          /* rich shadow tone */
+  --shadow: rgba(0, 230, 118, 0.45);
 
   position: relative;
-  width: 111px;             /* BIG BOI energy – 140–160px feels premium */
-  height: 111px;
+  width: 148px;             /* perfect sweet spot: big but not overwhelming */
+  height: 148px;
   border: none;
   border-radius: 50%;
-  background: 
-    radial-gradient(circle at 38% 38%, #ffffff 0%, var(--gem) 18%, var(--deep) 65%, #003322 100%),
-    conic-gradient(from 45deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.25) 30deg, transparent 90deg);
+  background: radial-gradient(
+    circle at 35% 35%,
+    #ffffff 0%,
+    var(--gem) 22%,
+    var(--deep) 70%,
+    #004d26 100%
+  );
   box-shadow:
-    0 16px 40px var(--shadow),
-    0 8px 20px rgba(0, 0, 0, 0.5),
-    inset 0 -10px 20px rgba(0,0,0,0.45),
-    inset 0 12px 24px rgba(255,255,255,0.55),
-    inset 0 0 30px rgba(0,255,220,0.3);
+    0 12px 40px var(--shadow),
+    0 6px 20px rgba(0,0,0,0.4),
+    inset 0 -8px 16px rgba(0,0,0,0.35),
+    inset 0 10px 24px rgba(255,255,255,0.65),
+    inset 0 0 30px rgba(0,255,200,0.25);
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.12s cubic-bezier(0.17, 0.67, 0.4, 1.4);
+  transition: all 0.14s cubic-bezier(0.25, 0.8, 0.4, 1.5);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   will-change: transform, box-shadow;
 }
 
-/* Epic inner shine + text lift */
-#tapButton::after {
-  content: "";
-  position: absolute;
-  inset: -40%;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7) 0%, transparent 60%);
-  opacity: 0.5;
-  pointer-events: none;
-  animation: shine 6s infinite linear;
-}
-
-@keyframes shine {
-  0%   { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
-  100% { transform: translateX(100%) translateY(100%) rotate(360deg); }
-}
-
-/* Always-on premium breathing glow */
+/* Subtle always-on premium glow (no moving shimmer) */
 #tapButton::before {
   content: "";
   position: absolute;
-  inset: -20px;
+  inset: -18px;
   border-radius: 50%;
-  background: radial-gradient(circle, transparent 40%, var(--glow) 70%, transparent 100%);
-  opacity: 0.35;
-  animation: godPulse 2.4s infinite ease-in-out;
+  background: radial-gradient(circle at 40% 40%, var(--glow) 30%, transparent 70%);
+  opacity: 0.45;
+  animation: softBreath 3.2s infinite ease-in-out;
   pointer-events: none;
-  filter: blur(8px);
+  filter: blur(10px);
 }
 
-@keyframes godPulse {
-  0%, 100%   { transform: scale(1.0);   opacity: 0.35; }
-  50%        { transform: scale(1.35);  opacity: 0.7;  }
+@keyframes softBreath {
+  0%, 100%   { transform: scale(1);   opacity: 0.45; }
+  50%        { transform: scale(1.28); opacity: 0.75; }
 }
 
-/* Text – bold, lifted, expensive */
+/* Big bold lifted text – screams "TAP ME" */
 #tapButton .inner {
   position: relative;
   z-index: 3;
-  font: 900 38px/1.1 "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  font: 900 42px/1 "Arial Black", "Helvetica Neue", Arial, sans-serif;
   color: #000000;
-  letter-spacing: -1px;
+  letter-spacing: -1.5px;
   text-shadow: 
-    0 2px 4px rgba(255,255,255,0.9),
-    0 -2px 6px rgba(0,0,0,0.4);
-  -webkit-text-stroke: 0.5px rgba(255,255,255,0.4);
+    0 2px 6px rgba(255,255,255,0.95),
+    0 -2px 8px rgba(0,0,0,0.5);
+  -webkit-text-stroke: 0.6px rgba(255,255,255,0.35);
 }
 
-/* Mega press feedback */
+/* Super juicy press feedback */
 #tapButton:active {
-  transform: translateY(8px) scale(0.92);
+  transform: translateY(10px) scale(0.91);
   box-shadow:
-    0 6px 16px var(--shadow),
+    0 4px 16px var(--shadow),
     inset 0 -6px 12px rgba(0,0,0,0.6),
-    inset 0 6px 16px rgba(255,255,255,0.5);
-  transition: all 0.08s ease-out;
+    inset 0 6px 18px rgba(255,255,255,0.6);
+  transition: all 0.09s ease-out;
 }
 
-/* Massive juicy ripple */
+/* Big satisfying ripple on tap */
 #tapButton .ripple {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.9) 5%, rgba(0,255,220,0.7) 40%, transparent 70%);
+  background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.95) 5%, rgba(0,255,200,0.75) 45%, transparent 75%);
   transform: scale(0);
-  opacity: 0.8;
-  animation: megaRipple 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 0.85;
+  animation: bigRipple 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
   pointer-events: none;
 }
 
-@keyframes megaRipple {
-  to { transform: scale(3.2); opacity: 0; }
+@keyframes bigRipple {
+  to { transform: scale(3.5); opacity: 0; }
 }
 
+/* Tiny satisfying burst on press (kept subtle) */
+#tapButton:active::after {
+  content: "";
+  position: absolute;
+  inset: 50%;
+  width: 8px; height: 8px;
+  margin: -4px;
+  background: var(--glow);
+  border-radius: 50%;
+  box-shadow:
+    0 0 16px 6px var(--glow),
+    35px -35px 0 -3px var(--glow),
+    -35px 35px 0 -3px var(--glow),
+    35px 35px 0 -3px var(--glow),
+    -35px -35px 0 -3px var(--glow);
+  animation: tinyBurst 0.5s ease-out forwards;
+}
+
+@keyframes tinyBurst {
+  to { transform: translateY(-60px) scale(0.7); opacity: 0; }
+}
+  
 /* Explosive particle crown on tap */
 #tapButton:active::after {
   content: "";
