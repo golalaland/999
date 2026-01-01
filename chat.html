@@ -1969,7 +1969,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   justify-content: center;
   text-align: center;
 }
-
+  
+/* LIVE MODAL - Fullscreen, mobile-optimized */
 /* LIVE MODAL - Fullscreen, mobile-optimized */
 .live-modal {
   display: none;
@@ -2004,29 +2005,28 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 .live-close:hover { opacity: 1; transform: scale(1.1); }
 
-/* TABS - Compact and giving glow space */
+/* TABS - Ultra compact, fits perfectly on mobile */
 .live-content-tabs {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  padding: 16px 10px 10px;    /* Extra top padding = room for glow */
+  gap: 8px;                    /* Even tighter gap */
+  padding: 0 10px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   flex-wrap: nowrap;
   margin-bottom: 10px;
-  background: transparent;    /* Ensures no parent clipping */
 }
 .live-content-tabs::-webkit-scrollbar { display: none; }
 
 .live-tab-btn {
   flex: 0 0 auto;
-  min-width: 90px;
-  padding: 8px 14px;
+  min-width: 90px;             /* Much smaller */
+  padding: 8px 14px;           /* Reduced padding = more compact */
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
-  font-size: 14.5px;
+  font-size: 14.5px;           /* Smaller, cleaner text */
   font-weight: 700;
   color: #fff;
   cursor: pointer;
@@ -2035,26 +2035,24 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   white-space: nowrap;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   position: relative;
-  /* REMOVED overflow: hidden — this was cutting the glow! */
+  overflow: hidden;
 }
 
 .live-tab-btn:hover {
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* ACTIVE TAB - Full visible neon glow, no clipping */
+/* ACTIVE TAB - Pure neon glow, no movement, no clipping */
 .live-tab-btn.active {
   background: #c3f60c;
   color: #000 !important;
   border-color: #c3f60c;
   font-weight: 800;
-  /* Tamed but still intense glow — fully visible */
   box-shadow:
-    0 0 12px rgba(195, 246, 12, 0.95),     /* Bright core glow */
-    0 0 24px rgba(195, 246, 12, 0.7),      /* Medium halo */
-    0 0 40px rgba(195, 246, 12, 0.5),      /* Wide soft glow */
-    0 6px 16px rgba(195, 246, 12, 0.4),    /* Green lift shadow */
-    inset 0 0 20px rgba(255, 255, 255, 0.6); /* Inner pop */
+    0 0 18px rgba(195, 246, 12, 0.9),
+    0 0 35px rgba(195, 246, 12, 0.6),
+    0 6px 16px rgba(195, 246, 12, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.5);
   z-index: 2;
 }
 
@@ -2119,10 +2117,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     padding: 0 6px;
   }
 }
- /* Reels Gallery */
+  /* Reels Gallery Tab - TikTok/YouTube style grid */
 #reelsGallery {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
   gap: 8px;
   padding: 0 8px;
 }
@@ -2134,7 +2132,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   overflow: hidden;
   background: #111;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease;
+}
+
+.reel-item:hover {
+  transform: scale(1.02);
 }
 
 .reel-item video {
@@ -2143,22 +2146,23 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   object-fit: cover;
 }
 
+/* Center play icon */
 .play-icon {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 48px;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
-/* Overlay with title + views */
+/* Bottom overlay with title + views */
 .reel-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%);
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.85) 100%);
   display: flex;
   align-items: flex-end;
   padding: 16px;
@@ -2171,11 +2175,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   opacity: 1;
 }
 
-.reel-item:hover .play-icon,
-.reel-item:active .play-icon {
+.reel-item:hover .play-icon {
   opacity: 0.6;
 }
 
+/* Info container */
 .reel-info {
   width: 100%;
   display: flex;
@@ -2187,35 +2191,56 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
+/* Views row with custom SVG icon */
 .reel-views {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
-.views-icon {
-  font-size: 16px;
+.views-icon-svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
 }
 
+/* Make numbers look crisp and aligned */
 .views-count {
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
 }
 
-/* Desktop */
+/* Desktop adjustments */
 @media (min-width: 768px) {
   #reelsGallery {
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
+    padding: 0 16px;
   }
-  .reel-title { font-size: 16px; }
-  .reel-views { font-size: 15px; }
+
+  .reel-title {
+    font-size: 16px;
+  }
+
+  .reel-views {
+    font-size: 15px;
+  }
+
+  .views-icon-svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .reel-item:hover {
+    transform: scale(1.03);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -2339,7 +2364,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
 
-      <!-- Reels Tab - TikTok-style gallery with views count -->
+     <!-- Reels Tab - TikTok-style gallery with custom SVG views icon -->
 <div id="reels" class="live-tab-content">
   <div id="reelsGallery">
     <!-- Reel Item Example -->
@@ -2350,7 +2375,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         <div class="reel-info">
           <div class="reel-title">Hot Dance Reel</div>
           <div class="reel-views">
-            <span class="views-icon">👁️</span>
+            <!-- Custom SVG Views Icon -->
+            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
+              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
+                    transform="translate(417,569)" fill="#ffffff"/>
+            </svg>
             <span class="views-count">42.3K</span>
           </div>
         </div>
@@ -2364,13 +2393,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         <div class="reel-info">
           <div class="reel-title">Behind the Scenes</div>
           <div class="reel-views">
-            <span class="views-icon">👁️</span>
+            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
+              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
+                    transform="translate(417,569)" fill="#ffffff"/>
+            </svg>
             <span class="views-count">18.7K</span>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Repeat for other reels with different titles/views -->
     <div class="reel-item">
       <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
       <div class="play-icon">▶</div>
@@ -2378,7 +2411,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         <div class="reel-info">
           <div class="reel-title">Late Night Vibes</div>
           <div class="reel-views">
-            <span class="views-icon">👁️</span>
+            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
+              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
+                    transform="translate(417,569)" fill="#ffffff"/>
+            </svg>
             <span class="views-count">105.2K</span>
           </div>
         </div>
@@ -2392,15 +2428,21 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         <div class="reel-info">
           <div class="reel-title">Exclusive Drop</div>
           <div class="reel-views">
-            <span class="views-icon">👁️</span>
+            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
+              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
+                    transform="translate(417,569)" fill="#ffffff"/>
+            </svg>
             <span class="views-count">89.1K</span>
           </div>
         </div>
       </div>
     </div>
-    <!-- Add more reels as needed -->
   </div>
 </div>
+
+    </div>
+  </div>
+
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
