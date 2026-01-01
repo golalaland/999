@@ -2121,10 +2121,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   }
 }
   /* Reels Gallery Tab - TikTok/YouTube style grid */
-/* Reels Gallery Tab - TikTok/YouTube style grid */
+/* Reels Gallery Tab - Pro TikTok/YouTube style grid */
 #reelsGallery {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Always 2 columns on mobile */
+  grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
   gap: 8px;
   padding: 0 8px;
 }
@@ -2137,12 +2137,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   background: #111;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
 }
 
 .reel-item:hover,
 .reel-item:active {
-  transform: scale(1.02);
+  transform: scale(1.02); /* Very subtle lift — feels responsive but not aggressive */
 }
 
 .reel-item video {
@@ -2151,7 +2151,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   object-fit: cover;
 }
 
-/* Big center play icon */
+/* Center play icon */
 .play-icon {
   position: absolute;
   top: 50%;
@@ -2163,14 +2163,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   transition: opacity 0.3s ease;
 }
 
-/* Bottom overlay */
+/* Bottom overlay with gradient */
 .reel-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.9) 100%);
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.92) 100%);
   display: flex;
   align-items: flex-end;
-  padding: 14px;
+  padding: 16px 14px;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -2184,15 +2184,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   opacity: 0.6;
 }
 
-/* Info: Views first, then title below */
+/* Text info — left-aligned, clean hierarchy */
 .reel-info {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 5px; /* Tight spacing between views and title */
+  gap: 5px;
+  align-items: flex-start;
+  text-align: left;
 }
 
-/* Views row - top priority, bold */
+/* Views row — bold, top priority */
 .reel-views {
   display: flex;
   align-items: center;
@@ -2203,24 +2205,37 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   opacity: 0.98;
 }
 
-/* Smaller, cleaner SVG icon */
 .views-icon-svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
 }
 
-/* Title below views - slightly lighter and smaller */
+/* Title — strong, aligned with views */
 .reel-title {
-  font-size: 14.5px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #fff;
-  opacity: 0.92;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  opacity: 0.98;
   line-height: 1.3;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* Desktop adjustments */
+/* Description — subtle caption, 2-line clamp */
+.reel-description {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  max-width: 95%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+/* Desktop enhancements */
 @media (min-width: 768px) {
   #reelsGallery {
     grid-template-columns: repeat(3, 1fr);
@@ -2229,7 +2244,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   }
 
   .reel-overlay {
-    padding: 18px;
+    padding: 20px 18px;
   }
 
   .reel-views {
@@ -2243,8 +2258,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   }
 
   .reel-title {
-    font-size: 15.5px;
-    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .reel-description {
+    font-size: 14.5px;
+    -webkit-line-clamp: 3; /* Allow 3 lines on larger screens */
+    max-width: 90%;
   }
 
   .reel-item:hover,
@@ -2374,7 +2394,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
 
-  <!-- Reels Tab - 2 per row, title below views -->
+ <!-- Reels Tab - Pro TikTok-style with description -->
 <div id="reels" class="live-tab-content">
   <div id="reelsGallery">
 
@@ -2386,7 +2406,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       
       <div class="reel-overlay">
         <div class="reel-info">
-          <!-- Views first -->
+          <!-- Views row -->
           <div class="reel-views">
             <svg class="views-icon-svg" viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#ffffff">
               <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
@@ -2402,8 +2422,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
             </svg>
             <span class="views-count">42.3K</span>
           </div>
-          <!-- Title below views -->
+          
+          <!-- Title -->
           <div class="reel-title">Hot Dance Reel</div>
+          
+          <!-- New: Description (short caption) -->
+          <div class="reel-description">
+            Turning up the heat with this fire routine 🔥 Who's joining next?
+          </div>
         </div>
       </div>
     </div>
@@ -2416,9 +2442,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       
       <div class="reel-overlay">
         <div class="reel-info">
-          <!-- Views first -->
           <div class="reel-views">
             <svg class="views-icon-svg" viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#ffffff">
+              <!-- Same SVG as above -->
               <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
               <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
               <g id="SVGRepo_iconCarrier">
@@ -2432,34 +2458,22 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
             </svg>
             <span class="views-count">18.7K</span>
           </div>
-          <!-- Title below -->
+          
           <div class="reel-title">Behind the Scenes</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- === ADD MORE REELS HERE === -->
-    <!-- Just copy one of the blocks above and paste below -->
-
-    <!-- Example for next reel:
-    <div class="reel-item">
-      <video src="your-video-url.mp4" muted loop playsinline preload="metadata"></video>
-      <div class="play-icon">▶</div>
-      <div class="reel-overlay">
-        <div class="reel-info">
-          <div class="reel-views">
-            <svg class="views-icon-svg" ...> ... </svg>
-            <span class="views-count">99.9K</span>
+          
+          <div class="reel-description">
+            Day in the life — prep, laughs, and real moments backstage 🎥
           </div>
-          <div class="reel-title">Your New Title</div>
         </div>
       </div>
     </div>
-    -->
+
+    <!-- Add more reels here — just copy-paste and change title/description/views -->
 
   </div>
 </div>
 
+   
     </div>
   </div>
 
