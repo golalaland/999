@@ -2118,6 +2118,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   }
 }
   /* Reels Gallery Tab - TikTok/YouTube style grid */
+/* Reels Gallery Tab - TikTok/YouTube style grid */
 #reelsGallery {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
@@ -2136,7 +2137,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   transition: transform 0.2s ease;
 }
 
-.reel-item:hover {
+.reel-item:hover,
+.reel-item:active {
   transform: scale(1.02);
 }
 
@@ -2146,7 +2148,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   object-fit: cover;
 }
 
-/* Center play icon */
+/* Center play icon (big ▶) */
 .play-icon {
   position: absolute;
   top: 50%;
@@ -2158,7 +2160,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   transition: opacity 0.3s ease;
 }
 
-/* Bottom overlay with title + views */
+/* Bottom overlay */
 .reel-overlay {
   position: absolute;
   inset: 0;
@@ -2194,7 +2196,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* Views row with custom SVG icon */
+/* Views count with your full SVG */
 .reel-views {
   display: flex;
   align-items: center;
@@ -2209,12 +2211,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   width: 19px;
   height: 19px;
   flex-shrink: 0;
-}
-
-/* Make numbers look crisp and aligned */
-.views-count {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.3px;
 }
 
 /* Desktop adjustments */
@@ -2238,7 +2234,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     height: 21px;
   }
 
-  .reel-item:hover {
+  .reel-item:hover,
+  .reel-item:active {
     transform: scale(1.03);
   }
 }
@@ -2365,76 +2362,29 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       </div>
 
      <!-- Reels Tab - TikTok-style gallery with custom SVG views icon -->
-<div id="reels" class="live-tab-content">
-  <div id="reelsGallery">
-    <!-- Reel Item Example -->
-    <div class="reel-item">
-      <video src="https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4" muted loop playsinline preload="metadata"></video>
-      <div class="play-icon">▶</div>
-      <div class="reel-overlay">
-        <div class="reel-info">
-          <div class="reel-title">Hot Dance Reel</div>
-          <div class="reel-views">
-            <!-- Custom SVG Views Icon -->
-            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
-              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
-                    transform="translate(417,569)" fill="#ffffff"/>
-            </svg>
-            <span class="views-count">42.3K</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reel-item">
-      <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
-      <div class="play-icon">▶</div>
-      <div class="reel-overlay">
-        <div class="reel-info">
-          <div class="reel-title">Behind the Scenes</div>
-          <div class="reel-views">
-            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
-              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
-                    transform="translate(417,569)" fill="#ffffff"/>
-            </svg>
-            <span class="views-count">18.7K</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Repeat for other reels with different titles/views -->
-    <div class="reel-item">
-      <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
-      <div class="play-icon">▶</div>
-      <div class="reel-overlay">
-        <div class="reel-info">
-          <div class="reel-title">Late Night Vibes</div>
-          <div class="reel-views">
-            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
-              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
-                    transform="translate(417,569)" fill="#ffffff"/>
-            </svg>
-            <span class="views-count">105.2K</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reel-item">
-      <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
-      <div class="play-icon">▶</div>
-      <div class="reel-overlay">
-        <div class="reel-info">
-          <div class="reel-title">Exclusive Drop</div>
-          <div class="reel-views">
-            <svg class="views-icon-svg" viewBox="-3 0 28 28" xmlns="http://www.w3.org/2000/svg">
-              <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" 
-                    transform="translate(417,569)" fill="#ffffff"/>
-            </svg>
-            <span class="views-count">89.1K</span>
-          </div>
-        </div>
+<div class="reel-item">
+  <video src="https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4" muted loop playsinline preload="metadata"></video>
+  
+  <div class="play-icon">▶</div>
+  
+  <div class="reel-overlay">
+    <div class="reel-info">
+      <div class="reel-title">Hot Dance Reel</div>
+      <div class="reel-views">
+        <!-- Your full SVG as views icon -->
+        <svg class="views-icon-svg" viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#ffffff">
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="SVGRepo_iconCarrier">
+            <title>play</title>
+            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+              <g id="Icon-Set" transform="translate(-417.000000, -569.000000)" fill="#ffffff">
+                <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" id="play"></path>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <span class="views-count">42.3K</span>
       </div>
     </div>
   </div>
