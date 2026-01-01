@@ -5,7 +5,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
   content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>XIXI</title>
+<title>CUBE</title>
 <link rel="icon" href="data:," />
 <style>
 :root {
@@ -1969,229 +1969,191 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   justify-content: center;
   text-align: center;
 }
-/* LIVE MODAL - Fullscreen cinematic experience */
-.live-modal {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  inset: 0;
-  background: #000;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-}
+  
+/* LIVE MODAL - Fullscreen, mobile-optimized */
+    .live-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #000;
+      overflow-y: auto;
+    }
 
-.live-modal .live-modal-content {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 80px 20px 60px;
-  box-sizing: border-box;
-  gap: 20px;
-}
+    .live-modal.open { display: block; }
 
-/* Close button - clean, no circular pad, moved higher */
-.live-modal .live-close {
-  position: fixed;
-  top: 12px;               /* moved higher */
-  right: 20px;
-  color: #fff;
-  font-size: 56px;         /* larger for visibility/tap */
-  font-weight: 200;
-  cursor: pointer;
-  z-index: 30;
-  opacity: 0.8;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  line-height: 1;
-  user-select: none;
-  pointer-events: auto !important;
-}
-.live-modal .live-close:hover,
-.live-modal .live-close:active {
-  opacity: 1;
-  transform: scale(1.1);
-}
-.live-modal .live-close.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-/* Tabs - glassmorphism with glow */
-.live-modal .live-content-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.live-modal .live-tab-btn {
-  min-width: 160px;
-  padding: 16px 32px;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 50px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.4s ease;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-.live-modal .live-tab-btn:hover {
-  background: rgba(255,255,255,0.15);
-  transform: translateY(-2px);
-}
-.live-modal .live-tab-btn.active {
-  background: linear-gradient(135deg, #ff3366, #ff6600);
-  box-shadow: 0 0 30px rgba(255,51,102,0.6);
-  transform: translateY(-4px);
-}
+    .live-modal-content {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 60px 12px 80px;
+      gap: 20px;
+      box-sizing: border-box;
+    }
 
-/* Player - cinematic, centered, letterboxed */
-.live-modal .live-player {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-.live-modal .live-player mux-player {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain; /* letterbox for perfect fit */
-}
+    .live-close {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      font-size: 48px;
+      font-weight: 200;
+      color: #fff;
+      opacity: 0.8;
+      cursor: pointer;
+      z-index: 30;
+      transition: all 0.3s ease;
+    }
 
-/* Posters - elegant fade, compact */
-.live-modal .upcoming-posters {
-  width: 100%;
-  padding: 30px 0;
-  text-align: center;
-  opacity: 1;
-  transition: opacity 1.5s ease, transform 1.5s ease;
-}
-.live-modal .upcoming-posters.fading {
-  opacity: 0;
-  transform: translateY(30px);
-}
-.live-modal .poster-grid {
-  display: flex;
-  overflow-x: auto;
-  gap: 20px;
-  padding: 0 20px 20px;
-  scrollbar-width: none;
-}
-.live-modal .poster-grid::-webkit-scrollbar { display: none; }
-.live-modal .poster {
-  flex: 0 0 170px;
-  text-align: center;
-}
-.live-modal .poster img {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-  transition: transform 0.4s ease;
-}
-.live-modal .poster:hover img, .live-modal .poster:active img {
-  transform: scale(1.08);
-}
-.live-modal .poster-title {
-  margin-top: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-}
+    .live-close:hover { opacity: 1; transform: scale(1.1); }
 
-/* Consent Modal - clean, modern */
-.live-modal .consent-modal {
-  display: none;
-  position: fixed;
-  z-index: 10000;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.live-modal .consent-content {
-  background: linear-gradient(135deg, #111, #222);
-  padding: 40px 30px;
-  border-radius: 24px;
-  max-width: 90%;
-  width: 480px;
-  text-align: center;
-  color: #eee;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-.live-modal .consent-content h2 {
-  font-size: 30px;
-  margin-bottom: 20px;
-  background: linear-gradient(90deg, #ff3366, #ff6600);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.live-modal .consent-content ul {
-  text-align: left;
-  font-size: 17px;
-  line-height: 1.8;
-}
-.live-modal .consent-buttons {
-  margin-top: 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.live-modal .consent-buttons button {
-  padding: 18px;
-  border: none;
-  border-radius: 50px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.live-modal #consentAgree {
-  background: linear-gradient(90deg, #ff3366, #ff6600);
-  color: white;
-  box-shadow: 0 8px 30px rgba(255,51,102,0.5);
-}
-.live-modal #consentAgree:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(255,51,102,0.7);
-}
-.live-modal #consentCancel {
-  background: rgba(255,255,255,0.1);
-  color: white;
-  backdrop-filter: blur(10px);
-}
-.live-modal #consentCancel:hover {
-  background: rgba(255,255,255,0.2);
-}
+    /* Tabs - 3 tabs, compact, neon green accent #c3f60c */
+    .live-content-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .live-modal .live-modal-content {
-    padding: 70px 16px 40px;
-  }
-  .live-modal .live-tab-btn {
-    min-width: 140px;
-    padding: 14px 24px;
-    font-size: 17px;
-  }
-  .live-modal .live-player {
-    aspect-ratio: 9 / 16; /* portrait priority on mobile */
-  }
-  .live-modal .poster {
-    flex: 0 0 150px;
-  }
-}
+    .live-tab-btn {
+      min-width: 120px;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50px;
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      backdrop-filter: blur(12px);
+    }
+
+    .live-tab-btn.active {
+      background: #c3f60c;
+      color: #000;
+      box-shadow: 0 0 20px rgba(195,246,12,0.6);
+    }
+
+    .live-tab-btn:hover { background: rgba(255,255,255,0.15); }
+
+    /* Tab Contents */
+    .live-tab-content {
+      display: none;
+      flex: 1;
+    }
+
+    .live-tab-content.active { display: block; }
+
+    /* Live Player Section */
+    #livePlayerContainer {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      aspect-ratio: 9 / 16;
+      background: #111;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    }
+
+    /* Upcoming Posters - horizontal scroll, compact */
+    .upcoming-posters {
+      width: 100%;
+      padding: 20px 0;
+    }
+
+    .poster-grid {
+      display: flex;
+      overflow-x: auto;
+      gap: 16px;
+      padding: 0 12px 16px;
+      scrollbar-width: none;
+    }
+
+    .poster-grid::-webkit-scrollbar { display: none; }
+
+    .poster {
+      flex: 0 0 140px;
+    }
+
+    .poster img {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      object-fit: cover;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    }
+
+    .poster-title {
+      margin-top: 8px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* Reels Gallery Tab - TikTok/YouTube style grid */
+    #reelsGallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); /* 2 columns on small screens */
+      gap: 8px;
+      padding: 0 8px;
+    }
+
+    .reel-item {
+      position: relative;
+      aspect-ratio: 9 / 16;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #111;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .reel-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .reel-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .reel-item:hover .reel-overlay,
+    .reel-item:active .reel-overlay { opacity: 1; }
+
+    .reel-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: rgba(255,255,255,0.8);
+      pointer-events: none;
+    }
+
+    /* Desktop adjustments */
+    @media (min-width: 768px) {
+      .live-modal-content { padding: 80px 40px 60px; }
+      #livePlayerContainer { aspect-ratio: 16 / 9; }
+      #reelsGallery { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .poster { flex: 0 0 180px; }
+    }
+
+    @media (min-width: 1024px) {
+      #reelsGallery { grid-template-columns: repeat(4, 1fr); }
+    }
 .google-block { 
   width: 100%;  /* ← Matches wrapper width */
   text-align: center;  /* ← Centers text + inline elements */
@@ -2268,36 +2230,68 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 <!-- Live Stream Modal -->
-<div id="liveModal" class="live-modal">
-  <div class="live-modal-content">
-    <span class="live-close">&times;</span>
+  <div id="liveModal" class="live-modal">
+    <div class="live-modal-content">
+      <span class="live-close" id="closeModal">&times;</span>
 
-    <!-- Livestream Tab Switcher (unique classes) -->
-    <div class="live-content-tabs">
-      <button class="live-tab-btn active" data-content="regular">LiveShows</button>
-      <button class="live-tab-btn" data-content="adult">cubeX</button>
-    </div>
-
-    <!-- Player Container -->
-    <div id="livePlayerContainer" class="live-player"></div>
-
-    <!-- Upcoming Posters – fades out after 8s -->
-    <div id="upcomingPosters" class="upcoming-posters">
-      <div class="poster-grid">
-        <div class="poster">
-          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
-          <p class="poster-title">Chill Vibes</p>
-        </div>
-        <div class="poster">
-          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
-          <p class="poster-title">Late Night Talk</p>
-        </div>
-        <div class="poster">
-          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
-          <p class="poster-title">Exclusive Drop</p>
-        </div>
-        <!-- Add more posters here if needed -->
+      <!-- 3 Tabs -->
+      <div class="live-content-tabs">
+        <button class="live-tab-btn active" data-content="live">LiveShows</button>
+        <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
+        <button class="live-tab-btn" data-content="reels">Reels</button>
       </div>
+
+      <!-- Live Tab -->
+      <div id="live" class="live-tab-content active">
+        <div id="livePlayerContainer" class="live-player">
+          <!-- Your mux-player or video element here -->
+          <p style="text-align:center; padding-top:40%; color:#666;">Live Player Placeholder</p>
+        </div>
+      </div>
+
+      <!-- Upcoming Tab (Posters) -->
+      <div id="upcoming" class="live-tab-content">
+        <div class="upcoming-posters">
+          <div class="poster-grid">
+            <div class="poster">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
+              <p class="poster-title">Chill Vibes</p>
+            </div>
+            <div class="poster">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
+              <p class="poster-title">Late Night Talk</p>
+            </div>
+            <div class="poster">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
+              <p class="poster-title">Exclusive Drop</p>
+            </div>
+            <!-- Add more -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Reels Tab - TikTok-style vertical video gallery -->
+      <div id="reels" class="live-tab-content">
+        <div id="reelsGallery">
+          <!-- Example reel items - replace src with your uploaded videos -->
+          <div class="reel-item">
+            <video src="your-video1.mp4" muted loop playsinline></video>
+            <div class="play-icon">▶</div>
+            <div class="reel-overlay">
+              <div class="reel-title">Hot Dance Reel</div>
+            </div>
+          </div>
+          <div class="reel-item">
+            <video src="your-video2.mp4" muted loop playsinline></video>
+            <div class="play-icon">▶</div>
+            <div class="reel-overlay">
+              <div class="reel-title">Behind the Scenes</div>
+            </div>
+          </div>
+          <!-- Add as many as needed -->
+        </div>
+      </div>
+
     </div>
   </div>
 
