@@ -2451,6 +2451,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
 
+<!-- Buttons (keep aligned) -->
+<div id="sessionBar">
+  <button class="session-btn" id="topBallersBtn">Win $STRZ</button>
+  <button id="highlightsBtn" class="session-btn star-hosts-btn">❤︎ Cuties ❤︎</button>
+  <button class="session-btn" id="openHostsBtn">Liveshows</button>
+</div>
+
 <!-- Live Stream Modal -->
 <div id="liveModal" class="live-modal">
   <div class="live-modal-content">
@@ -2463,22 +2470,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
-    <!-- Live Tab (Livestreams) - YouTube Style with Title & Description -->
+    <!-- Live Tab (Livestreams) - Slim, video only -->
     <div id="live" class="live-tab-content active">
       <div id="livePlayerContainer" class="live-player">
-        <p style="text-align:center; padding-top:40%; color:#666;">Live Player Loading...</p>
-      </div>
-
-      <!-- YouTube-style Title & Description (only in Livestreams tab) -->
-      <div class="live-info-section">
-        <h2 id="liveTitle" class="live-title" contenteditable="false">Dettyverse Live 🔥</h2>
-        <p id="liveDescription" class="live-description" contenteditable="false">
-          Late night vibes, real talk, and good energy. Pull up and join the cube!
-        </p>
-        <div class="live-meta">
-          <span class="live-viewers">12.4K watching</span>
-          <span class="live-status">• LIVE</span>
-        </div>
+        <p class="player-placeholder">Live Player Loading...</p>
       </div>
     </div>
 
