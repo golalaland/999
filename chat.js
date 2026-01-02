@@ -2346,6 +2346,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
+// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
@@ -2355,8 +2356,8 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     return;
   }
 
-  const loader = document.getElementById("postLoginLoader");
-  if (loader) loader.style.display = "flex";
+  // Start your beautiful organic loading bar
+  showLoadingBar(1800);  // lasts ~1.8 seconds with organic feel — adjust if you want longer/shorter
 
   try {
     // STEP 1: Firebase Auth login
@@ -2378,8 +2379,8 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     const data = userSnap.data();
 
     if (data.isHost || (data.isVIP && data.hasPaid === true)) {
-      // Allowed — onAuthStateChanged will handle the rest
       console.log("Access granted");
+      // onAuthStateChanged will call setupPostLogin() → chat opens
     } else {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
@@ -2395,9 +2396,8 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     } else {
       showStarPopup("Login failed — try again");
     }
-  } finally {
-    if (loader) loader.style.display = "none";
   }
+  // Bar auto-hides when it reaches 100% — no need for finally block
 });
 
 
@@ -2664,40 +2664,38 @@ function hideChatUI() {
 ======================================= */
 window.addEventListener("DOMContentLoaded", () => {
 
-  /* ----------------------------
-     ⚡ Smooth Loading Bar Helper
-  ----------------------------- */
-  function showLoadingBar(duration = 1000) {
-    const postLoginLoader = document.getElementById("postLoginLoader");
-    const loadingBar = document.getElementById("loadingBar");
-    if (!postLoginLoader || !loadingBar) return;
+ /* ----------------------------
+   ⚡ Smooth Loading Bar Helper
+----------------------------- */
+function showLoadingBar(duration = 1000) {
+  const postLoginLoader = document.getElementById("postLoginLoader");
+  const loadingBar = document.getElementById("loadingBar");
+  if (!postLoginLoader || !loadingBar) return;
 
-    postLoginLoader.style.display = "flex";
-    loadingBar.style.width = "0%";
+  postLoginLoader.style.display = "flex";
+  loadingBar.style.width = "0%";
 
-    let progress = 0;
-    const interval = 50;
-    const step = 100 / (duration / interval);
+  let progress = 0;
+  const interval = 50;
+  const step = 100 / (duration / interval);
 
-    const loadingInterval = setInterval(() => {
-      progress += step + Math.random() * 4; // adds organic feel
-      loadingBar.style.width = `${Math.min(progress, 100)}%`;
+  const loadingInterval = setInterval(() => {
+    progress += step + Math.random() * 4; // adds organic feel
+    loadingBar.style.width = `${Math.min(progress, 100)}%`;
 
-      if (progress >= 100) {
-        clearInterval(loadingInterval);
-        setTimeout(() => postLoginLoader.style.display = "none", 250);
-      }
-    }, interval);
-  }
-
-
-  /* ----------------------------
-     🔁 Auto Login Session
-  ----------------------------- */
- async function autoLogin() {
+    if (progress >= 100) {
+      clearInterval(loadingInterval);
+      setTimeout(() => postLoginLoader.style.display = "none", 250);
+    }
+  }, interval);
+}
+ /* ----------------------------
+   🔁 Auto Login Session
+----------------------------- */
+async function autoLogin() {
   const vipUser = JSON.parse(localStorage.getItem("vipUser"));
   if (vipUser?.email && vipUser?.password) {
-    showLoadingBar(1000);
+    showLoadingBar(1200);  // nice bar on auto-login too
     await sleep(60);
     const success = await loginWhitelist(vipUser.email, vipUser.password);
     if (!success) return;
@@ -2709,8 +2707,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // Call on page load
 autoLogin();
-
-
+  
 /* ----------------------------
    ⚡ Global setup for local message tracking
 ----------------------------- */
