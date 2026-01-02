@@ -3,221 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Private Messages 💌</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
-      authDomain: "dettyverse.firebaseapp.com",
-      projectId: "dettyverse",
-      storageBucket: "dettyverse.firebasestorage.app",
-      messagingSenderId: "1036459652488",
-      appId: "1:1036452488:web:e8910172ed16e9cac9b63d"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const messagesList = document.getElementById('messagesList');
-    const msgCount = document.getElementById('msgCount');
-    const clearBtn = document.getElementById('clearBtn');
-
-    let lastSeenTimestamp = Date.now(); // Track when page loaded
-
-    const q = query(collection(db, "privateLiveMessages"), orderBy("timestamp", "desc"));
-
-    onSnapshot(q, (snapshot) => {
-      messagesList.innerHTML = '';
-      const count = snapshot.size;
-      msgCount.textContent = count > 99 ? '99+' : count;
-
-      if (snapshot.empty) {
-        messagesList.innerHTML = `
-          <p class="no-messages">
-            No private messages yet...<br>
-            Waiting for your secrets 💕
-          </p>
-        `;
-        return;
-      }
-
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const msgTimestamp = data.timestamp ? data.timestamp.toDate().getTime() : 0;
-        const time = data.timestamp 
-          ? new Date(data.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-          : 'Just now';
-
-        const sender = data.senderChatId || data.senderUid?.split('_')[0] || "Anonymous";
-
-        const isNew = msgTimestamp > lastSeenTimestamp;
-
-        const msgEl = document.createElement('div');
-        msgEl.className = 'private-message';
-        msgEl.innerHTML = `
-          <div class="msg-header">
-            <span class="msg-sender">${sender}</span>
-            ${isNew ? '<span class="new-tag">NEW</span>' : ''}
-            <span class="msg-time">${time}</span>
-          </div>
-          <div class="msg-text">${data.content || '💌'}</div>
-        `;
-        messagesList.appendChild(msgEl);
-      });
-
-      messagesList.scrollTop = 0;
-    });
-
-    // Clear all messages
-    clearBtn.addEventListener('click', async () => {
-      if (!confirm("Delete all private messages? Can't undo!")) return;
-
-      try {
-        const snapshot = await getDocs(collection(db, "privateLiveMessages"));
-        const batch = writeBatch(db);
-        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-        await batch.commit();
-        alert("All cleared! Ready for new secrets ✨");
-      } catch (err) {
-        alert("Clear failed — try again");
-        console.error(err);
-      }
-    });
-  </script>
-
+  <title>Generate Access Token</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
+      padding: 40px;
       background: #000;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .header {
       text-align: center;
-      padding: 30px 0 20px;
     }
-    .header h1 {
-      font-size: 28px;
-      margin: 0;
+    h1 {
       color: #c3f60c;
-      font-weight: 800;
+      font-size: 28px;
     }
-    #msgCount {
-      display: inline-block;
+    input, button {
+      padding: 14px;
+      margin: 10px;
+      border-radius: 50px;
+      font-size: 16px;
+    }
+    input {
+      width: 80px;
+      background: #1a1a1a;
+      border: 1px solid #c3f60c;
+      color: #fff;
+      text-align: center;
+    }
+    button {
       background: #c3f60c;
       color: #000;
-      padding: 8px 16px;
-      border-radius: 50px;
-      font-weight: 700;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-    #messagesList {
-      background: rgba(20,20,30,0.6);
-      border-radius: 24px;
-      padding: 20px;
-      max-height: 65vh;
-      overflow-y: auto;
-      border: 1px solid rgba(195,246,12,0.2);
-      backdrop-filter: blur(10px);
-    }
-    .private-message {
-      background: rgba(255,255,255,0.06);
-      border-radius: 20px;
-      padding: 18px 20px;
-      margin-bottom: 16px;
-      border-left: 4px solid #c3f60c;
-      animation: fadeIn 0.5s ease;
-    }
-    .msg-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
-    .msg-sender {
-      font-size: 20px; /* BIGGER */
-      font-weight: 800;
-      color: #ff69b4;
-    }
-    .new-tag {
-      background: #ff3366;
-      color: #fff;
-      padding: 4px 12px;
-      border-radius: 50px;
-      font-size: 12px;
-      font-weight: 700;
-      animation: pulse 1.5s infinite;
-    }
-    .msg-time {
-      color: #888;
-    }
-    .msg-text {
-      font-size: 18px;
-      line-height: 1.5;
-      word-wrap: break-word;
-    }
-    .no-messages {
-      text-align: center;
-      color: #ff69b4;
-      font-size: 18px;
-      padding: 80px 20px;
-      font-style: italic;
-      opacity: 0.8;
-    }
-    #clearBtn {
-      width: 100%;
-      margin-top: 24px;
-      padding: 16px;
-      background: #333;
-      color: #ff3366;
-      border: 1px solid #ff3366;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 700;
+      border: none;
       cursor: pointer;
-      transition: background 0.3s;
+      font-weight: 700;
+      padding: 14px 24px;
     }
-    #clearBtn:hover {
-      background: rgba(255,51,102,0.2);
+    #linkOutput {
+      margin-top: 30px;
+      padding: 20px;
+      background: #111;
+      border-radius: 20px;
+      word-break: break-all;
+      font-size: 15px;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-    @media (max-width: 768px) {
-      .container { padding: 16px; }
-      .header h1 { font-size: 26px; }
-      .msg-sender { font-size: 19px; }
-      #messagesList { max-height: 60vh; }
+    .note {
+      color: #ff69b4;
+      margin: 20px 0;
+      font-size: 15px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Private Messages 💌</h1>
-      <div id="msgCount">0</div>
-    </div>
-    <div id="messagesList">
-      <p class="no-messages">No private messages yet...<br>Waiting for your secrets 💕</p>
-    </div>
-    <button id="clearBtn">Clear All Messages</button>
+  <h1>Generate Access Link 💌</h1>
+  <p>Hosts can view private messages with this temporary link</p>
+  <p>Expires in:</p>
+  <input type="number" id="minutes" value="30" min="5" max="1440"> minutes
+  <br>
+  <button id="generateBtn">Generate Link</button>
+
+  <div id="linkOutput" style="display:none;">
+    <p class="note">Share this link — it expires automatically</p>
+    <div id="generatedLink"></div>
   </div>
+
+  <script>
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const minutes = parseInt(document.getElementById('minutes').value) || 30;
+      const expires = Date.now() + minutes * 60 * 1000;
+      const token = btoa(JSON.stringify({ expires })).replace(/=/g, '');
+      const link = `${window.location.origin}${window.location.pathname.replace('generate-token.html', 'private-feed.html')}?token=${token}`;
+
+      document.getElementById('generatedLink').textContent = link;
+      document.getElementById('linkOutput').style.display = 'block';
+    });
+  </script>
 </body>
 </html>
