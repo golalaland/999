@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Access Token</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-align: center;
+    }
+    h1 {
+      color: #c3f60c;
+      font-size: 28px;
+    }
+    input, button {
+      padding: 14px;
+      margin: 10px;
+      border-radius: 50px;
+      font-size: 16px;
+    }
+    input {
+      width: 80px;
+      background: #1a1a1a;
+      border: 1px solid #c3f60c;
+      color: #fff;
+      text-align: center;
+    }
+    button {
+      background: #c3f60c;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 14px 24px;
+    }
+    #linkOutput {
+      margin-top: 30px;
+      padding: 20px;
+      background: #111;
+      border-radius: 20px;
+      word-break: break-all;
+      font-size: 15px;
+    }
+    .note {
+      color: #ff69b4;
+      margin: 20px 0;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Generate Access Link 💌</h1>
+  <p>Hosts can view private messages with this temporary link</p>
+  <p>Expires in:</p>
+  <input type="number" id="minutes" value="30" min="5" max="1440"> minutes
+  <br>
+  <button id="generateBtn">Generate Link</button>
+
+  <div id="linkOutput" style="display:none;">
+    <p class="note">Share this link — it expires automatically</p>
+    <div id="generatedLink"></div>
+  </div>
+
+  <script>
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const minutes = parseInt(document.getElementById('minutes').value) || 30;
+      const expires = Date.now() + minutes * 60 * 1000;
+      const token = btoa(JSON.stringify({ expires })).replace(/=/g, '');
+      const link = `${window.location.origin}${window.location.pathname.replace('generate-token.html', 'private-feed.html')}?token=${token}`;
+
+      document.getElementById('generatedLink').textContent = link;
+      document.getElementById('linkOutput').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
