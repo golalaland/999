@@ -2396,6 +2396,88 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   opacity: 1; 
   text-decoration: underline; 
 }
+
+/* Live Tab Only - Sticky Player + Chat */
+#live .live-player-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #000;
+}
+
+#live .live-player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+}
+
+#live .live-player mux-player {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+#live .live-chat-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background: #0a0a0a;
+  min-height: 100px;
+}
+
+#live .live-send-area {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #111;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  z-index: 25;
+}
+
+#live .live-send-area input {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+}
+
+#live .live-send-area input:focus {
+  border-color: #c3f60c;
+}
+
+#live .send-btn, #live .buzz-btn {
+  padding: 12px 18px;
+  border-radius: 50px;
+  background: #c3f60c;
+  color: #000;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+#live .buzz-btn {
+  font-size: 20px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  #live .live-player {
+    height: calc(100vw * 9 / 16);
+    border-radius: 0;
+  }
+  #live .live-send-area {
+    padding: 12px;
+  }
+}
 </style>
 </head>
 <body>
@@ -2451,24 +2533,27 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
 
-<!-- Live Stream Modal -->
-<div id="liveModal" class="live-modal">
-  <div class="live-modal-content">
-    <span class="live-close" id="closeModal">&times;</span>
-
-    <!-- 3 Tabs -->
-    <div class="live-content-tabs">
-      <button class="live-tab-btn active" data-content="live">Livestreams</button>
-      <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
-      <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
+<!-- Live Tab (Livestreams) -->
+<div id="live" class="live-tab-content active">
+  <!-- Sticky Player Wrapper -->
+  <div id="livePlayerWrapper" class="live-player-wrapper">
+    <div id="livePlayerContainer" class="live-player">
+      <p class="player-placeholder">Live Player Loading...</p>
     </div>
+  </div>
 
-    <!-- Live Tab (Livestreams) - Slim, video only -->
-    <div id="live" class="live-tab-content active">
-      <div id="livePlayerContainer" class="live-player">
-        <p class="player-placeholder">Live Player Loading...</p>
-      </div>
-    </div>
+  <!-- Live Chat Messages (scrollable) -->
+  <div id="liveChatMessages" class="live-chat-messages">
+    <p style="text-align:center; color:#666; padding:40px 20px;">Chat will appear here...</p>
+  </div>
+
+  <!-- Sticky Send Area (only in live tab) -->
+  <div class="live-send-area">
+    <input type="text" id="liveMessageInput" placeholder="Send a message..." autocomplete="off" />
+    <button id="liveBuzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
+    <button id="liveSendBtn" class="send-btn">Send</button>
+  </div>
+</div>
 
     <!-- Upcoming Tab (Posters) -->
     <div id="upcoming" class="live-tab-content">
