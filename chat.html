@@ -2525,7 +2525,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         <span id="onlineCount">…</span>
         <span>people are interacting in chatrooms</span>
     </div>
-    
 <!-- Buttons (keep aligned) -->
 <div id="sessionBar">
   <button class="session-btn" id="topBallersBtn">Win $STRZ</button>
@@ -2533,65 +2532,40 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
 
-<!-- Live Tab (Livestreams) -->
-<div id="live" class="live-tab-content active">
-  <!-- Sticky Player Wrapper -->
-  <div id="livePlayerWrapper" class="live-player-wrapper">
-    <div id="livePlayerContainer" class="live-player">
-      <p class="player-placeholder">Live Player Loading...</p>
+<!-- Live Stream Modal -->
+<div id="liveModal" class="live-modal">
+  <div class="live-modal-content">
+    <span class="live-close" id="closeModal">&times;</span>
+
+    <!-- Tabs -->
+    <div class="live-content-tabs">
+      <button class="live-tab-btn active" data-content="live">Livestreams</button>
+      <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
+      <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
-  </div>
 
-  <!-- Live Chat Messages (scrollable) -->
-  <div id="liveChatMessages" class="live-chat-messages">
-    <p style="text-align:center; color:#666; padding:40px 20px;">Chat will appear here...</p>
-  </div>
+    <!-- Live Tab -->
+    <div id="live" class="live-tab-content active">
+      <div id="livePlayerWrapper" class="live-player-wrapper">
+        <div id="livePlayerContainer" class="live-player">
+          <p class="player-placeholder">Live Player Loading...</p>
+        </div>
+      </div>
+      <div id="liveChatMessages" class="live-chat-messages">
+        <p style="text-align:center; color:#666; padding:40px 20px;">Chat will appear here...</p>
+      </div>
+      <div class="live-send-area">
+        <input type="text" id="liveMessageInput" placeholder="Send a message..." autocomplete="off" />
+        <button id="liveBuzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
+        <button id="liveSendBtn" class="send-btn">Send</button>
+      </div>
+    </div>
 
-  <!-- Sticky Send Area (only in live tab) -->
-  <div class="live-send-area">
-    <input type="text" id="liveMessageInput" placeholder="Send a message..." autocomplete="off" />
-    <button id="liveBuzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
-    <button id="liveSendBtn" class="send-btn">Send</button>
-  </div>
-</div>
-
-    <!-- Upcoming Tab (Posters) -->
+    <!-- Upcoming Tab -->
     <div id="upcoming" class="live-tab-content">
       <div id="upcomingPosters" class="upcoming-posters">
         <div class="poster-grid">
-          <!-- Poster 1 -->
-          <div class="poster-card">
-            <div class="poster-image">
-              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
-            </div>
-            <div class="poster-info">
-              <h3 class="poster-title">Chill Vibes</h3>
-              <p class="poster-time">Tonight @ 10PM EST</p>
-              <p class="poster-desc">Late night lo-fi beats, deep talks, and good energy. Pull up and unwind.</p>
-            </div>
-          </div>
-          <!-- Poster 2 -->
-          <div class="poster-card">
-            <div class="poster-image">
-              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
-            </div>
-            <div class="poster-info">
-              <h3 class="poster-title">Late Night Talk</h3>
-              <p class="poster-time">Tomorrow @ 1AM EST</p>
-              <p class="poster-desc">Real conversations, no filter. Stories, laughs, and truth bombs.</p>
-            </div>
-          </div>
-          <!-- Poster 3 -->
-          <div class="poster-card">
-            <div class="poster-image">
-              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
-            </div>
-            <div class="poster-info">
-              <h3 class="poster-title">Exclusive Drop</h3>
-              <p class="poster-time">Friday @ 9PM EST</p>
-              <p class="poster-desc">Special guest, new music reveal, and giveaways. You don't wanna miss this.</p>
-            </div>
-          </div>
+          <!-- Your posters here -->
         </div>
       </div>
     </div>
