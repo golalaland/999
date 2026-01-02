@@ -1998,9 +1998,18 @@ checkHostNotifications();
    🚀 DOMContentLoaded Bootstrap
 ======================================= */
 window.addEventListener("DOMContentLoaded", () => {
+  
 // =============================================
-// FORCE LOAD: Smart Loading Bar — GLOBAL
-// Place this at the TOP of chat.js
+// ESSENTIAL HELPER: sanitizeKey (MUST BE PRESENT)
+// Place this once, high up in your file (with other helpers)
+// =============================================
+function sanitizeKey(email) {
+  return email.toLowerCase().replace(/\./g, ',');  // most common version in VIP systems
+}
+
+// =============================================
+// ⚡ SMART LOADING BAR (GLOBAL & BULLETPROOF)
+// Place this early in chat.js — before any code that uses it
 // =============================================
 window.showLoadingBar = function(options = {}) {
   const {
@@ -2070,10 +2079,7 @@ window.showLoadingBar = function(options = {}) {
   return { update, finish };
 };
 
-// Safety log — remove later
-console.log("%c✅ showLoadingBar is now GLOBAL and ready", "color: #00ff00; font-weight: bold;");
-
-
+  
 /* ---------- 🆔 ChatID Modal ---------- */
 async function promptForChatID(userRef, userData) {
   if (!refs.chatIDModal || !refs.chatIDInput || !refs.chatIDConfirmBtn)
@@ -2428,15 +2434,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
-
-// =============================================
-// ESSENTIAL HELPER: sanitizeKey (MUST BE PRESENT)
-// Place this once, high up in your file (with other helpers)
-// =============================================
-function sanitizeKey(email) {
-  return email.toLowerCase().replace(/\./g, ',');  // most common version in VIP systems
-}
 
 // ————————————————————————————————————————
 // FINAL LOGIN BUTTON — NOW WITH PROPER LOADING BAR
