@@ -1970,113 +1970,92 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
   
 /* LIVE MODAL - Fullscreen, mobile-optimized */
-/* LIVE MODAL */
-.live-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
+/* Live Player - YouTube Mobile Style (Landscape Optimized) */
+.live-player {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9; /* True landscape */
   background: #000;
-  overflow-y: auto;
+  border-radius: 20px 20px 0 0; /* Rounded top only */
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
 }
-.live-modal.open { display: block; }
-
-.live-modal-content {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 60px 12px 80px;
-  gap: 20px;
-  box-sizing: border-box;
+.live-player mux-player {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  background: #000;
 }
-
-.live-close {
-  position: fixed;
-  top: 12px;
-  right: 16px;
-  font-size: 48px;
-  font-weight: 200;
-  color: #fff;
-  opacity: 0.8;
-  cursor: pointer;
-  z-index: 30;
-  transition: all 0.3s ease;
-}
-.live-close:hover {
-  opacity: 1;
-  transform: scale(1.1);
+.player-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #666;
+  font-size: 18px;
+  text-align: center;
+  pointer-events: none;
 }
 
-/* TABS - Compact, no wrap on mobile */
-.live-content-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 10px 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  flex-wrap: nowrap;
-  margin-bottom: 10px;
-  background: transparent;
+/* Info Section - YouTube Style */
+.live-info-section {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  background: #111;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
 }
-.live-content-tabs::-webkit-scrollbar { display: none; }
-
-.live-tab-btn {
-  flex: 0 0 auto;
-  min-width: 90px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50px;
-  font-size: 14.5px;
+.live-title {
+  font-size: 24px;
   font-weight: 700;
   color: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(12px);
-  white-space: nowrap;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-  position: relative;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+  word-wrap: break-word;
+}
+.live-description {
+  font-size: 16px;
+  color: #ddd;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+}
+.live-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: #aaa;
+}
+.live-status {
+  color: #ff3366;
+  font-weight: 700;
 }
 
-/* Hover - subtle brighten only, no zoom */
-.live-tab-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .live-modal-content {
+    padding: 60px 0 40px;
+    gap: 0;
+  }
+  .live-player {
+    border-radius: 0; /* Full bleed on mobile */
+    height: 56vw; /* Approx 16:9 on phone */
+  }
+  .live-info-section {
+    padding: 20px 16px;
+    border-radius: 0;
+  }
+  .live-title {
+    font-size: 22px;
+  }
+  .live-description {
+    font-size: 15.5px;
+  }
 }
-
-/* ACTIVE TAB - Reduced glow, no transform/zoom */
-.live-tab-btn.active {
-  background: #c3f60c;
-  color: #000 !important;
-  border-color: #c3f60c;
-  font-weight: 800;
-  /* Subtle, clean neon glow — no overpowering halo */
-  box-shadow:
-    0 0 8px rgba(195, 246, 12, 0.6),      /* Soft outer glow */
-    0 4px 12px rgba(195, 246, 12, 0.3),   /* Gentle lift shadow */
-    inset 0 0 12px rgba(255, 255, 255, 0.4); /* Light inner shine */
-  z-index: 2;
-}
-/* Tab Contents */
-.live-tab-content {
-  display: none;
-  flex: 1;
-}
-.live-tab-content.active { display: block; }
-
-/* Live Player Section */
-#livePlayerContainer {
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  aspect-ratio: 9 / 16;
-  background: #111;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-}
-
+  
 /* Upcoming Posters - Clean Instagram Style */
 .upcoming-posters {
   width: 100%;
@@ -2325,6 +2304,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     gap: 7px;
   }
 
+  .reel-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
   .views-icon-svg {
     width: 11px;
     height: 11px;
@@ -2443,15 +2428,29 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <div class="live-content-tabs">
       <button class="live-tab-btn active" data-content="live">Livestreams</button>
       <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
-      <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
+      <button class="live-tab-btn" data-content="reels">TV/button>
     </div>
 
-    <!-- Live Tab -->
-    <div id="live" class="live-tab-content active">
-      <div id="livePlayerContainer" class="live-player">
-        <p style="text-align:center; padding-top:40%; color:#666;">Live Player Loading...</p>
-      </div>
+  <!-- Live Tab - YouTube Style Landscape -->
+<div id="live" class="live-tab-content active">
+  <!-- Player Container - Landscape on Mobile -->
+  <div id="livePlayerContainer" class="live-player">
+    <!-- Fallback message -->
+    <p class="player-placeholder">Live Player Loading...</p>
+  </div>
+
+  <!-- Title & Description Section (YouTube style) -->
+  <div class="live-info-section">
+    <h2 id="liveTitle" class="live-title" contenteditable="false">Dettyverse Live 🔥</h2>
+    <p id="liveDescription" class="live-description" contenteditable="false">
+      Late night vibes, real talk, and good energy. Pull up and join the cube!
+    </p>
+    <div class="live-meta">
+      <span class="live-viewers">12.4K watching</span>
+      <span class="live-status">• LIVE</span>
     </div>
+  </div>
+</div>
 
     <!-- Upcoming Tab (Posters) -->
     <div id="upcoming" class="live-tab-content">
