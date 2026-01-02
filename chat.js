@@ -906,7 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ------------------------------
-  // MutationObserver for live updates
+  // MutationObserver for  updates
   // ------------------------------
   const messagesObserver = new MutationObserver(updateMessagesPlaceholder);
   messagesObserver.observe(messagesEl, { childList: true });
@@ -3635,7 +3635,7 @@ function showMeetModal(host) {
                   if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
                   waNumber = countryCodes[hostCountry] + waNumber;
                   const firstName = currentUser.fullName.split(" ")[0];
-                  const msg = `Hey! ${host.chatId}, my name’s ${firstName} (VIP on xixi live) & I’d like to meet you.`;
+                  const msg = `Hey! ${host.chatId}, my name’s ${firstName} (VIP on xixi ) & I’d like to meet you.`;
                   window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, "_blank");
                   modal.remove();
                 };
@@ -4522,24 +4522,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.live-tab-btn[data-content="regular"], .live-tab-btn[data-content="adult"]').forEach(oldBtn => {
     oldBtn.onclick = () => switchContent(oldBtn.dataset.content);
   });
-});
-
-// Make title/description editable (long press or double tap on mobile)
-document.getElementById('liveTitle').addEventListener('dblclick', function() {
-  this.contentEditable = true;
-  this.focus();
-});
-document.getElementById('liveDescription').addEventListener('dblclick', function() {
-  this.contentEditable = true;
-  this.focus();
-});
-
-// Save on blur (or Enter)
-document.getElementById('liveTitle').addEventListener('blur', function() {
-  this.contentEditable = false;
-});
-document.getElementById('liveDescription').addEventListener('blur', function() {
-  this.contentEditable = false;
 });
 
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
