@@ -2428,6 +2428,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
+
+// =============================================
+// ESSENTIAL HELPER: sanitizeKey (MUST BE PRESENT)
+// Place this once, high up in your file (with other helpers)
+// =============================================
+function sanitizeKey(email) {
+  return email.toLowerCase().replace(/\./g, ',');  // most common version in VIP systems
+}
+
 // ————————————————————————————————————————
 // FINAL LOGIN BUTTON — NOW WITH PROPER LOADING BAR
 // ————————————————————————————————————————
