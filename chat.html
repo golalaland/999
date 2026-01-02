@@ -2645,7 +2645,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
 
-<!-- Live Stream Modal -->
+<!-- Live Stream Modal - Full Clean Structure (No Bleeding) -->
 <div id="liveModal" class="live-modal">
   <div class="live-modal-content">
     <span class="live-close" id="closeModal">&times;</span>
@@ -2657,70 +2657,72 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
-    
-    <!-- Live Tab - Private Message Feature -->
-<div id="live" class="live-tab-content active">
-  <div id="livePlayerWrapper" class="live-player-wrapper">
-    <div id="livePlayerContainer" class="live-player">
-      <p class="player-placeholder">Live Player Loading...</p>
-    </div>
-  </div>
+    <!-- Live Tab (Livestreams) - Player + Private Message Feature -->
+    <div id="live" class="live-tab-content active">
+      <!-- Player -->
+      <div id="livePlayerWrapper" class="live-player-wrapper">
+        <div id="livePlayerContainer" class="live-player">
+          <p class="player-placeholder">Live Player Loading...</p>
+        </div>
+      </div>
 
-  <!-- Chat Messages (optional — keep if you want public chat too, or remove) -->
-  <div id="liveChatMessages" class="live-chat-messages">
-    <p style="text-align:center; color:#888; padding:60px 20px; font-size:15px;">
-      Private messages are sent directly to the host 💌
-    </p>
-  </div>
+      <!-- Optional Hint Text -->
+      <div id="liveChatMessages" class="live-chat-messages">
+        <p style="text-align:center; color:#888; padding:60px 20px; font-size:15px;">
+          Private messages are sent directly to the host 💌
+        </p>
+      </div>
 
-<!-- Floating Private Message Button -->
-<button id="privateMsgBtn" class="private-msg-btn" title="Send private message or request">
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
-  </svg>
-</button>
+      <!-- Floating Private Message Button (only in live tab) -->
+      <button id="privateMsgBtn" class="private-msg-btn" title="Send private message or request">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
+        </svg>
+      </button>
 
-<!-- Private Message Modal -->
-<div id="privateMsgModal" class="private-msg-modal">
-  <div class="private-msg-content">
-    <!-- Header -->
-    <div class="private-msg-header">
-      <h3>Secret Message to Host 💌</h3>
-      <span class="private-close">&times;</span>
-    </div>
+      <!-- Private Message Modal (centered, cute, with tabs) -->
+      <div id="privateMsgModal" class="private-msg-modal">
+        <div class="private-msg-content">
+          <!-- Header -->
+          <div class="private-msg-header">
+            <h3>Secret Message to Host 💌</h3>
+            <span class="private-close">&times;</span>
+          </div>
 
-    <!-- Tabs -->
-    <div class="private-tabs">
-      <button class="private-tab-btn active" data-tab="message">Message</button>
-      <button class="private-tab-btn" data-tab="requests">Requests</button>
-    </div>
+          <!-- Tabs -->
+          <div class="private-tabs">
+            <button class="private-tab-btn active" data-tab="message">Message</button>
+            <button class="private-tab-btn" data-tab="requests">Requests</button>
+          </div>
 
-    <!-- Message Tab -->
-    <div id="message" class="private-tab-content active">
-      <p class="private-note">Only the host sees this · Costs 100 stars ✨</p>
-      <textarea id="privateMsgInput" placeholder="Type your anonymous message... 💕"></textarea>
-      <button id="privateSendBtn" class="private-send-btn">Send Message</button>
-    </div>
+          <!-- Message Tab -->
+          <div id="message" class="private-tab-content active">
+            <p class="private-note">Only the host sees this · Costs 100 stars ✨</p>
+            <textarea id="privateMsgInput" placeholder="Type your anonymous message... 💕"></textarea>
+            <button id="privateSendBtn" class="private-send-btn">Send Message</button>
+          </div>
 
-    <!-- Requests Tab -->
-    <div id="requests" class="private-tab-content">
-      <p class="private-note">Pick a request · Costs 100 stars each 🌟</p>
-      <div class="request-grid">
-        <button class="request-btn" data-request="Do a 360 turn 🌀">Do a 360 turn 🌀</button>
-        <button class="request-btn" data-request="Dance for us 💃">Dance for us 💃</button>
-        <button class="request-btn" data-request="Show your outfit 👗">Show your outfit 👗</button>
-        <button class="request-btn" data-request="Say my name! 📢">Say my name! 📢</button>
-        <button class="request-btn" data-request="Sing a song 🎤">Sing a song 🎤</button>
-        <button class="request-btn" data-request="Make a heart ❤️">Make a heart ❤️</button>
+          <!-- Requests Tab -->
+          <div id="requests" class="private-tab-content">
+            <p class="private-note">Pick a request · Costs 100 stars each 🌟</p>
+            <div class="request-grid">
+              <button class="request-btn" data-request="Do a 360 turn 🌀">Do a 360 turn 🌀</button>
+              <button class="request-btn" data-request="Dance for us 💃">Dance for us 💃</button>
+              <button class="request-btn" data-request="Show your outfit 👗">Show your outfit 👗</button>
+              <button class="request-btn" data-request="Say my name! 📢">Say my name! 📢</button>
+              <button class="request-btn" data-request="Sing a song 🎤">Sing a song 🎤</button>
+              <button class="request-btn" data-request="Make a heart ❤️">Make a heart ❤️</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+
     <!-- Upcoming Tab -->
     <div id="upcoming" class="live-tab-content">
       <div id="upcomingPosters" class="upcoming-posters">
         <div class="poster-grid">
-          <!-- Poster 1 -->
+          <!-- Your posters here -->
           <div class="poster-card">
             <div class="poster-image">
               <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
@@ -2731,7 +2733,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
               <p class="poster-desc">Late night lo-fi beats, deep talks, and good energy. Pull up and unwind.</p>
             </div>
           </div>
-          <!-- Poster 2 -->
           <div class="poster-card">
             <div class="poster-image">
               <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
@@ -2742,7 +2743,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
               <p class="poster-desc">Real conversations, no filter. Stories, laughs, and truth bombs.</p>
             </div>
           </div>
-          <!-- Poster 3 -->
           <div class="poster-card">
             <div class="poster-image">
               <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
