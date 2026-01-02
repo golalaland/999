@@ -1993,63 +1993,6 @@ setInterval(checkHostNotifications, 15000);
 checkHostNotifications();
 
 
-
-/* =======================================
-   🚀 DOMContentLoaded Bootstrap
-======================================= */
-window.addEventListener("DOMContentLoaded", () => {
-  
-// =============================================
-// ESSENTIAL HELPER: sanitizeKey (MUST BE PRESENT)
-// Place this once, high up in your file (with other helpers)
-// =============================================
-function sanitizeKey(email) {
-  return email.toLowerCase().replace(/\./g, ',');  // most common version in VIP systems
-}
-
-// =============================================
-// ⚡ SMOOTH & ORGANIC LOADING BAR (BETTER THAN BEFORE)
-// =============================================
-function showLoadingBar() {
-  const postLoginLoader = document.getElementById("postLoginLoader");
-  const loadingBar = document.getElementById("loadingBar");
-  if (!postLoginLoader || !loadingBar) return;
-
-  postLoginLoader.style.display = "flex";
-  loadingBar.style.width = "0%";
-  loadingBar.style.transition = "width 0.4s ease-out"; // smooth updates
-
-  let progress = 0;
-  const interval = setInterval(() => {
-    // Organic feel: starts slow, speeds up near end, with tiny randomness
-    progress += 2 + Math.random() * 6;
-    if (progress > 100) progress = 100;
-
-    loadingBar.style.width = `${progress}%`;
-
-    if (progress >= 100) {
-      clearInterval(interval);
-      setTimeout(() => {
-        postLoginLoader.style.display = "none";
-        // Reset for next login
-        setTimeout(() => {
-          loadingBar.style.width = "0%";
-        }, 300);
-      }, 300);
-    }
-  }, 80);
-}
-
-// Optional: Manual hide if needed early (e.g., error)
-function hideLoadingBar() {
-  const postLoginLoader = document.getElementById("postLoginLoader");
-  if (postLoginLoader) {
-    postLoginLoader.style.display = "none";
-    const loadingBar = document.getElementById("loadingBar");
-    if (loadingBar) loadingBar.style.width = "0%";
-  }
-}
-
 /* ---------- 🆔 ChatID Modal ---------- */
 async function promptForChatID(userRef, userData) {
   if (!refs.chatIDModal || !refs.chatIDInput || !refs.chatIDConfirmBtn)
@@ -2094,8 +2037,6 @@ async function promptForChatID(userRef, userData) {
     };
   });
 }
-
-
 
 
 /* ======================================================
@@ -2404,10 +2345,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
-// =============================================
-// FINAL LOGIN BUTTON — EXACTLY LIKE ORIGINAL + SMOOTH BAR
-// =============================================
+// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
@@ -2417,7 +2355,8 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     return;
   }
 
-  showLoadingBar(); // ← Starts the beautiful animated bar
+  const loader = document.getElementById("postLoginLoader");
+  if (loader) loader.style.display = "flex";
 
   try {
     // STEP 1: Firebase Auth login
@@ -2433,36 +2372,34 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      hideLoadingBar();
       return;
     }
 
     const data = userSnap.data();
 
     if (data.isHost || (data.isVIP && data.hasPaid === true)) {
+      // Allowed — onAuthStateChanged will handle the rest
       console.log("Access granted");
-      // onAuthStateChanged will trigger setupPostLogin() → chat opens
     } else {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
-      hideLoadingBar();
       return;
     }
 
   } catch (err) {
     console.error("Login failed:", err);
-    let message = "Login failed — try again";
     if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      message = "Wrong password or email";
+      showStarPopup("Wrong password or email");
     } else if (err.code === "auth/too-many-requests") {
-      message = "Too many attempts. Wait a minute.";
+      showStarPopup("Too many attempts. Wait a minute.");
+    } else {
+      showStarPopup("Login failed — try again");
     }
-    showStarPopup(message);
-    hideLoadingBar();
+  } finally {
+    if (loader) loader.style.display = "none";
   }
-  // Note: On success, we let the bar finish naturally (reaches 100% organically)
-  // No need to hide in finally — it auto-hides when progress hits 100%
 });
+
 
 // HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
@@ -2651,7 +2588,7 @@ function startStarEarning(uid) {
    🧩 Helper Functions
 ================================= */
 const todayDate = () => new Date().toISOString().split("T")[0];
-
+const sleep = ms => new Promise(res => setTimeout(res, ms));
 
 
 /* ---------- UPDATE UI AFTER AUTH — IMPROVED & SAFE ---------- */
@@ -2722,29 +2659,57 @@ function hideChatUI() {
   updateUIAfterAuth(null);
 }
 
+/* =======================================
+   🚀 DOMContentLoaded Bootstrap
+======================================= */
+window.addEventListener("DOMContentLoaded", () => {
 
-// =============================================
-// 🔁 AUTO LOGIN SESSION — UPDATED TO USE NEW BAR
-// =============================================
-async function autoLogin() {
+  /* ----------------------------
+     ⚡ Smooth Loading Bar Helper
+  ----------------------------- */
+  function showLoadingBar(duration = 1000) {
+    const postLoginLoader = document.getElementById("postLoginLoader");
+    const loadingBar = document.getElementById("loadingBar");
+    if (!postLoginLoader || !loadingBar) return;
+
+    postLoginLoader.style.display = "flex";
+    loadingBar.style.width = "0%";
+
+    let progress = 0;
+    const interval = 50;
+    const step = 100 / (duration / interval);
+
+    const loadingInterval = setInterval(() => {
+      progress += step + Math.random() * 4; // adds organic feel
+      loadingBar.style.width = `${Math.min(progress, 100)}%`;
+
+      if (progress >= 100) {
+        clearInterval(loadingInterval);
+        setTimeout(() => postLoginLoader.style.display = "none", 250);
+      }
+    }, interval);
+  }
+
+
+  /* ----------------------------
+     🔁 Auto Login Session
+  ----------------------------- */
+ async function autoLogin() {
   const vipUser = JSON.parse(localStorage.getItem("vipUser"));
   if (vipUser?.email && vipUser?.password) {
-    showLoadingBar(); // Same beautiful bar on auto-login
+    showLoadingBar(1000);
     await sleep(60);
     const success = await loginWhitelist(vipUser.email, vipUser.password);
-    if (!success) {
-      hideLoadingBar();
-      return;
-    }
+    if (!success) return;
     await sleep(400);
     updateRedeemLink();
     updateTipLink();
-    // Bar will auto-complete and hide
   }
 }
 
 // Call on page load
 autoLogin();
+
 
 /* ----------------------------
    ⚡ Global setup for local message tracking
