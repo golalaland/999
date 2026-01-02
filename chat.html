@@ -2401,7 +2401,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
    PRIVATE MESSAGE FEATURE - FULL REWRITE
    ==================================== */
 
-/* Floating Button */
+/* Floating Button - Cute Envelope */
 .private-msg-btn {
   position: fixed;
   bottom: 28px;
@@ -2429,7 +2429,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   height: 34px;
 }
 
-/* Modal - Centered, Small, Cute */
+/* Modal - Centered, Safe for Keyboard */
 .private-msg-modal {
   display: none;
   position: fixed;
@@ -2440,22 +2440,26 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto; /* allows scrolling if needed */
 }
 .private-msg-modal.open {
   display: flex;
 }
 
-/* Modal Card - Small & Compact */
+/* Modal Card - Small, Cute, Fixed Height */
 .private-msg-content {
   width: 100%;
-  max-width: 360px; /* Smaller for cute feel */
+  max-width: 360px;
+  max-height: 90vh; /* prevents shooting out on small screens */
   background: linear-gradient(135deg, #111, #1a1a1a);
   border-radius: 28px;
   padding: 24px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   border: 1px solid rgba(195,246,12,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* contains everything */
   animation: popIn 0.35s ease;
-  text-align: center;
 }
 @keyframes popIn {
   from { transform: scale(0.9); opacity: 0; }
@@ -2468,6 +2472,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 .private-msg-header h3 {
   font-size: 21px;
@@ -2492,12 +2497,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   margin: 0 0 20px 0;
   font-weight: 600;
   line-height: 1.5;
+  flex-shrink: 0;
 }
 
-/* Input - Cute & Compact */
+/* Input - Compact, No Overflow */
 #privateMsgInput {
-  width: 100%;
-  height: 110px; /* Smaller */
+  flex: 1;
+  min-height: 100px;
+  max-height: 200px;
   padding: 16px;
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.1);
@@ -2506,7 +2513,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   font-size: 16px;
   resize: none;
   outline: none;
-  margin-bottom: 20px;
+  overflow-y: auto;
 }
 #privateMsgInput::placeholder {
   color: #888;
@@ -2516,9 +2523,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   box-shadow: 0 0 15px rgba(195,246,12,0.3);
 }
 
-/* Send Button - Cute Glow */
+/* Send Button - Fixed at Bottom */
 .private-send-btn {
   width: 100%;
+  margin-top: 20px;
   padding: 16px;
   border-radius: 50px;
   background: linear-gradient(135deg, #c3f60c, #a8d50a);
@@ -2529,13 +2537,25 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   cursor: pointer;
   box-shadow: 0 8px 25px rgba(195,246,12,0.4);
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 .private-send-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 35px rgba(195,246,12,0.6);
 }
-.private-send-btn:active {
-  transform: translateY(0);
+
+/* Mobile - Safe Keyboard Behavior */
+@media (max-width: 768px) {
+  .private-msg-modal {
+    padding: 10px;
+  }
+  .private-msg-content {
+    max-height: 85vh;
+    padding: 20px;
+  }
+  #privateMsgInput {
+    min-height: 90px;
+  }
 }
 </style>
 </head>
