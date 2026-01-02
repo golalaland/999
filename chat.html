@@ -2397,7 +2397,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   text-decoration: underline; 
 }
 
-/* Live Tab Only - Sticky Player + Chat */
+/* Live Tab - Twitch Mobile Style: Compact Chat + Keyboard Friendly */
 #live .live-player-wrapper {
   position: sticky;
   top: 0;
@@ -2418,64 +2418,104 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   object-fit: contain;
 }
 
+/* Chat Messages - Tight, scrollable */
 #live .live-chat-messages {
   flex: 1;
-  padding: 16px;
+  padding: 12px 16px;
   overflow-y: auto;
   background: #0a0a0a;
-  min-height: 100px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
+/* Compact Send Area - Small & Mobile-Optimized */
 #live .live-send-area {
   position: sticky;
   bottom: 0;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: #111;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
   z-index: 25;
+  box-sizing: border-box;
 }
 
 #live .live-send-area input {
   flex: 1;
-  padding: 14px 18px;
+  padding: 12px 16px;
   border-radius: 50px;
   border: 1px solid rgba(255,255,255,0.1);
   background: #1a1a1a;
   color: #fff;
-  font-size: 16px;
+  font-size: 15px; /* smaller for mobile */
   outline: none;
 }
-
+#live .live-send-area input::placeholder {
+  color: #888;
+  font-size: 15px;
+}
 #live .live-send-area input:focus {
   border-color: #c3f60c;
+  box-shadow: 0 0 10px rgba(195,246,12,0.3);
 }
 
+/* Compact Buttons */
 #live .send-btn, #live .buzz-btn {
-  padding: 12px 18px;
+  padding: 10px 14px;
   border-radius: 50px;
   background: #c3f60c;
   color: #000;
   font-weight: 700;
   border: none;
   cursor: pointer;
+  font-size: 14px;
+  min-width: 60px;
 }
-
 #live .buzz-btn {
-  font-size: 20px;
+  font-size: 18px;
+  padding: 10px 12px;
 }
 
-/* Mobile */
+/* Mobile - Perfect Fit, No Zoom */
 @media (max-width: 768px) {
+  .live-modal-content {
+    padding: 60px 0 0;
+    gap: 0;
+  }
+
   #live .live-player {
-    height: calc(100vw * 9 / 16);
+    height: calc(100vw * 9 / 16); /* Exact 16:9 based on screen width */
     border-radius: 0;
   }
+
+  #live .live-chat-messages {
+    padding: 12px 14px;
+  }
+
   #live .live-send-area {
-    padding: 12px;
+    padding: 8px 10px;
+  }
+
+  #live .live-send-area input {
+    padding: 11px 14px;
+    font-size: 15px;
+  }
+
+  #live .send-btn, #live .buzz-btn {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
+  #live .buzz-btn {
+    font-size: 17px;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input[type="text"] {
+    font-size: 16px !important; /* Prevents iOS zoom */
   }
 }
 </style>
