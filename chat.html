@@ -2603,6 +2603,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
+  <!-- Live Stream Modal -->
+<div id="liveModal" class="live-modal">
+  <div class="live-modal-content">
+    <span class="live-close" id="closeModal">&times;</span>
+
+    <!-- Tabs -->
+    <div class="live-content-tabs">
+      <button class="live-tab-btn active" data-content="live">Livestreams</button>
+      <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
+      <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
+    </div>
+
     <!-- Live Tab (Livestreams) - Player + Private Message Feature -->
     <div id="live" class="live-tab-content active">
       <!-- Player -->
@@ -2619,26 +2631,27 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </p>
       </div>
 
-     <!-- Floating Private Message Button -->
-<button id="privateMsgBtn" class="private-msg-btn" title="Send private message to host">
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
-  </svg>
-</button>
+      <!-- Floating Private Message Button -->
+      <button id="privateMsgBtn" class="private-msg-btn" title="Send private message to host">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
+        </svg>
+      </button>
 
-<!-- Private Message Modal - Small & Cute -->
-<div id="privateMsgModal" class="private-msg-modal">
-  <div class="private-msg-content">
-    <div class="private-msg-header">
-      <h3>Private Message 💌</h3>
-      <span class="private-close">&times;</span>
+      <!-- Private Message Modal - Small & Cute -->
+      <div id="privateMsgModal" class="private-msg-modal">
+        <div class="private-msg-content">
+          <div class="private-msg-header">
+            <h3>Private Message 💌</h3>
+            <span class="private-close">&times;</span>
+          </div>
+          <p class="private-note">Only the host will see this · Costs 100 stars</p>
+          <textarea id="privateMsgInput" placeholder="Type your message... ✨"></textarea>
+          <button id="privateSendBtn" class="private-send-btn">Send Message</button>
+        </div>
+      </div>
     </div>
-    <p class="private-note">Only you (the host) will see this · Costs 100 stars</p>
-    <textarea id="privateMsgInput" placeholder="Type your message... ✨"></textarea>
-    <button id="privateSendBtn" class="private-send-btn">Send Message</button>
-  </div>
-</div>
-      
+
     <!-- Upcoming Tab -->
     <div id="upcoming" class="live-tab-content">
       <div id="upcomingPosters" class="upcoming-posters">
