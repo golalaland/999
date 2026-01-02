@@ -5779,13 +5779,11 @@ function attachReelInteractions() {
   });
 }
 
-video.addEventListener('fullscreenchange', () => {
-  const desc = item.querySelector('.reel-description');
-  if (document.fullscreenElement) {
-    desc.classList.add('expanded');
-  } else {
-    desc.classList.remove('expanded');
-  }
+document.querySelectorAll('.reel-description').forEach(desc => {
+  desc.addEventListener('click', e => {
+    e.stopPropagation();
+    desc.classList.toggle('expanded');
+  });
 });
 
 /*********************************
