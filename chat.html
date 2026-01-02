@@ -1,4 +1,5 @@
 
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -2078,99 +2079,34 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
 }
 
-/* Upcoming Posters - Dope Card Layout */
+/* Upcoming Posters */
 .upcoming-posters {
   width: 100%;
-  padding: 30px 0;
+  padding: 20px 0;
 }
-
 .poster-grid {
   display: flex;
   overflow-x: auto;
-  gap: 24px;
-  padding: 0 20px 30px;
+  gap: 16px;
+  padding: 0 12px 16px;
   scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
 }
 .poster-grid::-webkit-scrollbar { display: none; }
-
-.poster-card {
-  flex: 0 0 300px; /* full-size cards, no shrinking */
-  background: rgba(255,255,255,0.05);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.1);
+.poster {
+  flex: 0 0 140px;
 }
-.poster-card:hover, .poster-card:active {
-  transform: translateY(-10px);
-  box-shadow: 0 25px 60px rgba(255,51,102,0.4);
-}
-
-.poster-image {
+.poster img {
   width: 100%;
-  height: 420px; /* tall, cinematic */
-  overflow: hidden;
-}
-.poster-image img {
-  width: 100%;
-  height: 100%;
+  aspect-ratio: 9 / 16;
   object-fit: cover;
-  transition: transform 0.6s ease;
-}
-.poster-card:hover .poster-image img {
-  transform: scale(1.1);
-}
-
-.poster-info {
-  padding: 20px;
-  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
 }
 .poster-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  letter-spacing: 0.5px;
-}
-.poster-time {
-  font-size: 15px;
-  color: #ff3366;
-  font-weight: 600;
-  margin-bottom: 12px;
-  letter-spacing: 1px;
-}
-.poster-desc {
-  font-size: 15px;
-  line-height: 1.6;
-  color: #ddd;
-  margin: 0;
-}
-
-/* Mobile - stack vertically for better reading */
-@media (max-width: 768px) {
-  .poster-grid {
-    flex-direction: column;
-    gap: 30px;
-    padding: 0 16px 40px;
-    overflow-x: hidden;
-  }
-  .poster-card {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-  }
-  .poster-image {
-    height: 500px;
-  }
-  .poster-title {
-    font-size: 24px;
-  }
-  .poster-desc {
-    font-size: 16px;
-  }
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: center;
+  color: #fff;
 }
 
 /* Extra tight on small phones */
@@ -2338,6 +2274,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   display: block;
   text-overflow: unset;
 }
+
+
   .reel-item:hover,
   .reel-item:active {
     transform: scale(1.03);
@@ -2433,7 +2371,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <div class="live-content-tabs">
         <button class="live-tab-btn active" data-content="live">Livestreams</button>
         <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
-        <button class="live-tab-btn" data-content="reels">TV</button>
+        <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
       </div>
 
       <!-- Live Tab -->
@@ -2444,48 +2382,26 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
 
-     <!-- Upcoming Posters – Dope Layout with Description & Time -->
-<div id="upcomingPosters" class="upcoming-posters">
-  <div class="poster-grid">
-    <!-- Poster 1 -->
-    <div class="poster-card">
-      <div class="poster-image">
-        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
+      <!-- Upcoming Tab (Posters) -->
+      <div id="upcoming" class="live-tab-content">
+        <div class="upcoming-posters">
+          <div class="poster-grid">
+            <div class="poster">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
+              <p class="poster-title">Chill Vibes</p>
+            </div>
+            <div class="poster">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
+              <p class="poster-title">Late Night Talk</p>
+            </div>
+            <div class="poster">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
+              <p class="poster-title">Exclusive Drop</p>
+            </div>
+            <!-- Add more -->
+          </div>
+        </div>
       </div>
-      <div class="poster-info">
-        <h3 class="poster-title">Chill Vibes</h3>
-        <p class="poster-time">Tonight @ 10PM EST</p>
-        <p class="poster-desc">Late night lo-fi beats, deep talks, and good energy. Pull up and unwind.</p>
-      </div>
-    </div>
-
-    <!-- Poster 2 -->
-    <div class="poster-card">
-      <div class="poster-image">
-        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
-      </div>
-      <div class="poster-info">
-        <h3 class="poster-title">Late Night Talk</h3>
-        <p class="poster-time">Tomorrow @ 1AM EST</p>
-        <p class="poster-desc">Real conversations, no filter. Stories, laughs, and truth bombs.</p>
-      </div>
-    </div>
-
-    <!-- Poster 3 -->
-    <div class="poster-card">
-      <div class="poster-image">
-        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
-      </div>
-      <div class="poster-info">
-        <h3 class="poster-title">Exclusive Drop</h3>
-        <p class="poster-time">Friday @ 9PM EST</p>
-        <p class="poster-desc">Special guest, new music reveal, and giveaways. You don't wanna miss this.</p>
-      </div>
-    </div>
-
-    <!-- Add more posters here -->
-  </div>
-</div>
 
 <!-- Reels Tab -->
 <div id="reels" class="live-tab-content">
