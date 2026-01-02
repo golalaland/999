@@ -2854,6 +2854,20 @@ privateSendBtn.addEventListener('click', async () => {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 });
+
+  // Auto-resize textarea as user types (cute growing input)
+privateMsgInput.addEventListener('input', () => {
+  privateMsgInput.style.height = 'auto';
+  privateMsgInput.style.height = privateMsgInput.scrollHeight + 'px';
+});
+
+// Enter key sends (Shift+Enter for new line)
+privateMsgInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    privateSendBtn.click();
+  }
+});
   
 // =============================
 // BUZZ MESSAGE — SUPER STICKER STYLE, CLASSY NON-NEON GRADIENTS
