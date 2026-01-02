@@ -5779,12 +5779,29 @@ function attachReelInteractions() {
   });
 }
 
-document.querySelectorAll('.reel-description').forEach(desc => {
-  desc.addEventListener('click', e => {
-    e.stopPropagation();
-    desc.classList.toggle('expanded');
-  });
+document.querySelectorAll('.reel-item').forEach(item => {
+  const video = item.querySelector('video');
+  const desc = item.querySelector('.reel-description');
+
+  if (!video) return;
+
+  /* Expand description in fullscreen */
+  function handleFullscreenChange() {
+    const isFullscreen =
+      document.fullscreenElement === video ||
+      document.webkitFullscreenElement === video;
+
+    if (isFullscreen) {
+      desc?.classList.add('expanded');
+    } else {
+      desc?.classList.remove('expanded');
+    }
+  }
+
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 });
+
 
 /*********************************
  * INIT
