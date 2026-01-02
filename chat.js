@@ -2428,7 +2428,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
+// ————————————————————————————————————————
+// FINAL LOGIN BUTTON — NOW WITH PROPER LOADING BAR
+// ————————————————————————————————————————
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
@@ -2438,24 +2440,29 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     return;
   }
 
-  const loader = showLoadingBar({
+  // Start the beautiful smart loader
+  const loader = window.showLoadingBar({
     minDuration: 1000,
     maxDuration: 4500,
     autoComplete: true
   });
 
   try {
-    loader.update(15);
+    loader.update(15); // Preparing...
 
+    // STEP 1: Firebase Auth login
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Firebase Auth Success:", userCredential.user.uid);
+    const firebaseUser = userCredential.user;
+    console.log("Firebase Auth Success:", firebaseUser.uid);
 
-    loader.update(50);
+    loader.update(50); // Authenticated, checking access...
 
+    // STEP 2: Check if allowed (Host or paid VIP)
     const uidKey = sanitizeKey(email);
-    const userSnap = await getDoc(doc(db, "users", uidKey));
+    const userRef = doc(db, "users", uidKey);
+    const userSnap = await getDoc(userRef);
 
-    loader.update(75);
+    loader.update(80); // Profile loaded...
 
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
@@ -2466,7 +2473,10 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
     const data = userSnap.data();
 
-    if (!(data.isHost || (data.isVIP && data.hasPaid === true))) {
+    if (data.isHost || (data.isVIP && data.hasPaid === true)) {
+      console.log("Access granted");
+      // onAuthStateChanged will trigger setupPostLogin(), show chat, etc.
+    } else {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
       loader.finish();
@@ -2474,19 +2484,22 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     }
 
     loader.update(95);
-    loader.finish(); // Let it polish to 100% and hide
+    loader.finish(); // Smooth final fill + hide
 
   } catch (err) {
     console.error("Login failed:", err);
+
     let message = "Login failed — try again";
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") message = "Wrong password or email";
-    else if (err.code === "auth/too-many-requests") message = "Too many attempts. Wait a minute.";
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      message = "Wrong password or email";
+    } else if (err.code === "auth/too-many-requests") {
+      message = "Too many attempts. Wait a minute.";
+    }
 
     showStarPopup(message);
     loader.finish();
   }
 });
-
 
 // HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
