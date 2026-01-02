@@ -2554,6 +2554,90 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     padding: 24px 20px;
   }
 }
+/* Private Message Reader - Cute & Host-Only */
+.private-msg-reader {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto 40px;
+  background: rgba(17, 17, 17, 0.8);
+  border-radius: 24px;
+  border: 1px solid rgba(195, 246, 12, 0.2);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  display: none; /* hidden by default */
+}
+
+.private-reader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(195,246,12,0.2), rgba(195,246,12,0.1));
+  border-bottom: 1px solid rgba(195,246,12,0.3);
+}
+.private-reader-header h3 {
+  font-size: 19px;
+  color: #c3f60c;
+  margin: 0;
+  font-weight: 700;
+}
+.msg-count {
+  background: #c3f60c;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 50px;
+}
+
+/* Messages List */
+.private-messages-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px;
+}
+.private-message-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  border-left: 4px solid #c3f60c;
+  animation: fadeIn 0.4s ease;
+}
+.private-message-item .msg-time {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+.private-message-item .msg-text {
+  font-size: 16px;
+  color: #fff;
+  line-height: 1.5;
+}
+.no-messages {
+  text-align: center;
+  color: #888;
+  font-size: 15px;
+  padding: 60px 20px;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .private-msg-reader {
+    margin: 16px 12px 40px;
+    border-radius: 20px;
+  }
+  .private-messages-list {
+    max-height: 300px;
+  }
+}
 </style>
 </head>
 <body>
@@ -2620,20 +2704,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
-    <!-- Private Message Reader (host only) -->
-  <div id="privateMsgReader" class="private-msg-reader">
- <!-- Private Message Reader - Only visible when host is live -->
-<div id="privateMsgReader" class="private-msg-reader">
-  <div class="private-reader-header">
-    <h3>Private Messages 💌</h3>
-    <span id="privateMsgCount" class="msg-count">0</span>
-  </div>
-  <div id="privateMessagesList" class="private-messages-list">
-    <p class="no-messages">No private messages yet... waiting for secrets ✨</p>
-  </div>
-</div>
-
-    <!-- Live Tab (Livestreams) - Player + Private Message Feature -->
+    <!-- Live Tab (Livestreams) - Player + Private Message Feature + Reader -->
     <div id="live" class="live-tab-content active">
       <!-- Player -->
       <div id="livePlayerWrapper" class="live-player-wrapper">
@@ -2641,13 +2712,23 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <p class="player-placeholder">Live Player Loading...</p>
         </div>
       </div>
-      
 
       <!-- Optional Hint Text -->
       <div id="liveChatMessages" class="live-chat-messages">
         <p style="text-align:center; color:#888; padding:60px 20px; font-size:15px;">
           Private messages are sent directly to the host 💌
         </p>
+      </div>
+
+      <!-- Private Message Reader (host only) -->
+      <div id="privateMsgReader" class="private-msg-reader">
+        <div class="private-reader-header">
+          <h3>Private Messages 💌</h3>
+          <span id="privateMsgCount" class="msg-count">0</span>
+        </div>
+        <div id="privateMessagesList" class="private-messages-list">
+          <p class="no-messages">No private messages yet... waiting for secrets ✨</p>
+        </div>
       </div>
 
       <!-- Floating Private Message Button -->
@@ -2718,7 +2799,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
   </div> <!-- End of .live-modal-content -->
 </div> <!-- End of #liveModal -->
-  
+
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
