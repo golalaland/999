@@ -2620,6 +2620,19 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
+    <!-- Private Message Reader (host only) -->
+  <div id="privateMsgReader" class="private-msg-reader">
+ <!-- Private Message Reader - Only visible when host is live -->
+<div id="privateMsgReader" class="private-msg-reader">
+  <div class="private-reader-header">
+    <h3>Private Messages 💌</h3>
+    <span id="privateMsgCount" class="msg-count">0</span>
+  </div>
+  <div id="privateMessagesList" class="private-messages-list">
+    <p class="no-messages">No private messages yet... waiting for secrets ✨</p>
+  </div>
+</div>
+
     <!-- Live Tab (Livestreams) - Player + Private Message Feature -->
     <div id="live" class="live-tab-content active">
       <!-- Player -->
@@ -2628,6 +2641,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <p class="player-placeholder">Live Player Loading...</p>
         </div>
       </div>
+      
 
       <!-- Optional Hint Text -->
       <div id="liveChatMessages" class="live-chat-messages">
