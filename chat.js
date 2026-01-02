@@ -5652,25 +5652,25 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
  *********************************/
 const reelsData = [
   {
-    videoUrl: "https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4",
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/3901931aca4f497f834b1a7d07d06f92.mp4",
     title: "Hot Dance Reel",
     description: "Turning up the heat with this fire routine 🔥 Who's joining next?",
     views: 42300
   },
   {
-    videoUrl: "https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4",
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/ac4b7566814a497ca3d4b2309ff9fa5d.mp4",
     title: "Behind the Scenes",
     description: "Day in the life — prep, laughs, and real moments backstage 🎥",
     views: 18700
   },
   {
-    videoUrl: "https://cdn.shopify.com/videos/c/o/v/a9d2688500e34b378788747a1888e29c.mp4",
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/31941326eb1745428c65ee9bb2a42e81.mp4",
     title: "Late Night Vibes",
     description: "Chill session after hours — just vibes and good energy 🌙",
     views: 105200
   },
   {
-    videoUrl: "https://cdn.shopify.com/videos/c/o/v/1314d58fabd74d32a96d996ce2bd77a2.mp4",
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/eb50a3c972c642a48ceef0c8424679b9.mp4",
     title: "Exclusive Drop",
     description: "First look at tomorrow's surprise... you saw it here first 👀",
     views: 89100
@@ -5778,6 +5778,15 @@ function attachReelInteractions() {
     });
   });
 }
+
+video.addEventListener('fullscreenchange', () => {
+  const desc = item.querySelector('.reel-description');
+  if (document.fullscreenElement) {
+    desc.classList.add('expanded');
+  } else {
+    desc.classList.remove('expanded');
+  }
+});
 
 /*********************************
  * INIT
