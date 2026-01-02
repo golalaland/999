@@ -2008,78 +2008,48 @@ function sanitizeKey(email) {
 }
 
 // =============================================
-// ⚡ SMART LOADING BAR (GLOBAL & BULLETPROOF)
-// Place this early in chat.js — before any code that uses it
+// ⚡ SMOOTH & ORGANIC LOADING BAR (BETTER THAN BEFORE)
 // =============================================
-window.showLoadingBar = function(options = {}) {
-  const {
-    minDuration = 800,
-    maxDuration = 4000,
-    autoComplete = true
-  } = options;
-
+function showLoadingBar() {
   const postLoginLoader = document.getElementById("postLoginLoader");
   const loadingBar = document.getElementById("loadingBar");
-  if (!postLoginLoader || !loadingBar) return { update: () => {}, finish: () => {} };
+  if (!postLoginLoader || !loadingBar) return;
 
   postLoginLoader.style.display = "flex";
   loadingBar.style.width = "0%";
-  loadingBar.style.transition = "width 0.4s ease-out";
+  loadingBar.style.transition = "width 0.4s ease-out"; // smooth updates
 
   let progress = 0;
-  let startTime = Date.now();
-  let interval = null;
-  let resolved = false;
+  const interval = setInterval(() => {
+    // Organic feel: starts slow, speeds up near end, with tiny randomness
+    progress += 2 + Math.random() * 6;
+    if (progress > 100) progress = 100;
 
-  const startAutoProgress = () => {
-    interval = setInterval(() => {
-      if (resolved) return;
-      const elapsed = Date.now() - startTime;
-      const baseProgress = (elapsed / maxDuration) * 100;
-      let target = baseProgress ** 0.95;
-      target += Math.random() * 3;
-      progress = Math.min(target, 95);
-      loadingBar.style.width = `${progress}%`;
-    }, 80);
-  };
+    loadingBar.style.width = `${progress}%`;
 
-  if (autoComplete) startAutoProgress();
-
-  const update = (percentage) => {
-    progress = Math.max(progress, percentage);
-    loadingBar.style.width = `${Math.min(progress, 100)}%`;
-    if (progress >= 100 && !resolved) {
-      resolved = true;
+    if (progress >= 100) {
       clearInterval(interval);
-      finish();
-    }
-  };
-
-  const finish = async () => {
-    if (resolved) return;
-    resolved = true;
-    clearInterval(interval);
-
-    const elapsed = Date.now() - startTime;
-    const delay = Math.max(0, minDuration - elapsed);
-    if (delay > 0) await new Promise(r => setTimeout(r, delay));
-
-    loadingBar.style.width = "100%";
-    loadingBar.style.transition = "width 0.6s ease-out";
-
-    setTimeout(() => {
-      postLoginLoader.style.display = "none";
       setTimeout(() => {
-        loadingBar.style.width = "0%";
-        loadingBar.style.transition = "width 0.4s ease-out";
+        postLoginLoader.style.display = "none";
+        // Reset for next login
+        setTimeout(() => {
+          loadingBar.style.width = "0%";
+        }, 300);
       }, 300);
-    }, 400);
-  };
+    }
+  }, 80);
+}
 
-  return { update, finish };
-};
+// Optional: Manual hide if needed early (e.g., error)
+function hideLoadingBar() {
+  const postLoginLoader = document.getElementById("postLoginLoader");
+  if (postLoginLoader) {
+    postLoginLoader.style.display = "none";
+    const loadingBar = document.getElementById("loadingBar");
+    if (loadingBar) loadingBar.style.width = "0%";
+  }
+}
 
-  
 /* ---------- 🆔 ChatID Modal ---------- */
 async function promptForChatID(userRef, userData) {
   if (!refs.chatIDModal || !refs.chatIDInput || !refs.chatIDConfirmBtn)
@@ -2435,9 +2405,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// ————————————————————————————————————————
-// FINAL LOGIN BUTTON — NOW WITH PROPER LOADING BAR
-// ————————————————————————————————————————
+// =============================================
+// FINAL LOGIN BUTTON — EXACTLY LIKE ORIGINAL + SMOOTH BAR
+// =============================================
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
@@ -2447,34 +2417,23 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     return;
   }
 
-  // Start the beautiful smart loader
-  const loader = window.showLoadingBar({
-    minDuration: 1000,
-    maxDuration: 4500,
-    autoComplete: true
-  });
+  showLoadingBar(); // ← Starts the beautiful animated bar
 
   try {
-    loader.update(15); // Preparing...
-
     // STEP 1: Firebase Auth login
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
     console.log("Firebase Auth Success:", firebaseUser.uid);
-
-    loader.update(50); // Authenticated, checking access...
 
     // STEP 2: Check if allowed (Host or paid VIP)
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
-    loader.update(80); // Profile loaded...
-
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      loader.finish();
+      hideLoadingBar();
       return;
     }
 
@@ -2482,30 +2441,27 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
     if (data.isHost || (data.isVIP && data.hasPaid === true)) {
       console.log("Access granted");
-      // onAuthStateChanged will trigger setupPostLogin(), show chat, etc.
+      // onAuthStateChanged will trigger setupPostLogin() → chat opens
     } else {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
-      loader.finish();
+      hideLoadingBar();
       return;
     }
 
-    loader.update(95);
-    loader.finish(); // Smooth final fill + hide
-
   } catch (err) {
     console.error("Login failed:", err);
-
     let message = "Login failed — try again";
     if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
       message = "Wrong password or email";
     } else if (err.code === "auth/too-many-requests") {
       message = "Too many attempts. Wait a minute.";
     }
-
     showStarPopup(message);
-    loader.finish();
+    hideLoadingBar();
   }
+  // Note: On success, we let the bar finish naturally (reaches 100% organically)
+  // No need to hide in finally — it auto-hides when progress hits 100%
 });
 
 // HELPER — SET CURRENT USER
