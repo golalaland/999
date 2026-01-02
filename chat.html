@@ -1970,6 +1970,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
   
 /* LIVE MODAL - Fullscreen, mobile-optimized */
+
 /* LIVE MODAL */
 .live-modal {
   display: none;
@@ -1979,8 +1980,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   background: #000;
   overflow-y: auto;
 }
-.live-modal.open { display: block; }
 
+/* Show when open */
+.live-modal.open {
+  display: block;
+}
+
+/* Modal Content - Column layout, full height */
 .live-modal-content {
   min-height: 100vh;
   display: flex;
@@ -1990,6 +1996,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   box-sizing: border-box;
 }
 
+/* Close Button - Simple, scalable */
 .live-close {
   position: fixed;
   top: 12px;
@@ -2002,12 +2009,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   z-index: 30;
   transition: all 0.3s ease;
 }
+
+/* Hover/Active - Subtle scale */
 .live-close:hover {
   opacity: 1;
   transform: scale(1.1);
 }
 
-/* TABS - Compact, no wrap on mobile */
+/* TABS - Compact, horizontal scroll on mobile */
 .live-content-tabs {
   display: flex;
   justify-content: center;
@@ -2020,8 +2029,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   margin-bottom: 10px;
   background: transparent;
 }
-.live-content-tabs::-webkit-scrollbar { display: none; }
+.live-content-tabs::-webkit-scrollbar {
+  display: none;
+}
 
+/* Tab Buttons - Pill style */
 .live-tab-btn {
   flex: 0 0 auto;
   min-width: 90px;
@@ -2040,32 +2052,34 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   position: relative;
 }
 
-/* Hover - subtle brighten only, no zoom */
+/* Hover - Subtle brighten */
 .live-tab-btn:hover {
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* ACTIVE TAB - Reduced glow, no transform/zoom */
+/* Active Tab - Vibrant with subtle glow */
 .live-tab-btn.active {
   background: #c3f60c;
   color: #000 !important;
   border-color: #c3f60c;
   font-weight: 800;
-  /* Subtle, clean neon glow — no overpowering halo */
   box-shadow:
-    0 0 8px rgba(195, 246, 12, 0.6),      /* Soft outer glow */
-    0 4px 12px rgba(195, 246, 12, 0.3),   /* Gentle lift shadow */
-    inset 0 0 12px rgba(255, 255, 255, 0.4); /* Light inner shine */
+    0 0 8px rgba(195, 246, 12, 0.6),
+    0 4px 12px rgba(195, 246, 12, 0.3),
+    inset 0 0 12px rgba(255, 255, 255, 0.4);
   z-index: 2;
 }
-/* Tab Contents */
+
+/* Tab Contents - Hidden by default */
 .live-tab-content {
   display: none;
   flex: 1;
 }
-.live-tab-content.active { display: block; }
+.live-tab-content.active {
+  display: block;
+}
 
-/* Live Player Section */
+/* Live Player Section - Centered, responsive */
 #livePlayerContainer {
   width: 100%;
   max-width: 800px;
@@ -2430,7 +2444,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 <!-- Buttons (keep aligned) -->
 <div id="sessionBar">
   <button class="session-btn" id="topBallersBtn">Win $STRZ</button>
-  <button id="highlightsBtn" class="session-btn star-hosts-btn">‪‪❤︎‬ Cuties ‪‪❤︎‬</button>
+  <button id="highlightsBtn" class="session-btn star-hosts-btn">❤︎ Cuties ❤︎</button>
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
 
@@ -2446,10 +2460,22 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
-    <!-- Live Tab -->
+    <!-- Live Tab (Livestreams) - YouTube Style with Title & Description -->
     <div id="live" class="live-tab-content active">
       <div id="livePlayerContainer" class="live-player">
         <p style="text-align:center; padding-top:40%; color:#666;">Live Player Loading...</p>
+      </div>
+
+      <!-- YouTube-style Title & Description (only in Livestreams tab) -->
+      <div class="live-info-section">
+        <h2 id="liveTitle" class="live-title" contenteditable="false">Dettyverse Live 🔥</h2>
+        <p id="liveDescription" class="live-description" contenteditable="false">
+          Late night vibes, real talk, and good energy. Pull up and join the cube!
+        </p>
+        <div class="live-meta">
+          <span class="live-viewers">12.4K watching</span>
+          <span class="live-status">• LIVE</span>
+        </div>
       </div>
     </div>
 
@@ -2497,12 +2523,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <!-- Reels Tab -->
     <div id="reels" class="live-tab-content">
       <div id="reelsGallery">
-        <!-- Reels injected here by JS -->
         <p style="text-align:center; padding-top:40%; color:#666;">Reels Loading...</p>
       </div>
     </div>
-  </div>
-</div>
+
+  </div> <!-- End of .live-modal-content -->
+</div> <!-- End of #liveModal -->
+  
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
