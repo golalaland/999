@@ -2349,12 +2349,12 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
+
   if (!email || !password) {
     showStarPopup("Enter email and password");
     return;
   }
 
-  // Start smart loader
   const loader = showLoadingBar({
     minDuration: 1000,
     maxDuration: 4500,
@@ -2362,17 +2362,17 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
   });
 
   try {
-    loader.update(20); // Preparing...
+    loader.update(15);
 
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log("Firebase Auth Success:", userCredential.user.uid);
 
-    loader.update(55); // Checking VIP status...
+    loader.update(50);
 
     const uidKey = sanitizeKey(email);
     const userSnap = await getDoc(doc(db, "users", uidKey));
 
-    loader.update(80);
+    loader.update(75);
 
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
@@ -2391,20 +2391,15 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     }
 
     loader.update(95);
-    // Success! Let it finish gracefully
-    loader.finish();
+    loader.finish(); // Let it polish to 100% and hide
 
   } catch (err) {
     console.error("Login failed:", err);
     let message = "Login failed — try again";
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      message = "Wrong password or email";
-    } else if (err.code === "auth/too-many-requests") {
-      message = "Too many attempts. Wait a minute.";
-    }
-    showStarPopup(message);
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") message = "Wrong password or email";
+    else if (err.code === "auth/too-many-requests") message = "Too many attempts. Wait a minute.";
 
-    // On error, still finish cleanly
+    showStarPopup(message);
     loader.finish();
   }
 });
@@ -2673,14 +2668,14 @@ function hideChatUI() {
 ======================================= */
 window.addEventListener("DOMContentLoaded", () => {
 
- /* ----------------------------
+/* ----------------------------
    ⚡ Smart Smooth Loading Bar (Organic + Realistic)
 ----------------------------- */
 function showLoadingBar(options = {}) {
   const {
-    minDuration = 800,     // Minimum time the loader is visible (ms)
-    maxDuration = 4000,     // Max fake duration if no manual progress
-    autoComplete = true    // If true, will slowly reach 100% even if no updates
+    minDuration = 800,
+    maxDuration = 4000,
+    autoComplete = true
   } = options;
 
   const postLoginLoader = document.getElementById("postLoginLoader");
@@ -2689,38 +2684,30 @@ function showLoadingBar(options = {}) {
 
   postLoginLoader.style.display = "flex";
   loadingBar.style.width = "0%";
-  loadingBar.style.transition = "width 0.4s ease-out"; // smooth jumps
+  loadingBar.style.transition = "width 0.4s ease-out";
 
   let progress = 0;
   let startTime = Date.now();
   let interval = null;
   let resolved = false;
 
-  // Organic auto-progress (slow at start, speeds up near end)
   const startAutoProgress = () => {
     interval = setInterval(() => {
       if (resolved) return;
-
       const elapsed = Date.now() - startTime;
       const baseProgress = (elapsed / maxDuration) * 100;
-
-      // Ease-out curve + some randomness for natural feel
-      let target = baseProgress ** 0.95; // slows down near 100
-      target += Math.random() * 3; // tiny jitter
-
-      progress = Math.min(target, 95); // never auto-hit 100% (feels fake if it does)
+      let target = baseProgress ** 0.95;
+      target += Math.random() * 3;
+      progress = Math.min(target, 95);
       loadingBar.style.width = `${progress}%`;
     }, 80);
   };
 
   if (autoComplete) startAutoProgress();
 
-  // Manual progress update — use this in your login steps!
   const update = (percentage) => {
     progress = Math.max(progress, percentage);
     loadingBar.style.width = `${Math.min(progress, 100)}%`;
-
-    // If we hit 100%, clean up
     if (progress >= 100 && !resolved) {
       resolved = true;
       clearInterval(interval);
@@ -2728,25 +2715,20 @@ function showLoadingBar(options = {}) {
     }
   };
 
-  // Call this when login fully succeeds (or fails)
   const finish = async () => {
     if (resolved) return;
     resolved = true;
     clearInterval(interval);
 
-    // Ensure minimum visible time
     const elapsed = Date.now() - startTime;
     const delay = Math.max(0, minDuration - elapsed);
-
     if (delay > 0) await new Promise(r => setTimeout(r, delay));
 
-    // Final fill to 100% with polish
     loadingBar.style.width = "100%";
     loadingBar.style.transition = "width 0.6s ease-out";
 
     setTimeout(() => {
       postLoginLoader.style.display = "none";
-      // Reset for next use
       setTimeout(() => {
         loadingBar.style.width = "0%";
         loadingBar.style.transition = "width 0.4s ease-out";
@@ -2754,10 +2736,10 @@ function showLoadingBar(options = {}) {
     }, 400);
   };
 
-  // Return control object
   return { update, finish };
 }
 
+  
   /* ----------------------------
      🔁 Auto Login Session
   ----------------------------- */
