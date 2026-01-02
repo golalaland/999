@@ -5730,78 +5730,62 @@ function attachReelInteractions() {
   document.querySelectorAll('.reel-item').forEach(item => {
     const video = item.querySelector('video');
     const playIcon = item.querySelector('.play-icon');
-
     if (!video || !playIcon) return;
 
-    /* Desktop hover preview */
+    // Reset on load
+    video.muted = true;
+    playIcon.style.opacity = '1';
+
+    /* Desktop hover preview (muted) */
     item.addEventListener('mouseenter', () => {
       video.muted = true;
       video.play().catch(() => {});
     });
-
     item.addEventListener('mouseleave', () => {
       video.pause();
       video.currentTime = 0;
       playIcon.style.opacity = '1';
     });
 
-    /* TAP PLAY ICON → FULLSCREEN + PLAY */
-    playIcon.addEventListener('click', async (e) => {
+    /* MOBILE & DESKTOP: Tap anywhere on reel to play with sound */
+    item.addEventListener('click', async (e) => {
       e.stopPropagation();
 
       try {
-        video.muted = false;
-
-        // iOS Safari native fullscreen
-        if (video.webkitEnterFullscreen) {
-          video.webkitEnterFullscreen();
-        }
-        // Android / Desktop
-        else if (video.requestFullscreen) {
-          await video.requestFullscreen();
-        }
-
+        // First play muted to "unlock" audio on iOS/Android
+        video.muted = true;
         await video.play();
+
+        // Then unmute and replay with sound
+        video.muted = false;
+        video.currentTime = 0;
+        await video.play();
+
+        // Hide play icon
         playIcon.style.opacity = '0';
+
+        // Optional: Enter fullscreen on mobile
+        if (video.requestFullscreen) {
+          await video.requestFullscreen();
+        } else if (video.webkitEnterFullscreen) { // iOS Safari
+          await video.webkitEnterFullscreen();
+        }
       } catch (err) {
-        console.log('Fullscreen play failed:', err);
+        console.log('Play failed:', err);
+        // Fallback: show play icon if blocked
+        playIcon.style.opacity = '1';
       }
     });
 
-    /* Safety sync */
-    video.addEventListener('pause', () => {
+    // Sync play icon visibility
+    video.addEventListener('play', () => playIcon.style.opacity = '0');
+    video.addEventListener('pause', () => playIcon.style.opacity = '1');
+    video.addEventListener('ended', () => {
       playIcon.style.opacity = '1';
-    });
-
-    video.addEventListener('play', () => {
-      playIcon.style.opacity = '0';
+      video.currentTime = 0;
     });
   });
 }
-
-document.querySelectorAll('.reel-item').forEach(item => {
-  const video = item.querySelector('video');
-  const desc = item.querySelector('.reel-description');
-
-  if (!video) return;
-
-  /* Expand description in fullscreen */
-  function handleFullscreenChange() {
-    const isFullscreen =
-      document.fullscreenElement === video ||
-      document.webkitFullscreenElement === video;
-
-    if (isFullscreen) {
-      desc?.classList.add('expanded');
-    } else {
-      desc?.classList.remove('expanded');
-    }
-  }
-
-  document.addEventListener('fullscreenchange', handleFullscreenChange);
-  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-});
-
 
 /*********************************
  * INIT
