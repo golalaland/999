@@ -2675,7 +2675,7 @@ function startStarEarning(uid) {
    🧩 Helper Functions
 ================================= */
 const todayDate = () => new Date().toISOString().split("T")[0];
-const sleep = ms => new Promise(res => setTimeout(res, ms));
+
 
 
 /* ---------- UPDATE UI AFTER AUTH — IMPROVED & SAFE ---------- */
