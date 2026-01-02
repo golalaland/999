@@ -2722,26 +2722,29 @@ function hideChatUI() {
   updateUIAfterAuth(null);
 }
 
-  
-  /* ----------------------------
-     🔁 Auto Login Session
-  ----------------------------- */
- async function autoLogin() {
+
+// =============================================
+// 🔁 AUTO LOGIN SESSION — UPDATED TO USE NEW BAR
+// =============================================
+async function autoLogin() {
   const vipUser = JSON.parse(localStorage.getItem("vipUser"));
   if (vipUser?.email && vipUser?.password) {
-    showLoadingBar(1000);
+    showLoadingBar(); // Same beautiful bar on auto-login
     await sleep(60);
     const success = await loginWhitelist(vipUser.email, vipUser.password);
-    if (!success) return;
+    if (!success) {
+      hideLoadingBar();
+      return;
+    }
     await sleep(400);
     updateRedeemLink();
     updateTipLink();
+    // Bar will auto-complete and hide
   }
 }
 
 // Call on page load
 autoLogin();
-
 
 /* ----------------------------
    ⚡ Global setup for local message tracking
