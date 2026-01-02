@@ -4524,6 +4524,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// Make title/description editable (long press or double tap on mobile)
+document.getElementById('liveTitle').addEventListener('dblclick', function() {
+  this.contentEditable = true;
+  this.focus();
+});
+document.getElementById('liveDescription').addEventListener('dblclick', function() {
+  this.contentEditable = true;
+  this.focus();
+});
+
+// Save on blur (or Enter)
+document.getElementById('liveTitle').addEventListener('blur', function() {
+  this.contentEditable = false;
+});
+document.getElementById('liveDescription').addEventListener('blur', function() {
+  this.contentEditable = false;
+});
+
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
   // Toggle this dynamically in your app
