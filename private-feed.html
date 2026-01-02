@@ -17,21 +17,30 @@
       appId: "1:1036452488:web:e8910172ed16e9cac9b63d"
     };
 
-    // Token check - expires access
+   // Secure token check - obfuscated
 const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get('token');
-if (token) {
+const shortCode = urlParams.get('t');
+
+if (shortCode) {
+  const payload = sessionStorage.getItem(`token_${shortCode}`);
+  if (!payload) {
+    document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">Invalid or expired link 🔒</div>`;
+    throw new Error("Invalid token");
+  }
+
   try {
-    const data = JSON.parse(atob(token));
+    const data = JSON.parse(atob(payload));
     if (Date.now() > data.expires) {
       document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">This link has expired 🔒</div>`;
+      sessionStorage.removeItem(`token_${shortCode}`);
       throw new Error("Expired");
     }
   } catch (e) {
-    document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">Invalid or expired link 🔒</div>`;
+    document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">Invalid link 🔒</div>`;
   }
+} else {
+  // No token = direct access allowed (for you)
 }
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
