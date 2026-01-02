@@ -2349,54 +2349,63 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
-
   if (!email || !password) {
     showStarPopup("Enter email and password");
     return;
   }
 
-  const loader = document.getElementById("postLoginLoader");
-  if (loader) loader.style.display = "flex";
+  // Start smart loader
+  const loader = showLoadingBar({
+    minDuration: 1000,
+    maxDuration: 4500,
+    autoComplete: true
+  });
 
   try {
-    // STEP 1: Firebase Auth login
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-    console.log("Firebase Auth Success:", firebaseUser.uid);
+    loader.update(20); // Preparing...
 
-    // STEP 2: Check if allowed (Host or paid VIP)
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Firebase Auth Success:", userCredential.user.uid);
+
+    loader.update(55); // Checking VIP status...
+
     const uidKey = sanitizeKey(email);
-    const userRef = doc(db, "users", uidKey);
-    const userSnap = await getDoc(userRef);
+    const userSnap = await getDoc(doc(db, "users", uidKey));
+
+    loader.update(80);
 
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
+      loader.finish();
       return;
     }
 
     const data = userSnap.data();
 
-    if (data.isHost || (data.isVIP && data.hasPaid === true)) {
-      // Allowed — onAuthStateChanged will handle the rest
-      console.log("Access granted");
-    } else {
+    if (!(data.isHost || (data.isVIP && data.hasPaid === true))) {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
+      loader.finish();
       return;
     }
 
+    loader.update(95);
+    // Success! Let it finish gracefully
+    loader.finish();
+
   } catch (err) {
     console.error("Login failed:", err);
+    let message = "Login failed — try again";
     if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      showStarPopup("Wrong password or email");
+      message = "Wrong password or email";
     } else if (err.code === "auth/too-many-requests") {
-      showStarPopup("Too many attempts. Wait a minute.");
-    } else {
-      showStarPopup("Login failed — try again");
+      message = "Too many attempts. Wait a minute.";
     }
-  } finally {
-    if (loader) loader.style.display = "none";
+    showStarPopup(message);
+
+    // On error, still finish cleanly
+    loader.finish();
   }
 });
 
@@ -2664,32 +2673,90 @@ function hideChatUI() {
 ======================================= */
 window.addEventListener("DOMContentLoaded", () => {
 
-  /* ----------------------------
-     ⚡ Smooth Loading Bar Helper
-  ----------------------------- */
-  function showLoadingBar(duration = 1000) {
-    const postLoginLoader = document.getElementById("postLoginLoader");
-    const loadingBar = document.getElementById("loadingBar");
-    if (!postLoginLoader || !loadingBar) return;
+ /* ----------------------------
+   ⚡ Smart Smooth Loading Bar (Organic + Realistic)
+----------------------------- */
+function showLoadingBar(options = {}) {
+  const {
+    minDuration = 800,     // Minimum time the loader is visible (ms)
+    maxDuration = 4000,     // Max fake duration if no manual progress
+    autoComplete = true    // If true, will slowly reach 100% even if no updates
+  } = options;
 
-    postLoginLoader.style.display = "flex";
-    loadingBar.style.width = "0%";
+  const postLoginLoader = document.getElementById("postLoginLoader");
+  const loadingBar = document.getElementById("loadingBar");
+  if (!postLoginLoader || !loadingBar) return;
 
-    let progress = 0;
-    const interval = 50;
-    const step = 100 / (duration / interval);
+  postLoginLoader.style.display = "flex";
+  loadingBar.style.width = "0%";
+  loadingBar.style.transition = "width 0.4s ease-out"; // smooth jumps
 
-    const loadingInterval = setInterval(() => {
-      progress += step + Math.random() * 4; // adds organic feel
-      loadingBar.style.width = `${Math.min(progress, 100)}%`;
+  let progress = 0;
+  let startTime = Date.now();
+  let interval = null;
+  let resolved = false;
 
-      if (progress >= 100) {
-        clearInterval(loadingInterval);
-        setTimeout(() => postLoginLoader.style.display = "none", 250);
-      }
-    }, interval);
-  }
+  // Organic auto-progress (slow at start, speeds up near end)
+  const startAutoProgress = () => {
+    interval = setInterval(() => {
+      if (resolved) return;
 
+      const elapsed = Date.now() - startTime;
+      const baseProgress = (elapsed / maxDuration) * 100;
+
+      // Ease-out curve + some randomness for natural feel
+      let target = baseProgress ** 0.95; // slows down near 100
+      target += Math.random() * 3; // tiny jitter
+
+      progress = Math.min(target, 95); // never auto-hit 100% (feels fake if it does)
+      loadingBar.style.width = `${progress}%`;
+    }, 80);
+  };
+
+  if (autoComplete) startAutoProgress();
+
+  // Manual progress update — use this in your login steps!
+  const update = (percentage) => {
+    progress = Math.max(progress, percentage);
+    loadingBar.style.width = `${Math.min(progress, 100)}%`;
+
+    // If we hit 100%, clean up
+    if (progress >= 100 && !resolved) {
+      resolved = true;
+      clearInterval(interval);
+      finish();
+    }
+  };
+
+  // Call this when login fully succeeds (or fails)
+  const finish = async () => {
+    if (resolved) return;
+    resolved = true;
+    clearInterval(interval);
+
+    // Ensure minimum visible time
+    const elapsed = Date.now() - startTime;
+    const delay = Math.max(0, minDuration - elapsed);
+
+    if (delay > 0) await new Promise(r => setTimeout(r, delay));
+
+    // Final fill to 100% with polish
+    loadingBar.style.width = "100%";
+    loadingBar.style.transition = "width 0.6s ease-out";
+
+    setTimeout(() => {
+      postLoginLoader.style.display = "none";
+      // Reset for next use
+      setTimeout(() => {
+        loadingBar.style.width = "0%";
+        loadingBar.style.transition = "width 0.4s ease-out";
+      }, 300);
+    }, 400);
+  };
+
+  // Return control object
+  return { update, finish };
+}
 
   /* ----------------------------
      🔁 Auto Login Session
