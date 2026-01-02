@@ -1993,6 +1993,87 @@ setInterval(checkHostNotifications, 15000);
 checkHostNotifications();
 
 
+
+/* =======================================
+   🚀 DOMContentLoaded Bootstrap
+======================================= */
+window.addEventListener("DOMContentLoaded", () => {
+// =============================================
+// FORCE LOAD: Smart Loading Bar — GLOBAL
+// Place this at the TOP of chat.js
+// =============================================
+window.showLoadingBar = function(options = {}) {
+  const {
+    minDuration = 800,
+    maxDuration = 4000,
+    autoComplete = true
+  } = options;
+
+  const postLoginLoader = document.getElementById("postLoginLoader");
+  const loadingBar = document.getElementById("loadingBar");
+  if (!postLoginLoader || !loadingBar) return { update: () => {}, finish: () => {} };
+
+  postLoginLoader.style.display = "flex";
+  loadingBar.style.width = "0%";
+  loadingBar.style.transition = "width 0.4s ease-out";
+
+  let progress = 0;
+  let startTime = Date.now();
+  let interval = null;
+  let resolved = false;
+
+  const startAutoProgress = () => {
+    interval = setInterval(() => {
+      if (resolved) return;
+      const elapsed = Date.now() - startTime;
+      const baseProgress = (elapsed / maxDuration) * 100;
+      let target = baseProgress ** 0.95;
+      target += Math.random() * 3;
+      progress = Math.min(target, 95);
+      loadingBar.style.width = `${progress}%`;
+    }, 80);
+  };
+
+  if (autoComplete) startAutoProgress();
+
+  const update = (percentage) => {
+    progress = Math.max(progress, percentage);
+    loadingBar.style.width = `${Math.min(progress, 100)}%`;
+    if (progress >= 100 && !resolved) {
+      resolved = true;
+      clearInterval(interval);
+      finish();
+    }
+  };
+
+  const finish = async () => {
+    if (resolved) return;
+    resolved = true;
+    clearInterval(interval);
+
+    const elapsed = Date.now() - startTime;
+    const delay = Math.max(0, minDuration - elapsed);
+    if (delay > 0) await new Promise(r => setTimeout(r, delay));
+
+    loadingBar.style.width = "100%";
+    loadingBar.style.transition = "width 0.6s ease-out";
+
+    setTimeout(() => {
+      postLoginLoader.style.display = "none";
+      setTimeout(() => {
+        loadingBar.style.width = "0%";
+        loadingBar.style.transition = "width 0.4s ease-out";
+      }, 300);
+    }, 400);
+  };
+
+  return { update, finish };
+};
+
+// Safety log — remove later
+console.log("%c✅ showLoadingBar is now GLOBAL and ready", "color: #00ff00; font-weight: bold;");
+
+
 /* ---------- 🆔 ChatID Modal ---------- */
 async function promptForChatID(userRef, userData) {
   if (!refs.chatIDModal || !refs.chatIDInput || !refs.chatIDConfirmBtn)
@@ -2037,6 +2118,8 @@ async function promptForChatID(userRef, userData) {
     };
   });
 }
+
+
 
 
 /* ======================================================
@@ -2661,82 +2744,6 @@ function hideChatUI() {
 
   // 🔹 Restore intro UI (subtitle, hello text, etc.)
   updateUIAfterAuth(null);
-}
-
-/* =======================================
-   🚀 DOMContentLoaded Bootstrap
-======================================= */
-window.addEventListener("DOMContentLoaded", () => {
-
-/* ----------------------------
-   ⚡ Smart Smooth Loading Bar (Organic + Realistic)
------------------------------ */
-function showLoadingBar(options = {}) {
-  const {
-    minDuration = 800,
-    maxDuration = 4000,
-    autoComplete = true
-  } = options;
-
-  const postLoginLoader = document.getElementById("postLoginLoader");
-  const loadingBar = document.getElementById("loadingBar");
-  if (!postLoginLoader || !loadingBar) return;
-
-  postLoginLoader.style.display = "flex";
-  loadingBar.style.width = "0%";
-  loadingBar.style.transition = "width 0.4s ease-out";
-
-  let progress = 0;
-  let startTime = Date.now();
-  let interval = null;
-  let resolved = false;
-
-  const startAutoProgress = () => {
-    interval = setInterval(() => {
-      if (resolved) return;
-      const elapsed = Date.now() - startTime;
-      const baseProgress = (elapsed / maxDuration) * 100;
-      let target = baseProgress ** 0.95;
-      target += Math.random() * 3;
-      progress = Math.min(target, 95);
-      loadingBar.style.width = `${progress}%`;
-    }, 80);
-  };
-
-  if (autoComplete) startAutoProgress();
-
-  const update = (percentage) => {
-    progress = Math.max(progress, percentage);
-    loadingBar.style.width = `${Math.min(progress, 100)}%`;
-    if (progress >= 100 && !resolved) {
-      resolved = true;
-      clearInterval(interval);
-      finish();
-    }
-  };
-
-  const finish = async () => {
-    if (resolved) return;
-    resolved = true;
-    clearInterval(interval);
-
-    const elapsed = Date.now() - startTime;
-    const delay = Math.max(0, minDuration - elapsed);
-    if (delay > 0) await new Promise(r => setTimeout(r, delay));
-
-    loadingBar.style.width = "100%";
-    loadingBar.style.transition = "width 0.6s ease-out";
-
-    setTimeout(() => {
-      postLoginLoader.style.display = "none";
-      setTimeout(() => {
-        loadingBar.style.width = "0%";
-        loadingBar.style.transition = "width 0.4s ease-out";
-      }, 300);
-    }, 400);
-  };
-
-  return { update, finish };
 }
 
   
