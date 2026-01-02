@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Private Feed 💌</title>
+  <title>Private Messages 💌</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -23,7 +23,7 @@
     const messagesList = document.getElementById('messagesList');
     const msgCount = document.getElementById('msgCount');
 
-    // Real-time listener for private messages
+    // Real-time listener — newest first
     const q = query(collection(db, "privateLiveMessages"), orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
@@ -35,7 +35,7 @@
         messagesList.innerHTML = `
           <p class="no-messages">
             No private messages yet...<br>
-            Waiting for your secrets 💕
+            Waiting for secrets 💕
           </p>
         `;
         return;
@@ -45,7 +45,7 @@
         const data = doc.data();
         const time = data.timestamp 
           ? new Date(data.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-          : 'Just now';
+          : 'Time unknown';
 
         const msgEl = document.createElement('div');
         msgEl.className = 'private-message';
@@ -65,7 +65,7 @@
     body {
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #0a001f, #1a0033);
+      background: #000;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
@@ -82,9 +82,7 @@
     .header h1 {
       font-size: 28px;
       margin: 0;
-      background: linear-gradient(90deg, #c3f60c, #ff69b4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #c3f60c;
       font-weight: 800;
     }
     #msgCount {
@@ -98,7 +96,7 @@
       font-size: 16px;
     }
     #messagesList {
-      background: rgba(20, 20, 40, 0.6);
+      background: rgba(20,20,30,0.6);
       border-radius: 24px;
       padding: 20px;
       max-height: 70vh;
@@ -107,7 +105,7 @@
       backdrop-filter: blur(10px);
     }
     .private-message {
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
       border-radius: 20px;
       padding: 16px 20px;
       margin-bottom: 16px;
@@ -137,7 +135,6 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    /* Mobile */
     @media (max-width: 768px) {
       .container {
         padding: 16px;
@@ -154,11 +151,11 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>Private Feed 💌</h1>
+      <h1>Private Messages 💌</h1>
       <div id="msgCount">0</div>
     </div>
     <div id="messagesList">
-      <p class="no-messages">No private messages yet...<br>Waiting for your secrets 💕</p>
+      <p class="no-messages">No private messages yet...<br>Waiting for secrets 💕</p>
     </div>
   </div>
 </body>
