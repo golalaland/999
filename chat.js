@@ -2785,6 +2785,75 @@ refs.sendBtn?.addEventListener("click", async () => {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 });
+
+
+// Private Message Modal Logic
+const privateMsgBtn = document.getElementById('privateMsgBtn');
+const privateMsgModal = document.getElementById('privateMsgModal');
+const privateClose = document.querySelector('.private-close');
+const privateMsgInput = document.getElementById('privateMsgInput');
+const privateSendBtn = document.getElementById('privateSendBtn');
+
+privateMsgBtn.addEventListener('click', () => {
+  privateMsgModal.classList.add('open');
+  privateMsgInput.focus();
+});
+
+privateClose.addEventListener('click', () => {
+  privateMsgModal.classList.remove('open');
+  privateMsgInput.value = '';
+});
+
+privateMsgModal.addEventListener('click', (e) => {
+  if (e.target === privateMsgModal) {
+    privateMsgModal.classList.remove('open');
+    privateMsgInput.value = '';
+  }
+});
+
+// Send Private Message (100 stars, anonymous to host only)
+privateSendBtn.addEventListener('click', async () => {
+  const message = privateMsgInput.value.trim();
+  if (!message) return;
+
+  if (!currentUser) {
+    showStarPopup("Sign in to send private messages.");
+    return;
+  }
+
+  if ((currentUser.stars || 0) < 100) {
+    showStarPopup("Need 100 stars to send a private message 💌");
+    return;
+  }
+
+  try {
+    // Deduct stars
+    currentUser.stars -= 100;
+    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      stars: increment(-100)
+    });
+
+    // Send to private collection (only host sees)
+    await addDoc(collection(db, "privateLiveMessages"), {
+      content: message,
+      senderUid: currentUser.uid,
+      senderChatId: currentUser.chatId || "anonymous",
+      timestamp: serverTimestamp(),
+      read: false
+    });
+
+    privateMsgInput.value = '';
+    privateMsgModal.classList.remove('open');
+    showStarPopup("Private message sent! Host only sees it 💌", { type: "success" });
+  } catch (err) {
+    console.error("Private send failed:", err);
+    showStarPopup("Failed to send — try again", { type: "error" });
+    // Refund
+    currentUser.stars += 100;
+    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+  }
+});
   
 // =============================
 // BUZZ MESSAGE — SUPER STICKER STYLE, CLASSY NON-NEON GRADIENTS
