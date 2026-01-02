@@ -6,7 +6,7 @@
   <title>Private Messages 💌</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
@@ -22,7 +22,7 @@
 
     const messagesList = document.getElementById('messagesList');
     const msgCount = document.getElementById('msgCount');
-    const newMsgBadge = document.getElementById('newMsgBadge');
+    const newBadge = document.getElementById('newBadge');
     const clearBtn = document.getElementById('clearBtn');
 
     let previousCount = 0;
@@ -34,6 +34,13 @@
       const count = snapshot.size;
       msgCount.textContent = count > 99 ? '99+' : count;
 
+      // Show "NEW" badge if new messages arrived
+      if (count > previousCount && previousCount > 0) {
+        newBadge.style.display = 'block';
+        setTimeout(() => newBadge.style.display = 'none', 4000);
+      }
+      previousCount = count;
+
       if (snapshot.empty) {
         messagesList.innerHTML = `
           <p class="no-messages">
@@ -41,16 +48,8 @@
             Waiting for your secrets 💕
           </p>
         `;
-        newMsgBadge.style.display = 'none';
         return;
       }
-
-      // Show "New" badge if count increased
-      if (count > previousCount && previousCount > 0) {
-        newMsgBadge.style.display = 'block';
-        setTimeout(() => newMsgBadge.style.display = 'none', 3000);
-      }
-      previousCount = count;
 
       snapshot.forEach((doc) => {
         const data = doc.data();
@@ -58,15 +57,13 @@
           ? new Date(data.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
           : 'Just now';
 
-        const sender = data.senderChatId || data.senderUid || "Anonymous";
+        const sender = data.senderChatId || data.senderUid?.split('_')[0] || "Anonymous";
 
         const msgEl = document.createElement('div');
         msgEl.className = 'private-message';
         msgEl.innerHTML = `
-          <div class="msg-header">
-            <span class="msg-sender">From: ${sender}</span>
-            <span class="msg-time">${time}</span>
-          </div>
+          <div class="msg-sender">${sender}</div>
+          <div class="msg-time">${time}</div>
           <div class="msg-text">${data.content || '💌'}</div>
         `;
         messagesList.appendChild(msgEl);
@@ -77,18 +74,16 @@
 
     // Clear all messages
     clearBtn.addEventListener('click', async () => {
-      if (!confirm("Clear all private messages? This cannot be undone.")) return;
+      if (!confirm("Delete all private messages? Can't undo!")) return;
 
       try {
         const snapshot = await getDocs(collection(db, "privateLiveMessages"));
         const batch = writeBatch(db);
         snapshot.docs.forEach((doc) => batch.delete(doc.ref));
         await batch.commit();
-
-        messagesList.innerHTML = '<p class="no-messages">All cleared! Ready for new secrets ✨</p>';
-        msgCount.textContent = '0';
+        alert("All cleared! Ready for new secrets ✨");
       } catch (err) {
-        alert("Failed to clear — try again");
+        alert("Clear failed — try again");
         console.error(err);
       }
     });
@@ -129,15 +124,16 @@
       margin-top: 10px;
       font-size: 16px;
     }
-    #newMsgBadge {
+    #newBadge {
       position: absolute;
       top: 20px;
       right: 20px;
       background: #ff3366;
       color: #fff;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: 50px;
       font-weight: 700;
+      font-size: 15px;
       animation: pulse 1.5s infinite;
       display: none;
     }
@@ -158,23 +154,21 @@
     .private-message {
       background: rgba(255,255,255,0.06);
       border-radius: 20px;
-      padding: 16px 20px;
+      padding: 18px 20px;
       margin-bottom: 16px;
       border-left: 4px solid #c3f60c;
       animation: fadeIn 0.5s ease;
     }
-    .msg-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
     .msg-sender {
+      font-size: 20px; /* BIGGER username */
+      font-weight: 800;
       color: #ff69b4;
-      font-weight: 700;
+      margin-bottom: 6px;
     }
     .msg-time {
+      font-size: 13px;
       color: #888;
+      margin-bottom: 10px;
     }
     .msg-text {
       font-size: 18px;
@@ -191,7 +185,7 @@
     }
     #clearBtn {
       width: 100%;
-      margin-top: 20px;
+      margin-top: 24px;
       padding: 16px;
       background: #333;
       color: #ff3366;
@@ -200,9 +194,10 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.3s;
     }
     #clearBtn:hover {
-      background: #ff336620;
+      background: rgba(255,51,102,0.2);
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -211,6 +206,7 @@
     @media (max-width: 768px) {
       .container { padding: 16px; }
       .header h1 { font-size: 26px; }
+      .msg-sender { font-size: 19px; }
       #messagesList { max-height: 60vh; }
     }
   </style>
@@ -220,7 +216,7 @@
     <div class="header">
       <h1>Private Messages 💌</h1>
       <div id="msgCount">0</div>
-      <div id="newMsgBadge">NEW MESSAGE!</div>
+      <div id="newBadge">NEW</div>
     </div>
     <div id="messagesList">
       <p class="no-messages">No private messages yet...<br>Waiting for your secrets 💕</p>
