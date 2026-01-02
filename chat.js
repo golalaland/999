@@ -5856,6 +5856,53 @@ function attachReelInteractions() {
   });
 }
 
+// Private Message Reader - Host Only
+const privateMsgReader = document.getElementById('privateMsgReader');
+const privateMessagesList = document.getElementById('privateMessagesList');
+const privateMsgCount = document.getElementById('privateMsgCount');
+
+let unreadCount = 0;
+
+// Only show if current user is the host and isLive = true
+if (currentUser && currentUser.isLive) {
+  privateMsgReader.style.display = 'block';
+
+  // Listen to private messages in real-time
+  const q = query(
+    collection(db, "privateLiveMessages"),
+    orderBy("timestamp", "asc")
+  );
+
+  onSnapshot(q, (snapshot) => {
+    privateMessagesList.innerHTML = '';
+    unreadCount = 0;
+
+    if (snapshot.empty) {
+      privateMessagesList.innerHTML = '<p class="no-messages">No private messages yet... waiting for secrets ✨</p>';
+      privateMsgCount.textContent = '0';
+      return;
+    }
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      unreadCount++;
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'private-message-item';
+      msgEl.innerHTML = `
+        <div class="msg-time">${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : 'Just now'}</div>
+        <div class="msg-text">${data.content || '💕'}</div>
+      `;
+      privateMessagesList.appendChild(msgEl);
+    });
+
+    privateMsgCount.textContent = unreadCount;
+    privateMessagesList.scrollTop = privateMessagesList.scrollHeight;
+  });
+} else {
+  privateMsgReader.style.display = 'none';
+}
+
 /*********************************
  * INIT
  *********************************/
