@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generate Private Access Link</title>
+  <title>Generate Private Link 💌</title>
   <style>
     body {
       margin: 0;
@@ -79,11 +79,11 @@
     <p style="color:#ff69b4; margin-bottom:10px;">Share this secure link:</p>
     <div id="generatedLink"></div>
     <button id="copyBtn">Tap to Copy Link</button>
-    <p id="copySuccess" class="success" style="display:none;">Copied to clipboard! ✨</p>
+    <p id="copySuccess" class="success" style="display:none;">Copied! ✨</p>
   </div>
 
   <script>
-    function randomString(len = 10) {
+    function randomString(len = 12) {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let str = '';
       for (let i = 0; i < len; i++) {
@@ -96,10 +96,10 @@
       const minutes = parseInt(document.getElementById('minutes').value) || 30;
       const expires = Date.now() + minutes * 60 * 1000;
       const payload = btoa(JSON.stringify({ expires })).replace(/=/g, '');
-      const shortCode = randomString(12); // obfuscated short code
+      const shortCode = randomString();
 
-      // Store in sessionStorage so private-feed can read it
-      sessionStorage.setItem(`token_${shortCode}`, payload);
+      // Store in localStorage (works across tabs)
+      localStorage.setItem(`token_${shortCode}`, payload);
 
       const baseUrl = window.location.origin + window.location.pathname.replace('generate-token.html', 'private-feed.html');
       const link = `${baseUrl}?t=${shortCode}`;
