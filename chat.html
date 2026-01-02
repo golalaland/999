@@ -2397,126 +2397,133 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   text-decoration: underline; 
 }
 
-/* Live Tab - Twitch Mobile Style: Compact Chat + Keyboard Friendly */
-#live .live-player-wrapper {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: #000;
-}
-
-#live .live-player {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  overflow: hidden;
-}
-
-#live .live-player mux-player {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain;
-}
-
-/* Chat Messages - Tight, scrollable */
-#live .live-chat-messages {
-  flex: 1;
-  padding: 12px 16px;
-  overflow-y: auto;
-  background: #0a0a0a;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-/* Compact Send Area - Small & Mobile-Optimized */
-#live .live-send-area {
-  position: sticky;
-  bottom: 0;
-  width: 100%;
+/* Floating Private Message Button - Cute & Visible */
+.private-msg-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 50%;
+  border: 2px solid #c3f60c;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #111;
-  padding: 10px 12px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  z-index: 25;
-  box-sizing: border-box;
+  justify-content: center;
+  z-index: 40;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(195,246,12,0.4);
+  transition: all 0.3s ease;
+}
+.private-msg-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 35px rgba(195,246,12,0.6);
+}
+.envelope-icon {
+  width: 32px;
+  height: 32px;
 }
 
-#live .live-send-area input {
-  flex: 1;
-  padding: 12px 16px;
-  border-radius: 50px;
+/* Private Message Modal - Cute & Compact */
+.private-msg-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  align-items: flex-end;
+  justify-content: center;
+}
+.private-msg-modal.open {
+  display: flex;
+}
+
+.private-msg-content {
+  width: 100%;
+  max-width: 420px;
+  background: #111;
+  border-radius: 28px 28px 0 0;
+  padding: 24px;
+  box-shadow: 0 -20px 50px rgba(0,0,0,0.8);
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.private-msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.private-msg-header h3 {
+  font-size: 20px;
+  color: #c3f60c;
+  margin: 0;
+}
+.private-close {
+  font-size: 32px;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+}
+.private-close:hover {
+  opacity: 1;
+}
+
+.private-note {
+  font-size: 14px;
+  color: #ff69b4;
+  text-align: center;
+  margin: 16px 0 20px;
+  font-weight: 600;
+}
+
+#privateMsgInput {
+  width: 100%;
+  height: 120px;
+  padding: 16px;
+  border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.1);
   background: #1a1a1a;
   color: #fff;
-  font-size: 15px; /* smaller for mobile */
+  font-size: 16px;
+  resize: none;
   outline: none;
 }
-#live .live-send-area input::placeholder {
+#privateMsgInput::placeholder {
   color: #888;
-  font-size: 15px;
 }
-#live .live-send-area input:focus {
+#privateMsgInput:focus {
   border-color: #c3f60c;
-  box-shadow: 0 0 10px rgba(195,246,12,0.3);
+  box-shadow: 0 0 15px rgba(195,246,12,0.3);
 }
 
-/* Compact Buttons */
-#live .send-btn, #live .buzz-btn {
-  padding: 10px 14px;
+.private-send-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
   border-radius: 50px;
-  background: #c3f60c;
+  background: linear-gradient(135deg, #c3f60c, #a8d50a);
   color: #000;
+  font-size: 18px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  font-size: 14px;
-  min-width: 60px;
+  box-shadow: 0 8px 25px rgba(195,246,12,0.4);
+  transition: all 0.3s ease;
 }
-#live .buzz-btn {
-  font-size: 18px;
-  padding: 10px 12px;
+.private-send-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(195,246,12,0.6);
 }
-
-/* Mobile - Perfect Fit, No Zoom */
-@media (max-width: 768px) {
-  .live-modal-content {
-    padding: 60px 0 0;
-    gap: 0;
-  }
-
-  #live .live-player {
-    height: calc(100vw * 9 / 16); /* Exact 16:9 based on screen width */
-    border-radius: 0;
-  }
-
-  #live .live-chat-messages {
-    padding: 12px 14px;
-  }
-
-  #live .live-send-area {
-    padding: 8px 10px;
-  }
-
-  #live .live-send-area input {
-    padding: 11px 14px;
-    font-size: 15px;
-  }
-
-  #live .send-btn, #live .buzz-btn {
-    padding: 9px 12px;
-    font-size: 13px;
-  }
-
-  #live .buzz-btn {
-    font-size: 17px;
-  }
-
-  /* Prevent zoom on input focus (iOS) */
-  input[type="text"] {
-    font-size: 16px !important; /* Prevents iOS zoom */
-  }
+.private-send-btn:active {
+  transform: translateY(0);
 }
 </style>
 </head>
@@ -2584,22 +2591,44 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <button class="live-tab-btn" data-content="reels">Reel Lyfe</button>
     </div>
 
-    <!-- Live Tab -->
-    <div id="live" class="live-tab-content active">
-      <div id="livePlayerWrapper" class="live-player-wrapper">
-        <div id="livePlayerContainer" class="live-player">
-          <p class="player-placeholder">Live Player Loading...</p>
-        </div>
-      </div>
-      <div id="liveChatMessages" class="live-chat-messages">
-        <p style="text-align:center; color:#666; padding:40px 20px;">Chat will appear here...</p>
-      </div>
-      <div class="live-send-area">
-        <input type="text" id="liveMessageInput" placeholder="Send a message..." autocomplete="off" />
-        <button id="liveBuzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
-        <button id="liveSendBtn" class="send-btn">Send</button>
-      </div>
+    
+    <!-- Live Tab - Private Message Feature -->
+<div id="live" class="live-tab-content active">
+  <div id="livePlayerWrapper" class="live-player-wrapper">
+    <div id="livePlayerContainer" class="live-player">
+      <p class="player-placeholder">Live Player Loading...</p>
     </div>
+  </div>
+
+  <!-- Chat Messages (optional — keep if you want public chat too, or remove) -->
+  <div id="liveChatMessages" class="live-chat-messages">
+    <p style="text-align:center; color:#888; padding:60px 20px; font-size:15px;">
+      Private messages are sent directly to the host 💌
+    </p>
+  </div>
+
+  <!-- Floating Private Message Button -->
+  <button id="privateMsgBtn" class="private-msg-btn" title="Send private message to host">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
+    </svg>
+  </button>
+
+  <!-- Private Message Modal (hidden by default) -->
+  <div id="privateMsgModal" class="private-msg-modal">
+    <div class="private-msg-content">
+      <div class="private-msg-header">
+        <h3>Send Private Message 💌</h3>
+        <span class="private-close">&times;</span>
+      </div>
+      <p class="private-note">Only the host will see this · Costs 100 stars</p>
+      <textarea id="privateMsgInput" placeholder="Type your anonymous message..."></textarea>
+      <button id="privateSendBtn" class="private-send-btn">
+        Send Message 
+      </button>
+    </div>
+  </div>
+</div>
 
     <!-- Upcoming Tab -->
     <div id="upcoming" class="live-tab-content">
