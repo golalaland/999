@@ -2466,38 +2466,46 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   to { transform: scale(1); opacity: 1; }
 }
 
-/* Header - Text centered */
+/* Header - Centered emoji only */
 .private-msg-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  justify-content: center;     /* Centers the emoji horizontally */
+  align-items: center;         /* Vertical centering */
+  position: relative;          /* Needed for absolute positioning of close button */
+  margin-bottom: 20px;
+  padding: 10px 0;
   flex-shrink: 0;
 }
-.private-msg-header h3 {
-  flex: 1;
-  text-align: center;
-  font-size: 21px;
-  color: #c3f60c;
-  margin: 0;
-  font-weight: 700;
+
+/* Remove any old h3 styles - no longer needed */
+.private-msg-header img {
+  display: block;
+  width: 40px;                 /* Matches your HTML size - adjust if needed */
+  height: 40px;
 }
+
+/* Close button - top right */
 .private-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
   font-size: 27px;
   color: #fff;
   opacity: 0.7;
   cursor: pointer;
-  margin-left: auto;
+  line-height: 1;
 }
+
 .private-close:hover {
   opacity: 1;
 }
 
-/* Note - Centered */
+/* Note - Centered with all the info */
 .private-note {
-  font-size: 13px;
+  text-align: center;
+  font-size: 14px;             /* Slightly larger for better readability */
   color: #ff69b4;
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   font-weight: 600;
   line-height: 1.5;
   flex-shrink: 0;
@@ -2738,20 +2746,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </svg>
       </button>
 
-   <!-- Private Message Modal - Small & Cute -->
+ <!-- Private Message Modal - Small & Cute -->
 <div id="privateMsgModal" class="private-msg-modal">
   <div class="private-msg-content">
     <div class="private-msg-header">
-      <h3>Live Private Message 
-        <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/Love%20Letter.webp" 
-             alt="Love Letter" 
-             width="26" 
-             height="26" 
-             style="vertical-align: middle; margin-left: 6px;">
-      </h3>
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/Love%20Letter.webp" 
+           alt="Love Letter" 
+           width="40" 
+           height="40">
       <span class="private-close">&times;</span>
     </div>
-    <p class="private-note">Only the host will see this message · Costs 100 STRZ</p>
+    <p class="private-note">Live Private Message · Only the host will see this · Costs 100 STRZ</p>
     <textarea id="privateMsgInput" placeholder="Type your message..."></textarea>
     <button id="privateSendBtn" class="private-send-btn">Send Message</button>
   </div>
