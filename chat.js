@@ -4417,100 +4417,182 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  // === ELEMENTS ===
-  const liveModal = document.getElementById('liveModal');
-  const liveConsentModal = document.getElementById('adultConsentModal'); // Optional: keep if using adult content
-  const livePlayerContainer = document.getElementById('livePlayerContainer');
-  const livePostersSection = document.getElementById('upcomingPosters');
-  const liveCloseBtn = document.querySelector('.live-close');
+// === ELEMENTS ===
+const liveModal = document.getElementById('liveModal');
+const liveConsentModal = document.getElementById('adultConsentModal'); // Optional: keep if using adult content
+const livePlayerContainer = document.getElementById('livePlayerContainer');
+const livePostersSection = document.getElementById('upcomingPosters');
+const liveCloseBtn = document.querySelector('.live-close');
+const tabBtns = document.querySelectorAll('.live-tab-btn');
+const tabContents = document.querySelectorAll('.live-tab-content');
+const openHostsBtn = document.getElementById('openHostsBtn');
+// Consent buttons (only relevant if adult tab exists)
+const consentAgreeBtn = document.getElementById('consentAgree');
+const consentCancelBtn = document.getElementById('consentCancel');
+// Reels videos for preview/play interaction
+const reelVideos = document.querySelectorAll('.reel-item video');
 
-  const tabBtns = document.querySelectorAll('.live-tab-btn');
-  const tabContents = document.querySelectorAll('.live-tab-content');
+// === CONFIG ===
+let fadeTimer;
+const POSTER_FADE_DELAY = 8000;
 
-  const openHostsBtn = document.getElementById('openHostsBtn');
+// Playback IDs (used by the player)
+const PLAYBACK_IDS = {
+  regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q',
+  adult:   'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // Change if different stream
+};
 
-  // Consent buttons (only relevant if adult tab exists)
-  const consentAgreeBtn = document.getElementById('consentAgree');
-  const consentCancelBtn = document.getElementById('consentCancel');
+// IMPORTANT: You MUST provide the LIVE STREAM IDs from your Mux dashboard/API
+// (different from playback ID – find it in Mux dashboard under each Live Stream)
+const MUX_LIVE_STREAM_IDS = {
+  regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q', // e.g. 'ZEBrNTpHC02iUah025KM3te6ylM7W4S4silsrFtUkn3Ag'
+  adult:   'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q', // or same as regular if it's the same stream
+};
 
-  // Reels videos for preview/play interaction
-  const reelVideos = document.querySelectorAll('.reel-item video');
+// Customize your offline placeholder
+const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544'; // ← replace with your image
+const OFFLINE_TITLE = 'Live stream is currently offline';
+const OFFLINE_MESSAGE = 'We\'ll be back soon — stay tuned for the next broadcast!';
 
-  // === CONFIG ===
-  let fadeTimer;
-  const POSTER_FADE_DELAY = 8000;
+// === CORE FUNCTIONS ===
 
-  const PLAYBACK_IDS = {
-    regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q',
-    adult: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // Change if different stream
-  };
+function switchContent(type) {
+  // Legacy support — maps old 'regular'/'adult' to new tab if needed
+  if (type === 'regular' || type === 'adult') {
+    showTab('live');
+    startStream(type);
+  }
+}
 
-  // === CORE FUNCTIONS (kept and improved from your original) ===
-  function switchContent(type) {
-    // Legacy support — maps old 'regular'/'adult' to new tab if needed
-    if (type === 'regular' || type === 'adult') {
-      showTab('live');
-      startStream(type);
-    }
+async function startStream(type = 'regular') {
+  const playbackId = PLAYBACK_IDS[type];
+  const liveStreamId = MUX_LIVE_STREAM_IDS[type];
+
+  // Show immediate loading feedback
+  livePlayerContainer.innerHTML = `
+    <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
+      Checking live status...
+    </div>
+  `;
+
+  // Basic validation
+  if (!playbackId || playbackId.includes('YOUR_') || !liveStreamId || liveStreamId.includes('YOUR_')) {
+    showOfflineState('Live stream not properly configured');
+    return;
   }
 
-  function startStream(type = 'regular') {
-    const playbackId = PLAYBACK_IDS[type];
-
-    // Show loading state
-    livePlayerContainer.innerHTML = `
-      <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
-        Loading stream...
-      </div>
-    `;
-
-    if (!playbackId || playbackId.includes('YOUR_')) {
-      livePlayerContainer.innerHTML = `
-        <div style="color:#ccc; text-align:center; padding:80px 20px; font-size:18px;">
-          Stream not configured
-        </div>
-      `;
-      return;
-    }
-
-    // Clear and setup player
-    livePlayerContainer.innerHTML = '';
+  try {
+    // Call your secure backend endpoint that uses Mux API credentials
+    // Example: returns { isActive: true/false, error?: string }
+    const response = await fetch(`/api/mux-live-status?type=${type}`);
     
-    const player = document.createElement('mux-player');
-    player.setAttribute('playback-id', playbackId);
-    player.setAttribute('stream-type', 'live');
-    player.setAttribute('autoplay', 'muted');
-    player.setAttribute('muted', 'true');
-    player.setAttribute('controls', 'true');
-    player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.jpg?width=720&height=1280&fit_mode=preserve`);
+    if (!response.ok) {
+      throw new Error('Status check failed');
+    }
+    
+    const data = await response.json();
 
-    player.style.width = '100%';
-    player.style.height = '100%';
-    player.style.objectFit = 'contain';
+    if (data.isActive) {
+      // Stream is LIVE → render the mux-player
+      livePlayerContainer.innerHTML = '';
 
-    livePlayerContainer.appendChild(player);
+      const player = document.createElement('mux-player');
+      player.setAttribute('playback-id', playbackId);
+      player.setAttribute('stream-type', 'live');
+      player.setAttribute('autoplay', 'muted');
+      player.setAttribute('muted', 'true');
+      player.setAttribute('controls', 'true');
+      player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.jpg?width=720&height=1280&fit_mode=preserve`);
+
+      player.style.width = '100%';
+      player.style.height = '100%';
+      player.style.objectFit = 'contain';
+
+      livePlayerContainer.appendChild(player);
+    } else {
+      // Idle / disabled / error → custom offline UI
+      showOfflineState(data.error || '');
+    }
+  } catch (err) {
+    console.error('Failed to check live stream status:', err);
+    showOfflineState('Unable to check stream status right now');
   }
+}
 
-  function closeAllLiveModal() {
-    liveModal.style.display = 'none';
-    if (liveConsentModal) liveConsentModal.style.display = 'none';
+// Helper: Display custom offline content with your image & message
+function showOfflineState(customError = '') {
+  livePlayerContainer.innerHTML = `
+    <div style="
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+      box-sizing: border-box;
+    ">
+      <img 
+        src="${OFFLINE_IMAGE_URL}" 
+        alt="Live stream offline" 
+        style="
+          max-width: 85%; 
+          max-height: 55%; 
+          border-radius: 12px; 
+          margin-bottom: 28px; 
+          box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+          object-fit: contain;
+        "
+      >
+      <h2 style="margin: 0 0 12px; font-size: 1.8rem;">${OFFLINE_TITLE}</h2>
+      <p style="margin: 0 0 24px; font-size: 1.1rem; opacity: 0.9;">${OFFLINE_MESSAGE}</p>
+      
+      ${customError ? `<p style="color: #ff6b6b; margin-bottom: 20px;">${customError}</p>` : ''}
+      
+      <button 
+        onclick="startStream('regular')" 
+        style="
+          padding: 14px 36px;
+          background: #e50914;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 1.1rem;
+          font-weight: bold;
+          cursor: pointer;
+          transition: background 0.2s;
+        "
+        onmouseover="this.style.background='#c40810'"
+        onmouseout="this.style.background='#e50914'"
+      >
+        Refresh / Check Again
+      </button>
+    </div>
+  `;
+}
 
-    livePlayerContainer.innerHTML = '';
-    livePlayerContainer.classList.remove('portrait', 'landscape');
+function closeAllLiveModal() {
+  liveModal.style.display = 'none';
+  if (liveConsentModal) liveConsentModal.style.display = 'none';
+  livePlayerContainer.innerHTML = '';
+  livePlayerContainer.classList.remove('portrait', 'landscape');
+  livePostersSection?.classList.remove('fading');
+  clearTimeout(fadeTimer);
+  liveCloseBtn?.classList.remove('hidden');
+}
 
-    livePostersSection?.classList.remove('fading');
-    clearTimeout(fadeTimer);
+function resetPosterFade() {
+  livePostersSection?.classList.remove('fading');
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
+    livePostersSection?.classList.add('fading');
+  }, POSTER_FADE_DELAY);
+}
 
-    liveCloseBtn?.classList.remove('hidden');
-  }
-
-  function resetPosterFade() {
-    livePostersSection?.classList.remove('fading');
-    clearTimeout(fadeTimer);
-    fadeTimer = setTimeout(() => {
-      livePostersSection?.classList.add('fading');
-    }, POSTER_FADE_DELAY);
-  }
+// (your showTab function can stay exactly as it was – omitted here for brevity)
 
   function showTab(tabId) {
     tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.content === tabId));
