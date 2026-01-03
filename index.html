@@ -728,16 +728,16 @@ body {
 
 .banner-title {
   font-family: 'Poppins', sans-serif;
-  font-size: clamp(1.8rem, 8vw, 3rem);   /* Smaller on phones, still bold */
+  font-size: clamp(1.5rem, 6.5vw, 2.6rem); /* reduced across all sizes */
   font-weight: 700;
   color: #fff;
-  margin-bottom: 0.5rem;                /* Tighter spacing */
+  margin-bottom: 0.4rem;
   text-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
   background: linear-gradient(90deg, #c3f60c, #e0ff4a);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .banner-subtitle {
@@ -752,8 +752,9 @@ body {
 }
 
 .banner-cta {
+  position: relative; /* Required for the pseudo-element */
   display: inline-block;
-  padding: 0.65rem 1.8rem;              /* Slightly smaller button */
+  padding: 0.65rem 1.8rem;
   font-size: 1rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -763,11 +764,40 @@ body {
   text-decoration: none;
   box-shadow: 0 6px 20px rgba(195, 246, 12, 0.35);
   transition: all 0.3s ease;
+  overflow: hidden; /* Hide the shimmer overflow */
 }
 
 .banner-cta:hover {
   transform: translateY(-4px) scale(1.05);
   box-shadow: 0 10px 25px rgba(195, 246, 12, 0.5);
+}
+
+/* Shimmer effect on hover */
+.banner-cta::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 45%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.3) 55%,
+    transparent 100%
+  );
+  transform: translateX(-100%) rotate(30deg);
+  transition: transform 0.6s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.banner-cta:hover::after {
+  opacity: 1;
+  transform: translateX(100%) rotate(30deg);
+  transition: transform 0.8s ease;
 }
 
 /* Extra mobile-specific tweaks */
@@ -1157,7 +1187,7 @@ body {
 <div class="footer-bottom">
   <div class="scanline"></div>
   <p>
-    © 2025 CUBE • XIXI.LIVE • UYE™<br>
+    © 2026 CUBE • XIXI.LIVE • UYE™<br>
     Dock Road, V&A Waterfront, Cape Town, South Africa
   </p>
 </div>
