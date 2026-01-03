@@ -4565,7 +4565,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (openHostsBtn) {
     openHostsBtn.onclick = () => {
       if (!currentUser?.uid) {
-        showGoldAlert("Please log in to watch the livestream 🔥");
+        showGoldAlert("Please log in to watch liveshows");
         return;
       }
 
