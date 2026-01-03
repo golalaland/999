@@ -4489,7 +4489,7 @@ async function startStream(type = 'regular') {
   // Show loading state immediately
   livePlayerContainer.innerHTML = `
     <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
-      Checking if stream is live...
+      Checking for active livestream...
     </div>
   `;
 
@@ -4523,7 +4523,7 @@ async function startStream(type = 'regular') {
       player.setAttribute('autoplay', 'muted');
       player.setAttribute('muted', 'true');
       player.setAttribute('controls', 'true');
-      player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.jpg?width=720&height=1280&fit_mode=preserve`);
+   player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.webp?time=10&width=720&height=1280&fit_mode=preserve`);
 
       player.style.width = '100%';
       player.style.height = '100%';
