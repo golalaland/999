@@ -4419,45 +4419,46 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
 document.addEventListener('DOMContentLoaded', () => {
 // === ELEMENTS ===
 const liveModal = document.getElementById('liveModal');
-const liveConsentModal = document.getElementById('adultConsentModal'); // Optional: keep if using adult content
+const liveConsentModal = document.getElementById('adultConsentModal'); // Optional: for adult content consent
 const livePlayerContainer = document.getElementById('livePlayerContainer');
 const livePostersSection = document.getElementById('upcomingPosters');
 const liveCloseBtn = document.querySelector('.live-close');
 const tabBtns = document.querySelectorAll('.live-tab-btn');
 const tabContents = document.querySelectorAll('.live-tab-content');
 const openHostsBtn = document.getElementById('openHostsBtn');
-// Consent buttons (only relevant if adult tab exists)
+// Consent buttons (only if adult tab exists)
 const consentAgreeBtn = document.getElementById('consentAgree');
 const consentCancelBtn = document.getElementById('consentCancel');
-// Reels videos for preview/play interaction
+// Reels videos for preview interaction
 const reelVideos = document.querySelectorAll('.reel-item video');
 
 // === CONFIG ===
 let fadeTimer;
 const POSTER_FADE_DELAY = 8000;
 
-// Playback IDs (used by the <mux-player playback-id="">)
+// Real Playback IDs (from your Render creation)
 const PLAYBACK_IDS = {
-  regular: '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58',  // ← YOUR NEW REAL PLAYBACK ID
-  adult:   '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58'   // same stream → use same ID
+  regular: '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58',
+  adult:   '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58' // same stream
 };
 
-// Live Stream IDs (used in backend to check status via Mux API)
-// These go in your backend server.js env var MUX_LIVE_STREAM_ID (already set in Render)
+// Real Live Stream IDs (reference only – backend uses env var)
 const MUX_LIVE_STREAM_IDS = {
-  regular: '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk',  // ← YOUR REAL LIVE STREAM ID
-  adult:   '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk'   // same stream → same ID
+  regular: '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk',
+  adult:   '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk'
 };
-  
-// Customize your offline placeholder
-const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544'; // ← replace with your image
+
+// Offline placeholder customization
+const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544';
 const OFFLINE_TITLE = 'Live stream is currently offline';
-const OFFLINE_MESSAGE = 'We\'ll be back soon — stay tuned for the next broadcast!';
+const OFFLINE_MESSAGE = "We'll be back soon — stay tuned for the next broadcast!";
+
+// Backend URL – IMPORTANT: change if your Render service name changes
+const BACKEND_URL = 'https://mux-backend-service.onrender.com';
 
 // === CORE FUNCTIONS ===
 
 function switchContent(type) {
-  // Legacy support — maps old 'regular'/'adult' to new tab if needed
   if (type === 'regular' || type === 'adult') {
     showTab('live');
     startStream(type);
@@ -4466,36 +4467,39 @@ function switchContent(type) {
 
 async function startStream(type = 'regular') {
   const playbackId = PLAYBACK_IDS[type];
-  const liveStreamId = MUX_LIVE_STREAM_IDS[type];
+  const liveStreamId = MUX_LIVE_STREAM_IDS[type]; // reference only
 
-  // Show immediate loading feedback
+  // Show loading state immediately
   livePlayerContainer.innerHTML = `
     <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
-      Checking live status...
+      Checking if stream is live...
     </div>
   `;
 
-  // Basic validation
-  if (!playbackId || playbackId.includes('YOUR_') || !liveStreamId || liveStreamId.includes('YOUR_')) {
-    showOfflineState('Live stream not properly configured');
+  // Basic config check
+  if (!playbackId || !liveStreamId) {
+    showOfflineState('Stream configuration missing');
     return;
   }
 
   try {
-    // Call your secure backend endpoint that uses Mux API credentials
-    // Example: returns { isActive: true/false, error?: string }
-    const response = await fetch(`/api/mux-live-status?type=${type}`);
-    
+    // Call backend with full URL (fixes 404 when domains differ)
+    const response = await fetch(`${BACKEND_URL}/api/mux-live-status?type=${type}`, {
+      cache: 'no-store' // prevent caching issues
+    });
+
+    console.log('Backend response status:', response.status); // debug
+
     if (!response.ok) {
-      throw new Error('Status check failed');
+      const errorText = await response.text().catch(() => 'No details');
+      throw new Error(`Backend returned ${response.status}: ${errorText}`);
     }
-    
+
     const data = await response.json();
 
     if (data.isActive) {
-      // Stream is LIVE → render the mux-player
+      // Stream is LIVE → show player
       livePlayerContainer.innerHTML = '';
-
       const player = document.createElement('mux-player');
       player.setAttribute('playback-id', playbackId);
       player.setAttribute('stream-type', 'live');
@@ -4510,16 +4514,21 @@ async function startStream(type = 'regular') {
 
       livePlayerContainer.appendChild(player);
     } else {
-      // Idle / disabled / error → custom offline UI
-      showOfflineState(data.error || '');
+      // Not live → show custom offline UI
+      showOfflineState(data.error || 'Stream is idle');
     }
   } catch (err) {
-    console.error('Failed to check live stream status:', err);
-    showOfflineState('Unable to check stream status right now');
+    console.error('Failed to check live stream status:', err.message);
+    // Show friendly message (Render free tier sleeps sometimes → first call takes 10-30s)
+    showOfflineState(
+      err.message.includes('503') || err.message.includes('failed to fetch')
+        ? 'Stream service waking up... try Refresh in 20 seconds'
+        : 'Unable to check stream status right now'
+    );
   }
 }
 
-// Helper: Display custom offline content with your image & message
+// Custom offline placeholder
 function showOfflineState(customError = '') {
   livePlayerContainer.innerHTML = `
     <div style="
@@ -4592,6 +4601,8 @@ function resetPosterFade() {
   }, POSTER_FADE_DELAY);
 }
 
+// Expose startStream globally so inline onclick="startStream('regular')" works
+window.startStream = startStream;
 // (your showTab function can stay exactly as it was – omitted here for brevity)
 
   function showTab(tabId) {
