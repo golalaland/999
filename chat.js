@@ -4445,8 +4445,8 @@ const PLAYBACK_IDS = {
 // IMPORTANT: You MUST provide the LIVE STREAM IDs from your Mux dashboard/API
 // (different from playback ID – find it in Mux dashboard under each Live Stream)
 const MUX_LIVE_STREAM_IDS = {
-  regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q', // e.g. 'ZEBrNTpHC02iUah025KM3te6ylM7W4S4silsrFtUkn3Ag'
-  adult:   'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q', // or same as regular if it's the same stream
+  regular: 'h8oQ7P6X01T402Kq00nvoGqYWUYqFyebGiesPJBcsG02hxQ', // e.g. 'ZEBrNTpHC02iUah025KM3te6ylM7W4S4silsrFtUkn3Ag'
+  adult:   'h8oQ7P6X01T402Kq00nvoGqYWUYqFyebGiesPJBcsG02hxQ', // or same as regular if it's the same stream
 };
 
 // Customize your offline placeholder
