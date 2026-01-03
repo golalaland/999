@@ -4489,7 +4489,7 @@ async function startStream(type = 'regular') {
   // Show loading state immediately
   livePlayerContainer.innerHTML = `
     <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
-      Checking for active livestream...
+      Checking for active livestreams...
     </div>
   `;
 
