@@ -4436,19 +4436,19 @@ const reelVideos = document.querySelectorAll('.reel-item video');
 let fadeTimer;
 const POSTER_FADE_DELAY = 8000;
 
-// Playback IDs (used by the player)
+// Playback IDs (used by the <mux-player playback-id="">)
 const PLAYBACK_IDS = {
-  regular: 'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q',
-  adult:   'r5llu01dBRiDMM4PKK1hzxjrhJoSD00ZCXKzM5jTupk7Q' // Change if different stream
+  regular: '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58',  // ← YOUR NEW REAL PLAYBACK ID
+  adult:   '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58'   // same stream → use same ID
 };
 
-// IMPORTANT: You MUST provide the LIVE STREAM IDs from your Mux dashboard/API
-// (different from playback ID – find it in Mux dashboard under each Live Stream)
+// Live Stream IDs (used in backend to check status via Mux API)
+// These go in your backend server.js env var MUX_LIVE_STREAM_ID (already set in Render)
 const MUX_LIVE_STREAM_IDS = {
-  regular: 'h8oQ7P6X01T402Kq00nvoGqYWUYqFyebGiesPJBcsG02hxQ', // e.g. 'ZEBrNTpHC02iUah025KM3te6ylM7W4S4silsrFtUkn3Ag'
-  adult:   'h8oQ7P6X01T402Kq00nvoGqYWUYqFyebGiesPJBcsG02hxQ', // or same as regular if it's the same stream
+  regular: '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk',  // ← YOUR REAL LIVE STREAM ID
+  adult:   '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk'   // same stream → same ID
 };
-
+  
 // Customize your offline placeholder
 const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544'; // ← replace with your image
 const OFFLINE_TITLE = 'Live stream is currently offline';
