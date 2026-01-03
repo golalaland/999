@@ -109,6 +109,20 @@ const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
 }
 
 
+// Add this once at the top of your script (after consts)
+const style = document.createElement('style');
+style.textContent = `
+  @media (max-width: 768px) {
+    #livePlayerContainer {
+      font-size: 14px !important; /* fallback base size */
+    }
+    #livePlayerContainer img {
+      max-height: 65vh !important;
+    }
+  }
+`;
+document.head.appendChild(style);
+
 
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
@@ -4416,6 +4430,8 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
 })();
 
 
+
+
 document.addEventListener('DOMContentLoaded', () => {
 // === ELEMENTS ===
 const liveModal = document.getElementById('liveModal');
@@ -4431,6 +4447,7 @@ const consentAgreeBtn = document.getElementById('consentAgree');
 const consentCancelBtn = document.getElementById('consentCancel');
 // Reels videos for preview interaction
 const reelVideos = document.querySelectorAll('.reel-item video');
+
 
 // === CONFIG ===
 let fadeTimer;
@@ -4451,7 +4468,7 @@ const MUX_LIVE_STREAM_IDS = {
 // Offline placeholder customization
 const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544';
 const OFFLINE_TITLE = 'Live stream is currently offline';
-const OFFLINE_MESSAGE = "We'll be back soon — stay tuned for the next broadcast!";
+const OFFLINE_MESSAGE = "We'll be back soon — check upcoming for the next broadcast!";
 
 // Backend URL – IMPORTANT: change if your Render service name changes
 const BACKEND_URL = 'https://mux-backend-service.onrender.com';
@@ -4528,7 +4545,7 @@ async function startStream(type = 'regular') {
   }
 }
 
-// Custom offline placeholder
+// Custom offline placeholder – mobile-optimized
 function showOfflineState(customError = '') {
   livePlayerContainer.innerHTML = `
     <div style="
@@ -4541,38 +4558,58 @@ function showOfflineState(customError = '') {
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 30px;
+      padding: 15px;                  /* reduced padding for mobile */
       box-sizing: border-box;
+      overflow: hidden;               /* prevent any overflow/cropping */
     ">
-      <img 
-        src="${OFFLINE_IMAGE_URL}" 
-        alt="Live stream offline" 
+      <!-- Offline image – takes priority on small screens -->
+      <img
+        src="${OFFLINE_IMAGE_URL}"
+        alt="Live stream offline"
         style="
-          max-width: 85%; 
-          max-height: 55%; 
-          border-radius: 12px; 
-          margin-bottom: 28px; 
+          max-width: 90%;             /* wider on mobile */
+          max-height: 60vh;           /* up to 60% of viewport height – prevents pushing */
+          width: auto;
+          height: auto;
+          border-radius: 12px;
+          margin-bottom: 20px;        /* reduced margin */
           box-shadow: 0 8px 32px rgba(0,0,0,0.5);
           object-fit: contain;
         "
       >
-      <h2 style="margin: 0 0 12px; font-size: 1.8rem;">${OFFLINE_TITLE}</h2>
-      <p style="margin: 0 0 24px; font-size: 1.1rem; opacity: 0.9;">${OFFLINE_MESSAGE}</p>
-      
-      ${customError ? `<p style="color: #ff6b6b; margin-bottom: 20px;">${customError}</p>` : ''}
-      
-      <button 
-        onclick="startStream('regular')" 
+
+      <!-- Title – smaller on mobile -->
+      <h2 style="
+        margin: 0 0 10px;
+        font-size: clamp(1.4rem, 5vw, 1.8rem); /* responsive: 1.4rem min, 1.8rem max */
+        line-height: 1.2;
+      ">${OFFLINE_TITLE}</h2>
+
+      <!-- Message – smaller + better spacing -->
+      <p style="
+        margin: 0 0 20px;
+        font-size: clamp(0.95rem, 4vw, 1.1rem);
+        opacity: 0.9;
+        max-width: 90%;
+      ">${OFFLINE_MESSAGE}</p>
+
+      <!-- Optional error message -->
+      ${customError ? `<p style="color: #ff6b6b; margin-bottom: 16px; font-size: clamp(0.9rem, 3.5vw, 1rem);">${customError}</p>` : ''}
+
+      <!-- Refresh button – smaller padding/font on mobile -->
+      <button
+        onclick="startStream('regular')"
         style="
-          padding: 14px 36px;
+          padding: clamp(10px, 3vw, 14px) clamp(20px, 6vw, 36px);
           background: #e50914;
           color: white;
           border: none;
           border-radius: 8px;
-          font-size: 1.1rem;
+          font-size: clamp(1rem, 4vw, 1.1rem);
           font-weight: bold;
           cursor: pointer;
           transition: background 0.2s;
+          min-width: 160px;           /* prevents too tiny on very small screens */
         "
         onmouseover="this.style.background='#c40810'"
         onmouseout="this.style.background='#e50914'"
