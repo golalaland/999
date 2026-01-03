@@ -4561,11 +4561,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // === EVENT LISTENERS ===
-  // Open modal
+  // Open modal — ONLY FOR LOGGED-IN VIP/HOST USERS
   if (openHostsBtn) {
     openHostsBtn.onclick = () => {
+      if (!currentUser?.uid) {
+        showGoldAlert("Please log in to watch the livestream 🔥");
+        return;
+      }
+
       liveModal.style.display = 'block';
-      showTab('live'); // Default to LiveShows tab
+      showTab('live'); // Default to Live tab
       resetPosterFade();
       liveCloseBtn?.classList.remove('hidden');
     };
