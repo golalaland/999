@@ -17,37 +17,38 @@
       appId: "1:1036452488:web:e8910172ed16e9cac9b63d"
     };
 
-  // Secure token check - obfuscated, works across tabs
-const urlParams = new URLSearchParams(window.location.search);
-const shortCode = urlParams.get('t');
-
-if (shortCode) {
-  const payload = localStorage.getItem(`token_${shortCode}`);
-  if (!payload) {
-    document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">Invalid link 🔒</div>`;
-    throw new Error("Invalid token");
-  }
-
-  try {
-    const data = JSON.parse(atob(payload));
-    if (Date.now() > data.expires) {
-      document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">This link has expired ⏰</div>`;
-      localStorage.removeItem(`token_${shortCode}`);
-      throw new Error("Expired");
-    }
-  } catch (e) {
-    document.body.innerHTML = `<div style="text-align:center;padding:100px;color:#ff69b4;font-size:20px;">Invalid or expired link 🔒</div>`;
-  }
-}
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     const messagesList = document.getElementById('messagesList');
     const msgCount = document.getElementById('msgCount');
-    const newBadge = document.getElementById('newBadge');
+    const viewerCountEl = document.getElementById('viewerCount');
     const clearBtn = document.getElementById('clearBtn');
 
-    let previousCount = 0;
+    let previousMsgCount = 0;
+    let lastSeenTimestamp = Date.now();
+
+    // Fake Viewer Count - Smart motion (5 to 5K)
+    let baseViewers = Math.floor(Math.random() * 3000) + 200; // Start 200-3200
+    let trend = Math.random() > 0.5 ? 1 : -1; // up or down trend
+    function updateViewerCount() {
+      // Random walk with bounds
+      const change = Math.floor(Math.random() * 80) * trend;
+      baseViewers = Math.max(5, Math.min(5000, baseViewers + change));
+
+      // Occasionally switch trend
+      if (Math.random() < 0.05) trend *= -1;
+
+      let display = baseViewers;
+      let suffix = '';
+      if (display >= 1000) {
+        display = (display / 1000).toFixed(1);
+        suffix = 'K';
+      }
+      viewerCountEl.textContent = display + suffix + ' watching';
+    }
+    updateViewerCount();
+    setInterval(updateViewerCount, 8000 + Math.random() * 7000); // Update every 8-15s
 
     const q = query(collection(db, "privateLiveMessages"), orderBy("timestamp", "desc"));
 
@@ -55,13 +56,6 @@ if (shortCode) {
       messagesList.innerHTML = '';
       const count = snapshot.size;
       msgCount.textContent = count > 99 ? '99+' : count;
-
-      // Show "NEW" badge if new messages arrived
-      if (count > previousCount && previousCount > 0) {
-        newBadge.style.display = 'block';
-        setTimeout(() => newBadge.style.display = 'none', 5000);
-      }
-      previousCount = count;
 
       if (snapshot.empty) {
         messagesList.innerHTML = `
@@ -75,18 +69,23 @@ if (shortCode) {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
+        const msgTimestamp = data.timestamp ? data.timestamp.toDate().getTime() : 0;
         const time = data.timestamp 
           ? new Date(data.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
           : 'Just now';
 
         const sender = data.senderChatId || data.senderUid?.split('_')[0] || "Anonymous";
+        const isNew = msgTimestamp > lastSeenTimestamp;
 
         const msgEl = document.createElement('div');
         msgEl.className = 'private-message';
         msgEl.innerHTML = `
-          <div class="msg-sender">${sender}</div>
-          <div class="msg-time">${time}</div>
+          <div class="msg-header">
+            <div class="msg-sender">${sender}</div>
+            <div class="msg-time">${time}</div>
+          </div>
           <div class="msg-text">${data.content || '💌'}</div>
+          ${isNew ? '<div class="new-badge">NEW</div>' : ''}
         `;
         messagesList.appendChild(msgEl);
       });
@@ -94,10 +93,9 @@ if (shortCode) {
       messagesList.scrollTop = 0;
     });
 
-    // Clear all messages
+    // Clear all
     clearBtn.addEventListener('click', async () => {
       if (!confirm("Delete all private messages? Can't undo!")) return;
-
       try {
         const snapshot = await getDocs(collection(db, "privateLiveMessages"));
         const batch = writeBatch(db);
@@ -105,7 +103,7 @@ if (shortCode) {
         await batch.commit();
         alert("All cleared! Ready for new secrets ✨");
       } catch (err) {
-        alert("Clear failed — try again");
+        alert("Failed — try again");
         console.error(err);
       }
     });
@@ -128,12 +126,35 @@ if (shortCode) {
     .header {
       text-align: center;
       padding: 30px 0 20px;
+      position: relative;
     }
     .header h1 {
       font-size: 28px;
-      margin: 0;
+      margin: 0 0 10px 0;
       color: #c3f60c;
       font-weight: 800;
+    }
+    #viewerCount {
+      display: inline-block;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      position: relative;
+      padding-left: 20px;
+    }
+    #viewerCount::before {
+      content: '●';
+      color: #ff1493;
+      font-size: 14px;
+      position: absolute;
+      left: 0;
+      top: 2px;
+      animation: pulseDot 2s infinite ease-in-out;
+      text-shadow: 0 0 15px #ff1493;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); text-shadow: 0 0 25px #ff1493; }
     }
     #msgCount {
       display: inline-block;
@@ -145,37 +166,17 @@ if (shortCode) {
       margin-top: 10px;
       font-size: 16px;
     }
-    /* NEW Badge - Bottom Right Floating */
-    #newBadge {
-      position: fixed;
-      bottom: 100px;
-      right: 20px;
-      background: #ff3366;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 16px;
-      box-shadow: 0 8px 25px rgba(255,51,102,0.6);
-      animation: pulse 1.5s infinite;
-      display: none;
-      z-index: 50;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
     #messagesList {
       background: rgba(20,20,30,0.6);
       border-radius: 24px;
       padding: 20px;
-      max-height: 65vh;
+      max-height: 60vh;
       overflow-y: auto;
       border: 1px solid rgba(195,246,12,0.2);
       backdrop-filter: blur(10px);
     }
     .private-message {
+      position: relative;
       background: rgba(255,255,255,0.06);
       border-radius: 20px;
       padding: 18px 20px;
@@ -183,21 +184,42 @@ if (shortCode) {
       border-left: 4px solid #c3f60c;
       animation: fadeIn 0.5s ease;
     }
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
     .msg-sender {
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 800;
       color: #ff69b4;
-      margin-bottom: 6px;
     }
     .msg-time {
       font-size: 13px;
       color: #888;
-      margin-bottom: 10px;
     }
     .msg-text {
       font-size: 18px;
       line-height: 1.5;
       word-wrap: break-word;
+    }
+    .new-badge {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      background: #ff3366;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
     .no-messages {
       text-align: center;
@@ -218,7 +240,6 @@ if (shortCode) {
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.3s;
     }
     #clearBtn:hover {
       background: rgba(255,51,102,0.2);
@@ -230,9 +251,8 @@ if (shortCode) {
     @media (max-width: 768px) {
       .container { padding: 16px; }
       .header h1 { font-size: 26px; }
-      .msg-sender { font-size: 19px; }
-      #messagesList { max-height: 60vh; }
-      #newBadge { bottom: 90px; }
+      .msg-sender { font-size: 20px; }
+      #messagesList { max-height: 55vh; }
     }
   </style>
 </head>
@@ -240,6 +260,7 @@ if (shortCode) {
   <div class="container">
     <div class="header">
       <h1>Private Messages 💌</h1>
+      <div id="viewerCount">0 watching</div>
       <div id="msgCount">0</div>
     </div>
     <div id="messagesList">
@@ -247,7 +268,5 @@ if (shortCode) {
     </div>
     <button id="clearBtn">Clear All Messages</button>
   </div>
-
-  <div id="newBadge">NEW</div>
 </body>
 </html>
