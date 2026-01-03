@@ -1993,30 +1993,58 @@ setInterval(checkHostNotifications, 15000);
 checkHostNotifications();
 
 
- /* ----------------------------
-   ⚡ Smooth Loading Bar Helper
+/* ----------------------------
+   ⚡ Accurate + Organic Loading Bar (Best of Both)
 ----------------------------- */
-function showLoadingBar(duration = 1000) {
+function showLoadingBar() {
   const postLoginLoader = document.getElementById("postLoginLoader");
   const loadingBar = document.getElementById("loadingBar");
   if (!postLoginLoader || !loadingBar) return;
 
   postLoginLoader.style.display = "flex";
   loadingBar.style.width = "0%";
+  loadingBar.style.transition = "width 0.35s ease-out"; // smooth real updates
 
   let progress = 0;
-  const interval = 50;
-  const step = 100 / (duration / interval);
 
-  const loadingInterval = setInterval(() => {
-    progress += step + Math.random() * 4; // adds organic feel
+  // Organic fallback animation (runs in background)
+  const interval = 60;
+  let organicProgress = 0;
+  const organicStep = 1.8 + Math.random() * 1.5; // gentle natural growth
+
+  const organicInterval = setInterval(() => {
+    if (progress >= 100) return;
+    organicProgress += organicStep;
+    if (organicProgress > 92) organicProgress = 92; // never auto-reach 100%
+    if (organicProgress > progress) {
+      progress = organicProgress;
+      loadingBar.style.width = `${progress}%`;
+    }
+  }, interval);
+
+  // Manual update function — called at real steps
+  const update = (target) => {
+    progress = Math.max(progress, target);
     loadingBar.style.width = `${Math.min(progress, 100)}%`;
 
     if (progress >= 100) {
-      clearInterval(loadingInterval);
-      setTimeout(() => postLoginLoader.style.display = "none", 250);
+      clearInterval(organicInterval);
+      // Final polish
+      setTimeout(() => {
+        loadingBar.style.width = "100%";
+        setTimeout(() => {
+          postLoginLoader.style.display = "none";
+          setTimeout(() => loadingBar.style.width = "0%", 300);
+        }, 300);
+      }, 200);
     }
-  }, interval);
+  };
+
+  // Auto-finish after max 4 seconds (safety)
+  setTimeout(() => update(100), 4000);
+
+  // Return updater so login code can push real progress
+  return { update };
 }
  /* ----------------------------
    🔁 Auto Login Session
@@ -2391,7 +2419,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
-// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
   const password = document.getElementById("passwordInput")?.value;
@@ -2401,23 +2428,29 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     return;
   }
 
-  // Start your beautiful organic loading bar
-  showLoadingBar(1800);  // lasts ~1.8 seconds with organic feel — adjust if you want longer/shorter
+  // Start smart accurate loader
+  const loader = showLoadingBar();
 
   try {
+    loader.update(18); // Starting login...
+
     // STEP 1: Firebase Auth login
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-    console.log("Firebase Auth Success:", firebaseUser.uid);
+    console.log("Firebase Auth Success:", userCredential.user.uid);
 
-    // STEP 2: Check if allowed (Host or paid VIP)
+    loader.update(55); // Authenticated, checking profile...
+
+    // STEP 2: Check if allowed
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
+    loader.update(82); // Profile loaded...
+
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
+      loader.update(100); // finish cleanly
       return;
     }
 
@@ -2425,10 +2458,12 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
     if (data.isHost || (data.isVIP && data.hasPaid === true)) {
       console.log("Access granted");
-      // onAuthStateChanged will call setupPostLogin() → chat opens
+      loader.update(100); // Success → full bar + hide
+      // Chat opens normally via onAuthStateChanged
     } else {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
+      loader.update(100);
       return;
     }
 
@@ -2441,10 +2476,9 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     } else {
       showStarPopup("Login failed — try again");
     }
+    loader.update(100); // Always finish bar on error
   }
-  // Bar auto-hides when it reaches 100% — no need for finally block
 });
-
 
 // HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
