@@ -28,27 +28,42 @@
     let previousMsgCount = 0;
     let lastSeenTimestamp = Date.now();
 
-    // Fake Viewer Count - Smart motion (5 to 5K)
-    let baseViewers = Math.floor(Math.random() * 3000) + 200; // Start 200-3200
-    let trend = Math.random() > 0.5 ? 1 : -1; // up or down trend
-    function updateViewerCount() {
-      // Random walk with bounds
-      const change = Math.floor(Math.random() * 80) * trend;
-      baseViewers = Math.max(5, Math.min(5000, baseViewers + change));
+ // Fake Viewer Count - Very Slow, Realistic Climb
+let baseViewers = Math.floor(Math.random() * 600) + 200; // Start 200-800
+let trend = 1; // Mostly upward
+let peakReached = false;
 
-      // Occasionally switch trend
-      if (Math.random() < 0.05) trend *= -1;
+function updateViewerCount() {
+  // Small random change, biased upward
+  let change = Math.floor(Math.random() * 30) - 10; // -10 to +20
+  if (trend > 0) change += Math.floor(Math.random() * 20); // extra upward bias
 
-      let display = baseViewers;
-      let suffix = '';
-      if (display >= 1000) {
-        display = (display / 1000).toFixed(1);
-        suffix = 'K';
-      }
-      viewerCountEl.textContent = display + suffix + ' watching';
-    }
-    updateViewerCount();
-    setInterval(updateViewerCount, 8000 + Math.random() * 7000); // Update every 8-15s
+  baseViewers += change;
+  baseViewers = Math.max(5, Math.min(5000, baseViewers));
+
+  // Slow peak — once near 4K+, start drifting down slowly
+  if (baseViewers > 4000 && !peakReached) {
+    peakReached = true;
+    trend = -1;
+  }
+  if (baseViewers < 2000 && peakReached) {
+    trend = 1; // start climbing again slowly
+  }
+
+  // Rare trend switch
+  if (Math.random() < 0.03) trend *= -1;
+
+  let display = baseViewers;
+  let suffix = '';
+  if (display >= 1000) {
+    display = (display / 1000).toFixed(1);
+    suffix = 'K';
+  }
+  viewerCountEl.textContent = display + suffix + ' watching';
+}
+
+updateViewerCount();
+setInterval(updateViewerCount, 12000 + Math.random() * 8000); // Update every 12-20s
 
     const q = query(collection(db, "privateLiveMessages"), orderBy("timestamp", "desc"));
 
@@ -260,7 +275,7 @@
   <div class="container">
     <div class="header">
       <h1>LIVE PRIVATE MESSAGES  💌</h1>
-      <div id="viewerCount">watching</div>
+      <div id="viewerCount">0 watching</div>
       <div id="msgCount">0</div>
     </div>
     <div id="messagesList">
