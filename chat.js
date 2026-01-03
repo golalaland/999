@@ -4546,6 +4546,7 @@ async function startStream(type = 'regular') {
 }
 
 // Custom offline placeholder – mobile-optimized
+// Custom offline placeholder – optimized for mobile (full image priority)
 function showOfflineState(customError = '') {
   livePlayerContainer.innerHTML = `
     <div style="
@@ -4558,64 +4559,70 @@ function showOfflineState(customError = '') {
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 15px;                  /* reduced padding for mobile */
+      padding: 10px;                      /* minimal padding on mobile */
       box-sizing: border-box;
-      overflow: hidden;               /* prevent any overflow/cropping */
+      overflow: hidden;
     ">
-      <!-- Offline image – takes priority on small screens -->
-      <img
-        src="${OFFLINE_IMAGE_URL}"
-        alt="Live stream offline"
-        style="
-          max-width: 90%;             /* wider on mobile */
-          max-height: 60vh;           /* up to 60% of viewport height – prevents pushing */
-          width: auto;
-          height: auto;
-          border-radius: 12px;
-          margin-bottom: 20px;        /* reduced margin */
-          box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-          object-fit: contain;
-        "
-      >
+      <!-- Image takes most space on mobile -->
+      <div style="
+        flex: 1;                          /* grow to fill available space */
+        width: 100%;
+        max-height: 80vh;                 /* most of screen on mobile */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <img
+          src="${OFFLINE_IMAGE_URL}"
+          alt="Live stream offline"
+          style="
+            width: 100%;
+            height: 100%;
+            object-fit: contain;          /* keep full image, no crop */
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+          "
+        >
+      </div>
 
-      <!-- Title – smaller on mobile -->
-      <h2 style="
-        margin: 0 0 10px;
-        font-size: clamp(1.4rem, 5vw, 1.8rem); /* responsive: 1.4rem min, 1.8rem max */
-        line-height: 1.2;
-      ">${OFFLINE_TITLE}</h2>
-
-      <!-- Message – smaller + better spacing -->
-      <p style="
-        margin: 0 0 20px;
-        font-size: clamp(0.95rem, 4vw, 1.1rem);
-        opacity: 0.9;
+      <!-- Text + button – smaller & condensed on mobile -->
+      <div style="
+        padding-top: 12px;
         max-width: 90%;
-      ">${OFFLINE_MESSAGE}</p>
+      ">
+        <h2 style="
+          margin: 0 0 8px;
+          font-size: clamp(1.3rem, 5.5vw, 1.6rem); /* smaller base on mobile */
+        ">${OFFLINE_TITLE}</h2>
 
-      <!-- Optional error message -->
-      ${customError ? `<p style="color: #ff6b6b; margin-bottom: 16px; font-size: clamp(0.9rem, 3.5vw, 1rem);">${customError}</p>` : ''}
+        <p style="
+          margin: 0 0 16px;
+          font-size: clamp(0.9rem, 4vw, 1rem);
+          opacity: 0.9;
+        ">${OFFLINE_MESSAGE}</p>
 
-      <!-- Refresh button – smaller padding/font on mobile -->
-      <button
-        onclick="startStream('regular')"
-        style="
-          padding: clamp(10px, 3vw, 14px) clamp(20px, 6vw, 36px);
-          background: #e50914;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: clamp(1rem, 4vw, 1.1rem);
-          font-weight: bold;
-          cursor: pointer;
-          transition: background 0.2s;
-          min-width: 160px;           /* prevents too tiny on very small screens */
-        "
-        onmouseover="this.style.background='#c40810'"
-        onmouseout="this.style.background='#e50914'"
-      >
-        Refresh / Check Again
-      </button>
+        ${customError ? `<p style="color: #ff6b6b; margin-bottom: 12px; font-size: clamp(0.85rem, 3.5vw, 0.95rem);">${customError}</p>` : ''}
+
+        <button
+          onclick="startStream('regular')"
+          style="
+            padding: 10px 28px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: clamp(0.95rem, 4vw, 1rem);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-width: 140px;
+          "
+          onmouseover="this.style.background='#c40810'"
+          onmouseout="this.style.background='#e50914'"
+        >
+          Refresh / Check Again
+        </button>
+      </div>
     </div>
   `;
 }
