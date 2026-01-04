@@ -5316,20 +5316,22 @@ modal.addEventListener("scroll", () => {
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.15)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
- closeBtn.onclick = (e) => {
+closeBtn.onclick = (e) => {
   e.stopPropagation();
-  e.preventDefault();
+  e.preventDefault(); // Extra safety
 
-  if (isModalClosing) return; // Prevents double-trigger
-  isModalClosing = true;
-
-  // Your original epic spin + scale animation on click
+  // Your original beautiful spin animation — fully preserved
   closeBtn.style.transform = "rotate(180deg) scale(1.3)";
 
+  // TEMPORARY BLOCK ALL CLICKS ON THE ENTIRE PAGE
+  document.body.style.pointerEvents = "none";
+
   setTimeout(() => {
-    modal.remove();
-    isModalClosing = false; // Reset flag
-  }, 200); // Matches your animation duration
+    modal.remove(); // Remove modal
+
+    // Re-enable clicks after everything is cleaned up
+    document.body.style.pointerEvents = "";
+  }, 250); // Slightly longer than your animation for safety
 };
   intro.firstElementChild.appendChild(closeBtn);
 
