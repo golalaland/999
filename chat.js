@@ -5081,15 +5081,15 @@ function setGreeting() {
   if (hour < 12) {
     // Morning: Bright sun
     greetingText = `Good Morning, ${name}!`;
-    emojiSrc = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Sun.webp";
+    emojiSrc = "x";
   } else if (hour < 18) {
     // Afternoon: Sunny behind cloud
     greetingText = `Good Afternoon, ${name}!`;
-    emojiSrc = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Sun%20Behind%20Large%20Cloud.webp";
+    emojiSrc = "x";
   } else {
     // Evening/Night: First quarter moon face
     greetingText = `Good Evening, ${name}!`;
-    emojiSrc = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/First%20Quarter%20Moon%20Face.webp";
+    emojiSrc = "x";
   }
 
   const titleEl = document.getElementById("hostPanelTitle");
@@ -5109,6 +5109,85 @@ function setGreeting() {
 document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
+
+
+// === SINGLE FULL-SCREEN VIDEO MODAL (GLOBAL, CREATED ONCE) ===
+let fullScreenVideoModal = null;
+let currentFullVideo = null;
+
+function initFullScreenVideoModal() {
+  if (fullScreenVideoModal) return; // Already exists
+
+  fullScreenVideoModal = document.createElement("div");
+  Object.assign(fullScreenVideoModal.style, {
+    position: "fixed",
+    top: "0", left: "0",
+    width: "100vw",
+    height: "100vh",
+    background: "#000",
+    zIndex: "99999",
+    display: "none", // Hidden by default
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer"
+  });
+
+  currentFullVideo = document.createElement("video");
+  currentFullVideo.controls = true;
+  currentFullVideo.playsInline = false;
+  Object.assign(currentFullVideo.style, {
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain"
+  });
+
+  // Click anywhere to close
+  fullScreenVideoModal.onclick = closeFullScreenVideoModal;
+
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
+
+  // ESC key to close
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeFullScreenVideoModal();
+  });
+}
+
+function openFullScreenVideo(videoUrl) {
+  initFullScreenVideoModal(); // Ensure modal exists
+
+  currentFullVideo.src = videoUrl || "";
+  currentFullVideo.load();
+
+  fullScreenVideoModal.style.display = "flex";
+
+  // Autoplay (safe because triggered by user click)
+  currentFullVideo.play().catch(err => {
+    console.log("Autoplay blocked:", err);
+  });
+
+  // Request fullscreen (with delay for mobile reliability)
+  setTimeout(() => {
+    if (currentFullVideo.requestFullscreen) {
+      currentFullVideo.requestFullscreen();
+    } else if (currentFullVideo.webkitRequestFullscreen) {
+      currentFullVideo.webkitRequestFullscreen();
+    } else if (currentFullVideo.msRequestFullscreen) {
+      currentFullVideo.msRequestFullscreen();
+    }
+  }, 150);
+}
+
+function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal) return;
+
+  currentFullVideo.pause();
+  currentFullVideo.src = ""; // Clear source for memory
+  fullScreenVideoModal.style.display = "none";
+}
+
+// Call this once when your page/app starts
+initFullScreenVideoModal();
 
 /* ---------- Highlights Button ---------- */
 highlightsBtn.onclick = async () => {
@@ -5408,7 +5487,7 @@ function renderCards(videosToRender) {
       videoContainer.appendChild(lockedOverlay);
     }
 
-   videoContainer.onclick = (e) => {
+videoContainer.onclick = (e) => {
   e.stopPropagation();
 
   if (!isUnlocked) {
@@ -5416,89 +5495,12 @@ function renderCards(videosToRender) {
     return;
   }
 
-  // Reuse or create the single modal
-  createFullScreenVideoModal();
-
-  // Set new source and play
-  currentFullVideo.src = video.videoUrl || "";
-  currentFullVideo.load();
-
-  // Show modal and autoplay
-  fullScreenVideoModal.style.display = "flex";
-  currentFullVideo.play().catch(() => {
-    // Fallback if autoplay blocked
-    console.log("Autoplay prevented — user interaction required");
-  });
-
-  // Request fullscreen after a short delay (helps on mobile)
-  setTimeout(() => {
-    if (currentFullVideo.requestFullscreen) {
-      currentFullVideo.requestFullscreen();
-    } else if (currentFullVideo.webkitRequestFullscreen) { // Safari
-      currentFullVideo.webkitRequestFullscreen();
-    } else if (currentFullVideo.msRequestFullscreen) {
-      currentFullVideo.msRequestFullscreen();
-    }
-  }, 100);
+  // Open the single reusable full-screen modal with autoplay + fullscreen
+  openFullScreenVideo(video.videoUrl || "");
 };
 
-    videoContainer.appendChild(videoEl);
+videoContainer.appendChild(videoEl);
 
-    // Create a single reusable full-screen video modal (once, outside the loop)
-let fullScreenVideoModal = null;
-let currentFullVideo = null;
-
-function createFullScreenVideoModal() {
-  if (fullScreenVideoModal) return fullScreenVideoModal;
-
-  fullScreenVideoModal = document.createElement("div");
-  fullScreenVideoModal.style.cssText = `
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  `;
-
-  currentFullVideo = document.createElement("video");
-  currentFullVideo.controls = true;
-  currentFullVideo.playsInline = false; // Important for fullscreen on iOS
-  currentFullVideo.style.cssText = `
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  `;
-
-  // Click anywhere (or video) to close
-  fullScreenVideoModal.onclick = () => closeFullScreenVideoModal();
-
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
-
-  return fullScreenVideoModal;
-}
-
-function closeFullScreenVideoModal() {
-  if (currentFullVideo) {
-    currentFullVideo.pause();
-    currentFullVideo.src = "";
-  }
-  if (fullScreenVideoModal) {
-    fullScreenVideoModal.style.display = "none";
-  }
-}
-
-// Escape key to close
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    closeFullScreenVideoModal();
-  }
-});
 
     // Info panel
     const infoPanel = document.createElement("div");
