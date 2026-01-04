@@ -5318,20 +5318,40 @@ modal.addEventListener("scroll", () => {
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
 closeBtn.onclick = (e) => {
   e.stopPropagation();
-  e.preventDefault(); // Extra safety
+  e.preventDefault();
 
-  // Your original beautiful spin animation — fully preserved
+  // Your beautiful spinning animation — completely untouched
   closeBtn.style.transform = "rotate(180deg) scale(1.3)";
 
-  // TEMPORARY BLOCK ALL CLICKS ON THE ENTIRE PAGE
-  document.body.style.pointerEvents = "none";
+  // ADD A FULL-SCREEN INVISIBLE BLOCKER FOR 500MS
+  const clickBlocker = document.createElement("div");
+  clickBlocker.id = "temporary-click-blocker";
+  Object.assign(clickBlocker.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100vw",
+    height: "100vh",
+    background: "transparent",
+    zIndex: "999999", // Higher than everything
+    pointerEvents: "auto",
+    cursor: "default"
+  });
 
+  // Prevent any clicks from going through
+  clickBlocker.onclick = (ev) => {
+    ev.stopPropagation();
+    ev.preventDefault();
+    return false;
+  };
+
+  document.body.appendChild(clickBlocker);
+
+  // Remove modal + blocker after animation
   setTimeout(() => {
-    modal.remove(); // Remove modal
-
-    // Re-enable clicks after everything is cleaned up
-    document.body.style.pointerEvents = "";
-  }, 250); // Slightly longer than your animation for safety
+    modal.remove();
+    clickBlocker.remove();
+  }, 300); // Matches your spin duration + safety buffer
 };
   intro.firstElementChild.appendChild(closeBtn);
 
