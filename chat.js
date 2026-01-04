@@ -5114,6 +5114,7 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
 // === SINGLE FULL-SCREEN VIDEO MODAL (GLOBAL, CREATED ONCE) ===
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
+let isModalClosing = false;
 
 function initFullScreenVideoModal() {
   if (fullScreenVideoModal) return; // Already exists
@@ -5315,11 +5316,21 @@ modal.addEventListener("scroll", () => {
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.15)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
-  closeBtn.onclick = (e) => {
-    e.stopPropagation();
-    closeBtn.style.transform = "rotate(180deg) scale(1.3)";
-    setTimeout(() => modal.remove(), 180);
-  };
+ closeBtn.onclick = (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+
+  if (isModalClosing) return; // Prevents double-trigger
+  isModalClosing = true;
+
+  // Your original epic spin + scale animation on click
+  closeBtn.style.transform = "rotate(180deg) scale(1.3)";
+
+  setTimeout(() => {
+    modal.remove();
+    isModalClosing = false; // Reset flag
+  }, 200); // Matches your animation duration
+};
   intro.firstElementChild.appendChild(closeBtn);
 
    // === SEARCH + FILTER BUTTONS ===
