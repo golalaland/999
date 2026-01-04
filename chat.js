@@ -5074,18 +5074,35 @@ function setGreeting() {
 
   const name = capitalizeFirstLetter(currentUser.chatId.replace(/_/g, " "));
   const hour = new Date().getHours();
-  let greeting;
+  
+  let greetingText;
+  let emojiSrc;
 
   if (hour < 12) {
-    greeting = `Good Morning, ${name}!`;
+    // Morning: Bright sun
+    greetingText = `Good Morning, ${name}!`;
+    emojiSrc = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Sun.webp";
   } else if (hour < 18) {
-    greeting = `Good Afternoon, ${name}!`;
+    // Afternoon: Sunny behind cloud
+    greetingText = `Good Afternoon, ${name}!`;
+    emojiSrc = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Sun%20Behind%20Large%20Cloud.webp";
   } else {
-    greeting = `Good Evening, ${name}!`;
+    // Evening/Night: First quarter moon face
+    greetingText = `Good Evening, ${name}!`;
+    emojiSrc = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/First%20Quarter%20Moon%20Face.webp";
   }
 
   const titleEl = document.getElementById("hostPanelTitle");
-  if (titleEl) titleEl.textContent = greeting;
+  if (titleEl) {
+    titleEl.innerHTML = `
+      ${greetingText}
+      <img src="${emojiSrc}" 
+           alt="Greeting Emoji" 
+           width="25" 
+           height="25" 
+           style="vertical-align: middle; margin-left: 8px;">
+    `;
+  }
 }
 
 /* Run greeting when host panel opens */
@@ -5391,24 +5408,97 @@ function renderCards(videosToRender) {
       videoContainer.appendChild(lockedOverlay);
     }
 
-    videoContainer.onclick = (e) => {
-      e.stopPropagation();
-      if (!isUnlocked) {
-        showUnlockConfirm(video, () => renderCards(videosToRender));
-        return;
-      }
-      const fullVideo = document.createElement("video");
-      fullVideo.src = video.videoUrl || "";
-      fullVideo.controls = true;
-      fullVideo.playsInline = false;
-      fullVideo.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:99999;";
-      fullVideo.onclick = () => fullVideo.remove();
-      document.body.appendChild(fullVideo);
-      fullVideo.play();
-      if (fullVideo.requestFullscreen) fullVideo.requestFullscreen();
-    };
+   videoContainer.onclick = (e) => {
+  e.stopPropagation();
+
+  if (!isUnlocked) {
+    showUnlockConfirm(video, () => renderCards(videosToRender));
+    return;
+  }
+
+  // Reuse or create the single modal
+  createFullScreenVideoModal();
+
+  // Set new source and play
+  currentFullVideo.src = video.videoUrl || "";
+  currentFullVideo.load();
+
+  // Show modal and autoplay
+  fullScreenVideoModal.style.display = "flex";
+  currentFullVideo.play().catch(() => {
+    // Fallback if autoplay blocked
+    console.log("Autoplay prevented — user interaction required");
+  });
+
+  // Request fullscreen after a short delay (helps on mobile)
+  setTimeout(() => {
+    if (currentFullVideo.requestFullscreen) {
+      currentFullVideo.requestFullscreen();
+    } else if (currentFullVideo.webkitRequestFullscreen) { // Safari
+      currentFullVideo.webkitRequestFullscreen();
+    } else if (currentFullVideo.msRequestFullscreen) {
+      currentFullVideo.msRequestFullscreen();
+    }
+  }, 100);
+};
 
     videoContainer.appendChild(videoEl);
+
+    // Create a single reusable full-screen video modal (once, outside the loop)
+let fullScreenVideoModal = null;
+let currentFullVideo = null;
+
+function createFullScreenVideoModal() {
+  if (fullScreenVideoModal) return fullScreenVideoModal;
+
+  fullScreenVideoModal = document.createElement("div");
+  fullScreenVideoModal.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  `;
+
+  currentFullVideo = document.createElement("video");
+  currentFullVideo.controls = true;
+  currentFullVideo.playsInline = false; // Important for fullscreen on iOS
+  currentFullVideo.style.cssText = `
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  `;
+
+  // Click anywhere (or video) to close
+  fullScreenVideoModal.onclick = () => closeFullScreenVideoModal();
+
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
+
+  return fullScreenVideoModal;
+}
+
+function closeFullScreenVideoModal() {
+  if (currentFullVideo) {
+    currentFullVideo.pause();
+    currentFullVideo.src = "";
+  }
+  if (fullScreenVideoModal) {
+    fullScreenVideoModal.style.display = "none";
+  }
+}
+
+// Escape key to close
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeFullScreenVideoModal();
+  }
+});
 
     // Info panel
     const infoPanel = document.createElement("div");
