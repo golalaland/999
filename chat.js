@@ -1451,7 +1451,7 @@ const usernameColor = refs.userColors && refs.userColors[m.uid]
 
 nameSpan.style.cssText = `
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 500;
   padding: 0 4px 0 2px;           /* Tight spacing to message */
   border-radius: 4px;
   user-select: none;
@@ -1566,7 +1566,7 @@ if (m.type === "buzz" && m.stickerGradient) {
   // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
 content.style.cssText = `
   font-weight: 900 !important;           /* Ultra bold */
-  font-size: 1.35em !important;          /* Big but not too big for inline */
+  font-size: 1.38em !important;          /* Big but not too big for inline */
   text-shadow: 0 2px 8px rgba(0,0,0,0.6);
   letter-spacing: 0.8px;
   display: inline !important;            /* ←←← Forces it back inline */
