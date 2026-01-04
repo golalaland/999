@@ -5320,38 +5320,40 @@ closeBtn.onclick = (e) => {
   e.stopPropagation();
   e.preventDefault();
 
-  // Your beautiful spinning animation — completely untouched
+  // Your iconic spin animation — untouched and perfect
   closeBtn.style.transform = "rotate(180deg) scale(1.3)";
 
-  // ADD A FULL-SCREEN INVISIBLE BLOCKER FOR 500MS
+  function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal) return;
+
+  currentFullVideo.pause();
+  currentFullVideo.src = ""; // Clear source
+  fullScreenVideoModal.style.display = "none";
+
+  // Optional: Exit fullscreen if active
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  }
+}
+
+  // === FIX: Close any open full-screen video ===
+  closeFullScreenVideoModal();
+
+  // Optional: Add blocker for mobile tap-through safety
   const clickBlocker = document.createElement("div");
   clickBlocker.id = "temporary-click-blocker";
   Object.assign(clickBlocker.style, {
-    position: "fixed",
-    top: "0",
-    left: "0",
-    width: "100vw",
-    height: "100vh",
-    background: "transparent",
-    zIndex: "999999", // Higher than everything
-    pointerEvents: "auto",
-    cursor: "default"
+    position: "fixed", top: "0", left: "0",
+    width: "100vw", height: "100vh",
+    background: "transparent", zIndex: "999999", pointerEvents: "auto"
   });
-
-  // Prevent any clicks from going through
-  clickBlocker.onclick = (ev) => {
-    ev.stopPropagation();
-    ev.preventDefault();
-    return false;
-  };
-
+  clickBlocker.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
   document.body.appendChild(clickBlocker);
 
-  // Remove modal + blocker after animation
   setTimeout(() => {
     modal.remove();
     clickBlocker.remove();
-  }, 300); // Matches your spin duration + safety buffer
+  }, 300);
 };
   intro.firstElementChild.appendChild(closeBtn);
 
