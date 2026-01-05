@@ -2648,15 +2648,15 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     max-height: 300px;
   }
 }
-/* ========== POLL OPTION BUTTONS ========== */
+/* ========== POLL OPTION BUTTONS (COMPACT) ========== */
 .poll-option-btn {
   width: 100%;
-  padding: 18px 20px;
-  background: linear-gradient(180deg, #1b1b1b, #141414);
+  padding: 14px 16px;              /* reduced */
+  background: linear-gradient(180deg, #1a1a1a, #131313);
   color: var(--text-main);
-  border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  font-size: 17px;
+  border: 1px solid #262626;
+  border-radius: 14px;             /* smaller radius */
+  font-size: 15px;                 /* reduced */
   font-weight: 600;
   cursor: pointer;
 
@@ -2671,137 +2671,133 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 
 .poll-option-btn:hover {
-  background: linear-gradient(180deg, #222, #181818);
+  background: linear-gradient(180deg, #202020, #161616);
   border-color: #333;
   transform: translateY(-1px);
 }
 
-.poll-option-btn:active {
-  transform: translateY(0);
-}
-
-/* Selected State */
 .poll-option-btn.selected {
-  border-color: var(--accent);
+  border-color: #c3f60c;
   color: #0b0b0b;
-  background: linear-gradient(180deg, #d9ff4d, var(--accent));
+  background: linear-gradient(180deg, #e5ff73, #c3f60c);
 }
 
-/* ========== RESULT BARS ========== */
+
+/* ========== RESULT BARS (SHORTER & SLEEK) ========== */
 .result-bar-label {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 14px;
+  margin-bottom: 4px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .result-bar {
-  height: 26px;
-  background: #171717;
+  height: 20px;                    /* reduced */
+  background: #141414;
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid #242424;
+  border: 1px solid #222;
 }
 
 .result-bar-fill {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--accent),
-    #a8d900
-  );
-  transition: width 0.7s cubic-bezier(.22,.61,.36,1);
+  background: linear-gradient(90deg, #c3f60c, #a8d900);
+  transition: width 0.6s cubic-bezier(.22,.61,.36,1);
 }
+
 
 /* ========== MODAL OVERLAY ========== */
 #pollModal {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.92);
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 
-/* ========== MODAL CARD ========== */
+
+/* ========== MODAL CARD (SHRUNK) ========== */
 .poll-modal-card {
-  background: linear-gradient(180deg, #121212, #0d0d0d);
+  background: linear-gradient(180deg, #111, #0c0c0c);
   color: var(--text-main);
-  padding: 32px 28px;
-  border-radius: 22px;
-  max-width: 460px;
-  width: 90%;
+  padding: 22px 20px;              /* reduced */
+  border-radius: 18px;
+  max-width: 380px;                /* reduced */
+  width: 88%;
   text-align: center;
-  border: 1px solid #262626;
+  border: 1px solid #242424;
 }
+
 
 /* ========== QUESTION ========== */
 #pollQuestion {
-  margin: 0 0 26px;
-  font-size: 22px;
+  margin: 0 0 18px;
+  font-size: 18px;                 /* reduced */
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: -0.02em;
 }
 
+
 /* ========== TIMER ========== */
 #pollTimer {
-  margin: 0 0 26px;
-  font-size: 15px;
+  margin: 0 0 18px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
 }
 
-/* ========== RESULTS ========== */
-#pollResult p {
-  margin: 0;
-}
 
+/* ========== RESULTS TEXT ========== */
 #yourChoice {
-  margin: 6px 0 20px;
-  font-size: 20px;
+  margin: 4px 0 16px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--accent);
+  color: #c3f60c;
 }
 
-/* ========== CAROUSEL / AD SPACE ========== */
+
+/* ========== CAROUSEL / AD SPACE (SMALLER) ========== */
 #pollCarousel {
-  margin: 0 0 24px;
-  height: 180px;
+  margin: 0 0 18px;
+  height: 130px;                   /* reduced */
   background:
     repeating-linear-gradient(
       45deg,
       #1a1a1a,
-      #1a1a1a 10px,
-      #181818 10px,
-      #181818 20px
+      #1a1a1a 8px,
+      #171717 8px,
+      #171717 16px
     );
-  border-radius: 16px;
-  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  border: 1px solid #262626;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #777;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-/* ========== CLOSE BUTTON ========== */
+
+/* ========== CLOSE BUTTON (COMPACT) ========== */
 #closePollBtn {
-  padding: 14px 38px;
-  background: #151515;
+  padding: 12px 30px;              /* reduced */
+  background: #141414;
   color: var(--text-main);
-  border: 1px solid #2f2f2f;
-  border-radius: 16px;
-  font-size: 15px;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
 }
 
 #closePollBtn:hover {
-  background: #1d1d1d;
+  background: #1c1c1c;
 }
 
 #closePollBtn:active {
@@ -2917,39 +2913,43 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   pointer-events: none !important;
   z-index: 99999 !important; /* Higher than modal */
 }
-/* ========== POLL SECTION HEADER (CENTERED) ========== */
+/* ========== POLL SECTION HEADER (CENTERED & CLEAN) ========== */
 .poll-section-header {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin: 10px 0 22px;
+  gap: 4px;                        /* tighter */
+  margin: 8px 0 18px;
   text-align: center;
 }
 
 .poll-section-eyebrow {
-  font-size: 11px;
+  font-size: 10px;                 /* slightly reduced */
   font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #777;
+  letter-spacing: 0.2em;
+  color: #6f6f6f;
+  text-transform: uppercase;
 }
 
 .poll-section-title {
   margin: 0;
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #c3f60c;
 }
+
+
+/* ========== INTRO (LEFT UNTOUCHED VISUALLY) ========== */
 .poll-intro {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
   text-align: center;
 }
 
 .poll-intro h3 {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: 18px;                 /* unchanged */
   font-weight: 700;
   color: var(--accent);
   letter-spacing: -0.02em;
@@ -2957,16 +2957,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 .poll-intro p {
   margin: 0;
-  font-size: 14px;
+  font-size: 14px;                 /* unchanged */
   line-height: 1.45;
   color: var(--text-muted);
 }
 
+
+/* ========== POLL BODY (COMPACT CONTAINER) ========== */
 .poll-body {
-  background: #0f0f0f;
-  border: 1px solid #242424;
-  border-radius: 18px;
-  padding: 22px 20px;
+  background: #0e0e0e;
+  border: 1px solid #232323;
+  border-radius: 16px;             /* reduced */
+  padding: 18px 16px;              /* reduced */
 }
 
 /* ----- BUY TICKETS SHIMMER EFFECT ----- */
