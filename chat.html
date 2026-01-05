@@ -2942,16 +2942,25 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   letter-spacing: -0.03em;
   color: #c3f60c;
 }
-/* ----- POLL INTRO ABOVE MODAL ----- */
-.poll-intro-above {
-  max-width: 480px;
-  margin: 0 auto 20px;
+.poll-intro {
+  margin-bottom: 22px;
   text-align: center;
-  font-size: 15px;
-  color: #ccc;
-  line-height: 1.45;
 }
 
+.poll-intro h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.poll-intro p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
 /* ----- POLL MODAL CARD SIZE ----- */
 .poll-modal-card {
   background: linear-gradient(180deg, #121212, #0d0d0d);
@@ -2963,6 +2972,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   text-align: center;
   border: 1px solid #262626;
 }
+.poll-body {
+  background: #0f0f0f;
+  border: 1px solid #242424;
+  border-radius: 18px;
+  padding: 22px 20px;
+}
 
 /* ----- BUY TICKETS SHIMMER EFFECT ----- */
 @keyframes shimmer {
@@ -2970,17 +2985,25 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   100% { background-position: 300px 0; }
 }
 
+/* Buy Tickets Section */
+.buy-tickets-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 18px 0 40px;
+  gap: 8px;
+}
+
+/* Buy Tickets Button */
 #buyTicketsBtn {
   padding: 14px 32px;
-  background: linear-gradient(90deg, #c3f60c 20%, #e0ff3f 50%, #c3f60c 80%);
-  background-size: 300px 100%;
+  background: var(--accent);
   color: #0b0b0b;
   border: none;
   border-radius: 18px;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  animation: shimmer 2s linear infinite;
   transition: transform 0.12s ease, filter 0.2s ease;
 }
 
@@ -3274,44 +3297,54 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
-<!-- POLL INTRO ABOVE MODAL -->
-<div class="poll-intro-above">
-  <p>
-    Welcome to the pool! Vote for your favorite, see where you stand, 
-    and discuss the topic with others in the chatrooms. It's fast, fun, and interactive!
-  </p>
-</div>
-
 <!-- USER POLL MODAL (Win $STRZ) -->
 <div id="pollModal">
   <div class="poll-modal-card">
 
-    <!-- Question -->
-    <h2 id="pollQuestion"></h2>
-
-    <!-- Options -->
-    <div id="pollOptions" style="margin-bottom:28px; display:flex; flex-direction:column; gap:12px;">
+    <!-- INTRO / CONTEXT (INSIDE MODAL, OUTSIDE POLL) -->
+    <div class="poll-intro">
+      <h3>Join the Poll</h3>
+      <p>
+        Cast your vote, see how others feel, and jump into the conversation.
+        Every poll sparks real-time discussion — take your stance, then head
+        into the chatrooms to debate, joke, or defend your pick.
+      </p>
     </div>
 
-    <!-- Timer -->
-    <p id="pollTimer"></p>
+    <!-- POLL CONTAINER (SHRUNK) -->
+    <div class="poll-body">
 
-    <!-- Results -->
-    <div id="pollResult" style="display:none; margin-bottom:28px;">
-      <p style="font-size:15px; color:#aaa;">You voted for</p>
-      <p id="yourChoice"></p>
-      <div id="resultBars" style="display:flex; flex-direction:column; gap:16px;"></div>
+      <!-- Question -->
+      <h2 id="pollQuestion"></h2>
+
+      <!-- Options -->
+      <div id="pollOptions"
+        style="margin-bottom:22px; display:flex; flex-direction:column; gap:12px;">
+      </div>
+
+      <!-- Timer -->
+      <p id="pollTimer"></p>
+
+      <!-- Results -->
+      <div id="pollResult" style="display:none; margin-bottom:22px;">
+        <p style="font-size:15px; color:#aaa;">You voted for</p>
+        <p id="yourChoice"></p>
+        <div id="resultBars"
+          style="display:flex; flex-direction:column; gap:16px;"></div>
+      </div>
+
+      <!-- Carousel / Ads -->
+      <div id="pollCarousel">
+        Carousel / Ad Space
+      </div>
+
+      <!-- Close -->
+      <button id="closePollBtn">Close</button>
+
     </div>
-
-    <!-- Carousel / Ads -->
-    <div id="pollCarousel">
-      Carousel / Ad Space
-    </div>
-
-    <!-- Close -->
-    <button id="closePollBtn">Close</button>
   </div>
 </div>
+
 
 <!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
 <div class="buy-tickets-section">
