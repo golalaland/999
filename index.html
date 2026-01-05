@@ -1063,26 +1063,28 @@ body {
 
     <div class="feature-card">
       
-  <h3>REWARD$</h3>
+  <h3>REWARDS</h3>
 <p>
 Win cash gifts. Unlock real-world experiences.
 Grind daily, conquer challenges, and earn when your friends earn.
 Your presence and influence convert directly into real value.
 </p>
+</div>
 
-
+    
     <div class="feature-card">
   <h3>VISIT CUBE</h3>
   <p>
     Stay active each week to unlock private invites to Cube setups in your city.
    Free drinks, immersive moments, and experiential services from cuties.
   </p>
-</div>
+      
 
     <div class="feature-card">
       <h3>EXCLUSIVE PARTIES</h3>
       <p>Invite-only nights, unforgettable energy. Not everyone gets in.</p>
     </div>
+     </div>
 
   </div>
 </section>
@@ -1539,7 +1541,7 @@ function updateCalculator() {
   const hostWinsPerMonth = 6;
 
   const vipEarnings = vipCount * vipWinsPerMonth * 1500;
-  const hostEarnings = hostCount * hostWinsPerMonth * 1000;
+  const hostEarnings = hostCount * hostWinsPerMonth * 500;
   const total = vipEarnings + hostEarnings;
 
   document.getElementById("vipEarnings").textContent = `₦${vipEarnings.toLocaleString()}`;
