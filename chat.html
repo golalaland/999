@@ -2758,11 +2758,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   pointer-events: none !important;
   z-index: 99999 !important; /* Higher than modal */
 }
-
 /* ----- BUY TICKETS SHIMMER EFFECT ----- */
 @keyframes shimmer {
-  0% { background-position: -300px 0; }
-  100% { background-position: 300px 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Buy Tickets Section */
@@ -2774,26 +2777,56 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   gap: 8px;
 }
 
-/* Buy Tickets Button */
+/* Buy Tickets Button – SMALLER & SHIMMER */
 #buyTicketsBtn {
-  padding: 14px 32px;
-  background: var(--accent);
+  padding: 10px 24px;               /* smaller than before (was 14px 32px) */
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent) 40%,
+    #d9ff4d 50%,                    /* bright highlight for shimmer */
+    var(--accent) 60%,
+    var(--accent) 100%
+  );
+  background-size: 200% 100%;         /* wide gradient for movement */
+  background-position: -200% 0;
   color: #0b0b0b;
   border: none;
-  border-radius: 18px;
-  font-size: 16px;
+  border-radius: 16px;                /* slightly smaller radius to match size */
+  font-size: 15px;                    /* slightly smaller text */
   font-weight: 700;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: transform 0.12s ease, filter 0.2s ease;
+  animation: shimmer 2.8s linear infinite; /* continuous shimmer */
 }
 
 #buyTicketsBtn:hover {
-  filter: brightness(0.95);
+  filter: brightness(1.08);           /* subtle glow on hover */
   transform: translateY(-1px);
+  animation-play-state: paused;       /* pause shimmer on hover for clarity */
 }
 
 #buyTicketsBtn:active {
   transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* Optional: Add a tiny shine layer on top for extra premium feel */
+#buyTicketsBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  animation: shimmer 3.5s linear infinite;
+  pointer-events: none;
 }
 
 /* Note under button */
@@ -2817,53 +2850,40 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.92);
-  align-items: flex-start;     /* Changed: start from top instead of center */
+  align-items: flex-start;      /* Start from top on mobile */
   justify-content: center;
   z-index: 9999;
-  padding: 20px 0;             /* New: safe top/bottom padding */
-  overflow-y: auto;            /* New: allow scrolling the overlay if needed */
+  padding: 20px 0;              /* Safe space top/bottom */
+  overflow-y: auto;             /* Scroll whole modal if needed */
 }
 
 /* ========== MODAL CARD ========== */
 .poll-modal-card {
   background: linear-gradient(180deg, #121212, #0d0d0d);
   color: var(--text-main);
-  padding: 24px 20px;          /* Reduced a bit for mobile comfort */
+  padding: 28px 24px;
   border-radius: 22px;
   max-width: 400px;
-  width: 92%;                  /* Slightly wider on small screens */
-  max-height: 90vh;            /* NEW: Critical – never taller than 90% of screen */
-  overflow-y: auto;            /* NEW: Internal scroll when content is long */
+  width: 92%;
+  max-height: 90vh;             /* Never taller than screen */
+  overflow-y: auto;             /* Internal scroll if content overflows */
   text-align: center;
   border: 1px solid #262626;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 28px;                    /* Clean space between intro and poll body */
   box-sizing: border-box;
-  
-  /* Optional smooth feel */
   -webkit-overflow-scrolling: touch;
 }
 
-/* Extra safety for very small screens */
-@media (max-height: 600px) {
-  .poll-modal-card {
-    padding: 20px 16px;
-    gap: 20px;
-  }
-  
-  .poll-body {
-    padding: 18px 16px;
-  }
-}
-/* ========== INTRO / CONTEXT (KEEP COMFORTABLE – NOT SHRUNK) ========== */
+/* ========== INTRO / CONTEXT – OUTSIDE POLL BODY (SPACIOUS & WELCOMING) ========== */
 .poll-intro {
   text-align: center;
 }
 
 .poll-intro h3 {
   margin: 0 0 12px;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--accent);
   letter-spacing: -0.02em;
@@ -2871,12 +2891,15 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 .poll-intro p {
   margin: 0;
-  font-size: 14.5px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--text-muted);
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* ========== POLL BODY (COMPACT CONTAINER – EVERYTHING SHRUNK HERE) ========== */
+/* ========== POLL BODY – COMPACT DARK CONTAINER (ONLY POLL CONTENT) ========== */
 .poll-body {
   background: #0f0f0f;
   border: 1px solid #242424;
@@ -2885,10 +2908,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px; /* controlled internal spacing */
+  gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Question inside poll body */
+/* Question */
 .poll-body #pollQuestion {
   margin: 0;
   font-size: 20px;
@@ -2897,13 +2922,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   letter-spacing: -0.02em;
 }
 
-/* Options container */
+/* Options */
 .poll-body #pollOptions {
   width: 100%;
-  margin-bottom: 0; /* override inline style */
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px; /* tighter than original */
+  gap: 10px;
 }
 
 /* Timer */
@@ -2917,18 +2942,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 /* Results */
 .poll-body #pollResult {
   width: 100%;
-  margin-bottom: 0; /* override inline style */
+  margin-bottom: 0;
   display: none;
 }
 
-.poll-body #pollResult p {
-  margin: 0;
+.poll-body #pollResult > p:first-child {
+  margin: 0 0 8px;
   font-size: 14px;
   color: #aaa;
 }
 
 .poll-body #yourChoice {
-  margin: 6px 0 16px;
+  margin: 0 0 16px;
   font-size: 18px;
   font-weight: 600;
   color: var(--accent);
@@ -2937,13 +2962,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 .poll-body #resultBars {
   display: flex;
   flex-direction: column;
-  gap: 14px; /* slightly tighter */
+  gap: 14px;
+  width: 100%;
 }
 
 /* ========== POLL OPTION BUTTONS ========== */
 .poll-option-btn {
   width: 100%;
-  padding: 14px 18px; /* compact but still comfortable */
+  padding: 14px 18px;
   background: linear-gradient(180deg, #1b1b1b, #141414);
   color: var(--text-main);
   border: 1px solid var(--border-soft);
@@ -2951,15 +2977,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  transition:
-    transform 0.12s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .poll-option-btn:hover {
@@ -2972,7 +2993,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   transform: translateY(0);
 }
 
-/* Selected State */
 .poll-option-btn.selected {
   border-color: var(--accent);
   color: #0b0b0b;
@@ -2998,27 +3018,16 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 .result-bar-fill {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--accent),
-    #a8d900
-  );
+  background: linear-gradient(90deg, var(--accent), #a8d900);
   transition: width 0.7s cubic-bezier(.22,.61,.36,1);
 }
 
 /* ========== CAROUSEL / AD SPACE ========== */
 .poll-body #pollCarousel {
   width: 100%;
-  height: 140px; /* reduced but still visible */
+  height: 140px;
   margin: 0;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      #1a1a1a,
-      #1a1a1a 10px,
-      #181818 10px,
-      #181818 20px
-    );
+  background: repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 10px, #181818 10px, #181818 20px);
   border-radius: 14px;
   border: 1px solid #2a2a2a;
   display: flex;
@@ -3027,6 +3036,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   color: #777;
   font-size: 13px;
 }
+
 /* ========== CLOSE BUTTON ========== */
 .poll-body #closePollBtn {
   padding: 12px 34px;
@@ -3046,6 +3056,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 .poll-body #closePollBtn:active {
   transform: translateY(1px);
+}
+
+/* Mobile fine-tuning */
+@media (max-height: 600px) {
+  .poll-modal-card {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+  .poll-body {
+    padding: 18px 16px;
+  }
 }
 </style>
 </head>
@@ -3364,14 +3385,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 <!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
 <div class="buy-tickets-section">
-  <button id="buyTicketsBtn">
+  <a href="https://cube.example.com" target="_blank" rel="noopener noreferrer" id="buyTicketsBtn" class="buy-tickets-btn">
     VISIT CUBE
-  </button>
+  </a>
   <p class="buy-tickets-note">
-    Want to visit Cube & pay? <a href="#" target="_blank">Click here</a>
+    Want to book an experience ? <a href="https://cube.example.com/pay" target="_blank" rel="noopener noreferrer">Click here</a>
   </p>
 </div>
-
 
     
 <!-- 🟣 HOST MODAL -->
