@@ -2913,27 +2913,61 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   background: linear-gradient(180deg, #d9ff4d, var(--accent));
 }
 
-/* ========== RESULT BARS ========== */
+/* ========== RESULT BARS – NOW GOLD ========== */
+.result-bar {
+  height: 20px;
+  background: #171717;              /* dark base */
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #242424;
+  position: relative;               /* for potential shine overlay */
+}
+
+.result-bar-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #f9ca24 0%,     /* warm gold */
+    #ffd700 30%,    /* bright gold */
+    #ffea00 50%,    /* peak highlight */
+    #f7931e 70%,    /* deeper gold */
+    #d4af37 100%    /* rich shadow gold */
+  );
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+  
+  /* Optional: subtle shine moving across the bar */
+  position: relative;
+  overflow: hidden;
+}
+
+.result-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  animation: shimmer 3.5s linear infinite;
+  pointer-events: none;
+}
+
+/* Reuse the same shimmer animation from reward text */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Label stays clean */
 .result-bar-label {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
   font-size: 13px;
   color: var(--text-muted);
-}
-
-.result-bar {
-  height: 20px;
-  background: #171717;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid #242424;
-}
-
-.result-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), #a8d900);
-  transition: width 0.7s cubic-bezier(.22,.61,.36,1);
 }
 
 /* ========== CAROUSEL / AD SPACE ========== */
@@ -2995,6 +3029,35 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   align-items: center;
   margin: 18px 0 40px;
   gap: 10px;
+}
+.poll-reward-line {
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.reward-amount {
+  font-weight: 800;
+  font-size: 16px;
+  background: linear-gradient(90deg, #ffd700, #ffea00, #f9ca24, #f7931e, #ffd700);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+  letter-spacing: -0.01em;
+}
+
+.poll-timer-line {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Buy Tickets Button – SUPER SMALL & DOPE */
