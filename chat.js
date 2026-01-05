@@ -6226,8 +6226,9 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
-// WIN $STRZ POLL — FINAL BULLETPROOF VERSION
+// WIN $STRZ POLL — FINAL FIXED VERSION WITH LIVE VOTE COUNTING
 let pollUnsubscribe = null;
+let votesUnsubscribe = null;
 
 document.getElementById("topBallersBtn")?.addEventListener("click", openPollModal);
 
@@ -6240,42 +6241,67 @@ async function openPollModal() {
   showLoader("Loading poll...");
 
   try {
+    // Clean old listeners
     if (pollUnsubscribe) pollUnsubscribe();
+    if (votesUnsubscribe) votesUnsubscribe();
 
-    pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (snap) => {
-      hideLoader();
-
-      if (!snap.exists()) {
+    // Listen to poll document
+    pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
+      if (!pollSnap.exists()) {
+        hideLoader();
         document.getElementById("pollModal").style.display = "none";
-        showStarPopup("No active poll right now — check back soon!");
+        showStarPopup("No active poll right now");
         return;
       }
 
-      const poll = snap.data();
+      const poll = pollSnap.data();
       const now = Date.now();
       const endTime = poll.endsAt.toMillis();
 
       if (now > endTime) {
+        hideLoader();
         document.getElementById("pollModal").style.display = "none";
-        showStarPopup("Poll ended! Winners rewarded.");
+        showStarPopup("Poll ended!");
         return;
       }
 
-      // Always refresh UI with latest poll data
-      renderPoll(poll, endTime);
+      // Start listening to votes
+      startVotesListener(poll, endTime);
 
-      document.getElementById("pollModal").style.display = "flex";
     }, (err) => {
       hideLoader();
-      showStarPopup("Failed to load poll");
-      console.error("Poll listener error:", err);
+      console.error("Poll load error:", err);
     });
 
   } catch (err) {
     hideLoader();
-    showStarPopup("Error loading poll");
     console.error(err);
   }
+}
+
+function startVotesListener(poll, endTime) {
+  votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
+    hideLoader();
+
+    // Count votes
+    const voteCounts = {};
+    poll.options.forEach(opt => voteCounts[opt] = 0);
+
+    votesSnap.forEach(doc => {
+      const vote = doc.data();
+      if (vote.choice && poll.options.includes(vote.choice)) {
+        voteCounts[vote.choice]++;
+      }
+    });
+
+    // Update poll with live counts
+    poll.liveVotes = voteCounts;
+
+    // Render
+    renderPoll(poll, endTime);
+
+    document.getElementById("pollModal").style.display = "flex";
+  });
 }
 
 function renderPoll(poll, endTime) {
@@ -6288,15 +6314,13 @@ function renderPoll(poll, endTime) {
 
   startPollTimer(endTime);
 
-  // Check if user has voted
+  // Check user's vote
   getDoc(doc(db, "pollVotes", currentUser.uid)).then(voteSnap => {
     if (voteSnap.exists()) {
       showLiveResults(poll, voteSnap.data().choice);
     } else {
       showVotingOptions(poll);
     }
-  }).catch(() => {
-    showVotingOptions(poll);
   });
 }
 
@@ -6307,34 +6331,30 @@ function showVotingOptions(poll) {
   poll.options.forEach(option => {
     const btn = document.createElement("button");
     btn.textContent = option;
-    btn.className = "poll-option-btn";
+    btn.style.cssText = "width:100%;padding:18px;margin:12px 0;background:#222;color:#fff;border:2px solid #444;border-radius:16px;font-size:18px;font-weight:bold;cursor:pointer;transition:all 0.2s;";
 
     btn.onclick = async () => {
       try {
-        // Record vote
         await setDoc(doc(db, "pollVotes", currentUser.uid), {
           choice: option,
           votedAt: serverTimestamp()
         });
 
-        // Give reward
         await updateDoc(doc(db, "users", currentUser.uid), {
           stars: increment(poll.reward)
         });
 
-        // CONFETTI
         confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#ff69b4', '#ff1493', '#0f9', '#ffd700', '#00ffff']
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 }
         });
 
         showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
         showLiveResults(poll, option);
 
       } catch (err) {
-        showStarPopup("Vote failed — try again");
+        showStarPopup("Vote failed");
         console.error(err);
       }
     };
@@ -6353,32 +6373,32 @@ function showLiveResults(poll, yourChoice) {
   const barsContainer = document.getElementById("resultBars");
   barsContainer.innerHTML = "";
 
-  const totalVotes = Object.values(poll.votes || {}).reduce((a, b) => a + b, 0);
+  const totalVotes = Object.values(poll.liveVotes || {}).reduce((a, b) => a + b, 0);
 
   if (totalVotes === 0) {
-    barsContainer.innerHTML = "<p style='color:#777;font-style:italic;'>No votes yet — be the first!</p>";
+    barsContainer.innerHTML = "<p style='color:#888;font-style:italic;'>No votes yet — be the first!</p>";
     return;
   }
 
   poll.options.forEach(option => {
-    const votes = poll.votes[option] || 0;
+    const votes = poll.liveVotes[option] || 0;
     const percentage = Math.round((votes / totalVotes) * 100);
     const isYour = option === yourChoice;
-    const isWinner = votes === Math.max(...Object.values(poll.votes || {}));
+    const isWinner = votes === Math.max(...Object.values(poll.liveVotes || {}));
 
     const bar = document.createElement("div");
     bar.innerHTML = `
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:15px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
         <strong style="color:${isYour ? '#ff69b4' : '#fff'}">
           ${option} ${isWinner ? '👑' : ''} ${isYour ? '(You)' : ''}
         </strong>
-        <span style="color:#aaa;">${votes} votes (${percentage}%)</span>
+        <span>${votes} votes (${percentage}%)</span>
       </div>
       <div style="height:32px;background:#222;border-radius:16px;overflow:hidden;">
-        <div style="width:${percentage}%;height:100%;background:linear-gradient(90deg,#ff69b4,#0f9);transition:width 1.2s ease;"></div>
+        <div style="width:${percentage}%;height:100%;background:linear-gradient(90deg,#ff69b4,#0f9);transition:width 1s ease;"></div>
       </div>
     `;
-    bar.style.margin = "20px 0";
+    bar.style.margin = "18px 0";
     barsContainer.appendChild(bar);
   });
 }
@@ -6395,16 +6415,15 @@ function startPollTimer(endTime) {
     const hours = Math.floor(left / 3600000);
     const mins = Math.floor((left % 3600000) / 60000);
     const secs = Math.floor((left % 60000) / 1000);
-    countdownEl.textContent = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    countdownEl.textContent = `${hours}h ${mins}m ${secs}s`;
   }, 1000);
-
-  // Clear on close
-  document.getElementById("closePollBtn").onclick = () => {
-    clearInterval(interval);
-    document.getElementById("pollModal").style.display = "none";
-    if (pollUnsubscribe) pollUnsubscribe();
-  };
 }
+
+document.getElementById("closePollBtn").onclick = () => {
+  document.getElementById("pollModal").style.display = "none";
+  if (pollUnsubscribe) pollUnsubscribe();
+  if (votesUnsubscribe) votesUnsubscribe();
+};
 // CREATE POLL BUTTON — BULLETPROOF & ETERNAL
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
   // SAFETY FIRST — MAKE SURE ADMIN IS LOGGED IN
