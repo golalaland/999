@@ -2812,6 +2812,23 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div> <!-- End of .live-modal-content -->
 </div> <!-- End of #liveModal -->
 
+<div class="tab" data-tab="polls">Create Poll</div>
+  
+  
+  <!-- POLL MODAL -->
+<div id="pollModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(16px);align-items:center;justify-content:center;z-index:9999;">
+  <div style="background:#111;color:#fff;padding:30px;border-radius:20px;max-width:420px;width:90%;text-align:center;box-shadow:0 0 60px rgba(0,255,150,0.4);">
+    <h2 id="pollQuestion" style="margin:0 0 20px;color:#0f9;font-size:24px;"></h2>
+    <div id="pollOptions" style="margin:20px 0;"></div>
+    <p id="pollTimer" style="font-size:18px;color:#0f9;margin:20px 0;font-weight:bold;"></p>
+    <div id="pollResult" style="display:none;margin:20px 0;">
+      <p style="font-size:18px;">You voted for:</p>
+      <p style="font-size:22px;font-weight:bold;color:#ff69b4;" id="yourChoice"></p>
+      <div id="resultBars" style="margin-top:20px;"></div>
+    </div>
+    <button id="closePollBtn" style="padding:12px 30px;background:#333;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;">Close</button>
+  </div>
+</div>
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
