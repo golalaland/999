@@ -4552,7 +4552,7 @@ async function startStream(type = 'regular') {
 }
 
 // Custom offline placeholder – mobile-optimized
-// Custom offline placeholder – optimized for mobile (full image priority)
+// Custom offline placeholder – super mobile-optimized (tiny text, image priority)
 function showOfflineState(customError = '') {
   livePlayerContainer.innerHTML = `
     <div style="
@@ -4565,18 +4565,19 @@ function showOfflineState(customError = '') {
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 10px;                      /* minimal padding on mobile */
+      padding: 8px;
       box-sizing: border-box;
       overflow: hidden;
     ">
-      <!-- Image takes most space on mobile -->
+      <!-- Image takes almost all space on mobile -->
       <div style="
-        flex: 1;                          /* grow to fill available space */
+        flex: 1;
         width: 100%;
-        max-height: 80vh;                 /* most of screen on mobile */
+        max-height: 85vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-bottom: 8px;
       ">
         <img
           src="${OFFLINE_IMAGE_URL}"
@@ -4584,49 +4585,59 @@ function showOfflineState(customError = '') {
           style="
             width: 100%;
             height: 100%;
-            object-fit: contain;          /* keep full image, no crop */
+            object-fit: contain;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
           "
         >
       </div>
 
-      <!-- Text + button – smaller & condensed on mobile -->
+      <!-- Tiny text section – minimal & mobile-friendly -->
       <div style="
-        padding-top: 12px;
+        width: 100%;
         max-width: 90%;
       ">
         <h2 style="
-          margin: 0 0 8px;
-          font-size: clamp(1.3rem, 5.5vw, 1.6rem); /* smaller base on mobile */
-        ">${OFFLINE_TITLE}</h2>
-
+          margin: 0 0 6px;
+          font-size: clamp(1.1rem, 4.5vw, 1.4rem); /* way smaller */
+          font-weight: 700;
+        ">
+          ${OFFLINE_TITLE}
+        </h2>
         <p style="
-          margin: 0 0 16px;
-          font-size: clamp(0.9rem, 4vw, 1rem);
-          opacity: 0.9;
-        ">${OFFLINE_MESSAGE}</p>
-
-        ${customError ? `<p style="color: #ff6b6b; margin-bottom: 12px; font-size: clamp(0.85rem, 3.5vw, 0.95rem);">${customError}</p>` : ''}
+          margin: 0 0 14px;
+          font-size: clamp(0.8rem, 3.5vw, 0.95rem); /* tiny subtext */
+          opacity: 0.85;
+          line-height: 1.4;
+        ">
+          ${OFFLINE_MESSAGE}
+        </p>
+        ${customError ? `
+          <p style="
+            color: #ff6b6b;
+            margin: 0 0 12px;
+            font-size: clamp(0.75rem, 3vw, 0.9rem);
+          ">
+            ${customError}
+          </p>` : ''}
 
         <button
           onclick="startStream('regular')"
           style="
-            padding: 10px 28px;
+            padding: 9px 24px;
             background: #e50914;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: clamp(0.95rem, 4vw, 1rem);
+            font-size: clamp(0.9rem, 3.8vw, 1rem);
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
-            min-width: 140px;
+            min-width: 130px;
           "
           onmouseover="this.style.background='#c40810'"
           onmouseout="this.style.background='#e50914'"
         >
-          Refresh / Check Again
+          Refresh Stream
         </button>
       </div>
     </div>
