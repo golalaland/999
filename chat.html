@@ -2916,7 +2916,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 <div class="tab" data-tab="polls">Create Poll</div>
 
 <!-- CREATE POLL SECTION (ADMIN ONLY) -->
-<div id="polls" class="section">
+<div id="polls" class="section" style="display:${currentUser?.isAdmin ? 'block' : 'none'};">
   <h2 style="color:#0f9;text-align:center;margin-bottom:30px;">Create New Win $STRZ Poll</h2>
   
   <input 
@@ -2961,6 +2961,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
   <div id="current-poll-admin" style="margin-top:40px;padding:20px;background:#1a1a1a;border-radius:16px;border:2px solid #0f9;box-shadow:0 0 30px rgba(0,255,150,0.2);"></div>
 </div>
+    
 
 <!-- USER POLL MODAL (Win $STRZ) -->
 <div id="pollModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.94);backdrop-filter:blur(20px);align-items:center;justify-content:center;z-index:9999;">
@@ -3688,6 +3689,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 <!-- Gift Alert -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <div id="giftAlert" class="gift-alert"></div>
 <script type="module" src="chat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
