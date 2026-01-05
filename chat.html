@@ -2909,6 +2909,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   font-size: 14px;
   color: #ccc;
 }
+/* CONFETTI ON TOP OF EVERYTHING */
+.confetti-canvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  pointer-events: none !important;
+  z-index: 99999 !important; /* Higher than modal */
+}
 </style>
 </head>
 <body>
