@@ -6279,21 +6279,21 @@ async function openPollModal() {
 
 function renderPoll(poll, endTime) {
   document.getElementById("pollQuestion").textContent = poll.question;
-
-  // SHOW REWARD
   document.getElementById("pollTimer").innerHTML = `
     <strong>Reward: ${poll.reward} $STRZ</strong><br>
     Time left: <span id="countdown"></span>
   `;
-
   startPollTimer(endTime);
 
+  // Always check vote + show results live
   getDoc(doc(db, "pollVotes", currentUser.uid)).then(voteSnap => {
     if (voteSnap.exists()) {
       showLiveResults(poll, voteSnap.data().choice);
     } else {
       showVotingOptions(poll);
     }
+  }).catch(() => {
+    showVotingOptions(poll);
   });
 }
 
@@ -6315,15 +6315,15 @@ function showVotingOptions(poll) {
 
     btn.onclick = async () => {
       try {
-        await setDoc(doc(db, "pollVotes", currentUser.uid), {
-          choice: option,
-          votedAt: serverTimestamp()
-        });
-
-        await updateDoc(doc(db, "users", currentUser.uid), {
-          stars: increment(poll.reward)
-        });
-
+       await setDoc(doc(db, "polls", "current"), {
+  question,
+  options,
+  votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+  endsAt: endsAt,
+  reward,
+  createdAt: serverTimestamp(),
+  createdBy: currentAdmin.uid
+});
         // CONFETTI EXPLOSION
         confetti({
           particleCount: 150,
@@ -6354,7 +6354,11 @@ function showLiveResults(poll, yourChoice) {
   const barsContainer = document.getElementById("resultBars");
   barsContainer.innerHTML = "";
 
-  const totalVotes = Object.values(poll.votes || {}).reduce((a, b) => a + b, 0) || 1;
+  const totalVotes = Object.values(poll.votes || {}).reduce((a, b) => a + b, 0);
+  if (totalVotes === 0) {
+    barsContainer.innerHTML = "<p style='color:#aaa;'>No votes yet — be the first!</p>";
+    return;
+  }
 
   poll.options.forEach(option => {
     const votes = poll.votes[option] || 0;
@@ -6364,21 +6368,20 @@ function showLiveResults(poll, yourChoice) {
 
     const bar = document.createElement("div");
     bar.innerHTML = `
-      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
         <strong style="color:${isYour ? '#ff69b4' : '#fff'}">
           ${option} ${isWinner ? '👑' : ''} ${isYour ? '(You)' : ''}
         </strong>
         <span>${votes} votes (${percentage}%)</span>
       </div>
-      <div style="height:24px;background:#333;border-radius:12px;overflow:hidden;">
+      <div style="height:28px;background:#222;border-radius:14px;overflow:hidden;">
         <div style="width:${percentage}%;height:100%;background:linear-gradient(90deg,#ff69b4,#0f9);transition:width 1s ease;"></div>
       </div>
     `;
-    bar.style.margin = "20px 0";
+    bar.style.margin = "16px 0";
     barsContainer.appendChild(bar);
   });
 }
-
 function startPollTimer(endTime) {
   const countdownEl = document.getElementById("countdown");
   const interval = setInterval(() => {
@@ -6400,65 +6403,18 @@ document.getElementById("closePollBtn").onclick = () => {
   document.getElementById("pollModal").style.display = "none";
   if (pollUnsubscribe) pollUnsubscribe();
 };
-// CREATE POLL BUTTON — BULLETPROOF & ETERNAL
-document.getElementById("create-new-poll")?.addEventListener("click", async () => {
-  // SAFETY FIRST — MAKE SURE ADMIN IS LOGGED IN
-  if (!currentAdmin || !currentAdmin.uid) {
-    dopeAlert("Admin login required to create poll!");
-    return;
-  }
-
-  const question = document.getElementById("poll-question").value.trim();
-  const optionInputs = document.querySelectorAll(".poll-option-input");
-  const options = Array.from(optionInputs)
-    .map(input => input.value.trim())
-    .filter(v => v.length > 0);
-
-  const reward = parseInt(document.getElementById("poll-reward").value) || 50;
-  const hours = parseInt(document.getElementById("poll-duration").value) || 24;
-
-  if (!question) {
-    dopeAlert("Please enter a poll question ♡");
-    return;
-  }
-  if (options.length < 2) {
-    dopeAlert("Need at least 2 cute options!");
-    return;
-  }
-
-  showLoader("Creating your poll...");
-
-  try {
-    const endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
-
-    await setDoc(doc(db, "polls", "current"), {
-      question,
-      options,
-      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
-      endsAt: endsAt,
-      reward,
-      createdAt: serverTimestamp(),
-      createdBy: currentAdmin.uid
-    });
-
-    // Clear form
-    document.getElementById("poll-question").value = "";
-    optionInputs.forEach(input => input.value = "");
-    document.getElementById("poll-reward").value = "50";
-    document.getElementById("poll-duration").value = "24";
-
-    hideLoader();
-    dopeAlert(`Poll created! ♡\n${options.length} options\n${reward} $STRZ reward\nEnds in ${hours} hours`, "SUCCESS");
-
-    // Optional: refresh current poll display
-    if (typeof loadCurrentPollAdmin === "function") loadCurrentPollAdmin();
-
-  } catch (err) {
-    hideLoader();
-    dopeAlert("Failed to create poll — try again");
-    console.error("Poll creation error:", err);
-  }
-});
+function loadPollCarousel() {
+  const carousel = document.getElementById("pollCarousel");
+  
+  // Example: inject images
+  carousel.innerHTML = `
+    <div style="display:flex; height:100%;">
+      <img src="ad1.jpg" style="width:33.3%; object-fit:cover;">
+      <img src="ad2.jpg" style="width:33.3%; object-fit:cover;">
+      <img src="ad3.jpg" style="width:33.3%; object-fit:cover;">
+    </div>
+  `;
+}
 /*********************************
  * INIT
  *********************************/
