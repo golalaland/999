@@ -365,16 +365,22 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       hostLink: data.hostLink || null
     };
 
-    // SET currentAdmin IF ISADMIN
-    if (currentUser.isAdmin) {
-      currentAdmin = {
-        uid: currentUser.uid,
-        email: currentUser.email,
-        chatId: currentUser.chatId
-      };
-      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
-    }
+// SET currentAdmin AND SHOW POLL TAB IF ADMIN
+if (currentUser.isAdmin) {
+  currentAdmin = {
+    uid: currentUser.uid,
+    email: currentUser.email,
+    chatId: currentUser.chatId
+  };
 
+  console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+
+  // SHOW POLL CREATION PANEL
+  const pollSection = document.getElementById("polls");
+  if (pollSection) {
+    pollSection.style.display = "block";
+  }
+}
     console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
     console.log("[USER STATUS]", currentUser);
 
