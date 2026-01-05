@@ -2912,56 +2912,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </button>
 </div>
 
-<!-- POLL TAB IN ADMIN DASHBOARD -->
-<div class="tab" data-tab="polls">Create Poll</div>
-
-<!-- CREATE POLL SECTION (ADMIN ONLY) -->
-<div id="polls" class="section" style="display:${currentUser?.isAdmin ? 'block' : 'none'};">
-  <h2 style="color:#0f9;text-align:center;margin-bottom:30px;">Create New Win $STRZ Poll</h2>
-  
-  <input 
-    id="poll-question" 
-    type="text" 
-    placeholder="Question e.g. Who has the cutest vibe tonight?" 
-    style="width:100%;padding:16px;margin:15px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:18px;box-shadow:inset 0 4px 10px rgba(0,0,0,0.5);"
-  >
-
-  <div id="poll-options-container" style="margin:20px 0;">
-    <input class="poll-option-input" placeholder="Option 1 (e.g. XOXOI)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
-    <input class="poll-option-input" placeholder="Option 2 (e.g. HIVODADDY)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
-    <input class="poll-option-input" placeholder="Option 3 (e.g. TRACY)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
-    <input class="poll-option-input" placeholder="Option 4 (e.g. JENNIFER)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
-  </div>
-
-  <div style="display:flex;gap:15px;margin:20px 0;">
-    <input 
-      id="poll-reward" 
-      type="number" 
-      value="50" 
-      placeholder="$STRZ reward" 
-      style="flex:1;padding:16px;border-radius:16px;border:none;background:#222;color:#fff;font-size:18px;text-align:center;"
-    >
-    <input 
-      id="poll-duration" 
-      type="number" 
-      value="24" 
-      placeholder="Hours" 
-      style="flex:1;padding:16px;border-radius:16px;border:none;background:#222;color:#fff;font-size:18px;text-align:center;"
-    >
-  </div>
-
-  <button 
-    id="create-new-poll" 
-    style="width:100%;padding:20px;margin:30px 0;background:linear-gradient(90deg,#ff69b4,#ff1493,#ff69b4);color:white;border:none;border-radius:20px;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 15px 40px rgba(255,105,180,0.6);transition:all 0.3s;letter-spacing:1px;"
-    onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 20px 50px rgba(255,105,180,0.8)'"
-    onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 15px 40px rgba(255,105,180,0.6)'"
-  >
-    CREATE POLL & START $STRZ REWARDS
-  </button>
-
-  <div id="current-poll-admin" style="margin-top:40px;padding:20px;background:#1a1a1a;border-radius:16px;border:2px solid #0f9;box-shadow:0 0 30px rgba(0,255,150,0.2);"></div>
-</div>
-    
 
 <!-- USER POLL MODAL (Win $STRZ) -->
 <div id="pollModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.94);backdrop-filter:blur(20px);align-items:center;justify-content:center;z-index:9999;">
@@ -3592,6 +3542,43 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
   </style>
 </div>
+
+
+<!-- POLL TAB (SMALL & CUTE) -->
+<div class="tab" data-tab="polls">✨ Poll</div>
+
+<!-- CREATE POLL PANEL — HIDDEN UNTIL ADMIN LOGGED IN -->
+<div id="polls" class="section" style="display:none;">
+  <div style="text-align:center;margin:20px 0;">
+    <h3 style="color:#0f9;font-size:20px;margin:0 0 15px;">Create Win $STRZ Poll ♡</h3>
+  </div>
+
+  <input id="poll-question" placeholder="Who has the cutest vibe? 💕" 
+    style="width:100%;padding:12px;margin:10px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+
+  <div id="poll-options-container" style="margin:15px 0;">
+    <input class="poll-option-input" placeholder="Option 1" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+    <input class="poll-option-input" placeholder="Option 2" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+    <input class="poll-option-input" placeholder="Option 3" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+    <input class="poll-option-input" placeholder="Option 4" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+  </div>
+
+  <div style="display:flex;gap:10px;margin:15px 0;">
+    <input id="poll-reward" type="number" value="50" placeholder="Reward" 
+      style="flex:1;padding:12px;border-radius:12px;background:#222;color:#fff;border:none;text-align:center;font-size:15px;">
+    <input id="poll-duration" type="number" value="24" placeholder="Hours" 
+      style="flex:1;padding:12px;border-radius:12px;background:#222;color:#fff;border:none;text-align:center;font-size:15px;">
+  </div>
+
+  <button id="create-new-poll" 
+    style="width:100%;padding:14px;margin:20px 0;background:linear-gradient(90deg,#ff69b4,#ff1493);color:#fff;border:none;border-radius:16px;font-size:17px;font-weight:bold;cursor:pointer;box-shadow:0 8px 20px rgba(255,105,180,0.4);">
+    ♡ Create Poll & Reward $STRZ ♡
+  </button>
+
+  <div id="current-poll-admin" style="margin-top:25px;padding:15px;background:#1a1a1a;border-radius:12px;font-size:14px;"></div>
+</div>
+
+  
   
 <!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
 <div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
