@@ -2917,6 +2917,30 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   pointer-events: none !important;
   z-index: 99999 !important; /* Higher than modal */
 }
+/* ========== POLL SECTION HEADER ========== */
+.poll-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 10px 0 18px;
+  padding-left: 6px;
+}
+
+.poll-section-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #777;
+}
+
+.poll-section-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #c3f60c;
+}
+
 </style>
 </head>
 <body>
@@ -3827,6 +3851,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </style>
 </div>
 
+  <!-- POLL SECTION HEADER -->
+<div class="poll-section-header">
+  <span class="poll-section-eyebrow">ADMIN</span>
+  <h2 class="poll-section-title">POLL</h2>
+</div>
 
 <!-- CREATE POLL PANEL — ADMIN ONLY -->
 <div id="polls" class="section">
