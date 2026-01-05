@@ -2942,34 +2942,45 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   letter-spacing: -0.03em;
   color: #c3f60c;
 }
-/* Poll intro text inside modal */
-.poll-intro {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 20px;
-  line-height: 1.4;
+/* ----- POLL INTRO ABOVE MODAL ----- */
+.poll-intro-above {
+  max-width: 480px;
+  margin: 0 auto 20px;
   text-align: center;
+  font-size: 15px;
+  color: #ccc;
+  line-height: 1.45;
 }
 
-/* Buy Tickets Section */
-.buy-tickets-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 18px 0 40px;
-  gap: 8px;
+/* ----- POLL MODAL CARD SIZE ----- */
+.poll-modal-card {
+  background: linear-gradient(180deg, #121212, #0d0d0d);
+  color: var(--text-main);
+  padding: 28px 24px;
+  border-radius: 22px;
+  max-width: 400px;   /* smaller than before */
+  width: 90%;
+  text-align: center;
+  border: 1px solid #262626;
 }
 
-/* Buy Tickets Button */
+/* ----- BUY TICKETS SHIMMER EFFECT ----- */
+@keyframes shimmer {
+  0% { background-position: -300px 0; }
+  100% { background-position: 300px 0; }
+}
+
 #buyTicketsBtn {
   padding: 14px 32px;
-  background: var(--accent);
+  background: linear-gradient(90deg, #c3f60c 20%, #e0ff3f 50%, #c3f60c 80%);
+  background-size: 300px 100%;
   color: #0b0b0b;
   border: none;
   border-radius: 18px;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+  animation: shimmer 2s linear infinite;
   transition: transform 0.12s ease, filter 0.2s ease;
 }
 
@@ -3263,15 +3274,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
+<!-- POLL INTRO ABOVE MODAL -->
+<div class="poll-intro-above">
+  <p>
+    Welcome to the pool! Vote for your favorite, see where you stand, 
+    and discuss the topic with others in the chatrooms. It's fast, fun, and interactive!
+  </p>
+</div>
+
 <!-- USER POLL MODAL (Win $STRZ) -->
 <div id="pollModal">
   <div class="poll-modal-card">
-
-    <!-- Optional poll intro text -->
-    <p class="poll-intro">
-      Join the pool, vote for your favorite, and see how your choice compares! 
-      Discuss the topic with others in the chatrooms and make your voice count.
-    </p>
 
     <!-- Question -->
     <h2 id="pollQuestion"></h2>
@@ -3303,7 +3316,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 <!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
 <div class="buy-tickets-section">
   <button id="buyTicketsBtn">
-    Buy Tickets to Cube
+    VISIT CUBE
   </button>
   <p class="buy-tickets-note">
     Want to visit Cube & pay? <a href="#" target="_blank">Click here</a>
