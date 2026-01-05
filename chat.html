@@ -2942,6 +2942,61 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   letter-spacing: -0.03em;
   color: #c3f60c;
 }
+/* Poll intro text inside modal */
+.poll-intro {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Buy Tickets Section */
+.buy-tickets-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 18px 0 40px;
+  gap: 8px;
+}
+
+/* Buy Tickets Button */
+#buyTicketsBtn {
+  padding: 14px 32px;
+  background: var(--accent);
+  color: #0b0b0b;
+  border: none;
+  border-radius: 18px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.2s ease;
+}
+
+#buyTicketsBtn:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+#buyTicketsBtn:active {
+  transform: translateY(0);
+}
+
+/* Note under button */
+.buy-tickets-note {
+  font-size: 13px;
+  color: #aaa;
+}
+
+.buy-tickets-note a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.buy-tickets-note a:hover {
+  text-decoration: underline;
+}
 </style>
 </head>
 <body>
@@ -3212,12 +3267,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 <div id="pollModal">
   <div class="poll-modal-card">
 
+    <!-- Optional poll intro text -->
+    <p class="poll-intro">
+      Join the pool, vote for your favorite, and see how your choice compares! 
+      Discuss the topic with others in the chatrooms and make your voice count.
+    </p>
+
     <!-- Question -->
     <h2 id="pollQuestion"></h2>
 
     <!-- Options -->
-    <div id="pollOptions"
-         style="margin-bottom:28px; display:flex; flex-direction:column; gap:12px;">
+    <div id="pollOptions" style="margin-bottom:28px; display:flex; flex-direction:column; gap:12px;">
     </div>
 
     <!-- Timer -->
@@ -3239,6 +3299,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <button id="closePollBtn">Close</button>
   </div>
 </div>
+
+<!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
+<div class="buy-tickets-section">
+  <button id="buyTicketsBtn">
+    Buy Tickets to Cube
+  </button>
+  <p class="buy-tickets-note">
+    Want to visit Cube & pay? <a href="#" target="_blank">Click here</a>
+  </p>
+</div>
+
 
     
 <!-- 🟣 HOST MODAL -->
