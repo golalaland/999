@@ -6409,7 +6409,7 @@ function startPollTimer(endTime) {
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
   // SAFETY FIRST — MAKE SURE ADMIN IS LOGGED IN
   if (!currentAdmin || !currentAdmin.uid) {
-    dopeAlert("Admin login required to create poll!");
+    showGoldAlert("Admin login required to create poll!");
     return;
   }
 
@@ -6423,11 +6423,11 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   const hours = parseInt(document.getElementById("poll-duration").value) || 24;
 
   if (!question) {
-    dopeAlert("Please enter a poll question ♡");
+    showGoldAlert("Please enter a poll question ♡");
     return;
   }
   if (options.length < 2) {
-    dopeAlert("Need at least 2 cute options!");
+    showGoldAlert("Need at least 2 cute options!");
     return;
   }
 
@@ -6453,14 +6453,14 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
     document.getElementById("poll-duration").value = "24";
 
     hideLoader();
-    dopeAlert(`Poll created! ♡\n${options.length} options\n${reward} $STRZ reward\nEnds in ${hours} hours`, "SUCCESS");
+    showGoldAlert(`Poll created! ♡\n${options.length} options\n${reward} $STRZ reward\nEnds in ${hours} hours`, "SUCCESS");
 
     // Optional: refresh current poll display
     if (typeof loadCurrentPollAdmin === "function") loadCurrentPollAdmin();
 
   } catch (err) {
     hideLoader();
-    dopeAlert("Failed to create poll — try again");
+    showGoldAlert("Failed to create poll — try again");
     console.error("Poll creation error:", err);
   }
 });
