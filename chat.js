@@ -4465,9 +4465,9 @@ const MUX_LIVE_STREAM_IDS = {
 };
 
 // Offline placeholder customization
-const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/CUBE.jpg?v=1766534544';
+const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776';
 const OFFLINE_TITLE = 'Live stream is currently offline';
-const OFFLINE_MESSAGE = "We'll be back soon — check upcoming for the next broadcast!";
+const OFFLINE_MESSAGE = "We'll be back soon, check upcoming for the next broadcast!";
 
 // Backend URL – IMPORTANT: change if your Render service name changes
 const BACKEND_URL = 'https://mux-backend-service.onrender.com';
@@ -6218,6 +6218,154 @@ if (currentUser && currentUser.isLive) {
 } else {
   privateMsgReader.style.display = 'none';
 }
+
+// WIN $STRZ POLL — FULL SYSTEM
+document.getElementById("topBallersBtn")?.addEventListener("click", openPollModal);
+
+async function openPollModal() {
+  if (!currentUser) {
+    showStarPopup("Login to vote & win $STRZ!");
+    return;
+  }
+
+  showLoader("Loading poll...");
+
+  try {
+    const pollSnap = await getDoc(doc(db, "polls", "current"));
+    hideLoader();
+
+    if (!pollSnap.exists()) {
+      showStarPopup("No active poll right now — check back soon! 🎉");
+      return;
+    }
+
+    const poll = pollSnap.data();
+    const now = Date.now();
+    const endsAt = poll.endsAt.toMillis();
+
+    if (now > endsAt) {
+      showStarPopup("Poll has ended! Winners rewarded.");
+      return;
+    }
+
+    // Check if user already voted
+    const voteSnap = await getDoc(doc(db, "pollVotes", currentUser.uid));
+    if (voteSnap.exists()) {
+      showPollResults(poll, voteSnap.data().choice);
+    } else {
+      showPollVoting(poll);
+    }
+
+    document.getElementById("pollModal").style.display = "flex";
+    startPollTimer(endsAt);
+
+  } catch (err) {
+    hideLoader();
+    showStarPopup("Failed to load poll");
+    console.error(err);
+  }
+}
+
+function showPollVoting(poll) {
+  document.getElementById("pollQuestion").textContent = poll.question;
+  const optionsDiv = document.getElementById("pollOptions");
+  optionsDiv.innerHTML = "";
+
+  poll.options.forEach(option => {
+    const btn = document.createElement("button");
+    btn.textContent = option;
+    btn.style.cssText = `
+      width:100%;padding:16px;margin:8px 0;
+      background:linear-gradient(135deg,#ff69b4,#ff1493);
+      color:#fff;border:none;border-radius:16px;
+      font-size:18px;font-weight:bold;cursor:pointer;
+      box-shadow:0 8px 20px rgba(255,105,180,0.4);
+      transition:all 0.3s;
+    `;
+    btn.onmouseover = () => btn.style.transform = "scale(1.05)";
+    btn.onmouseout = () => btn.style.transform = "scale(1)";
+    btn.onclick = async () => {
+      try {
+        // Record vote
+        await setDoc(doc(db, "pollVotes", currentUser.uid), {
+          choice: option,
+          votedAt: serverTimestamp()
+        });
+
+        // Reward $STRZ
+        await updateDoc(doc(db, "users", currentUser.uid), {
+          stars: increment(poll.reward)
+        });
+
+        showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
+        showPollResults(poll, option);
+      } catch (err) {
+        showStarPopup("Vote failed — try again");
+      }
+    };
+    optionsDiv.appendChild(btn);
+  });
+
+  document.getElementById("pollResult").style.display = "none";
+}
+
+function showPollResults(poll, yourChoice) {
+  document.getElementById("pollQuestion").textContent = poll.question;
+  document.getElementById("yourChoice").textContent = yourChoice;
+  document.getElementById("pollResult").style.display = "block";
+  document.getElementById("pollOptions").innerHTML = "";
+
+  const resultDiv = document.getElementById("resultBars");
+  resultDiv.innerHTML = "";
+
+  const totalVotes = Object.values(poll.votes || {}).reduce((a, b) => a + b, 0);
+
+  poll.options.forEach(opt => {
+    const votes = poll.votes[opt] || 0;
+    const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
+    const isWinner = votes === Math.max(...Object.values(poll.votes || {}));
+    const isYour = opt === yourChoice;
+
+    const bar = document.createElement("div");
+    bar.style.cssText = `
+      margin:12px 0;padding:12px;background:#222;border-radius:12px;
+      border-left:6px solid ${isWinner ? '#0f9' : isYour ? '#ff69b4' : '#666'};
+    `;
+    bar.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <strong>${opt} ${isWinner ? '👑' : ''} ${isYour ? '(You)' : ''}</strong>
+        <span>${votes} votes (${percentage}%)</span>
+      </div>
+      <div style="height:12px;background:#333;border-radius:6px;overflow:hidden;">
+        <div style="width:${percentage}%;height:100%;background:linear-gradient(90deg,#ff69b4,#0f9);transition:width 1s ease;"></div>
+      </div>
+    `;
+    resultDiv.appendChild(bar);
+  });
+}
+
+function startPollTimer(endTime) {
+  const timerEl = document.getElementById("pollTimer");
+  const interval = setInterval(() => {
+    const left = endTime - Date.now();
+    if (left <= 0) {
+      timerEl.textContent = "Poll Ended! Winners Rewarded 🎉";
+      clearInterval(interval);
+      return;
+    }
+
+    const hours = Math.floor(left / 3600000);
+    const mins = Math.floor((left % 3600000) / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+
+    timerEl.textContent = `Time left: ${hours}h ${mins}m ${secs}s`;
+  }, 1000);
+}
+
+// Close modal
+document.getElementById("closePollBtn").onclick = () => {
+  document.getElementById("pollModal").style.display = "none";
+};
 
 /*********************************
  * INIT
