@@ -6515,9 +6515,9 @@ function loadPollCarousel() {
   // Example: inject images
   carousel.innerHTML = `
     <div style="display:flex; height:100%;">
-      <img src="ad1.jpg" style="width:33.3%; object-fit:cover;">
-      <img src="ad2.jpg" style="width:33.3%; object-fit:cover;">
-      <img src="ad3.jpg" style="width:33.3%; object-fit:cover;">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" style="width:33.3%; object-fit:cover;">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" style="width:33.3%; object-fit:cover;">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" style="width:33.3%; object-fit:cover;">
     </div>
   `;
 }
