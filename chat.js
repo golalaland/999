@@ -6305,22 +6305,34 @@ function startVotesListener(poll, endTime) {
 }
 
 function renderPoll(poll, endTime) {
+  // Set the poll question
   document.getElementById("pollQuestion").textContent = poll.question;
 
+  // Render reward (gold gradient) + timer
   document.getElementById("pollTimer").innerHTML = `
-    <strong>Reward: ${poll.reward} $STRZ</strong><br>
-    Time left: <span id="countdown"></span>
+    <div class="poll-reward-line">
+      Reward: <span class="reward-amount">${poll.reward} $STRZ</span>
+    </div>
+    <div class="poll-timer-line">
+      Time left: <span id="countdown"></span>
+    </div>
   `;
 
+  // Start the countdown timer
   startPollTimer(endTime);
 
-  // Check user's vote
-  getDoc(doc(db, "pollVotes", currentUser.uid)).then(voteSnap => {
+  // Check if the current user has already voted
+  getDoc(doc(db, "pollVotes", currentUser.uid)).then((voteSnap) => {
     if (voteSnap.exists()) {
-      showLiveResults(poll, voteSnap.data().choice);
+      const userChoice = voteSnap.data().choice;
+      showLiveResults(poll, userChoice);
     } else {
       showVotingOptions(poll);
     }
+  }).catch((error) => {
+    console.error("Error checking user vote:", error);
+    // Optionally fallback to showing voting options
+    showVotingOptions(poll);
   });
 }
 
