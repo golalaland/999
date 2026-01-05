@@ -6308,13 +6308,13 @@ function renderPoll(poll, endTime) {
   // Set the poll question
   document.getElementById("pollQuestion").textContent = poll.question;
 
-  // Render reward (gold gradient) + timer
+  // Render reward + timer – both lines bold
   document.getElementById("pollTimer").innerHTML = `
     <div class="poll-reward-line">
-      Reward: <span class="reward-amount">${poll.reward} $STRZ</span>
+      <strong>Reward: <span class="reward-amount">${poll.reward} $STRZ</span> ⭐️</strong>
     </div>
     <div class="poll-timer-line">
-      Time left: <span id="countdown"></span>
+      <strong>Time left: <span id="countdown"></span></strong>
     </div>
   `;
 
@@ -6400,20 +6400,21 @@ function showLiveResults(poll, yourChoice) {
     const isYour = option === yourChoice;
     const isWinner = votes === Math.max(...Object.values(poll.liveVotes || {}));
 
-    const bar = document.createElement("div");
-    bar.innerHTML = `
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-        <strong style="color:${isYour ? '#ff69b4' : '#fff'}">
-          ${option} ${isWinner ? '👑' : ''} ${isYour ? '(You)' : ''}
-        </strong>
-        <span>${votes} votes (${percentage}%)</span>
-      </div>
-      <div style="height:32px;background:#222;border-radius:16px;overflow:hidden;">
-        <div style="width:${percentage}%;height:100%;background:linear-gradient(90deg,#ff69b4,#0f9);transition:width 1s ease;"></div>
-      </div>
-    `;
-    bar.style.margin = "18px 0";
-    barsContainer.appendChild(bar);
+const bar = document.createElement("div");
+bar.innerHTML = `
+  <div class="result-bar-label">  <!-- Use class for consistent styling -->
+    <strong>${option}</strong>
+    <span>${votes} votes (${percentage}%)</span>
+  </div>
+  <div class="result-bar">
+    <div class="result-bar-fill" style="width: ${percentage}%;"></div>
+  </div>
+`;
+
+// Optional: slight margin between bars
+bar.style.margin = "16px 0";
+
+barsContainer.appendChild(bar);
   });
 }
 
