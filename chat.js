@@ -294,10 +294,7 @@ async function pushNotification(userId, message) {
   }
 }
 
-// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
-// YAH IS THE ONE TRUE EL — THE CODE IS NOW PURE
-// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION
-// YAH IS THE ONE TRUE EL — THE CODE IS NOW PURE
+// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
@@ -305,9 +302,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     notificationsUnsubscribe = null;
   }
 
+  // Reset both
+  currentUser = null;
+  currentAdmin = null;
+
   // ——— USER LOGGED OUT ———
   if (!firebaseUser) {
-    currentUser = null;
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
@@ -315,7 +315,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (typeof showLoginUI === "function") showLoginUI();
     console.log("User logged out");
 
-    // Clear my clips
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
@@ -330,7 +329,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
   try {
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
       console.error("Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
@@ -340,7 +338,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-    // ——— BUILD CURRENT USER OBJECT ———
+    // BUILD CURRENT USER
     currentUser = {
       uid,
       email,
@@ -367,28 +365,29 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       hostLink: data.hostLink || null
     };
 
-    console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-    console.log("[USER STATUS]", {
-      uid: currentUser.uid,
-      isHost: currentUser.isHost,
-      isVIP: currentUser.isVIP,
-      hasPaid: currentUser.hasPaid,
-      stars: currentUser.stars,
-      cash: currentUser.cash
-    });
+    // SET currentAdmin IF ISADMIN
+    if (currentUser.isAdmin) {
+      currentAdmin = {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        chatId: currentUser.chatId
+      };
+      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+    }
 
-    // ——— POST-LOGIN SETUP ———
+    console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
+    console.log("[USER STATUS]", currentUser);
+
+    // POST-LOGIN SETUP
     revealHostTabs();
     updateInfoTab();
-
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
     localStorage.setItem("userId", uid);
     localStorage.setItem("lastVipEmail", email);
 
-    // ——— USER COLORS & SOCIAL CARDS ———
-setupUsersListener();
+    setupUsersListener();
     showChatUI(currentUser);
     attachMessagesListener();
     startStarEarning(uid);
@@ -397,7 +396,6 @@ setupUsersListener();
     updateRedeemLink();
     updateTipLink();
 
-    // BACKGROUND TASKS
     setTimeout(() => {
       syncUserUnlocks?.();
       loadNotifications?.();
@@ -418,10 +416,11 @@ setupUsersListener();
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
     showStarPopup(`
       <div style="text-align:center;font-size:13px;">
-        Welcome back, 
+        Welcome back,
         <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">
           ${currentUser.chatId.toUpperCase()}
         </b>
+        ${currentUser.isAdmin ? "<br><span style='color:#0f9;font-size:16px;'>ADMIN MODE</span>" : ""}
       </div>
     `);
 
@@ -6374,8 +6373,13 @@ function startPollTimer(endTime) {
   };
 }
 
-// CREATE POLL BUTTON — THIS IS THE RESPONDER
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
+  // SAFETY CHECK — MAKE SURE ADMIN IS LOGGED IN
+  if (!currentAdmin || !currentAdmin.uid) {
+    dopeAlert("You must be logged in as admin to create a poll!");
+    return;
+  }
+
   const question = document.getElementById("poll-question").value.trim();
   const optionInputs = document.querySelectorAll(".poll-option-input");
   const options = Array.from(optionInputs)
@@ -6386,11 +6390,11 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   const hours = parseInt(document.getElementById("poll-duration").value) || 24;
 
   if (!question) {
-    showGoldAlert("Enter a question");
+    dopeAlert("Please enter a poll question");
     return;
   }
   if (options.length < 2) {
-    showGoldAlert("Need at least 2 options");
+    dopeAlert("Please enter at least 2 options");
     return;
   }
 
@@ -6406,21 +6410,22 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
       endsAt: endsAt,
       reward,
       createdAt: serverTimestamp(),
-      createdBy: currentAdmin.uid
+      createdBy: currentAdmin.uid  // Now safe — currentAdmin.uid exists
     });
-
-    hideLoader();
-    showGoldAlert(`Poll created! ${options.length} options, ${reward} $STRZ reward, ends in ${hours} hours`, "SUCCESS");
 
     // Clear form
     document.getElementById("poll-question").value = "";
     optionInputs.forEach(input => input.value = "");
-    loadCurrentPollAdmin(); // if you have this function
+    document.getElementById("poll-reward").value = "50";
+    document.getElementById("poll-duration").value = "24";
+
+    hideLoader();
+    dopeAlert(`Poll created successfully!\nReward: ${reward} $STRZ\nDuration: ${hours} hours`, "Success!");
 
   } catch (err) {
     hideLoader();
-    showGoldAlert("Failed to create poll");
-    console.error(err);
+    dopeAlert("Failed to create poll — try again");
+    console.error("Poll creation error:", err);
   }
 });
 /*********************************
