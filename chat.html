@@ -2807,6 +2807,108 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 #closePollBtn:active {
   transform: translateY(1px);
 }
+/* ========== ADMIN POLL SECTION ========== */
+#polls {
+  display: none;
+  background: linear-gradient(180deg, #101010, #0c0c0c);
+  padding: 26px 22px;
+  border-radius: 20px;
+  border: 1px solid #242424;
+}
+
+/* Title */
+.poll-admin-title {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.poll-admin-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #c3f60c;
+}
+
+/* Inputs */
+.poll-input,
+.poll-option-input,
+.poll-meta-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #161616;
+  color: #fff;
+  border: 1px solid #262626;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.poll-input::placeholder,
+.poll-option-input::placeholder,
+.poll-meta-input::placeholder {
+  color: #777;
+}
+
+.poll-input:focus,
+.poll-option-input:focus,
+.poll-meta-input:focus {
+  border-color: #c3f60c;
+  background: #141414;
+}
+
+/* Options container */
+#poll-options-container {
+  margin: 18px 0;
+}
+
+/* Reward & Duration row */
+.poll-meta-row {
+  display: flex;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.poll-meta-input {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Create button */
+#create-new-poll {
+  width: 100%;
+  padding: 14px;
+  margin-top: 18px;
+  background: linear-gradient(180deg, #d9ff4d, #c3f60c);
+  color: #0b0b0b;
+  border: none;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.2s ease;
+}
+
+#create-new-poll:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+#create-new-poll:active {
+  transform: translateY(0);
+}
+
+/* Current poll preview */
+#current-poll-admin {
+  margin-top: 26px;
+  padding: 16px;
+  background: #141414;
+  border-radius: 16px;
+  border: 1px solid #242424;
+  font-size: 14px;
+  color: #ccc;
+}
 </style>
 </head>
 <body>
@@ -3718,38 +3820,56 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
-<!-- CREATE POLL PANEL — HIDDEN UNTIL ADMIN LOGGED IN -->
-<div id="polls" class="section" style="display:none;">
-  <div style="text-align:center;margin:20px 0;">
-    <h3 style="color:#0f9;font-size:20px;margin:0 0 15px;">Create Win $STRZ Poll ♡</h3>
+<!-- CREATE POLL PANEL — ADMIN ONLY -->
+<div id="polls" class="section">
+
+  <div class="poll-admin-title">
+    <h3>Create Win $STRZ Poll</h3>
   </div>
 
-  <input id="poll-question" placeholder="Who has the cutest vibe? " 
-    style="width:100%;padding:12px;margin:10px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+  <!-- Question -->
+  <input
+    id="poll-question"
+    class="poll-input"
+    placeholder="Who has the cutest vibe?"
+  />
 
-  <div id="poll-options-container" style="margin:15px 0;">
-    <input class="poll-option-input" placeholder="Option 1" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
-    <input class="poll-option-input" placeholder="Option 2" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
-    <input class="poll-option-input" placeholder="Option 3" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
-    <input class="poll-option-input" placeholder="Option 4" style="width:100%;padding:12px;margin:6px 0;border-radius:12px;background:#222;color:#fff;border:none;font-size:15px;">
+  <!-- Options -->
+  <div id="poll-options-container">
+    <input class="poll-option-input" placeholder="Option 1">
+    <input class="poll-option-input" placeholder="Option 2">
+    <input class="poll-option-input" placeholder="Option 3">
+    <input class="poll-option-input" placeholder="Option 4">
   </div>
 
-  <div style="display:flex;gap:10px;margin:15px 0;">
-    <input id="poll-reward" type="number" value="50" placeholder="Reward" 
-      style="flex:1;padding:12px;border-radius:12px;background:#222;color:#fff;border:none;text-align:center;font-size:15px;">
-    <input id="poll-duration" type="number" value="24" placeholder="Hours" 
-      style="flex:1;padding:12px;border-radius:12px;background:#222;color:#fff;border:none;text-align:center;font-size:15px;">
+  <!-- Reward + Duration -->
+  <div class="poll-meta-row">
+    <input
+      id="poll-reward"
+      type="number"
+      value="50"
+      class="poll-meta-input"
+      placeholder="Reward"
+    />
+    <input
+      id="poll-duration"
+      type="number"
+      value="24"
+      class="poll-meta-input"
+      placeholder="Hours"
+    />
   </div>
 
-  <button id="create-new-poll" 
-    style="width:100%;padding:9px;margin:15px 0;background:linear-gradient(90deg,#ff69b4,#ff1493);color:#fff;border:none;border-radius:16px;font-size:12px;font-weight:bold;cursor:pointer;box-shadow:0 8px 20px rgba(255,105,180,0.4);">
-    ♡ Create Poll & Reward $STRZ ♡
+  <!-- Create -->
+  <button id="create-new-poll">
+    Create Poll & Reward $STRZ
   </button>
 
-  <div id="current-poll-admin" style="margin-top:25px;padding:15px;background:#1a1a1a;border-radius:12px;font-size:14px;"></div>
+  <!-- Current Poll Preview -->
+  <div id="current-poll-admin"></div>
+
 </div>
 
-  
   
 <!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
 <div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
