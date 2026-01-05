@@ -2648,48 +2648,164 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     max-height: 300px;
   }
 }
+/* ========== POLL OPTION BUTTONS ========== */
 .poll-option-btn {
   width: 100%;
-  padding: 18px;
-  background: #222;
-  color: white;
-  border: 1px solid #444;
-  border-radius: 12px;
-  font-size: 18px;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #1b1b1b, #141414);
+  color: var(--text-main);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  transition:
+    transform 0.12s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .poll-option-btn:hover {
-  background: #333;
-  transform: translateY(-2px);
+  background: linear-gradient(180deg, #222, #181818);
+  border-color: #333;
+  transform: translateY(-1px);
 }
 
 .poll-option-btn:active {
   transform: translateY(0);
 }
 
+/* Selected State */
+.poll-option-btn.selected {
+  border-color: var(--accent);
+  color: #0b0b0b;
+  background: linear-gradient(180deg, #d9ff4d, var(--accent));
+}
+
+/* ========== RESULT BARS ========== */
+.result-bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
 .result-bar {
-  background: #222;
-  border-radius: 8px;
+  height: 26px;
+  background: #171717;
+  border-radius: 999px;
   overflow: hidden;
-  height: 28px;
+  border: 1px solid #242424;
 }
 
 .result-bar-fill {
   height: 100%;
-  background: #0f9;
-  transition: width 0.8s ease;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    #a8d900
+  );
+  transition: width 0.7s cubic-bezier(.22,.61,.36,1);
 }
 
-.result-bar-label {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 12px;
-  margin-bottom: 4px;
+/* ========== MODAL OVERLAY ========== */
+#pollModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* ========== MODAL CARD ========== */
+.poll-modal-card {
+  background: linear-gradient(180deg, #121212, #0d0d0d);
+  color: var(--text-main);
+  padding: 32px 28px;
+  border-radius: 22px;
+  max-width: 460px;
+  width: 90%;
+  text-align: center;
+  border: 1px solid #262626;
+}
+
+/* ========== QUESTION ========== */
+#pollQuestion {
+  margin: 0 0 26px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+/* ========== TIMER ========== */
+#pollTimer {
+  margin: 0 0 26px;
   font-size: 15px;
-  color: #ddd;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ========== RESULTS ========== */
+#pollResult p {
+  margin: 0;
+}
+
+#yourChoice {
+  margin: 6px 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ========== CAROUSEL / AD SPACE ========== */
+#pollCarousel {
+  margin: 0 0 24px;
+  height: 180px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #1a1a1a,
+      #1a1a1a 10px,
+      #181818 10px,
+      #181818 20px
+    );
+  border-radius: 16px;
+  border: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-size: 13px;
+}
+
+/* ========== CLOSE BUTTON ========== */
+#closePollBtn {
+  padding: 14px 38px;
+  background: #151515;
+  color: var(--text-main);
+  border: 1px solid #2f2f2f;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+#closePollBtn:hover {
+  background: #1d1d1d;
+}
+
+#closePollBtn:active {
+  transform: translateY(1px);
 }
 </style>
 </head>
@@ -2958,37 +3074,37 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
 <!-- USER POLL MODAL (Win $STRZ) -->
-<div id="pollModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); align-items:center; justify-content:center; z-index:9999;">
-  <div style="background:#111; color:#fff; padding:32px; border-radius:16px; max-width:460px; width:90%; text-align:center; border:1px solid #333;">
-    
-    <!-- Question -->
-    <h2 id="pollQuestion" style="margin:0 0 28px; font-size:24px; font-weight:700; line-height:1.3;"></h2>
+<div id="pollModal">
+  <div class="poll-modal-card">
 
-    <!-- Options – large tappable buttons -->
-    <div id="pollOptions" style="margin:0 0 28px; display:flex; flex-direction:column; gap:12px;"></div>
+    <!-- Question -->
+    <h2 id="pollQuestion"></h2>
+
+    <!-- Options -->
+    <div id="pollOptions"
+         style="margin-bottom:28px; display:flex; flex-direction:column; gap:12px;">
+    </div>
 
     <!-- Timer -->
-    <p id="pollTimer" style="margin:0 0 28px; font-size:16px; color:#aaa; font-weight:500;"></p>
+    <p id="pollTimer"></p>
 
-    <!-- Results (shown after voting) -->
-    <div id="pollResult" style="display:none; margin:0 0 28px;">
-      <p style="margin:0 0 12px; font-size:16px; color:#ccc;">You voted for:</p>
-      <p id="yourChoice" style="margin:0 0 20px; font-size:20px; font-weight:600; color:#fff;"></p>
+    <!-- Results -->
+    <div id="pollResult" style="display:none; margin-bottom:28px;">
+      <p style="font-size:15px; color:#aaa;">You voted for</p>
+      <p id="yourChoice"></p>
       <div id="resultBars" style="display:flex; flex-direction:column; gap:16px;"></div>
     </div>
 
-    <!-- Image Carousel Placeholder (for ads / visuals) -->
-    <div id="pollCarousel" style="margin:0 0 24px; height:180px; background:#1a1a1a; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#666; font-size:14px;">
-      <!-- Ads or images will be injected here -->
+    <!-- Carousel / Ads -->
+    <div id="pollCarousel">
       Carousel / Ad Space
     </div>
 
-    <!-- Close button -->
-    <button id="closePollBtn" style="padding:14px 32px; background:#222; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; transition:background 0.2s;">
-      Close
-    </button>
+    <!-- Close -->
+    <button id="closePollBtn">Close</button>
   </div>
 </div>
+
     
 <!-- 🟣 HOST MODAL -->
 <div id="hostModal" class="modal">
