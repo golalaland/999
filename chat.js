@@ -6384,11 +6384,11 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   const hours = parseInt(document.getElementById("poll-duration").value) || 24;
 
   if (!question) {
-    dopeAlert("Enter a question");
+    showGoldAlert("Enter a question");
     return;
   }
   if (options.length < 2) {
-    dopeAlert("Need at least 2 options");
+    showGoldAlert("Need at least 2 options");
     return;
   }
 
@@ -6408,7 +6408,7 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
     });
 
     hideLoader();
-    dopeAlert(`Poll created! ${options.length} options, ${reward} $STRZ reward, ends in ${hours} hours`, "SUCCESS");
+    showGoldAlert(`Poll created! ${options.length} options, ${reward} $STRZ reward, ends in ${hours} hours`, "SUCCESS");
 
     // Clear form
     document.getElementById("poll-question").value = "";
@@ -6417,7 +6417,7 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
 
   } catch (err) {
     hideLoader();
-    dopeAlert("Failed to create poll");
+    showGoldAlert("Failed to create poll");
     console.error(err);
   }
 });
