@@ -2758,92 +2758,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   pointer-events: none !important;
   z-index: 99999 !important; /* Higher than modal */
 }
-/* ----- BUY TICKETS SHIMMER EFFECT ----- */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Buy Tickets Section */
-.buy-tickets-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 18px 0 40px;
-  gap: 8px;
-}
-
-/* Buy Tickets Button – SMALLER & SHIMMER */
-#buyTicketsBtn {
-  padding: 10px 24px;               /* smaller than before (was 14px 32px) */
-  background: linear-gradient(
-    90deg,
-    var(--accent) 0%,
-    var(--accent) 40%,
-    #d9ff4d 50%,                    /* bright highlight for shimmer */
-    var(--accent) 60%,
-    var(--accent) 100%
-  );
-  background-size: 200% 100%;         /* wide gradient for movement */
-  background-position: -200% 0;
-  color: #0b0b0b;
-  border: none;
-  border-radius: 16px;                /* slightly smaller radius to match size */
-  font-size: 15px;                    /* slightly smaller text */
-  font-weight: 700;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.12s ease, filter 0.2s ease;
-  animation: shimmer 2.8s linear infinite; /* continuous shimmer */
-}
-
-#buyTicketsBtn:hover {
-  filter: brightness(1.08);           /* subtle glow on hover */
-  transform: translateY(-1px);
-  animation-play-state: paused;       /* pause shimmer on hover for clarity */
-}
-
-#buyTicketsBtn:active {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}
-
-/* Optional: Add a tiny shine layer on top for extra premium feel */
-#buyTicketsBtn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.25) 50%,
-    transparent 100%
-  );
-  opacity: 0.5;
-  animation: shimmer 3.5s linear infinite;
-  pointer-events: none;
-}
-
-/* Note under button */
-.buy-tickets-note {
-  font-size: 13px;
-  color: #aaa;
-}
-
-.buy-tickets-note a {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.buy-tickets-note a:hover {
-  text-decoration: underline;
-}
 /* ========== MODAL OVERLAY ========== */
 #pollModal {
   display: none;
@@ -3067,6 +2981,92 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   .poll-body {
     padding: 18px 16px;
   }
+}
+/* ----- BUY TICKETS SHIMMER EFFECT ----- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Buy Tickets Section */
+.buy-tickets-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 18px 0 40px;
+  gap: 10px;
+}
+
+/* Buy Tickets Button – SUPER SMALL & DOPE */
+.buy-tickets-btn {
+  display: inline-block;
+  padding: 8px 20px;                       /* really small now */
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent) 40%,
+    #d9ff4d 50%,                           /* bright shimmer highlight */
+    var(--accent) 60%,
+    var(--accent) 100%
+  );
+  background-size: 200% 100%;
+  background-position: -200% 0;
+  color: #0b0b0b;
+  font-size: 14px;                         /* smaller text */
+  font-weight: 700;
+  text-decoration: none;                   /* no underline */
+  border-radius: 14px;                     /* proportionally smaller radius */
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.14s ease, filter 0.2s ease;
+  animation: shimmer 3s linear infinite;
+  line-height: 1;                          /* tighter vertical spacing */
+}
+
+.buy-tickets-btn:hover {
+  text-decoration: none;                   /* double ensure no underline */
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+  animation-play-state: paused;
+}
+
+.buy-tickets-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.94);
+}
+
+/* Extra subtle shine overlay */
+.buy-tickets-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 100%
+  );
+  animation: shimmer 3.2s linear infinite;
+  pointer-events: none;
+}
+
+/* Note under button */
+.buy-tickets-note {
+  font-size: 13px;
+  color: #aaa;
+  margin: 0;
+  text-align: center;
+}
+
+.buy-tickets-note a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.buy-tickets-note a:hover {
+  text-decoration: underline;
 }
 </style>
 </head>
@@ -3340,11 +3340,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
     <!-- INTRO / CONTEXT (INSIDE MODAL, OUTSIDE POLL) -->
     <div class="poll-intro">
-      <h3>Join the Poll</h3>
+      <h3>JOIN THE POLL</h3>
       <p>
-        Cast your vote, see how others feel, and jump into the conversation.
-        Every poll sparks real-time discussion — take your stance, then head
-        into the chatrooms to debate, joke, or defend your pick.
+        Speak your mind, see how others feel, and jump into the conversation.
+        Every poll sparks real-time discussion, take your stance & earn STRZ, 
       </p>
     </div>
 
@@ -3389,7 +3388,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     VISIT CUBE
   </a>
   <p class="buy-tickets-note">
-    Want to book an experience ? <a href="https://cube.example.com/pay" target="_blank" rel="noopener noreferrer">Click here</a>
+    Want to book an experience? <a href="https://cube.example.com/pay" target="_blank" rel="noopener noreferrer">Click here</a>
   </p>
 </div>
 
