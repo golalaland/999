@@ -267,6 +267,8 @@ let currentReplyTarget = null;
 ================================= */
 
 let currentUser = null;
+let currentAdmin = null;
+
 
 // UNIVERSAL ID SANITIZER — RESTORED & FINAL
 const sanitizeId = (input) => {
