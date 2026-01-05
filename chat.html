@@ -2812,23 +2812,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div> <!-- End of .live-modal-content -->
 </div> <!-- End of #liveModal -->
 
-<div class="tab" data-tab="polls">Create Poll</div>
-  
-  
-  <!-- POLL MODAL -->
-<div id="pollModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(16px);align-items:center;justify-content:center;z-index:9999;">
-  <div style="background:#111;color:#fff;padding:30px;border-radius:20px;max-width:420px;width:90%;text-align:center;box-shadow:0 0 60px rgba(0,255,150,0.4);">
-    <h2 id="pollQuestion" style="margin:0 0 20px;color:#0f9;font-size:24px;"></h2>
-    <div id="pollOptions" style="margin:20px 0;"></div>
-    <p id="pollTimer" style="font-size:18px;color:#0f9;margin:20px 0;font-weight:bold;"></p>
-    <div id="pollResult" style="display:none;margin:20px 0;">
-      <p style="font-size:18px;">You voted for:</p>
-      <p style="font-size:22px;font-weight:bold;color:#ff69b4;" id="yourChoice"></p>
-      <div id="resultBars" style="margin-top:20px;"></div>
-    </div>
-    <button id="closePollBtn" style="padding:12px 30px;background:#333;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;">Close</button>
-  </div>
-</div>
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
 </div>
@@ -2927,6 +2910,75 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <path d="M11.75 9.874C11.75 10.2882 12.0858 10.624 12.5 10.624C12.9142 10.624 13.25 10.2882 13.25 9.874H11.75ZM13.25 4C13.25 3.58579 12.9142 3.25 12.5 3.25C12.0858 3.25 11.75 3.58579 11.75 4H13.25ZM9.81082 6.66156C10.1878 6.48991 10.3542 6.04515 10.1826 5.66818C10.0109 5.29121 9.56615 5.12478 9.18918 5.29644L9.81082 6.66156ZM5.5 12.16L4.7499 12.1561L4.75005 12.1687L5.5 12.16ZM12.5 19L12.5086 18.25C12.5029 18.25 12.4971 18.25 12.4914 18.25L12.5 19ZM19.5 12.16L20.2501 12.1687L20.25 12.1561L19.5 12.16ZM15.8108 5.29644C15.4338 5.12478 14.9891 5.29121 14.8174 5.66818C14.6458 6.04515 14.8122 6.48991 15.1892 6.66156L15.8108 5.29644ZM13.25 9.874V4H11.75V9.874H13.25ZM9.18918 5.29644C6.49843 6.52171 4.7655 9.19951 4.75001 12.1561L6.24999 12.1639C6.26242 9.79237 7.65246 7.6444 9.81082 6.66156L9.18918 5.29644ZM4.75005 12.1687C4.79935 16.4046 8.27278 19.7986 12.5086 19.75L12.4914 18.25C9.08384 18.2892 6.28961 15.5588 6.24995 12.1513L4.75005 12.1687ZM12.4914 19.75C16.7272 19.7986 20.2007 16.4046 20.2499 12.1687L18.7501 12.1513C18.7104 15.5588 15.9162 18.2892 12.5086 18.25L12.4914 19.75ZM20.25 12.1561C20.2345 9.19951 18.5016 6.52171 15.8108 5.29644L15.1892 6.66156C17.3475 7.6444 18.7376 9.79237 18.75 12.1639L20.25 12.1561Z" fill="#ff3366"/>
     </svg>
   </button>
+</div>
+
+<!-- POLL TAB IN ADMIN DASHBOARD -->
+<div class="tab" data-tab="polls">Create Poll</div>
+
+<!-- CREATE POLL SECTION (ADMIN ONLY) -->
+<div id="polls" class="section">
+  <h2 style="color:#0f9;text-align:center;margin-bottom:30px;">Create New Win $STRZ Poll</h2>
+  
+  <input 
+    id="poll-question" 
+    type="text" 
+    placeholder="Question e.g. Who has the cutest vibe tonight?" 
+    style="width:100%;padding:16px;margin:15px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:18px;box-shadow:inset 0 4px 10px rgba(0,0,0,0.5);"
+  >
+
+  <div id="poll-options-container" style="margin:20px 0;">
+    <input class="poll-option-input" placeholder="Option 1 (e.g. XOXOI)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
+    <input class="poll-option-input" placeholder="Option 2 (e.g. HIVODADDY)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
+    <input class="poll-option-input" placeholder="Option 3 (e.g. TRACY)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
+    <input class="poll-option-input" placeholder="Option 4 (e.g. JENNIFER)" style="width:100%;padding:16px;margin:8px 0;border-radius:16px;border:none;background:#222;color:#fff;font-size:16px;">
+  </div>
+
+  <div style="display:flex;gap:15px;margin:20px 0;">
+    <input 
+      id="poll-reward" 
+      type="number" 
+      value="50" 
+      placeholder="$STRZ reward" 
+      style="flex:1;padding:16px;border-radius:16px;border:none;background:#222;color:#fff;font-size:18px;text-align:center;"
+    >
+    <input 
+      id="poll-duration" 
+      type="number" 
+      value="24" 
+      placeholder="Hours" 
+      style="flex:1;padding:16px;border-radius:16px;border:none;background:#222;color:#fff;font-size:18px;text-align:center;"
+    >
+  </div>
+
+  <button 
+    id="create-new-poll" 
+    style="width:100%;padding:20px;margin:30px 0;background:linear-gradient(90deg,#ff69b4,#ff1493,#ff69b4);color:white;border:none;border-radius:20px;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 15px 40px rgba(255,105,180,0.6);transition:all 0.3s;letter-spacing:1px;"
+    onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 20px 50px rgba(255,105,180,0.8)'"
+    onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 15px 40px rgba(255,105,180,0.6)'"
+  >
+    CREATE POLL & START $STRZ REWARDS
+  </button>
+
+  <div id="current-poll-admin" style="margin-top:40px;padding:20px;background:#1a1a1a;border-radius:16px;border:2px solid #0f9;box-shadow:0 0 30px rgba(0,255,150,0.2);"></div>
+</div>
+
+<!-- USER POLL MODAL (Win $STRZ) -->
+<div id="pollModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.94);backdrop-filter:blur(20px);align-items:center;justify-content:center;z-index:9999;">
+  <div style="background:linear-gradient(135deg,#0f0c29,#302b63);padding:40px;border-radius:28px;max-width:420px;width:92%;text-align:center;box-shadow:0 0 100px rgba(0,255,150,0.5),inset 0 0 40px rgba(0,255,150,0.1);border:3px solid #0f9;">
+    <h2 id="pollQuestion" style="margin:0 0 30px;color:#0f9;font-size:28px;font-weight:900;text-shadow:0 0 30px #0f9;"></h2>
+    <div id="pollOptions" style="margin:30px 0;"></div>
+    <p id="pollTimer" style="font-size:20px;color:#0f9;margin:30px 0;font-weight:bold;text-shadow:0 0 20px #0f9;"></p>
+    
+    <div id="pollResult" style="display:none;margin:30px 0;">
+      <p style="font-size:20px;color:#fff;margin-bottom:10px;">You voted for:</p>
+      <p id="yourChoice" style="font-size:28px;font-weight:bold;color:#ff69b4;text-shadow:0 0 20px #ff69b4;margin:20px 0;"></p>
+      <div id="resultBars" style="margin-top:30px;"></div>
+    </div>
+
+    <button id="closePollBtn" style="padding:16px 40px;background:#333;color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:bold;cursor:pointer;margin-top:20px;box-shadow:0 8px 20px rgba(0,0,0,0.5);">
+      Close
+    </button>
+  </div>
 </div>
 
 <!-- 🟣 HOST MODAL -->
