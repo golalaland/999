@@ -6400,6 +6400,65 @@ document.getElementById("closePollBtn").onclick = () => {
   document.getElementById("pollModal").style.display = "none";
   if (pollUnsubscribe) pollUnsubscribe();
 };
+// CREATE POLL BUTTON — BULLETPROOF & ETERNAL
+document.getElementById("create-new-poll")?.addEventListener("click", async () => {
+  // SAFETY FIRST — MAKE SURE ADMIN IS LOGGED IN
+  if (!currentAdmin || !currentAdmin.uid) {
+    dopeAlert("Admin login required to create poll!");
+    return;
+  }
+
+  const question = document.getElementById("poll-question").value.trim();
+  const optionInputs = document.querySelectorAll(".poll-option-input");
+  const options = Array.from(optionInputs)
+    .map(input => input.value.trim())
+    .filter(v => v.length > 0);
+
+  const reward = parseInt(document.getElementById("poll-reward").value) || 50;
+  const hours = parseInt(document.getElementById("poll-duration").value) || 24;
+
+  if (!question) {
+    dopeAlert("Please enter a poll question ♡");
+    return;
+  }
+  if (options.length < 2) {
+    dopeAlert("Need at least 2 cute options!");
+    return;
+  }
+
+  showLoader("Creating your poll...");
+
+  try {
+    const endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+
+    await setDoc(doc(db, "polls", "current"), {
+      question,
+      options,
+      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+      endsAt: endsAt,
+      reward,
+      createdAt: serverTimestamp(),
+      createdBy: currentAdmin.uid
+    });
+
+    // Clear form
+    document.getElementById("poll-question").value = "";
+    optionInputs.forEach(input => input.value = "");
+    document.getElementById("poll-reward").value = "50";
+    document.getElementById("poll-duration").value = "24";
+
+    hideLoader();
+    dopeAlert(`Poll created! ♡\n${options.length} options\n${reward} $STRZ reward\nEnds in ${hours} hours`, "SUCCESS");
+
+    // Optional: refresh current poll display
+    if (typeof loadCurrentPollAdmin === "function") loadCurrentPollAdmin();
+
+  } catch (err) {
+    hideLoader();
+    dopeAlert("Failed to create poll — try again");
+    console.error("Poll creation error:", err);
+  }
+});
 /*********************************
  * INIT
  *********************************/
