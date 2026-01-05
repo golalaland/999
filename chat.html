@@ -2914,30 +2914,44 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 
 /* ========== RESULT BARS – NOW GOLD ========== */
+.result-bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.result-bar-label strong {
+  font-weight: 600;
+  color: inherit; /* no special color needed – header already highlights your vote */
+}
+
+/* Gold result bar (premium & on-brand) */
 .result-bar {
-  height: 20px;
-  background: #171717;              /* dark base */
+  height: 26px;                     /* slightly taller for presence */
+  background: #171717;
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid #242424;
-  position: relative;               /* for potential shine overlay */
+  position: relative;
 }
 
 .result-bar-fill {
   height: 100%;
+  width: 0; /* starts at 0, animated via inline style */
   background: linear-gradient(
     90deg,
-    #f9ca24 0%,     /* warm gold */
-    #ffd700 30%,    /* bright gold */
-    #ffea00 50%,    /* peak highlight */
-    #f7931e 70%,    /* deeper gold */
-    #d4af37 100%    /* rich shadow gold */
+    #f9ca24 0%,
+    #ffd700 30%,
+    #ffea00 50%,
+    #f7931e 80%,
+    #d4af37 100%
   );
   border-radius: 999px;
-  transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: width 1s cubic-bezier(0.22, 0.61, 0.36, 1);
   
-  /* Optional: subtle shine moving across the bar */
-  position: relative;
+  /* Subtle moving shine for extra luxury */
   overflow: hidden;
 }
 
@@ -2947,27 +2961,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 100%
+    transparent,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent
   );
-  animation: shimmer 3.5s linear infinite;
+  animation: shimmer 3s linear infinite;
   pointer-events: none;
 }
 
-/* Reuse the same shimmer animation from reward text */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
-}
-
-/* Label stays clean */
-.result-bar-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-  font-size: 13px;
-  color: var(--text-muted);
 }
 
 /* ========== CAROUSEL / AD SPACE ========== */
@@ -3031,15 +3035,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   gap: 10px;
 }
 .poll-reward-line {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 15px;
-  font-weight: 600;
+}
+
+.poll-reward-line strong {
+  font-weight: 700;                    /* ensures bold */
   color: var(--text-main);
 }
 
 .reward-amount {
   font-weight: 800;
-  font-size: 16px;
+  font-size: 16.5px;
   background: linear-gradient(90deg, #ffd700, #ffea00, #f9ca24, #f7931e, #ffd700);
   background-size: 200% 100%;
   -webkit-background-clip: text;
@@ -3050,9 +3057,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 
 .poll-timer-line {
-  font-size: 14px;
+  font-size: 14.5px;
+}
+
+.poll-timer-line strong {
+  font-weight: 700;
   color: var(--text-muted);
-  font-weight: 500;
 }
 
 @keyframes shimmer {
