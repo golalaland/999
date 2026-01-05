@@ -6371,6 +6371,56 @@ function startPollTimer(endTime) {
     document.getElementById("pollModal").style.display = "none";
   };
 }
+
+// CREATE POLL BUTTON — THIS IS THE RESPONDER
+document.getElementById("create-new-poll")?.addEventListener("click", async () => {
+  const question = document.getElementById("poll-question").value.trim();
+  const optionInputs = document.querySelectorAll(".poll-option-input");
+  const options = Array.from(optionInputs)
+    .map(input => input.value.trim())
+    .filter(v => v.length > 0);
+
+  const reward = parseInt(document.getElementById("poll-reward").value) || 50;
+  const hours = parseInt(document.getElementById("poll-duration").value) || 24;
+
+  if (!question) {
+    dopeAlert("Enter a question");
+    return;
+  }
+  if (options.length < 2) {
+    dopeAlert("Need at least 2 options");
+    return;
+  }
+
+  showLoader("Creating poll...");
+
+  try {
+    const endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+
+    await setDoc(doc(db, "polls", "current"), {
+      question,
+      options,
+      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+      endsAt: endsAt,
+      reward,
+      createdAt: serverTimestamp(),
+      createdBy: currentAdmin.uid
+    });
+
+    hideLoader();
+    dopeAlert(`Poll created! ${options.length} options, ${reward} $STRZ reward, ends in ${hours} hours`, "SUCCESS");
+
+    // Clear form
+    document.getElementById("poll-question").value = "";
+    optionInputs.forEach(input => input.value = "");
+    loadCurrentPollAdmin(); // if you have this function
+
+  } catch (err) {
+    hideLoader();
+    dopeAlert("Failed to create poll");
+    console.error(err);
+  }
+});
 /*********************************
  * INIT
  *********************************/
