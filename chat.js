@@ -1557,7 +1557,7 @@ if (m.type === "buzz" && m.stickerGradient) {
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
   wrapper.appendChild(confettiContainer);
 
-  // Make text pop on hover
+  // Hover pop
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
   wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
@@ -1570,36 +1570,33 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
-content.style.cssText = `
-  font-weight: 900 !important;           /* Ultra bold */
-  font-size: 1.35em !important;          /* Big but not too big for inline */
-  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-  letter-spacing: 0.8px;
-  display: inline !important;            /* ←←← Forces it back inline */
-  vertical-align: middle;                /* Perfect alignment with username */
-  line-height: 1.4;
-`;
+  // === MEGAPHONE + BUZZ MESSAGE ONLY ===
+  const messageText = content.innerHTML || content.textContent.trim();
+
+  // Inject small animated megaphone + message
+  content.innerHTML = `
+    <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Megaphone.webp" 
+         alt="📢" 
+         width="28" 
+         height="28" 
+         style="vertical-align: middle; margin-right: 12px; display: inline-block;">
+    ${messageText}
+  `;
+
+  // Apply bold big style to text (image stays separate)
+  content.style.cssText = `
+    font-weight: 900 !important;
+    font-size: 1.35em !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    letter-spacing: 0.8px;
+    display: inline !important;
+    vertical-align: middle;
+    line-height: 1.4;
+  `;
 }
 
 // ALWAYS APPEND CONTENT
 wrapper.appendChild(content);
-    
-    // TAP FOR MENU
-    wrapper.onclick = function(e) {
-      e.stopPropagation();
-      showTapModal(wrapper, {
-        id: id,
-        chatId: m.chatId,
-        uid: realUid,
-        content: m.content,
-        replyTo: m.replyTo,
-        replyToContent: m.replyToContent,
-        replyToChatId: m.replyToChatId
-      });
-    };
-
-    refs.messagesEl.appendChild(wrapper);
   });
 
 
