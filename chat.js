@@ -1341,6 +1341,7 @@ function showTapModal(targetEl, msgData) {
     }
   }, 4000);
 }
+
 // =============================
 // EXTRACT COLORS FROM GRADIENT — USED FOR CONFETTI
 // =============================
@@ -1551,12 +1552,12 @@ if (m.type === "buzz" && m.stickerGradient) {
   `;
 
   // Confetti
-  const confettiContainer = document.createElement("div");
+  var confettiContainer = document.createElement("div");
   confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
   wrapper.appendChild(confettiContainer);
 
-  // Hover pop
+  // Hover effect
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
   wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
@@ -1569,49 +1570,28 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // === UNIFIED SUPER BOLD STYLE FOR BOTH USERNAME & BUZZ TEXT ===
-  // We'll apply this via a shared class or direct style on the inner container
-  const textContainer = document.createElement("div");
-  textContainer.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    width: 100%;
-  `;
+  // === ONE-LINER: USERNAME + MESSAGE ON SAME LINE, SAME STYLE ===
+  const usernameText = m.username || "Anon";
 
-  // Username — now same size & weight as buzz
-  const usernameEl = document.createElement("div");
-  usernameEl.textContent = m.username || "Anon";
-  usernameEl.style.cssText = `
-    font-weight: 900;
-    font-size: 1.37em;
-    letter-spacing: 0.8px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    opacity: 0.95;
-    line-height: 1.2;
-  `;
-
-  // Buzz content — same style
+  // Apply same bold, big style to the entire line
   content.style.cssText = `
     font-weight: 900 !important;
     font-size: 1.37em !important;
     letter-spacing: 0.8px;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     line-height: 1.4;
-    margin: 0;
-    display: block;
+    display: inline !important;
   `;
 
-  // Append username + content
-  textContainer.appendChild(usernameEl);
-  textContainer.appendChild(content);
-  wrapper.appendChild(textContainer);
+  // Prepend username in same style, on same line
+  content.innerHTML = `<strong style="opacity:0.95;">${usernameText}:</strong> ${content.innerHTML}`;
 
-} else {
-  // Normal messages (keep your existing logic)
-  wrapper.appendChild(content);
+} 
+
+// Always append content (now with username included)
+wrapper.appendChild(content);
 }
+                   
     // TAP FOR MENU
     wrapper.onclick = function(e) {
       e.stopPropagation();
