@@ -3775,28 +3775,40 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     onmouseover="this.style.background='rgba(255,255,255,0.1)'"
     onmouseout="this.style.background='none'">×</button>
 
-   <!-- Title -->
-    <h2 style="
-      font-size: 28px;
-      font-weight: 800;
-      margin: 0 0 16px;
-      background: linear-gradient(90deg, #c3f60c, #d9ff4d);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    ">
-      Fruit Guide
-    </h2>
+ <!-- Title Section – Smaller, Perfectly Centered & Balanced -->
+<div style="padding: 24px 28px 12px; text-align:center;">
+  <h2 style="
+    font-size: 24px;               /* Reduced from 28px – fits better on mobile */
+    font-weight: 800;
+    margin: 0 0 12px;
+    background: linear-gradient(90deg, #c3f60c, #d9ff4d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+  ">
+    Fruit Guide
+  </h2>
 
-<p style="color:#aaa; font-size:13px; margin:16px 0 10px; line-height:1.6;">
-  Understand the vibe behind each fruit, so you know exactly what she’s open to.
-</p>
+  <p style="
+    color:#aaa; 
+    font-size: 14px;               /* Slightly larger for readability */
+    margin: 0 0 8px;
+    line-height: 1.5;
+  ">
+    Understand the vibe behind each fruit, so you know exactly what she’s open to.
+  </p>
 
-<p style="color:#aaa; font-size:11px; margin:0; line-height:1.6;">
-  Swipe to see each vibe →
-</p>
-
-
+  <p style="
+    color:#888; 
+    font-size: 12px;               /* Small hint, subtle */
+    margin: 0;
+    line-height: 1.4;
+    font-weight: 500;
+  ">
+    Swipe to see each vibe →
+  </p>
+</div>
     <!-- Swipeable Carousel Container -->
     <div id="fruitCarousel" style="
       flex: 1;
