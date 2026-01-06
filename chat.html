@@ -3614,114 +3614,104 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <!-- Items will appear here -->
   </div>
 </div>
+<!-- 🎥 MEDIA TAB -->
+<div id="mediaTab" class="tab-content active" style="max-height:500px; overflow-y:auto; padding:16px 8px 16px 16px; box-sizing:border-box;">
+  <!-- Media Uploads -->
+  <label class="upload-label">Popup Photo</label>
+  <input type="file" id="popupPhoto" accept="image/*" class="smalla-btn">
+  <div class="photo-preview">
+    <img id="photoPreview" src="" alt="Preview" style="display:none;">
+    <span id="photoPlaceholder">📸</span>
+  </div>
 
-    <!-- 🎥 MEDIA TAB -->
-    <div id="mediaTab" class="tab-content active" style="max-height:500px; overflow-y:auto; padding-right:8px;">
+  <hr class="divider" style="margin:20px 0;">
 
-      <!-- Media Uploads -->
-      <label class="upload-label">Popup Photo</label>
-      <input type="file" id="popupPhoto" accept="image/*" class="smalla-btn">
+  <!-- Profile Section -->
+  <h4 style="text-align:center; margin-bottom:10px;">Profile 👤</h4>
+  <label>Name</label>
+  <input type="text" id="fullName" placeholder="Enter your full name">
+  
+  <label>Location</label>
+  <input type="text" id="location" placeholder="Enter your location">
+  
+  <label>City</label>
+  <input type="text" id="city" placeholder="Enter your city">
+  
+  <label>Short Bio</label>
+  <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
 
-      <div class="photo-preview">
-        <img id="photoPreview" src="" alt="Preview" style="display:none;">
-        <span id="photoPlaceholder">📸</span>
-      </div>
+  <!-- Nature & Fruit Picks -->
+  <label>Nature Pick</label>
+  <select id="naturePick">
+    <option value="" disabled selected>What describes you?</option>
+    <option value="Hot">Hot</option>
+    <option value="Sexy">Sexy</option>
+    <option value="Beautiful">Beautiful</option>
+    <option value="Charming">Charming</option>
+    <option value="Curvy">Curvy</option>
+    <option value="Cool">Cool</option>
+  </select>
 
-      <label class="upload-label" style="margin-top:15px;">Upload Video</label>
-      <input type="file" id="uploadVideo" accept="video/*" class="smalla-btn">
+  <label>Fruit Pick</label>
+  <select id="fruitPick">
+    <option value="" disabled selected>Choose your vibe</option>
+    <option value="🍇">🍇 Casual Hangout & Friendships</option>
+    <option value="🍑">🍑 Thrills & Meetups</option>
+    <option value="🍒">🍒 Passionate Romance & Dates</option>
+    <option value="🍓">🍓 Love Adventures</option>
+  </select>
 
-      <hr class="divider" style="margin:20px 0;">
+  <hr class="divider" style="margin:20px 0;">
 
-      <!-- Profile Section -->
-      <h4 style="text-align:center; margin-bottom:10px;">Profile 👤</h4>
+  <!-- Payments Section -->
+  <h4 style="text-align:center; margin-bottom:10px;">Payments 🏦</h4>
+  <label>Bank Name</label>
+  <input type="text" id="bankName" placeholder="Enter your bank name">
+  
+  <label>Bank Number</label>
+  <input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
+    oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
 
-      <label>Name</label>
-      <input type="text" id="fullName" placeholder="Enter your full name">
+  <hr class="divider" style="margin:20px 0;">
 
-      <label>Location</label>
-      <input type="text" id="location" placeholder="Enter your location">
+  <!-- Socials Section -->
+  <h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
+  <label>WhatsApp</label>
+  <input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
+  
+  <label>Telegram</label>
+  <input type="text" id="telegram" placeholder="@username">
+  
+  <label>TikTok</label>
+  <input type="text" id="tiktok" placeholder="@username">
+  
+  <label>Instagram</label>
+  <input type="text" id="instagram" placeholder="@username">
 
-      <label>City</label>
-      <input type="text" id="city" placeholder="Enter your city">
+  <button id="saveInfo" class="small-btn" style="margin-top:20px; width:100%;">Save</button>
+</div>
 
-      <label>Short Bio</label>
-      <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
-
-      <!-- New Profile Fields -->
-      <label>Nature Pick</label>
-      <select id="naturePick">
-        <option value="" disabled selected>What describes you?</option>
-        <option value="Hot">Hot</option>
-        <option value="Sexy">Sexy</option>
-        <option value="Beautiful">Beautiful</option>
-        <option value="Charming">Charming</option>
-        <option value="Curvy">Curvy</option>
-        <option value="Cool">Cool</option>
-      </select>
-
-      <label>Fruit Pick</label>
-      <select id="fruitPick">
-        <option value="" disabled selected>Choose your vibe</option>
-        <option value="🍇">🍇 Casual Hangout & Friendships</option>
-        <option value="🍑">🍑 Thrills & Meetups</option>
-        <option value="🍒">🍒 Passionate Romance & Dates</option>
-        <option value="🍓">🍓 Love Adventures</option>
-      </select>
-
-      <hr class="divider" style="margin:20px 0;">
-
-      <!-- Payments Section -->
-      <h4 style="text-align:center; margin-bottom:10px;">Payments 🏦</h4>
-
-      <label>Bank Name</label>
-      <input type="text" id="bankName" placeholder="Enter your bank name">
-
-      <label>Bank Number</label>
-      <input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
-        oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
-
-      <hr class="divider" style="margin:20px 0;">
-
-      <!-- Socials Section -->
-      <h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
-
-      <label>WhatsApp</label>
-      <input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
-
-      <label>Telegram</label>
-      <input type="text" id="telegram" placeholder="@username">
-
-      <label>TikTok</label>
-      <input type="text" id="tiktok" placeholder="@username">
-
-      <label>Instagram</label>
-      <input type="text" id="instagram" placeholder="@username">
-
-      <button id="saveInfo" class="small-btn" style="margin-top:10px;">Save</button>
-      </div>
-      
-     <!-- Standalone Fruit Guide Link/Button -->
-<div style="margin: 24px 0; text-align:center;">
+<!-- Standalone Fruit Guide Button (place wherever you want - e.g. in a separate section, footer, or another tab) -->
+<div style="margin: 32px 0; text-align:center;">
   <button id="openFruitGuide" style="
-    padding: 14px 32px;
+    padding: 14px 36px;
     background: linear-gradient(135deg, #1a1a1a, #0f0f0f);
     color: #c3f60c;
     border: 1px solid #333;
-    border-radius: 18px;
+    border-radius: 20px;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(195,246,12,0.15);
+    box-shadow: 0 6px 24px rgba(195,246,12,0.15);
     transition: all 0.3s ease;
   "
-  onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-2px)'"
-  onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'">
-   Read 🍒 the 🍓 Fruit 🍑 Guide 🍇
+  onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
+  onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
+    🍇🍑🍒🍓 Read the Fruit Guide
   </button>
 </div>
 
-
-<!-- FRUIT GUIDE MODAL (STANDALONE) -->
+<!-- FRUIT GUIDE MODAL (STANDALONE - NO BLEED) -->
 <div id="fruitGuideModal" style="
   display: none;
   position: fixed;
@@ -3732,6 +3722,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   justify-content: center;
   padding: 20px;
   backdrop-filter: blur(8px);
+  box-sizing: border-box;
 ">
   <div style="
     background: linear-gradient(180deg, #121212, #0a0a0a);
@@ -3739,10 +3730,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     padding: 32px 28px;
     max-width: 460px;
     width: 92%;
+    max-height: 90vh;
+    overflow-y: auto;
     border: 1px solid #262626;
     text-align: center;
     position: relative;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    box-sizing: border-box;
   ">
     <!-- Close Button -->
     <button id="closeFruitGuide" style="
@@ -3777,68 +3771,58 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       Fruit Guide
     </h2>
 
-    <p style="
-      color: #aaa;
-      font-size: 15px;
-      margin-bottom: 28px;
-      line-height: 1.6;
-    ">
+    <p style="color:#aaa; font-size:15px; margin-bottom:28px; line-height:1.6;">
       Understand the vibe behind each fruit — so you know exactly what she's open to.
     </p>
 
     <!-- Fruit Cards -->
-    <div style="display: flex; flex-direction: column; gap: 18px; text-align: left;">
-
-      <div style="background: #1a1a1a; padding: 18px; border-radius: 16px; border-left: 4px solid #9c72ff;">
-        <div style="font-size: 36px; margin-bottom: 8px;">🍇</div>
-        <strong style="font-size: 17px; color: #c3f60c;">Grapes – Casual & Friends</strong>
-        <p style="margin: 8px 0 0; color: #ccc; font-size: 15px; line-height: 1.5;">
+    <div style="display:flex; flex-direction:column; gap:18px; text-align:left;">
+      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #9c72ff;">
+        <div style="font-size:36px; margin-bottom:8px;">🍇</div>
+        <strong style="font-size:17px; color:#c3f60c;">Grapes – Casual & Friends</strong>
+        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
           She's here for light, fun chats and friendships. No pressure, just good vibes, laughs, and easy connection.
         </p>
       </div>
-
-      <div style="background: #1a1a1a; padding: 18px; border-radius: 16px; border-left: 4px solid #ff6b9d;">
-        <div style="font-size: 36px; margin-bottom: 8px;">🍑</div>
-        <strong style="font-size: 17px; color: #c3f60c;">Peach – Thrills & Generosity</strong>
-        <p style="margin: 8px 0 0; color: #ccc; font-size: 15px; line-height: 1.5;">
+      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #ff6b9d;">
+        <div style="font-size:36px; margin-bottom:8px;">🍑</div>
+        <strong style="font-size:17px; color:#c3f60c;">Peach – Thrills & Generosity</strong>
+        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
           She's open to exciting, luxurious experiences where you spoil her. Think paid dates, gifts, and high-energy fun.
         </p>
       </div>
-
-      <div style="background: #1a1a1a; padding: 18px; border-radius: 16px; border-left: 4px solid #ff4757;">
-        <div style="font-size: 36px; margin-bottom: 8px;">🍒</div>
-        <strong style="font-size: 17px; color: #c3f60c;">Cherries – Passion & Romance</strong>
-        <p style="margin: 8px 0 0; color: #ccc; font-size: 15px; line-height: 1.5;">
+      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #ff4757;">
+        <div style="font-size:36px; margin-bottom:8px;">🍒</div>
+        <strong style="font-size:17px; color:#c3f60c;">Cherries – Passion & Romance</strong>
+        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
           All about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
         </p>
       </div>
-
-      <div style="background: #1a1a1a; padding: 18px; border-radius: 16px; border-left: 4px solid #ff9f43;">
-        <div style="font-size: 36px; margin-bottom: 8px;">🍓</div>
-        <strong style="font-size: 17px; color: #c3f60c;">Strawberry – Love & Relationships</strong>
-        <p style="margin: 8px 0 0; color: #ccc; font-size: 15px; line-height: 1.5;">
+      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #ff9f43;">
+        <div style="font-size:36px; margin-bottom:8px;">🍓</div>
+        <strong style="font-size:17px; color:#c3f60c;">Strawberry – Love & Relationships</strong>
+        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
           She's ready for deeper emotions, commitment, and building something real. Perfect for love adventures and long-term vibes.
         </p>
       </div>
-
     </div>
 
-    <!-- Close Button Bottom -->
     <button id="closeFruitGuideBottom" style="
-      margin-top: 32px;
-      padding: 14px 44px;
-      background: #151515;
-      color: #c3f60c;
-      border: 1px solid #333;
-      border-radius: 18px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
+      margin-top:32px;
+      padding:14px 44px;
+      background:#151515;
+      color:#c3f60c;
+      border:1px solid #333;
+      border-radius:18px;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
     ">
       Got it!
     </button>
   </div>
-
+</div>
+      
 
 <!-- 📝 INFO TAB -->
 <div id="infoTab" class="tab-content"
