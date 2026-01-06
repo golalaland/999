@@ -1551,29 +1551,24 @@ if (m.type === "buzz" && m.stickerGradient) {
     backdrop-filter: blur(4px);
   `;
 
-  /* ================= CONFETTI ================= */
+  /* CONFETTI */
   const confettiContainer = document.createElement("div");
-  confettiContainer.style.cssText = `
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    overflow:hidden;
-    opacity:0.7;
-  `;
+  confettiContainer.style.cssText =
+    "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(
     confettiContainer,
     extractColorsFromGradient(m.stickerGradient)
   );
   wrapper.appendChild(confettiContainer);
 
-  /* ================= HOVER ================= */
+  /* HOVER */
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () =>
     (wrapper.style.transform = "scale(1.03) translateY(-4px)");
   wrapper.onmouseleave = () =>
     (wrapper.style.transform = "scale(1)");
 
-  /* ================= FADE ================= */
+  /* FADE */
   setTimeout(() => {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
@@ -1581,37 +1576,20 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  /* ================= INLINE ROW ================= */
-  const inlineRow = document.createElement("span");
-  inlineRow.style.cssText = `
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-  `;
+  /* 🔑 INLINE ALIGNMENT FIX (NO DOM MOVES) */
+  wrapper.style.display = "inline-flex";
+  wrapper.style.alignItems = "center";
 
-  /* ================= USERNAME (SAFE CREATE) ================= */
-  const usernameEl = document.createElement("span");
-  usernameEl.textContent = `${m.username || "user"}:`;
-  usernameEl.style.cssText = `
-    font-size: 1.35em;
-    font-weight: 900;
-    line-height: 1.4;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    display: inline;
-  `;
-
-  /* ================= BUZZ TEXT ================= */
   content.style.cssText += `
     font-size: 1.35em;
     font-weight: 900;
     line-height: 1.4;
     letter-spacing: 0.8px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     white-space: nowrap;
     display: inline;
+    vertical-align: middle;
   `;
-
+  
   /* ================= APPEND ================= */
   inlineRow.appendChild(usernameEl);
   inlineRow.appendChild(content);
