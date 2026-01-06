@@ -1581,7 +1581,7 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  /* ================= INLINE ALIGNMENT FIX ================= */
+  /* ================= INLINE ROW ================= */
   const inlineRow = document.createElement("span");
   inlineRow.style.cssText = `
     display: inline-flex;
@@ -1590,36 +1590,39 @@ if (m.type === "buzz" && m.stickerGradient) {
     white-space: nowrap;
   `;
 
-  /* USERNAME */
-  username.style.cssText += `
+  /* ================= USERNAME (SAFE CREATE) ================= */
+  const usernameEl = document.createElement("span");
+  usernameEl.textContent = `${m.username || "user"}:`;
+  usernameEl.style.cssText = `
     font-size: 1.35em;
     font-weight: 900;
     line-height: 1.4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     display: inline;
   `;
 
-  /* BUZZ TEXT */
+  /* ================= BUZZ TEXT ================= */
   content.style.cssText += `
     font-size: 1.35em;
     font-weight: 900;
     line-height: 1.4;
     letter-spacing: 0.8px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     white-space: nowrap;
     display: inline;
   `;
 
-  /* IMPORTANT: MOVE BOTH INTO INLINE ROW */
-  inlineRow.appendChild(username);
+  /* ================= APPEND ================= */
+  inlineRow.appendChild(usernameEl);
   inlineRow.appendChild(content);
-
-  /* IMPORTANT: APPEND INLINE ROW */
   wrapper.appendChild(inlineRow);
 
-  return; // ⬅️ STOP FALLTHROUGH SO CONTENT IS NOT RE-APPENDED ELSEWHERE
+  return; // ⬅️ critical: prevents global content append
 }
 
 /* ===== GLOBAL FALLBACK ===== */
 wrapper.appendChild(content);
+
 
     // TAP FOR MENU
     wrapper.onclick = function(e) {
