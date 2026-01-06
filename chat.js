@@ -6655,19 +6655,21 @@ document.getElementById("closeFruitGuideBottom").addEventListener("click", () =>
   document.getElementById("fruitGuideModal").style.display = "none";
 });
 
+// Function to toggle host-only fields
 function toggleHostFields() {
   const hostFields = document.getElementById("hostOnlyFields");
+  if (!hostFields) return; // Safety check
+
   if (currentUser && currentUser.isHost === true) {
-    hostFields.style.display = "block";
+    hostFields.style.display = "block"; // Show for hosts
   } else {
-    hostFields.style.display = "none";
+    hostFields.style.display = "none"; // Hide for non-hosts
   }
 }
 
-// Call on login / page load
-toggleHostFields();
 /*********************************
  * INIT
  *********************************/
 loadReels();
 loadPollCarousel()
+toggleHostFields();
