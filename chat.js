@@ -1570,10 +1570,10 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // === ONE-LINER: USERNAME + MESSAGE ON SAME LINE, SAME STYLE ===
-  const usernameText = m.username || "Anon";
+  // === CLEAN ONE-LINER: USERNAME + MESSAGE, SAME STYLE ===
+  const displayName = m.username && m.username.trim() !== "" ? m.username : "Anon";
 
-  // Apply same bold, big style to the entire line
+  // Apply big bold style to the entire message
   content.style.cssText = `
     font-weight: 900 !important;
     font-size: 1.37em !important;
@@ -1583,12 +1583,12 @@ if (m.type === "buzz" && m.stickerGradient) {
     display: inline !important;
   `;
 
-  // Prepend username in same style, on same line
-  content.innerHTML = `<strong style="opacity:0.95;">${usernameText}:</strong> ${content.innerHTML}`;
+  // Prepend username correctly — no duplicate if missing
+  content.innerHTML = `<strong style="opacity:0.95;">${displayName}:</strong> ${content.innerHTML}`;
 
-} 
+}
 
-// Always append content (now with username included)
+// Always append content
 wrapper.appendChild(content);
                    
     // TAP FOR MENU
