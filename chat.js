@@ -3844,25 +3844,40 @@ function showMeetModal(host) {
                 return;
               }
 
-              // Unified final screen
-              modalContent.innerHTML = `
-                <h3 style="margin-bottom:12px; font-weight:600;">Your request to meet ${host.chatId} is approved</h3>
-                <p style="margin-bottom:20px; font-size:15px;">Chat with <b>${contact}</b> on ${platform}</p>
-                <div style="font-size:56px; margin:24px 0;">📱</div>
-                <button id="openChatBtn" style="
-                  margin-top:8px;
-                  padding:12px 32px;
-                  border:none;
-                  border-radius:12px;
-                  font-weight:600;
-                  background:${buttonColor};
-                  color:#fff;
-                  cursor:pointer;
-                  font-size:16px;
-                  box-shadow:0 6px 20px rgba(0,0,0,0.4);
-                ">Send Message on ${platform}</button>
-              `;
-
+              // Unified final screen — SMALL, CUTE & CLEAN (no phone emoji)
+modalContent.innerHTML = `
+  <h3 style="
+    margin:0 0 12px;
+    font-weight:600;
+    font-size:18px;
+    line-height:1.3;
+  ">
+   Request to meet ${host.chatId} is approved!
+  </h3>
+  <p style="
+    margin:0 0 24px;
+    font-size:15px;
+    color:#ddd;
+  ">
+    Chat with <b>${contact}</b> on ${platform}
+  </p>
+  <button id="openChatBtn" style="
+    padding:12px 36px;
+    border:none;
+    border-radius:50px;
+    font-weight:700;
+    font-size:16px;
+    background:${buttonColor};
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.4);
+    transition:transform 0.2s ease;
+  "
+  onmouseover="this.style.transform='translateY(-2px)'"
+  onmouseout="this.style.transform='translateY(0)'">
+    Send Message
+  </button>
+`;
               const openBtn = modalContent.querySelector("#openChatBtn");
               openBtn.onclick = () => {
                 window.open(openURL, "_blank");
@@ -6640,19 +6655,138 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
 });
 function loadPollCarousel() {
   const carousel = document.getElementById("pollCarousel");
-  carousel.innerHTML = `
-    <div style="display:flex; height:100%; border-radius:14px; overflow:hidden;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
-           alt="Cube Livestream Offline"
-           style="width:33.3%; height:100%; object-fit:cover;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
-           alt="Cube Livestream Offline"
-           style="width:33.3%; height:100%; object-fit:cover;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
-           alt="Cube Livestream Offline"
-           style="width:33.3%; height:100%; object-fit:cover;">
-    </div>
+  
+  // Clear any previous content
+  carousel.innerHTML = "";
+
+  // Images array — easy to add/change later
+  const images = [
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
+  ];
+
+  // Carousel container
+  const carouselWrapper = document.createElement("div");
+  carouselWrapper.style.cssText = `
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 14px;
   `;
+
+  // Slides track
+  const slidesTrack = document.createElement("div");
+  slidesTrack.id = "carouselSlides";
+  slidesTrack.style.cssText = `
+    display: flex;
+    width: ${images.length * 100}%;
+    height: 100%;
+    transition: transform 0.4s ease;
+    transform: translateX(0%);
+  `;
+
+  // Create each slide
+  images.forEach((src) => {
+    const slide = document.createElement("div");
+    slide.style.cssText = `
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+    `;
+
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Cube Livestream Offline";
+    img.style.cssText = `
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    `;
+
+    slide.appendChild(img);
+    slidesTrack.appendChild(slide);
+  });
+
+  carouselWrapper.appendChild(slidesTrack);
+
+  // Dots indicator
+  const dotsContainer = document.createElement("div");
+  dotsContainer.style.cssText = `
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  `;
+
+  images.forEach((_, index) => {
+    const dot = document.createElement("div");
+    dot.style.cssText = `
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: ${index === 0 ? '#c3f60c' : 'rgba(255,255,255,0.4)'};
+      transition: background 0.3s;
+    `;
+    dot.dataset.index = index;
+    dotsContainer.appendChild(dot);
+  });
+
+  carouselWrapper.appendChild(dotsContainer);
+  carousel.appendChild(carouselWrapper);
+
+  // ——— SWIPE & SLIDE LOGIC ———
+  let currentIndex = 0;
+  const totalSlides = images.length;
+
+  function updateCarousel() {
+    slidesTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+    // Update dots
+    dotsContainer.querySelectorAll("div").forEach((dot, i) => {
+      dot.style.background = i === currentIndex ? "#c3f60c" : "rgba(255,255,255,0.4)";
+    });
+  }
+
+  // Touch swipe support
+  let touchStartX = 0;
+  carouselWrapper.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+  });
+
+  carouselWrapper.addEventListener("touchend", (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 50) { // Minimum swipe distance
+      if (diff > 0 && currentIndex < totalSlides - 1) {
+        currentIndex++;
+      } else if (diff < 0 && currentIndex > 0) {
+        currentIndex--;
+      }
+      updateCarousel();
+    }
+  });
+
+  // Optional: Click dots to navigate
+  dotsContainer.addEventListener("click", (e) => {
+    const dot = e.target.closest("div");
+    if (dot && dot.dataset.index !== undefined) {
+      currentIndex = parseInt(dot.dataset.index);
+      updateCarousel();
+    }
+  });
+
+  // Auto-play (optional — uncomment if you want it)
+ setInterval(() => {
+currentIndex = (currentIndex + 1) % totalSlides;
+  updateCarousel();
+ }, 4000);
 }
 /*********************************
  * Nature!!
