@@ -820,6 +820,21 @@ body.start-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"] {
   opacity: 1;
   transform: translateY(0);
 }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes amountPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
 </style>
 </head>
 </body>
@@ -1401,24 +1416,79 @@ body.start-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"] {
   </div>
 </div>
 
-  <!-- LUXURY SUCCESS OVERLAY — GOLDEN MONEY RAIN -->
-<div id="withdrawSuccessOverlay" class="modal-backdrop" style="display:none;z-index:9999999;background:linear-gradient(135deg,rgba(0,0,0,0.95),rgba(15,15,15,0.98));">
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+ <!-- LUXURY SUCCESS OVERLAY — GOLDEN MONEY RAIN 2.0 -->
+<div id="withdrawSuccessOverlay" class="modal-backdrop" style="display:none; z-index:9999999; background:rgba(0,0,0,0.96);">
+  <!-- Golden particle rain background -->
+  <div id="goldenRain" style="position:absolute; inset:0; overflow:hidden; pointer-events:none;"></div>
+
+  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; width:90%; max-width:420px;">
     
-    <div style="font-size:44px;color:#FFD700;text-shadow:0 0 40px #FFD700;animation:pulseGlow 1.8s infinite;margin-bottom:20px;font-family:'Press Start 2P',cursive;">
-      PAID!
+    <!-- Elegant "PAID" with subtle glow -->
+    <div style="
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: #FFD700;
+      text-shadow: 0 0 30px rgba(255,215,0,0.6);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 0.3s forwards;
+    ">
+      PAID
     </div>
 
-    <div style="font-size:50px;font-weight:900;color:#FFD700;letter-spacing:6px;margin:30px 0;text-shadow:0 0 50px #FFD700,0 0 80px #FF8C00;">
+    <!-- Amount with falling animation and glow -->
+    <div style="
+      font-family: 'Montserrat', sans-serif;
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(180deg, #FFEB3B, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 10px 40px rgba(255,215,0,0.4);
+      margin: 20px 0;
+      opacity: 0;
+      animation: fadeInUp 1.2s ease-out 0.6s forwards, amountPulse 2s ease-in-out infinite alternate 1.8s;
+    ">
       ₦<span id="goldenAmount">0</span>
     </div>
 
-    <div id="successMessage" style="font-size:15px;color:#00ff88;margin:20px 0;font-weight:700;">
-      Withdrawal requested!
+    <!-- Success message -->
+    <div id="successMessage" style="
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #b3ffab;
+      margin: 24px 0 40px;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 1s forwards;
+    ">
+      Withdrawal requested successfully!
     </div>
 
-    <button id="closeSuccessBtn" style="padding:16px 50px;background:#FFD700;color:#000;border:none;border-radius:16px;font-weight:900;font-size:18px;margin-top:40px;cursor:pointer;box-shadow:0 10px 40px rgba(255,215,0,0.6);">
-      COOL!
+    <!-- Premium close button -->
+    <button id="closeSuccessBtn" style="
+      padding: 16px 48px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #000;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(255,215,0,0.4);
+      transition: all 0.3s ease;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 1.3s forwards;
+    "
+    onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(255,215,0,0.6)'"
+    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 30px rgba(255,215,0,0.4)'">
+      GOT IT
     </button>
   </div>
 </div>
@@ -1513,14 +1583,7 @@ body.start-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"] {
   </div>
 </div>
 
-<!-- AUDIO ASSETS — preload metadata only -->
-<audio id="tapSound" src="/assets/pop-reverb-423718.mp3" preload="metadata"></audio>
-<audio id="confettiSound" src="/assets/material-mold-394512.mp3" preload="metadata"></audio>
-<audio id="comboSound" src="/assets/clear-combo-7-394494.mp3" preload="metadata"></audio>
-<audio id="uiClickSound" src="/assets/click-sound-432501.mp3" preload="metadata"></audio>
-
-   <!-- Your game HTML above -->
-<script type="module" src="e05b44cf59f8548cc0a2d34d9b122cf86cc44b18.js?t=20251123"></script>
+<script language=JavaScript> html='%3C%21--%20AUDIO%20ASSETS%20%E2%80%94%20preload%20metadata%20only%20--%3E%0D%0A%3Caudio%20id%3D%22tapSound%22%20src%3D%22%2Fassets%2Fpop-reverb-423718.mp3%22%20preload%3D%22metadata%22%3E%3C%2Faudio%3E%0D%0A%3Caudio%20id%3D%22confettiSound%22%20src%3D%22%2Fassets%2Fmaterial-mold-394512.mp3%22%20preload%3D%22metadata%22%3E%3C%2Faudio%3E%0D%0A%3Caudio%20id%3D%22comboSound%22%20src%3D%22%2Fassets%2Fclear-combo-7-394494.mp3%22%20preload%3D%22metadata%22%3E%3C%2Faudio%3E%0D%0A%3Caudio%20id%3D%22uiClickSound%22%20src%3D%22%2Fassets%2Fclick-sound-432501.mp3%22%20preload%3D%22metadata%22%3E%3C%2Faudio%3E%0D%0A%0D%0A%C2%A0%20%20%3C%21--%20Your%20game%20HTML%20above%20--%3E%0D%0A%3Cscript%20type%3D%22module%22%20src%3D%22e05b44cf59f8548cc0a2d34d9b122cf86cc44b18.js%3Ft%3D20251123%22%3E%3C%2Fscript%3E';d=unescape(html);document.write(d);</script>
 </body>
 </html>
   
