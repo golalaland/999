@@ -1570,20 +1570,12 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // === MEGAPHONE + BUZZ MESSAGE ONLY ===
+  // === NATIVE MEGAPHONE EMOJI + MESSAGE (SAFE & ALWAYS SHOWS) ===
   const messageText = content.innerHTML || content.textContent.trim();
 
-  // Inject small animated megaphone + message
-  content.innerHTML = `
-    <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Megaphone.webp" 
-         alt="📢" 
-         width="28" 
-         height="28" 
-         style="vertical-align: middle; margin-right: 12px; display: inline-block;">
-    ${messageText}
-  `;
+  content.innerHTML = `<span style="font-size:1.4em; margin-right:12px; vertical-align:middle;">📢</span>${messageText}`;
 
-  // Apply bold big style to text (image stays separate)
+  // Big bold text style
   content.style.cssText = `
     font-weight: 900 !important;
     font-size: 1.35em !important;
