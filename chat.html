@@ -3249,6 +3249,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   letter-spacing: 0.6px;
   margin-right: 6px;
 }
+#fruitDots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+  transition: background 0.3s;
+}
+
+#fruitDots .dot.active {
+  background: #c3f60c;
+  box-shadow: 0 0 12px rgba(195,246,12,0.6);
+}
 </style>
 </head>
 <body>
@@ -3641,7 +3653,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <label>Short Bio</label>
   <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
 
-  <!-- Nature & Fruit Picks -->
+  <!-- Inside your Media Tab -->
+<div id="hostOnlyFields" style="display: none;"> <!-- Hidden by default -->
   <label>Nature Pick</label>
   <select id="naturePick">
     <option value="" disabled selected>What describes you?</option>
@@ -3662,58 +3675,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <option value="🍓">🍓 Love Adventures</option>
   </select>
 
-  <!-- Fruit Guide Button – LOCKED INSIDE MEDIA TAB ONLY -->
-  <div style="margin: 32px 0 20px; text-align:center;">
-    <button id="openFruitGuide" style="
-      padding: 14px 36px;
-      background: linear-gradient(135deg, #1a1a1a, #0f0f0f);
-      color: #c3f60c;
-      border: 1px solid #333;
-      border-radius: 20px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 24px rgba(195,246,12,0.15);
-      transition: all 0.3s ease;
-    "
-    onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
-    onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
-      🍒Read the🍇 Fruit🍑 Guide🍓 
-    </button>
-  </div>
 
-  <hr class="divider" style="margin:20px 0;">
-
-  <!-- Payments Section -->
-  <h4 style="text-align:center; margin-bottom:10px;">Payments 🏦</h4>
-  <label>Bank Name</label>
-  <input type="text" id="bankName" placeholder="Enter your bank name">
-  
-  <label>Bank Number</label>
-  <input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
-    oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
-
-  <hr class="divider" style="margin:20px 0;">
-
-  <!-- Socials Section -->
-  <h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
-  <label>WhatsApp</label>
-  <input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
-  
-  <label>Telegram</label>
-  <input type="text" id="telegram" placeholder="@username">
-  
-  <label>TikTok</label>
-  <input type="text" id="tiktok" placeholder="@username">
-  
-  <label>Instagram</label>
-  <input type="text" id="instagram" placeholder="@username">
-
-  <!-- RESTORED ORIGINAL SAVE BUTTON SIZE -->
-  <button id="saveInfo" class="small-btn" style="margin-top:10px;">Save</button>
-</div>
-
-<!-- FRUIT GUIDE MODAL (STILL GLOBAL BUT ONLY ACCESSIBLE FROM MEDIA TAB) -->
+  <!-- FRUIT GUIDE MODAL – SWIPEABLE CARDS (ONE PER VIEW) -->
 <div id="fruitGuideModal" style="
   display: none;
   position: fixed;
@@ -3724,21 +3687,21 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   justify-content: center;
   padding: 20px;
   backdrop-filter: blur(8px);
-  box-sizing: border-box;
+  overflow: hidden;
 ">
   <div style="
     background: linear-gradient(180deg, #121212, #0a0a0a);
     border-radius: 24px;
-    padding: 32px 28px;
-    max-width: 460px;
     width: 92%;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 460px;
+    height: 85vh;
+    max-height: 680px;
     border: 1px solid #262626;
-    text-align: center;
     position: relative;
+    overflow: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
   ">
     <!-- Close Button -->
     <button id="closeFruitGuide" style="
@@ -3756,75 +3719,122 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 10;
     "
     onmouseover="this.style.background='rgba(255,255,255,0.1)'"
     onmouseout="this.style.background='none'">×</button>
 
-    <!-- Title -->
-    <h2 style="
-      font-size: 28px;
-      font-weight: 800;
-      margin: 0 0 16px;
-      background: linear-gradient(90deg, #c3f60c, #d9ff4d);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    <!-- Title (Fixed Top) -->
+    <div style="padding: 32px 28px 16px; text-align:center;">
+      <h2 style="
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0;
+        background: linear-gradient(90deg, #c3f60c, #d9ff4d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      ">
+        Fruit Guide
+      </h2>
+      <p style="color:#aaa; font-size:15px; margin:16px 0 0; line-height:1.6;">
+        Swipe to see each vibe →
+      </p>
+    </div>
+
+    <!-- Swipeable Carousel Container -->
+    <div id="fruitCarousel" style="
+      flex: 1;
+      overflow: hidden;
+      position: relative;
     ">
-      Fruit Guide
-    </h2>
+      <div id="fruitSlides" style="
+        display: flex;
+        width: 400%; /* 4 fruits */
+        height: 100%;
+        transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+      ">
+        <!-- Fruit 1: Grapes -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #9c72ff; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍇</div>
+            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
+              Grapes – Casual & Friends
+            </strong>
+            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
+              She's here for light, fun chats and friendships. No pressure, just good vibes, laughs, and easy connection.
+            </p>
+          </div>
+        </div>
 
-    <p style="color:#aaa; font-size:15px; margin-bottom:28px; line-height:1.6;">
-      Understand the vibe behind each fruit — so you know exactly what she's open to.
-    </p>
+        <!-- Fruit 2: Peach -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #ff6b9d; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍑</div>
+            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
+              Peach – Thrills & Generosity
+            </strong>
+            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
+              She's open to exciting, luxurious experiences where you spoil her. Think paid dates, gifts, and high-energy fun.
+            </p>
+          </div>
+        </div>
 
-    <!-- Fruit Cards -->
-    <div style="display:flex; flex-direction:column; gap:18px; text-align:left;">
-      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #9c72ff;">
-        <div style="font-size:36px; margin-bottom:8px;">🍇</div>
-        <strong style="font-size:17px; color:#c3f60c;">Grapes – Casual & Friends</strong>
-        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
-          She's here for light, fun chats and friendships. No pressure, just good vibes, laughs, and easy connection.
-        </p>
-      </div>
-      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #ff6b9d;">
-        <div style="font-size:36px; margin-bottom:8px;">🍑</div>
-        <strong style="font-size:17px; color:#c3f60c;">Peach – Thrills & Generosity</strong>
-        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
-          She's open to exciting, luxurious experiences where you spoil her. Think paid dates, gifts, and high-energy fun.
-        </p>
-      </div>
-      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #ff4757;">
-        <div style="font-size:36px; margin-bottom:8px;">🍒</div>
-        <strong style="font-size:17px; color:#c3f60c;">Cherries – Passion & Romance</strong>
-        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
-          All about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
-        </p>
-      </div>
-      <div style="background:#1a1a1a; padding:18px; border-radius:16px; border-left:4px solid #ff9f43;">
-        <div style="font-size:36px; margin-bottom:8px;">🍓</div>
-        <strong style="font-size:17px; color:#c3f60c;">Strawberry – Love & Relationships</strong>
-        <p style="margin:8px 0 0; color:#ccc; font-size:15px; line-height:1.5;">
-          She's ready for deeper emotions, commitment, and building something real. Perfect for love adventures and long-term vibes.
-        </p>
+        <!-- Fruit 3: Cherries -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #ff4757; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍒</div>
+            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
+              Cherries – Passion & Romance
+            </strong>
+            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
+              All about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
+            </p>
+          </div>
+        </div>
+
+        <!-- Fruit 4: Strawberry -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #ff9f43; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍓</div>
+            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
+              Strawberry – Love & Relationships
+            </strong>
+            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
+              She's ready for deeper emotions, commitment, and building something real. Perfect for love adventures and long-term vibes.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <button id="closeFruitGuideBottom" style="
-      margin-top:32px;
-      padding:14px 44px;
-      background:#151515;
-      color:#c3f60c;
-      border:1px solid #333;
-      border-radius:18px;
-      font-size:16px;
-      font-weight:700;
-      cursor:pointer;
-    ">
-      Got it!
-    </button>
+    <!-- Dots Indicator -->
+    <div style="padding: 20px 28px; text-align:center;">
+      <div id="fruitDots" style="display:inline-flex; gap:10px;">
+        <span class="dot active" data-slide="0"></span>
+        <span class="dot" data-slide="1"></span>
+        <span class="dot" data-slide="2"></span>
+        <span class="dot" data-slide="3"></span>
+      </div>
+    </div>
+
+    <!-- Bottom Close Button -->
+    <div style="padding: 0 28px 32px; text-align:center;">
+      <button id="closeFruitGuideBottom" style="
+        padding:14px 44px;
+        background:#151515;
+        color:#c3f60c;
+        border:1px solid #333;
+        border-radius:18px;
+        font-size:16px;
+        font-weight:700;
+        cursor:pointer;
+      ">
+        Got it!
+      </button>
+    </div>
   </div>
 </div>
-      
 
 <!-- 📝 INFO TAB -->
 <div id="infoTab" class="tab-content"
