@@ -1597,7 +1597,7 @@ if (m.type === "buzz" && m.stickerGradient) {
 } else {
   // Normal messages — just append content as usual
   wrapper.appendChild(content);
-
+}
   // Auto-scroll only if user is near bottom (within 200px)
 const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
 if (distanceFromBottom < 200) {
