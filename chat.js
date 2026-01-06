@@ -6583,9 +6583,67 @@ function loadPollCarousel() {
   `;
 }
 /*********************************
+ * Nature!!
+ *********************************/
+function showHostFields() {
+  const hostFields = document.getElementById("hostOnlyFields");
+  if (currentUser && currentUser.isHost === true) {
+    hostFields.style.display = "block"; // Show for hosts
+  } else {
+    hostFields.style.display = "none"; // Hide for everyone else
+  }
+}
+
+// Call this when user data is ready (e.g., after login or page load)
+showHostFields();
+/*********************************
  * fruity punch!!
  *********************************/
+let currentFruitSlide = 0;
+const totalFruitSlides = 4;
+
+function updateFruitCarousel() {
+  document.getElementById("fruitSlides").style.transform = `translateX(-${currentFruitSlide * 25}%)`;
+  
+  document.querySelectorAll("#fruitDots .dot").forEach((dot, i) => {
+    dot.classList.toggle("active", i === currentFruitSlide);
+  });
+}
+
+// Touch/Swipe Support
+let touchStartX = 0;
+const carousel = document.getElementById("fruitCarousel");
+
+carousel.addEventListener("touchstart", e => {
+  touchStartX = e.touches[0].clientX;
+});
+
+carousel.addEventListener("touchend", e => {
+  const touchEndX = e.changedTouches[0].clientX;
+  const diff = touchStartX - touchEndX;
+
+  if (Math.abs(diff) > 50) { // minimum swipe distance
+    if (diff > 0 && currentFruitSlide < totalFruitSlides - 1) {
+      currentFruitSlide++;
+    } else if (diff < 0 && currentFruitSlide > 0) {
+      currentFruitSlide--;
+    }
+    updateFruitCarousel();
+  }
+});
+
+// Dot clicks
+document.querySelectorAll("#fruitDots .dot").forEach(dot => {
+  dot.addEventListener("click", () => {
+    currentFruitSlide = parseInt(dot.dataset.slide);
+    updateFruitCarousel();
+  });
+});
+
+// Open/Close (your existing)
 document.getElementById("openFruitGuide").addEventListener("click", () => {
+  currentFruitSlide = 0;
+  updateFruitCarousel();
   document.getElementById("fruitGuideModal").style.display = "flex";
 });
 
@@ -6597,12 +6655,6 @@ document.getElementById("closeFruitGuideBottom").addEventListener("click", () =>
   document.getElementById("fruitGuideModal").style.display = "none";
 });
 
-// Close when clicking outside
-document.getElementById("fruitGuideModal").addEventListener("click", (e) => {
-  if (e.target === document.getElementById("fruitGuideModal")) {
-    document.getElementById("fruitGuideModal").style.display = "none";
-  }
-});
 /*********************************
  * INIT
  *********************************/
