@@ -1533,16 +1533,13 @@ wrapper.appendChild(metaEl);
 var content = document.createElement("span");
 content.className = "content";
 content.textContent = " " + (m.content || "");
-
 // SUPER STICKER BUZZ — ONLY WHEN NEEDED
 if (m.type === "buzz" && m.stickerGradient) {
-  // Create a dedicated container JUST for the buzz message content
-  const buzzContainer = document.createElement("div");
-  buzzContainer.className = "super-sticker-buzz";
-  buzzContainer.style.cssText = `
+  wrapper.className += " super-sticker";
+  wrapper.style.cssText = `
     display: inline-block;
-    max-width: 100%;
-    margin: 12px 0 0 0;
+    max-width: 85%;
+    margin: 14px 10px;
     padding: 18px 24px;
     border-radius: 28px;
     background: ${m.stickerGradient};
@@ -1552,86 +1549,78 @@ if (m.type === "buzz" && m.stickerGradient) {
     border: 3px solid rgba(255,255,255,0.25);
     animation: stickerPop 0.7s ease-out;
     backdrop-filter: blur(4px);
-    transition: transform 0.2s;
   `;
 
-  // Hover pop effect
-  buzzContainer.onmouseenter = () => buzzContainer.style.transform = "scale(1.03) translateY(-4px)";
-  buzzContainer.onmouseleave = () => buzzContainer.style.transform = "scale(1)";
-
-  // Confetti inside the buzz container only
-  const confettiContainer = document.createElement("div");
+  // CONFETTI INSIDE
+  var confettiContainer = document.createElement("div");
   confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
-  buzzContainer.appendChild(confettiContainer);
+  wrapper.appendChild(confettiContainer);
+
+  // Make text pop on hover
+  wrapper.style.transition = "transform 0.2s";
+  wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
+  wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
 
   // Fade after 20s
-  setTimeout(() => {
-    buzzContainer.style.background = "rgba(255,255,255,0.06)";
-    buzzContainer.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-    buzzContainer.style.border = "none";
+  setTimeout(function() {
+    wrapper.style.background = "rgba(255,255,255,0.06)";
+    wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    wrapper.style.border = "none";
     confettiContainer.remove();
   }, 20000);
 
-  // Style the message content
-  content.style.cssText = `
-    font-weight: 900 !important;
-    font-size: 1.35em !important;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    letter-spacing: 0.8px;
-    display: block;
-    line-height: 1.4;
-    text-align: center;
-  `;
-
-  // Add megaphone emoji
-  const originalText = content.innerHTML || content.textContent || "";
-  content.innerHTML = `<span style="font-size:1.5em; margin-right:12px;">📢</span>${originalText}`;
-
-  // Append content to buzz container
-  buzzContainer.appendChild(content);
-
-  // Append buzz container to wrapper
-  wrapper.appendChild(buzzContainer);
-
-} else {
-  // Normal messages — append content directly
-  wrapper.appendChild(content);
+  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
+content.style.cssText = `
+  font-weight: 900 !important;           /* Ultra bold */
+  font-size: 1.35em !important;          /* Big but not too big for inline */
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  letter-spacing: 0.8px;
+  display: inline !important;            /* ←←← Forces it back inline */
+  vertical-align: middle;                /* Perfect alignment with username */
+  line-height: 1.4;
+`;
 }
 
-// TAP FOR MENU (applies to all messages)
-wrapper.onclick = function(e) {
-  e.stopPropagation();
-  showTapModal(wrapper, {
-    id: id,
-    chatId: m.chatId,
-    uid: realUid,
-    content: m.content,
-    replyTo: m.replyTo,
-    replyToContent: m.replyToContent,
-    replyToChatId: m.replyToChatId
+// ALWAYS APPEND CONTENT
+wrapper.appendChild(content);
+    
+    // TAP FOR MENU
+    wrapper.onclick = function(e) {
+      e.stopPropagation();
+      showTapModal(wrapper, {
+        id: id,
+        chatId: m.chatId,
+        uid: realUid,
+        content: m.content,
+        replyTo: m.replyTo,
+        replyToContent: m.replyToContent,
+        replyToChatId: m.replyToChatId
+      });
+    };
+
+    refs.messagesEl.appendChild(wrapper);
   });
-};
 
-refs.messagesEl.appendChild(wrapper);
-
-  // Auto-scroll logic — only if user is near bottom
+  // Auto-scroll only if user is near bottom (within 200px)
 const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
 if (distanceFromBottom < 200) {
   refs.messagesEl.scrollTo({
     top: refs.messagesEl.scrollHeight,
-    behavior: "smooth"
+    behavior: "smooth"  // Smooth scroll for better UX
   });
 }
 
-// Additional auto-scroll fallback
-if (!scrollPending) {
-  scrollPending = true;
-  requestAnimationFrame(() => {
-    refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-    scrollPending = false;
-  });
+  // AUTO-SCROLL
+  if (!scrollPending) {
+    scrollPending = true;
+    requestAnimationFrame(function() {
+      refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+      scrollPending = false;
+    });
+  }
 }
+
 /* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
 function attachMessagesListener() {
   const q = query(collection(db, CHAT_COLLECTION), orderBy("timestamp", "asc"));
