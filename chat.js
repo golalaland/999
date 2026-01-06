@@ -3812,7 +3812,7 @@ function showMeetModal(host) {
           if (index === stages.length - 1) {
             setTimeout(() => {
               const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
-              const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on xixi) and I’d love to meet you. 😊`;
+              const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on CUBE) and I’d love to meet you.`;
 
               let openURL = "";
               let buttonColor = "";
