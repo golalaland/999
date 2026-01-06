@@ -1557,7 +1557,7 @@ if (m.type === "buzz" && m.stickerGradient) {
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
   wrapper.appendChild(confettiContainer);
 
-  // Hover pop
+  // Make text pop on hover
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
   wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
@@ -1570,46 +1570,38 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // === ONE-LINE: USERNAME + MESSAGE, SAME SIZE & BOLD ===
-  const username = m.username && m.username.trim() ? m.username.trim() : "Anon";
-
-  // Save original message content
-  const messageText = content.textContent || content.innerHTML;
-
-  // Apply bold big style to the whole line
-  content.style.cssText = `
-    font-weight: 900 !important;
-    font-size: 1.35em !important;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    letter-spacing: 0.8px;
-    display: inline !important;
-    vertical-align: middle;
-    line-height: 1.4;
-  `;
-
-  // Build the full one-liner: username + message
-  content.innerHTML = `<strong style="opacity:0.92; margin-right:6px;">${username}:</strong>${messageText}`;
+  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
+content.style.cssText = `
+  font-weight: 900 !important;           /* Ultra bold */
+  font-size: 1.35em !important;          /* Big but not too big for inline */
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  letter-spacing: 0.8px;
+  display: inline !important;            /* ←←← Forces it back inline */
+  vertical-align: middle;                /* Perfect alignment with username */
+  line-height: 1.4;
+`;
 }
 
-// ALWAYS APPEND CONTENT (now includes username)
+// ALWAYS APPEND CONTENT
 wrapper.appendChild(content);
+    
+    // TAP FOR MENU
+    wrapper.onclick = function(e) {
+      e.stopPropagation();
+      showTapModal(wrapper, {
+        id: id,
+        chatId: m.chatId,
+        uid: realUid,
+        content: m.content,
+        replyTo: m.replyTo,
+        replyToContent: m.replyToContent,
+        replyToChatId: m.replyToChatId
+      });
+    };
 
-// TAP FOR MENU (unchanged)
-wrapper.onclick = function(e) {
-  e.stopPropagation();
-  showTapModal(wrapper, {
-    id: id,
-    chatId: m.chatId,
-    uid: realUid,
-    content: m.content,
-    replyTo: m.replyTo,
-    replyToContent: m.replyToContent,
-    replyToChatId: m.replyToChatId
+    refs.messagesEl.appendChild(wrapper);
   });
-};
 
-refs.messagesEl.appendChild(wrapper);
-  });
 
   // Auto-scroll only if user is near bottom (within 200px)
 const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
