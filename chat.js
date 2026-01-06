@@ -1551,7 +1551,6 @@ if (m.type === "buzz" && m.stickerGradient) {
     backdrop-filter: blur(4px);
   `;
 
-  /* CONFETTI */
   const confettiContainer = document.createElement("div");
   confettiContainer.style.cssText =
     "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
@@ -1561,14 +1560,12 @@ if (m.type === "buzz" && m.stickerGradient) {
   );
   wrapper.appendChild(confettiContainer);
 
-  /* HOVER */
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () =>
     (wrapper.style.transform = "scale(1.03) translateY(-4px)");
   wrapper.onmouseleave = () =>
     (wrapper.style.transform = "scale(1)");
 
-  /* FADE */
   setTimeout(() => {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
@@ -1576,10 +1573,7 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  /* 🔑 INLINE ALIGNMENT FIX (NO DOM MOVES) */
-  wrapper.style.display = "inline-flex";
-  wrapper.style.alignItems = "center";
-
+  /* ✅ STYLE ONLY — NO DOM MOVES */
   content.style.cssText += `
     font-size: 1.35em;
     font-weight: 900;
@@ -1589,18 +1583,8 @@ if (m.type === "buzz" && m.stickerGradient) {
     display: inline;
     vertical-align: middle;
   `;
-  
-  /* ================= APPEND ================= */
-  inlineRow.appendChild(usernameEl);
-  inlineRow.appendChild(content);
-  wrapper.appendChild(inlineRow);
-
-  return; // ⬅️ critical: prevents global content append
 }
-
-/* ===== GLOBAL FALLBACK ===== */
 wrapper.appendChild(content);
-
 
     // TAP FOR MENU
     wrapper.onclick = function(e) {
