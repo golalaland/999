@@ -1436,6 +1436,7 @@ function renderMessagesFromArray(messages) {
     wrapper.id = id;
 
 
+// USERNAME — FULL REWRITE: ORIGINAL BEHAVIOR + SAME-COLOR COLON + TIGHTER SPACING
 // USERNAME — FINAL VERSION: SHORT TAP = USERNAME ACTION, LONG PRESS = REPLY/REPORT MODAL
 const metaEl = document.createElement("span");
 metaEl.className = "meta";
@@ -1459,7 +1460,7 @@ const usernameColor = refs.userColors && refs.userColors[m.uid]
 nameSpan.style.cssText = `
   cursor: pointer;
   font-weight: 700;
-  padding: 0 3px 0 2px;           /* Tight spacing to message */
+  padding: 0 4px 0 2px;           /* Tight spacing to message */
   border-radius: 4px;
   user-select: none;
   color: ${usernameColor} !important;
