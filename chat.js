@@ -1536,11 +1536,13 @@ content.textContent = " " + (m.content || "");
 
 // SUPER STICKER BUZZ — ONLY WHEN NEEDED
 if (m.type === "buzz" && m.stickerGradient) {
-  wrapper.className += " super-sticker";
-  wrapper.style.cssText = `
+  // Create a dedicated container JUST for the buzz message content
+  const buzzContainer = document.createElement("div");
+  buzzContainer.className = "super-sticker-buzz";
+  buzzContainer.style.cssText = `
     display: inline-block;
-    max-width: 85%;
-    margin: 14px 10px;
+    max-width: 100%;
+    margin: 12px 0 0 0;
     padding: 18px 24px;
     border-radius: 28px;
     background: ${m.stickerGradient};
@@ -1550,57 +1552,51 @@ if (m.type === "buzz" && m.stickerGradient) {
     border: 3px solid rgba(255,255,255,0.25);
     animation: stickerPop 0.7s ease-out;
     backdrop-filter: blur(4px);
+    transition: transform 0.2s;
   `;
 
-  // CONFETTI INSIDE
-  var confettiContainer = document.createElement("div");
+  // Hover pop effect
+  buzzContainer.onmouseenter = () => buzzContainer.style.transform = "scale(1.03) translateY(-4px)";
+  buzzContainer.onmouseleave = () => buzzContainer.style.transform = "scale(1)";
+
+  // Confetti inside the buzz container only
+  const confettiContainer = document.createElement("div");
   confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
-  wrapper.appendChild(confettiContainer);
-
-  // Make text pop on hover
-  wrapper.style.transition = "transform 0.2s";
-  wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
-  wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+  buzzContainer.appendChild(confettiContainer);
 
   // Fade after 20s
-  setTimeout(function() {
-    wrapper.style.background = "rgba(255,255,255,0.06)";
-    wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-    wrapper.style.border = "none";
+  setTimeout(() => {
+    buzzContainer.style.background = "rgba(255,255,255,0.06)";
+    buzzContainer.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    buzzContainer.style.border = "none";
     confettiContainer.remove();
   }, 20000);
 
-  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
-content.style.cssText = `
-  font-weight: 900 !important;           /* Ultra bold */
-  font-size: 1.35em !important;          /* Big but not too big for inline */
-  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-  letter-spacing: 0.8px;
-  display: inline !important;            /* ←←← Forces it back inline */
-  vertical-align: middle;                /* Perfect alignment with username */
-  line-height: 1.4;
-`;
-}
+  // Move the content into the buzz container
+  content.style.cssText = `
+    font-weight: 900 !important;
+    font-size: 1.35em !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    letter-spacing: 0.8px;
+    display: block;
+    line-height: 1.4;
+    text-align: center;
+  `;
 
-// ALWAYS APPEND CONTENT
-wrapper.appendChild(content);
-    
-    // TAP FOR MENU
-    wrapper.onclick = function(e) {
-      e.stopPropagation();
-      showTapModal(wrapper, {
-        id: id,
-        chatId: m.chatId,
-        uid: realUid,
-        content: m.content,
-        replyTo: m.replyTo,
-        replyToContent: m.replyToContent,
-        replyToChatId: m.replyToChatId
-      });
-    };
+  // Optional: Add megaphone for extra buzz feel
+  content.innerHTML = `<span style="font-size:1.5em; margin-right:12px;">📢</span> ${content.innerHTML || content.textContent}`;
 
-    refs.messagesEl.appendChild(wrapper);
+  buzzContainer.appendChild(content);
+
+  // Append the special buzz container AFTER the normal content would go
+  wrapper.appendChild(buzzContainer);
+
+  // Prevent the tap modal from triggering on the buzz container if you want
+  // Or keep it — users can still tap the message to report/reply
+} else {
+  // Normal messages — just append content as usual
+  wrapper.appendChild(content);
   });
 
   // Auto-scroll only if user is near bottom (within 200px)
