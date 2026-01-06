@@ -3735,157 +3735,147 @@ function showMeetModal(host) {
 
   cancelBtn.onclick = () => modal.remove();
 
-  confirmBtn.onclick = async () => {
-    const COST = 21;
+ confirmBtn.onclick = async () => {
+  const COST = 21;
 
-    if (!currentUser?.uid) {
-      showGiftAlert("⚠️ Please log in to request meets");
-      modal.remove();
-      return;
-    }
-
-    if ((currentUser.stars || 0) < COST) {
-      showGiftAlert("⚠️ Not enough stars ⭐");
-      modal.remove();
-      return;
-    }
-
-    confirmBtn.disabled = true;
-    confirmBtn.style.opacity = 0.6;
-    confirmBtn.style.cursor = "not-allowed";
-
-    try {
-      // Deduct stars
-      currentUser.stars -= COST;
-      if (refs?.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-      await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
-
-      // Same playful staged flow for BOTH Telegram & WhatsApp
-      const fixedStages = ["Handling your meet request…", "Collecting host’s identity…"];
-      const playfulMessages = [
-        "Oh, she’s hella cute…💋", "Careful, she may be naughty..😏",
-        "Be generous with her, she’ll like you..", "Ohh, she’s a real star.. 🤩",
-        "Be a real gentleman, when she texts u..", "She’s ready to dazzle you tonight.. ✨",
-        "Watch out, she might steal your heart.. ❤️", "Look sharp, she’s got a sparkle.. ✨",
-        "Don’t blink, or you’ll miss her charm.. 😉", "Get ready for some fun surprises.. 😏",
-        "She knows how to keep it exciting.. 🎉", "Better behave, she’s watching.. 👀",
-        "She might just blow your mind.. 💥", "Keep calm, she’s worth it.. 😘",
-        "She’s got a twinkle in her eyes.. ✨", "Brace yourself for some charm.. 😎",
-        "She’s not just cute, she’s 🔥", "Careful, her smile is contagious.. 😁",
-        "She might make you blush.. 😳", "She’s a star in every way.. 🌟",
-        "Don’t miss this chance.. ⏳"
-      ];
-
-      const randomPlayful = [];
-      while (randomPlayful.length < 3) {
-        const choice = playfulMessages[Math.floor(Math.random() * playfulMessages.length)];
-        if (!randomPlayful.includes(choice)) randomPlayful.push(choice);
-      }
-
-      const stages = [...fixedStages, ...randomPlayful, "Generating secure link…"];
-      modalContent.innerHTML = `<p id="stageMsg" style="margin-top:20px;font-weight:500;"></p>`;
-      const stageMsgEl = modalContent.querySelector("#stageMsg");
-
-      let totalTime = 0;
-      stages.forEach((stage, index) => {
-        let duration = index < 2 ? 1500 + Math.random() * 1000
-                     : index < stages.length - 1 ? 1700 + Math.random() * 600
-                     : 2000 + Math.random() * 500;
-        totalTime += duration;
-
-      // Inside the staged animation — after last stage
-setTimeout(() => {
-  const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
-  const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on xixi) and I’d love to meet you. 😊`;
-
-  let finalHTML = "";
-  let openURL = "";
-  let buttonColor = "";
-
-  if (host.telegram && host.telegram.trim()) {
-    // TELEGRAM PATH
-    const username = host.telegram.trim().replace(/^@/, "");
-    openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
-    buttonColor = "#0088cc"; // Telegram blue
-
-    finalHTML = `
-      <h3 style="margin-bottom:12px; font-weight:600;">Your request to meet ${host.chatId} is approved</h3>
-      <p style="margin-bottom:20px; font-size:15px;">Chat with <b>@${username}</b> on Telegram</p>
-      <div style="font-size:56px; margin:24px 0;">📱</div>
-      <button id="openChatBtn" style="
-        margin-top:8px;
-        padding:12px 28px;
-        border:none;
-        border-radius:12px;
-        font-weight:600;
-        background:${buttonColor};
-        color:#fff;
-        cursor:pointer;
-        font-size:16px;
-        box-shadow:0 4px 15px rgba(0,0,0,0.3);
-      ">Send Message on Telegram</button>
-    `;
-  } else if (host.whatsapp && host.whatsapp.trim()) {
-    // WHATSAPP PATH
-    const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
-    const hostCountry = host.country || "Nigeria";
-    let waNumber = host.whatsapp.trim();
-    if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
-    waNumber = countryCodes[hostCountry] + waNumber;
-
-    openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
-    buttonColor = "#25D366"; // WhatsApp green
-
-    finalHTML = `
-      <h3 style="margin-bottom:12px; font-weight:600;">Your request to meet ${host.chatId} is approved</h3>
-      <p style="margin-bottom:20px; font-size:15px;">Chat with <b>${host.chatId}</b> on WhatsApp</p>
-      <div style="font-size:56px; margin:24px 0;">📱</div>
-      <button id="openChatBtn" style="
-        margin-top:8px;
-        padding:12px 28px;
-        border:none;
-        border-radius:12px;
-        font-weight:600;
-        background:${buttonColor};
-        color:#fff;
-        cursor:pointer;
-        font-size:16px;
-        box-shadow:0 4px 15px rgba(0,0,0,0.3);
-      ">Send Message on WhatsApp</button>
-    `;
-  } else {
-    // Fallback to social
-    showSocialRedirectModal(modalContent, host);
+  if (!currentUser?.uid) {
+    showGiftAlert("⚠️ Please log in to request meets");
+    modal.remove();
     return;
   }
 
-  modalContent.innerHTML = finalHTML;
-
-  // Button click + auto-open
-  const openBtn = modalContent.querySelector("#openChatBtn");
-  openBtn.onclick = () => {
-    window.open(openURL, "_blank");
+  if ((currentUser.stars || 0) < COST) {
+    showGiftAlert("⚠️ Not enough stars ⭐");
     modal.remove();
-  };
+    return;
+  }
 
-  // Auto-open the chat
-  window.open(openURL, "_blank");
+  confirmBtn.disabled = true;
+  confirmBtn.style.opacity = 0.6;
+  confirmBtn.style.cursor = "not-allowed";
 
-  // Auto-close modal after a moment
-  setTimeout(() => modal.remove(), 8000);
+  try {
+    // Deduct stars
+    currentUser.stars -= COST;
+    if (refs?.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
 
-}, 500);
-          }
-        }, totalTime);
-      });
+    // === SAME PLAYFUL STAGED FLOW FOR TELEGRAM & WHATSAPP ===
+    const fixedStages = ["Handling your meet request…", "Collecting host’s identity…"];
+    const playfulMessages = [
+      "Oh, she’s hella cute…💋", "Careful, she may be naughty..😏",
+      "Be generous with her, she’ll like you..", "Ohh, she’s a real star.. 🤩",
+      "Be a real gentleman, when she texts u..", "She’s ready to dazzle you tonight.. ✨",
+      "Watch out, she might steal your heart.. ❤️", "Look sharp, she’s got a sparkle.. ✨",
+      "Don’t blink, or you’ll miss her charm.. 😉", "Get ready for some fun surprises.. 😏",
+      "She knows how to keep it exciting.. 🎉", "Better behave, she’s watching.. 👀",
+      "She might just blow your mind.. 💥", "Keep calm, she’s worth it.. 😘",
+      "She’s got a twinkle in her eyes.. ✨", "Brace yourself for some charm.. 😎",
+      "She’s not just cute, she’s 🔥", "Careful, her smile is contagious.. 😁",
+      "She might make you blush.. 😳", "She’s a star in every way.. 🌟",
+      "Don’t miss this chance.. ⏳"
+    ];
 
-    } catch (err) {
-      console.error("Meet request failed:", err);
-      showGiftAlert("Something went wrong. Try again.");
-      modal.remove();
+    const randomPlayful = [];
+    while (randomPlayful.length < 3) {
+      const choice = playfulMessages[Math.floor(Math.random() * playfulMessages.length)];
+      if (!randomPlayful.includes(choice)) randomPlayful.push(choice);
     }
-  };
-}
+
+    const stages = [...fixedStages, ...randomPlayful, "Generating secure link…"];
+
+    modalContent.innerHTML = `<p id="stageMsg" style="margin-top:20px; font-weight:500; font-size:15px;"></p>`;
+    const stageMsgEl = modalContent.querySelector("#stageMsg");
+
+    let totalTime = 0;
+    stages.forEach((stage, index) => {
+      const duration = index < 2 
+        ? 1500 + Math.random() * 1000
+        : index < stages.length - 1 
+        ? 1700 + Math.random() * 600
+        : 2000 + Math.random() * 500;
+
+      totalTime += duration;
+
+      setTimeout(() => {
+        stageMsgEl.textContent = stage;
+
+        // Final stage complete → show result screen
+        if (index === stages.length - 1) {
+          setTimeout(() => {
+            const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
+            const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on xixi) and I’d love to meet you. 😊`;
+
+            let openURL = "";
+            let buttonColor = "";
+            let platformName = "";
+            let contactDisplay = "";
+
+            if (host.telegram && host.telegram.trim()) {
+              // TELEGRAM
+              const username = host.telegram.trim().replace(/^@/, "");
+              openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
+              buttonColor = "#0088cc";
+              platformName = "Telegram";
+              contactDisplay = `@${username}`;
+            } else if (host.whatsapp && host.whatsapp.trim()) {
+              // WHATSAPP
+              const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
+              const hostCountry = host.country || "Nigeria";
+              let waNumber = host.whatsapp.trim();
+              if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
+              waNumber = countryCodes[hostCountry] + waNumber;
+
+              openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
+              buttonColor = "#25D366";
+              platformName = "WhatsApp";
+              contactDisplay = host.chatId;
+            } else {
+              showSocialRedirectModal(modalContent, host);
+              return;
+            }
+
+            // Final success screen — consistent for both platforms
+            modalContent.innerHTML = `
+              <h3 style="margin-bottom:12px; font-weight:600;">Your request to meet ${host.chatId} is approved</h3>
+              <p style="margin-bottom:20px; font-size:15px;">Chat with <b>${contactDisplay}</b> on ${platformName}</p>
+              <div style="font-size:56px; margin:24px 0;">📱</div>
+              <button id="openChatBtn" style="
+                margin-top:8px;
+                padding:12px 32px;
+                border:none;
+                border-radius:12px;
+                font-weight:600;
+                background:${buttonColor};
+                color:#fff;
+                cursor:pointer;
+                font-size:16px;
+                box-shadow:0 6px 20px rgba(0,0,0,0.4);
+              ">Send Message on ${platformName}</button>
+            `;
+
+            const openBtn = modalContent.querySelector("#openChatBtn");
+            openBtn.onclick = () => {
+              window.open(openURL, "_blank");
+              modal.remove();
+            };
+
+            // Auto-open chat
+            window.open(openURL, "_blank");
+
+            // Auto-close modal
+            setTimeout(() => modal.remove(), 8000);
+          }, 500);
+        }
+      }, totalTime);
+    });
+
+  } catch (err) {
+    console.error("Meet request failed:", err);
+    showGiftAlert("Something went wrong. Try again.");
+    modal.remove();
+  }
+};
 
 /* ---------- Social Fallback (unchanged) ---------- */
 function showSocialRedirectModal(modalContent, host) {
