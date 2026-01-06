@@ -6583,6 +6583,27 @@ function loadPollCarousel() {
   `;
 }
 /*********************************
+ * fruity punch!!
+ *********************************/
+document.getElementById("openFruitGuide").addEventListener("click", () => {
+  document.getElementById("fruitGuideModal").style.display = "flex";
+});
+
+document.getElementById("closeFruitGuide").addEventListener("click", () => {
+  document.getElementById("fruitGuideModal").style.display = "none";
+});
+
+document.getElementById("closeFruitGuideBottom").addEventListener("click", () => {
+  document.getElementById("fruitGuideModal").style.display = "none";
+});
+
+// Close when clicking outside
+document.getElementById("fruitGuideModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("fruitGuideModal")) {
+    document.getElementById("fruitGuideModal").style.display = "none";
+  }
+});
+/*********************************
  * INIT
  *********************************/
 loadReels();
