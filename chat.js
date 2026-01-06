@@ -1566,14 +1566,14 @@ if (m.type === "buzz" && m.stickerGradient) {
   );
   wrapper.appendChild(confettiContainer);
 
-  /* ================= HOVER POP ================= */
+  /* ================= HOVER ================= */
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () =>
     (wrapper.style.transform = "scale(1.03) translateY(-4px)");
   wrapper.onmouseleave = () =>
     (wrapper.style.transform = "scale(1)");
 
-  /* ================= FADE AFTER 20s ================= */
+  /* ================= FADE ================= */
   setTimeout(() => {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
@@ -1581,7 +1581,7 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  /* ================= INLINE ROW (USERNAME + TEXT) ================= */
+  /* ================= INLINE ALIGNMENT FIX ================= */
   const inlineRow = document.createElement("span");
   inlineRow.style.cssText = `
     display: inline-flex;
@@ -1590,30 +1590,37 @@ if (m.type === "buzz" && m.stickerGradient) {
     white-space: nowrap;
   `;
 
-  /* ================= USERNAME STYLE ================= */
+  /* USERNAME */
   username.style.cssText += `
     font-size: 1.35em;
     font-weight: 900;
     line-height: 1.4;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    display: inline;
   `;
 
-  /* ================= BUZZ TEXT STYLE ================= */
-  content.style.cssText = `
-    font-size: 1.35em !important;
-    font-weight: 900 !important;
-    letter-spacing: 0.8px;
+  /* BUZZ TEXT */
+  content.style.cssText += `
+    font-size: 1.35em;
+    font-weight: 900;
     line-height: 1.4;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    letter-spacing: 0.8px;
     white-space: nowrap;
+    display: inline;
   `;
 
-  /* ================= APPEND ORDER ================= */
+  /* IMPORTANT: MOVE BOTH INTO INLINE ROW */
   inlineRow.appendChild(username);
   inlineRow.appendChild(content);
+
+  /* IMPORTANT: APPEND INLINE ROW */
   wrapper.appendChild(inlineRow);
+
+  return; // ⬅️ STOP FALLTHROUGH SO CONTENT IS NOT RE-APPENDED ELSEWHERE
 }
-    
+
+/* ===== GLOBAL FALLBACK ===== */
+wrapper.appendChild(content);
+
     // TAP FOR MENU
     wrapper.onclick = function(e) {
       e.stopPropagation();
