@@ -1551,61 +1551,64 @@ if (m.type === "buzz" && m.stickerGradient) {
     backdrop-filter: blur(4px);
   `;
 
-  // Confetti
+  // CONFETTI INSIDE
   var confettiContainer = document.createElement("div");
   confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
   wrapper.appendChild(confettiContainer);
 
-  // Hover effect
+  // Hover pop
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
   wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
 
   // Fade after 20s
-  setTimeout(() => {
+  setTimeout(function() {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     wrapper.style.border = "none";
     confettiContainer.remove();
   }, 20000);
 
-  // === CLEAN ONE-LINER: USERNAME + MESSAGE, SAME STYLE ===
-  const displayName = m.username && m.username.trim() !== "" ? m.username : "Anon";
+  // === ONE-LINE: USERNAME + MESSAGE, SAME SIZE & BOLD ===
+  const username = m.username && m.username.trim() ? m.username.trim() : "Anon";
 
-  // Apply big bold style to the entire message
+  // Save original message content
+  const messageText = content.textContent || content.innerHTML;
+
+  // Apply bold big style to the whole line
   content.style.cssText = `
     font-weight: 900 !important;
-    font-size: 1.37em !important;
-    letter-spacing: 0.8px;
+    font-size: 1.35em !important;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    line-height: 1.4;
+    letter-spacing: 0.8px;
     display: inline !important;
+    vertical-align: middle;
+    line-height: 1.4;
   `;
 
-  // Prepend username correctly — no duplicate if missing
-  content.innerHTML = `<strong style="opacity:0.95;">${displayName}:</strong> ${content.innerHTML}`;
-
+  // Build the full one-liner: username + message
+  content.innerHTML = `<strong style="opacity:0.92; margin-right:6px;">${username}:</strong>${messageText}`;
 }
 
-// Always append content
+// ALWAYS APPEND CONTENT (now includes username)
 wrapper.appendChild(content);
-                   
-    // TAP FOR MENU
-    wrapper.onclick = function(e) {
-      e.stopPropagation();
-      showTapModal(wrapper, {
-        id: id,
-        chatId: m.chatId,
-        uid: realUid,
-        content: m.content,
-        replyTo: m.replyTo,
-        replyToContent: m.replyToContent,
-        replyToChatId: m.replyToChatId
-      });
-    };
 
-    refs.messagesEl.appendChild(wrapper);
+// TAP FOR MENU (unchanged)
+wrapper.onclick = function(e) {
+  e.stopPropagation();
+  showTapModal(wrapper, {
+    id: id,
+    chatId: m.chatId,
+    uid: realUid,
+    content: m.content,
+    replyTo: m.replyTo,
+    replyToContent: m.replyToContent,
+    replyToChatId: m.replyToChatId
+  });
+};
+
+refs.messagesEl.appendChild(wrapper);
   });
 
   // Auto-scroll only if user is near bottom (within 200px)
