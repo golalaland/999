@@ -4799,6 +4799,7 @@ window.startStream = startStream;
     oldBtn.onclick = () => switchContent(oldBtn.dataset.content);
   });
 });
+
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
   // Toggle this dynamically in your app
@@ -6245,7 +6246,7 @@ document.getElementById("topBallersBtn")?.addEventListener("click", openPollModa
 
 async function openPollModal() {
   if (!currentUser) {
-    showStarPopup("Login to vote & win $STRZ!");
+    showGoldAlert("Login to vote & win $STRZ!");
     return;
   }
 
@@ -6272,7 +6273,7 @@ async function openPollModal() {
       if (now > endTime) {
         hideLoader();
         document.getElementById("pollModal").style.display = "none";
-        showStarPopup("Poll ended!");
+        showStarPopup("Poll has ended!");
         return;
       }
 
@@ -6450,9 +6451,9 @@ document.getElementById("closePollBtn").onclick = () => {
   if (pollUnsubscribe) pollUnsubscribe();
   if (votesUnsubscribe) votesUnsubscribe();
 };
-// CREATE POLL BUTTON — BULLETPROOF & ETERNAL
+
+   // === CREATE NEW POLL ===
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
-  // SAFETY FIRST — MAKE SURE ADMIN IS LOGGED IN
   if (!currentAdmin || !currentAdmin.uid) {
     showGoldAlert("Admin login required to create poll!");
     return;
@@ -6463,20 +6464,27 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   const options = Array.from(optionInputs)
     .map(input => input.value.trim())
     .filter(v => v.length > 0);
-
   const reward = parseInt(document.getElementById("poll-reward").value) || 50;
   const hours = parseInt(document.getElementById("poll-duration").value) || 24;
 
-  if (!question) {
-    showGoldAlert("Please enter a poll question ♡");
-    return;
-  }
-  if (options.length < 2) {
-    showGoldAlert("Need at least 2 cute options!");
-    return;
-  }
+  if (!question) return showGoldAlert("Please enter a poll question ♡");
+  if (options.length < 2) return showGoldAlert("Need at least 2 cute options!");
 
-  showLoader("Creating your poll...");
+  const btn = document.getElementById("create-new-poll");
+
+  // Remember original styles for perfect reset
+  const originalWidth = btn.style.width;
+  const originalHeight = btn.style.height;
+  const originalBorderRadius = btn.style.borderRadius;
+  const originalBackground = btn.style.background;
+
+  // === START LOADING: Round spinner button ===
+  btn.innerHTML = '<span class="btn-spinner visible"></span>';
+  btn.style.width = '48px';
+  btn.style.height = '48px';
+  btn.style.borderRadius = '50%';
+  btn.style.background = '#2a2a2a'; // dark neutral while spinning
+  btn.disabled = true;
 
   try {
     const endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
@@ -6485,11 +6493,15 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
       question,
       options,
       votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
-      endsAt: endsAt,
+      endsAt,
       reward,
       createdAt: serverTimestamp(),
       createdBy: currentAdmin.uid
     });
+
+    // === SUCCESS: Green checkmark ===
+    btn.innerHTML = '✓';
+    btn.style.background = 'linear-gradient(90deg, #40c057, #69db7c)';
 
     // Clear form
     document.getElementById("poll-question").value = "";
@@ -6497,27 +6509,55 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
     document.getElementById("poll-reward").value = "50";
     document.getElementById("poll-duration").value = "24";
 
-    hideLoader();
-    showGoldAlert(`Poll created! ♡\n${options.length} options\n${reward} $STRZ reward\nEnds in ${hours} hours`, "SUCCESS");
+    // Show detailed alert (kept as requested!)
+    showGoldAlert(`Poll live! ♡\n${options.length} options • ${reward} $STRZ reward`, "SUCCESS");
 
-    // Optional: refresh current poll display
     if (typeof loadCurrentPollAdmin === "function") loadCurrentPollAdmin();
 
+    // Reset after 1.5s
+    setTimeout(() => {
+      btn.innerHTML = 'Create Poll';
+      btn.style.width = originalWidth;
+      btn.style.height = originalHeight;
+      btn.style.borderRadius = originalBorderRadius;
+      btn.style.background = originalBackground;
+      btn.disabled = false;
+    }, 1500);
+
   } catch (err) {
-    hideLoader();
+    // === ERROR: Red X ===
+    btn.innerHTML = '✗';
+    btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
+
     showGoldAlert("Failed to create poll — try again");
+
     console.error("Poll creation error:", err);
+
+    // Reset after 2s
+    setTimeout(() => {
+      btn.innerHTML = 'Create Poll';
+      btn.style.width = originalWidth;
+      btn.style.height = originalHeight;
+      btn.style.borderRadius = originalBorderRadius;
+      btn.style.background = originalBackground;
+      btn.disabled = false;
+    }, 2000);
   }
 });
+
 function loadPollCarousel() {
   const carousel = document.getElementById("pollCarousel");
-  
-  // Example: inject images
   carousel.innerHTML = `
-    <div style="display:flex; height:100%;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" style="width:33.3%; object-fit:cover;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" style="width:33.3%; object-fit:cover;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" style="width:33.3%; object-fit:cover;">
+    <div style="display:flex; height:100%; border-radius:14px; overflow:hidden;">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" 
+           alt="Cube Livestream Offline" 
+           style="width:33.3%; height:100%; object-fit:cover;">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" 
+           alt="Cube Livestream Offline" 
+           style="width:33.3%; height:100%; object-fit:cover;">
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" 
+           alt="Cube Livestream Offline" 
+           style="width:33.3%; height:100%; object-fit:cover;">
     </div>
   `;
 }
