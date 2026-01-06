@@ -64,8 +64,8 @@ const rtdb = getDatabase(app); // RTDB now properly initialized
 export { app, db, auth, rtdb };
 
 /* ---------- Global State ---------- */
-const ROOM_ID = "room5";
-const CHAT_COLLECTION = "messages_room5";
+const ROOM_ID = "room888";
+const CHAT_COLLECTION = "messages_room888";
 const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
