@@ -1536,6 +1536,9 @@ content.textContent = " " + (m.content || "");
 // SUPER STICKER BUZZ — ONLY WHEN NEEDED
 // SUPER STICKER BUZZ — ONLY WHEN NEEDED
 if (m.type === "buzz" && m.stickerGradient) {
+  // Remove the username meta for buzz messages (we don't want it)
+  if (metaEl) metaEl.remove();
+
   wrapper.className += " super-sticker";
   wrapper.style.cssText = `
     display: inline-block;
@@ -1552,41 +1555,48 @@ if (m.type === "buzz" && m.stickerGradient) {
     backdrop-filter: blur(4px);
   `;
 
-  // CONFETTI INSIDE
-  var confettiContainer = document.createElement("div");
+  // Confetti
+  const confettiContainer = document.createElement("div");
   confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
   wrapper.appendChild(confettiContainer);
 
-  // Hover pop
+  // Hover effect
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
   wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
 
   // Fade after 20s
-  setTimeout(function() {
+  setTimeout(() => {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     wrapper.style.border = "none";
     confettiContainer.remove();
   }, 20000);
 
-  // === MEGAPHONE SYMBOL + BUZZ MESSAGE (SAFE & ALWAYS VISIBLE) ===
-  const buzzText = m.content || "";
+  // === MEGAPHONE + BOLD BUZZ MESSAGE ONLY ===
+  const buzzText = m.content?.trim() || "";
 
-  // Use native emoji (📢) – guaranteed to show, no loading issues
-  content.innerHTML = `<span style="font-size:1.6em; margin-right:14px; vertical-align:middle; display:inline-block;">📢</span><span style="vertical-align:middle;">${buzzText}</span>`;
+  content.innerHTML = `
+    <span style="font-size:1.6em; margin-right:16px; vertical-align:middle; display:inline-block;">📢</span>
+    <span style="vertical-align:middle;">${buzzText}</span>
+  `;
 
-  // Apply bold style only to the text part (not the emoji)
-  content.querySelector('span:last-child').style.cssText = `
+  // Style only the text part
+  const textSpan = content.querySelector("span:last-child");
+  textSpan.style.cssText = `
     font-weight: 900;
     font-size: 1.35em;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     letter-spacing: 0.8px;
     line-height: 1.4;
+    display: inline;
   `;
-}
 
+  // Optional: make whole content centered or tighter
+  content.style.textAlign = "center";
+  content.style.display = "block";
+  
 // ALWAYS APPEND CONTENT
 wrapper.appendChild(content);
   });
