@@ -2455,3 +2455,37 @@ setBg();
 new MutationObserver(setBg).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 // Re-apply whenever class changes
 new MutationObserver(setBg).observe(document.body, {attributes:true, attributeFilter:['class']});
+function startGoldenRain() {
+  const rain = document.getElementById("goldenRain");
+  rain.innerHTML = ""; // clear previous
+
+  for (let i = 0; i < 50; i++) {
+    const bill = document.createElement("div");
+    bill.innerHTML = "₦";
+    bill.style.cssText = `
+      position: absolute;
+      font-size: ${18 + Math.random() * 20}px;
+      font-weight: 900;
+      color: #FFD700;
+      left: ${Math.random() * 100}%;
+      opacity: ${0.6 + Math.random() * 0.4};
+      animation: fall ${4 + Math.random() * 6}s linear infinite;
+      animation-delay: ${Math.random() * 4}s;
+      pointer-events: none;
+      text-shadow: 0 0 20px #FFD700;
+      transform: rotate(${Math.random() * 60 - 30}deg);
+    `;
+    rain.appendChild(bill);
+  }
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(100vh) rotate(${Math.random() * 720}deg);
+    opacity: 0;
+  }
+}
+
+// Call this when showing the overlay
+document.getElementById("withdrawSuccessOverlay").style.display = "block";
+startGoldenRain();
