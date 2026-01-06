@@ -6,7 +6,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
   content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>CUBE</title>
+<title>ＣＵＢＥ</title>
 <link rel="icon" href="data:," />
 <style>
 :root {
@@ -3141,22 +3141,71 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 .buy-tickets-note a:hover {
   text-decoration: underline;
 }
-/* ========== POLL SECTION HEADER (CENTERED) ========== */
+/* ========== POLL SECTION HEADER – PIM PED EDITION ========== */
 .poll-section-header {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin: 10px 0 18px; /* slightly reduced bottom */
+  gap: 8px;
+  margin: 12px 0 20px;
   text-align: center;
+  position: relative;
 }
 
+/* Eyebrow – subtle glow + upscale feel */
 .poll-section-eyebrow {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #777;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(90deg, #777, #aaa, #777);
+  -webkit-background-clip: text;
+  background-clip: text;
+  opacity: 0.9;
+  position: relative;
+}
+
+/* Optional: tiny animated underline flair */
+.poll-section-eyebrow::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateX(-50%);
+  opacity: 0.6;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Main title – gold gradient + subtle shimmer */
+.poll-section-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, #d4af37, #ffd700, #ffea00, #f9ca24, #d4af37);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 5s linear infinite;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.15); /* soft gold aura */
+}
+
+/* Shimmer animation (reuse from reward/button) */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Subtle pulse on the eyebrow line */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
 }
 </style>
 </head>
@@ -3179,7 +3228,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <div class="app">
     <div class="brand">
   <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962" 
-       alt="乂丨乂丨" 
+       alt="ＣＵＢＥ" 
        class="brand-logo">
 </div>
 
@@ -3858,8 +3907,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     margin: 0 auto 16px;
     line-height: 1.45;
   ">
-    Share your personal invite link and expand your influence!<br>
-    <strong>100 STRZ</strong> each new host referral & • <strong>250 STRZ</strong> per VIP invite!
+    Share your personal invite link and grow your influence!<br>
+    <strong>100 STRZ</strong> each new host referral & <strong>250 STRZ</strong> per VIP invite!
   </p>
 
   <div style="display: flex; justify-content: center;">
