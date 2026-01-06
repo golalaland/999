@@ -1573,7 +1573,7 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // Move the content into the buzz container
+  // Style the message content
   content.style.cssText = `
     font-weight: 900 !important;
     font-size: 1.35em !important;
@@ -1584,37 +1584,53 @@ if (m.type === "buzz" && m.stickerGradient) {
     text-align: center;
   `;
 
-  // Optional: Add megaphone for extra buzz feel
-  content.innerHTML = `<span style="font-size:1.5em; margin-right:12px;">📢</span> ${content.innerHTML || content.textContent}`;
+  // Add megaphone emoji
+  const originalText = content.innerHTML || content.textContent || "";
+  content.innerHTML = `<span style="font-size:1.5em; margin-right:12px;">📢</span>${originalText}`;
 
+  // Append content to buzz container
   buzzContainer.appendChild(content);
 
-  // Append the special buzz container AFTER the normal content would go
+  // Append buzz container to wrapper
   wrapper.appendChild(buzzContainer);
 
-  // Prevent the tap modal from triggering on the buzz container if you want
-  // Or keep it — users can still tap the message to report/reply
 } else {
-  // Normal messages — just append content as usual
+  // Normal messages — append content directly
   wrapper.appendChild(content);
 }
-  // Auto-scroll only if user is near bottom (within 200px)
+
+// TAP FOR MENU (applies to all messages)
+wrapper.onclick = function(e) {
+  e.stopPropagation();
+  showTapModal(wrapper, {
+    id: id,
+    chatId: m.chatId,
+    uid: realUid,
+    content: m.content,
+    replyTo: m.replyTo,
+    replyToContent: m.replyToContent,
+    replyToChatId: m.replyToChatId
+  });
+};
+
+refs.messagesEl.appendChild(wrapper);
+
+  // Auto-scroll logic — only if user is near bottom
 const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
 if (distanceFromBottom < 200) {
   refs.messagesEl.scrollTo({
     top: refs.messagesEl.scrollHeight,
-    behavior: "smooth"  // Smooth scroll for better UX
+    behavior: "smooth"
   });
 }
 
-  // AUTO-SCROLL
-  if (!scrollPending) {
-    scrollPending = true;
-    requestAnimationFrame(function() {
-      refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-      scrollPending = false;
-    });
-  }
+// Additional auto-scroll fallback
+if (!scrollPending) {
+  scrollPending = true;
+  requestAnimationFrame(() => {
+    refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+    scrollPending = false;
+  });
 }
 /* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
 function attachMessagesListener() {
