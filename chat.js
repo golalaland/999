@@ -3793,64 +3793,88 @@ function showMeetModal(host) {
                      : 2000 + Math.random() * 500;
         totalTime += duration;
 
-        setTimeout(() => {
-          stageMsgEl.textContent = stage;
+      // Inside the staged animation — after last stage
+setTimeout(() => {
+  const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
+  const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on xixi) and I’d love to meet you. 😊`;
 
-          if (index === stages.length - 1) {
-            setTimeout(() => {
-              const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
-              const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on xixi) and I’d love to meet you. 😊`;
+  let finalHTML = "";
+  let openURL = "";
+  let buttonColor = "";
 
-              // PRIORITY 1: TELEGRAM
-              if (host.telegram && host.telegram.trim()) {
-                const username = host.telegram.trim().replace(/^@/, "");
+  if (host.telegram && host.telegram.trim()) {
+    // TELEGRAM PATH
+    const username = host.telegram.trim().replace(/^@/, "");
+    openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
+    buttonColor = "#0088cc"; // Telegram blue
 
-                modalContent.innerHTML = `
-                  <h3 style="margin-bottom:10px;font-weight:600;">Meet Request Sent!</h3>
-                  <p style="margin-bottom:16px;">Opening chat with <b>@${username}</b> on Telegram</p>
-                  <div style="font-size:48px; margin:20px 0;">📱</div>
-                  <button id="openChatBtn" style="margin-top:6px;padding:10px 24px;border:none;border-radius:10px;font-weight:600;background:#0088cc;color:#fff;cursor:pointer;">Send Message</button>
-                `;
+    finalHTML = `
+      <h3 style="margin-bottom:12px; font-weight:600;">Your request to meet ${host.chatId} is approved</h3>
+      <p style="margin-bottom:20px; font-size:15px;">Chat with <b>@${username}</b> on Telegram</p>
+      <div style="font-size:56px; margin:24px 0;">📱</div>
+      <button id="openChatBtn" style="
+        margin-top:8px;
+        padding:12px 28px;
+        border:none;
+        border-radius:12px;
+        font-weight:600;
+        background:${buttonColor};
+        color:#fff;
+        cursor:pointer;
+        font-size:16px;
+        box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      ">Send Message on Telegram</button>
+    `;
+  } else if (host.whatsapp && host.whatsapp.trim()) {
+    // WHATSAPP PATH
+    const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
+    const hostCountry = host.country || "Nigeria";
+    let waNumber = host.whatsapp.trim();
+    if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
+    waNumber = countryCodes[hostCountry] + waNumber;
 
-                modalContent.querySelector("#openChatBtn").onclick = () => {
-                  window.open(`https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`, "_blank");
-                  modal.remove();
-                };
+    openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
+    buttonColor = "#25D366"; // WhatsApp green
 
-                // Auto-open
-                window.open(`https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`, "_blank");
-              }
-              // PRIORITY 2: WHATSAPP
-              else if (host.whatsapp && host.whatsapp.trim()) {
-                const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
-                const hostCountry = host.country || "Nigeria";
-                let waNumber = host.whatsapp.trim();
-                if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
-                waNumber = countryCodes[hostCountry] + waNumber;
+    finalHTML = `
+      <h3 style="margin-bottom:12px; font-weight:600;">Your request to meet ${host.chatId} is approved</h3>
+      <p style="margin-bottom:20px; font-size:15px;">Chat with <b>${host.chatId}</b> on WhatsApp</p>
+      <div style="font-size:56px; margin:24px 0;">📱</div>
+      <button id="openChatBtn" style="
+        margin-top:8px;
+        padding:12px 28px;
+        border:none;
+        border-radius:12px;
+        font-weight:600;
+        background:${buttonColor};
+        color:#fff;
+        cursor:pointer;
+        font-size:16px;
+        box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      ">Send Message on WhatsApp</button>
+    `;
+  } else {
+    // Fallback to social
+    showSocialRedirectModal(modalContent, host);
+    return;
+  }
 
-                modalContent.innerHTML = `
-                  <h3 style="margin-bottom:10px;font-weight:600;">Meet Request Sent!</h3>
-                  <p style="margin-bottom:16px;">Your request to meet <b>${host.chatId}</b> is approved.</p>
-                  <button id="openChatBtn" style="margin-top:6px;padding:10px 24px;border:none;border-radius:10px;font-weight:600;background:#25D366;color:#fff;cursor:pointer;">Send Message on WhatsApp</button>
-                `;
+  modalContent.innerHTML = finalHTML;
 
-                modalContent.querySelector("#openChatBtn").onclick = () => {
-                  window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`, "_blank");
-                  modal.remove();
-                };
+  // Button click + auto-open
+  const openBtn = modalContent.querySelector("#openChatBtn");
+  openBtn.onclick = () => {
+    window.open(openURL, "_blank");
+    modal.remove();
+  };
 
-                // Auto-open
-                window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`, "_blank");
-              }
-              // FALLBACK: Social
-              else {
-                showSocialRedirectModal(modalContent, host);
-                return;
-              }
+  // Auto-open the chat
+  window.open(openURL, "_blank");
 
-              // Auto-close modal after showing button
-              setTimeout(() => modal.remove(), 8000);
-            }, 500);
+  // Auto-close modal after a moment
+  setTimeout(() => modal.remove(), 8000);
+
+}, 500);
           }
         }, totalTime);
       });
