@@ -1533,6 +1533,7 @@ wrapper.appendChild(metaEl);
 var content = document.createElement("span");
 content.className = "content";
 content.textContent = " " + (m.content || "");
+    
 // SUPER STICKER BUZZ — ONLY WHEN NEEDED
 if (m.type === "buzz" && m.stickerGradient) {
   wrapper.className += " super-sticker";
@@ -1583,7 +1584,26 @@ if (m.type === "buzz" && m.stickerGradient) {
     display: inline;
     vertical-align: middle;
   `;
+
+  /* 🔑 ADD: BOLD USERNAME INSIDE CONTENT (SAFE) */
+  if (!content.dataset.buzzUserStyled) {
+    const html = content.innerHTML;
+
+    // match "username:" ONLY at the start
+    const match = html.match(/^([^:]{1,32}:)/);
+
+    if (match) {
+      const userPart = match[1];
+      const rest = html.slice(userPart.length);
+
+      content.innerHTML =
+        `<span class="buzz-username">${userPart}</span>${rest}`;
+
+      content.dataset.buzzUserStyled = "true";
+    }
+  }
 }
+
 wrapper.appendChild(content);
 
     // TAP FOR MENU
