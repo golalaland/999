@@ -66,7 +66,7 @@ export { app, db, auth, rtdb };
 /* ---------- Global State ---------- */
 const ROOM_ID = "room5";
 const CHAT_COLLECTION = "messages_room5";
-const BUZZ_COST = 50;
+const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
 let starInterval = null;
@@ -1550,40 +1550,68 @@ if (m.type === "buzz" && m.stickerGradient) {
     backdrop-filter: blur(4px);
   `;
 
-  // CONFETTI INSIDE
-  var confettiContainer = document.createElement("div");
+  // Confetti
+  const confettiContainer = document.createElement("div");
   confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
   createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
   wrapper.appendChild(confettiContainer);
 
-  // Make text pop on hover
+  // Hover pop
   wrapper.style.transition = "transform 0.2s";
   wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
   wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
 
   // Fade after 20s
-  setTimeout(function() {
+  setTimeout(() => {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     wrapper.style.border = "none";
     confettiContainer.remove();
   }, 20000);
 
-  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
-content.style.cssText = `
-  font-weight: 900 !important;           /* Ultra bold */
-  font-size: 1.37em !important;          /* Big but not too big for inline */
-  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-  letter-spacing: 0.8px;
-  display: inline !important;            /* ←←← Forces it back inline */
-  vertical-align: middle;                /* Perfect alignment with username */
-  line-height: 1.4;
-`;
-}
+  // === UNIFIED SUPER BOLD STYLE FOR BOTH USERNAME & BUZZ TEXT ===
+  // We'll apply this via a shared class or direct style on the inner container
+  const textContainer = document.createElement("div");
+  textContainer.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  `;
 
-// ALWAYS APPEND CONTENT
-wrapper.appendChild(content);
-    
+  // Username — now same size & weight as buzz
+  const usernameEl = document.createElement("div");
+  usernameEl.textContent = m.username || "Anon";
+  usernameEl.style.cssText = `
+    font-weight: 900;
+    font-size: 1.37em;
+    letter-spacing: 0.8px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    opacity: 0.95;
+    line-height: 1.2;
+  `;
+
+  // Buzz content — same style
+  content.style.cssText = `
+    font-weight: 900 !important;
+    font-size: 1.37em !important;
+    letter-spacing: 0.8px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    line-height: 1.4;
+    margin: 0;
+    display: block;
+  `;
+
+  // Append username + content
+  textContainer.appendChild(usernameEl);
+  textContainer.appendChild(content);
+  wrapper.appendChild(textContainer);
+
+} else {
+  // Normal messages (keep your existing logic)
+  wrapper.appendChild(content);
+}
     // TAP FOR MENU
     wrapper.onclick = function(e) {
       e.stopPropagation();
@@ -2949,8 +2977,8 @@ refs.buzzBtn.addEventListener("click", async () => {
     return;
   }
 
-  if (text.length > 50) {
-    showStarPopup("BUZZ messages are limited to 50 characters!", {
+  if (text.length > 21) {
+    showStarPopup("BUZZ messages are limited to 21 characters!", {
       type: "error"
     });
     return;
