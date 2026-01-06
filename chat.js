@@ -1534,6 +1534,7 @@ content.className = "content";
 content.textContent = " " + (m.content || "");
 
 // SUPER STICKER BUZZ — ONLY WHEN NEEDED
+// SUPER STICKER BUZZ — ONLY WHEN NEEDED
 if (m.type === "buzz" && m.stickerGradient) {
   wrapper.className += " super-sticker";
   wrapper.style.cssText = `
@@ -1570,19 +1571,18 @@ if (m.type === "buzz" && m.stickerGradient) {
     confettiContainer.remove();
   }, 20000);
 
-  // === NATIVE MEGAPHONE EMOJI + MESSAGE (SAFE & ALWAYS SHOWS) ===
-  const messageText = content.innerHTML || content.textContent.trim();
+  // === MEGAPHONE SYMBOL + BUZZ MESSAGE (SAFE & ALWAYS VISIBLE) ===
+  const buzzText = m.content || "";
 
-  content.innerHTML = `<span style="font-size:1.4em; margin-right:12px; vertical-align:middle;">📢</span>${messageText}`;
+  // Use native emoji (📢) – guaranteed to show, no loading issues
+  content.innerHTML = `<span style="font-size:1.6em; margin-right:14px; vertical-align:middle; display:inline-block;">📢</span><span style="vertical-align:middle;">${buzzText}</span>`;
 
-  // Big bold text style
-  content.style.cssText = `
-    font-weight: 900 !important;
-    font-size: 1.35em !important;
+  // Apply bold style only to the text part (not the emoji)
+  content.querySelector('span:last-child').style.cssText = `
+    font-weight: 900;
+    font-size: 1.35em;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     letter-spacing: 0.8px;
-    display: inline !important;
-    vertical-align: middle;
     line-height: 1.4;
   `;
 }
