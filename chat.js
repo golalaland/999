@@ -294,7 +294,7 @@ async function pushNotification(userId, message) {
   }
 }
 
-// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN SUPPORT)
+// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
@@ -302,7 +302,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     notificationsUnsubscribe = null;
   }
 
-  // Reset both
+  // Reset globals
   currentUser = null;
   currentAdmin = null;
 
@@ -310,15 +310,24 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
+
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
+
     if (typeof showLoginUI === "function") showLoginUI();
+
     console.log("User logged out");
 
+    // Clear clips grid
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
     if (noMsg) noMsg.style.display = "none";
+
+    // Hide host-only fields
+    const hostFields = document.getElementById("hostOnlyFields");
+    if (hostFields) hostFields.style.display = "none";
+
     return;
   }
 
@@ -329,6 +338,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
   try {
     const userSnap = await getDoc(userRef);
+
     if (!userSnap.exists()) {
       console.error("Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
@@ -338,7 +348,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-    // BUILD CURRENT USER
+    // BUILD CURRENT USER OBJECT
     currentUser = {
       uid,
       email,
@@ -365,28 +375,26 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       hostLink: data.hostLink || null
     };
 
-// SET currentAdmin AND SHOW POLL TAB IF ADMIN
-if (currentUser.isAdmin) {
-  currentAdmin = {
-    uid: currentUser.uid,
-    email: currentUser.email,
-    chatId: currentUser.chatId
-  };
+    // ADMIN MODE ACTIVATION
+    if (currentUser.isAdmin) {
+      currentAdmin = {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        chatId: currentUser.chatId
+      };
+      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
 
-  console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+      const pollSection = document.getElementById("polls");
+      if (pollSection) pollSection.style.display = "block";
+    }
 
-  // SHOW POLL CREATION PANEL
-  const pollSection = document.getElementById("polls");
-  if (pollSection) {
-    pollSection.style.display = "block";
-  }
-}
     console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
     console.log("[USER STATUS]", currentUser);
 
-    // POST-LOGIN SETUP
+    // ——— POST-LOGIN UI & FUNCTION SETUP ———
     revealHostTabs();
     updateInfoTab();
+
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
@@ -402,6 +410,7 @@ if (currentUser.isAdmin) {
     updateRedeemLink();
     updateTipLink();
 
+    // Delayed loads to avoid blocking
     setTimeout(() => {
       syncUserUnlocks?.();
       loadNotifications?.();
@@ -417,9 +426,16 @@ if (currentUser.isAdmin) {
       }, 2000);
     }
 
-    // DIVINE WELCOME
+    // ——— SHOW HOST-ONLY FIELDS (Nature Pick & Fruit Pick) ———
+    const hostFields = document.getElementById("hostOnlyFields");
+    if (hostFields) {
+      hostFields.style.display = currentUser.isHost ? "block" : "none";
+    }
+
+    // ——— DIVINE WELCOME POPUP ———
     const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+
     showStarPopup(`
       <div style="text-align:center;font-size:13px;">
         Welcome back,
@@ -432,9 +448,9 @@ if (currentUser.isAdmin) {
 
     console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
 
-  } catch (err) {
-    console.error("Auth state error:", err);
-    showStarPopup("Login failed — please try again");
+  } catch (error) {
+    console.error("Error during login process:", error);
+    showStarPopup("Failed to load profile — please try again");
     await signOut(auth);
   }
 });
@@ -6585,17 +6601,6 @@ function loadPollCarousel() {
 /*********************************
  * Nature!!
  *********************************/
-function showHostFields() {
-  const hostFields = document.getElementById("hostOnlyFields");
-  if (currentUser && currentUser.isHost === true) {
-    hostFields.style.display = "block"; // Show for hosts
-  } else {
-    hostFields.style.display = "none"; // Hide for everyone else
-  }
-}
-
-// Call this when user data is ready (e.g., after login or page load)
-showHostFields();
 /*********************************
  * fruity punch!!
  *********************************/
@@ -6672,4 +6677,3 @@ function toggleHostFields() {
  *********************************/
 loadReels();
 loadPollCarousel()
-toggleHostFields();
