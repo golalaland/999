@@ -6661,9 +6661,9 @@ function loadPollCarousel() {
 
   // Images array — easy to add/change later
   const images = [
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776",
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776",
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741"
   ];
 
   // Carousel container
