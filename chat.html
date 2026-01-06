@@ -3653,7 +3653,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <label>Short Bio</label>
   <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
 
-  <!-- HOST-ONLY FIELDS (Nature & Fruit Pick) -->
+  <!-- HOST-ONLY FIELDS: Nature & Fruit Pick (only visible to hosts) -->
   <div id="hostOnlyFields" style="display:none;">
     <label>Nature Pick</label>
     <select id="naturePick">
@@ -3674,26 +3674,26 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       <option value="🍒">🍒 Passionate Romance & Dates</option>
       <option value="🍓">🍓 Love Adventures</option>
     </select>
+  </div>
 
-    <!-- Fruit Guide Button – ONLY IN MEDIA TAB -->
-    <div style="margin:32px 0 20px; text-align:center;">
-      <button id="openFruitGuide" style="
-        padding:14px 36px;
-        background:linear-gradient(135deg,#1a1a1a,#0f0f0f);
-        color:#c3f60c;
-        border:1px solid #333;
-        border-radius:20px;
-        font-size:16px;
-        font-weight:700;
-        cursor:pointer;
-        box-shadow:0 6px 24px rgba(195,246,12,0.15);
-        transition:all 0.3s ease;
-      "
-      onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
-      onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
-        🍇🍑🍒🍓 Read the Fruit Guide
-      </button>
-    </div>
+  <!-- FRUIT GUIDE BUTTON — AVAILABLE TO EVERYONE (inside Media tab) -->
+  <div style="margin:32px 0 20px; text-align:center;">
+    <button id="openFruitGuide" style="
+      padding:14px 36px;
+      background:linear-gradient(135deg,#1a1a1a,#0f0f0f);
+      color:#c3f60c;
+      border:1px solid #333;
+      border-radius:20px;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 24px rgba(195,246,12,0.15);
+      transition:all 0.3s ease;
+    "
+    onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
+    onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
+      🍇🍑🍒🍓 Read the Fruit Guide
+    </button>
   </div>
 
   <hr class="divider" style="margin:20px 0;">
@@ -3723,7 +3723,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   <label>Instagram</label>
   <input type="text" id="instagram" placeholder="@username">
 
-  <!-- ORIGINAL SAVE BUTTON SIZE RESTORED -->
+  <!-- ORIGINAL SAVE BUTTON SIZE -->
   <button id="saveInfo" class="small-btn" style="margin-top:10px;">Save</button>
 </div>
 
@@ -3801,7 +3801,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     ">
       <div id="fruitSlides" style="
         display: flex;
-        width: 400%; /* 4 fruits */
+        width: 400%;
         height: 100%;
         transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
       ">
