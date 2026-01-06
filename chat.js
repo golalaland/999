@@ -1590,7 +1590,6 @@ if (m.type === "buzz" && m.stickerGradient) {
 
 // Always append content (now with username included)
 wrapper.appendChild(content);
-}
                    
     // TAP FOR MENU
     wrapper.onclick = function(e) {
