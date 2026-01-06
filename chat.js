@@ -6655,6 +6655,17 @@ document.getElementById("closeFruitGuideBottom").addEventListener("click", () =>
   document.getElementById("fruitGuideModal").style.display = "none";
 });
 
+function toggleHostFields() {
+  const hostFields = document.getElementById("hostOnlyFields");
+  if (currentUser && currentUser.isHost === true) {
+    hostFields.style.display = "block";
+  } else {
+    hostFields.style.display = "none";
+  }
+}
+
+// Call on login / page load
+toggleHostFields();
 /*********************************
  * INIT
  *********************************/
