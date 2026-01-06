@@ -1551,39 +1551,68 @@ if (m.type === "buzz" && m.stickerGradient) {
     backdrop-filter: blur(4px);
   `;
 
-  // CONFETTI INSIDE
-  var confettiContainer = document.createElement("div");
-  confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
-  createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
+  /* ================= CONFETTI ================= */
+  const confettiContainer = document.createElement("div");
+  confettiContainer.style.cssText = `
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    opacity:0.7;
+  `;
+  createConfettiInside(
+    confettiContainer,
+    extractColorsFromGradient(m.stickerGradient)
+  );
   wrapper.appendChild(confettiContainer);
 
-  // Make text pop on hover
+  /* ================= HOVER POP ================= */
   wrapper.style.transition = "transform 0.2s";
-  wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
-  wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+  wrapper.onmouseenter = () =>
+    (wrapper.style.transform = "scale(1.03) translateY(-4px)");
+  wrapper.onmouseleave = () =>
+    (wrapper.style.transform = "scale(1)");
 
-  // Fade after 20s
-  setTimeout(function() {
+  /* ================= FADE AFTER 20s ================= */
+  setTimeout(() => {
     wrapper.style.background = "rgba(255,255,255,0.06)";
     wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     wrapper.style.border = "none";
     confettiContainer.remove();
   }, 20000);
 
-  // ←←← MAKE BUZZ TEXT SUPER BOLD AND STAND OUT ←←←
-content.style.cssText = `
-  font-weight: 900 !important;           /* Ultra bold */
-  font-size: 1.35em !important;          /* Big but not too big for inline */
-  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-  letter-spacing: 0.8px;
-  display: inline !important;            /* ←←← Forces it back inline */
-  vertical-align: middle;                /* Perfect alignment with username */
-  line-height: 1.4;
-`;
-}
+  /* ================= INLINE ROW (USERNAME + TEXT) ================= */
+  const inlineRow = document.createElement("span");
+  inlineRow.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  `;
 
-// ALWAYS APPEND CONTENT
-wrapper.appendChild(content);
+  /* ================= USERNAME STYLE ================= */
+  username.style.cssText += `
+    font-size: 1.35em;
+    font-weight: 900;
+    line-height: 1.4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  `;
+
+  /* ================= BUZZ TEXT STYLE ================= */
+  content.style.cssText = `
+    font-size: 1.35em !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    white-space: nowrap;
+  `;
+
+  /* ================= APPEND ORDER ================= */
+  inlineRow.appendChild(username);
+  inlineRow.appendChild(content);
+  wrapper.appendChild(inlineRow);
+}
     
     // TAP FOR MENU
     wrapper.onclick = function(e) {
@@ -6545,19 +6574,18 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
     }, 2000);
   }
 });
-
 function loadPollCarousel() {
   const carousel = document.getElementById("pollCarousel");
   carousel.innerHTML = `
     <div style="display:flex; height:100%; border-radius:14px; overflow:hidden;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" 
-           alt="Cube Livestream Offline" 
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
+           alt="Cube Livestream Offline"
            style="width:33.3%; height:100%; object-fit:cover;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" 
-           alt="Cube Livestream Offline" 
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
+           alt="Cube Livestream Offline"
            style="width:33.3%; height:100%; object-fit:cover;">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776" 
-           alt="Cube Livestream Offline" 
+      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776"
+           alt="Cube Livestream Offline"
            style="width:33.3%; height:100%; object-fit:cover;">
     </div>
   `;
@@ -6566,3 +6594,4 @@ function loadPollCarousel() {
  * INIT
  *********************************/
 loadReels();
+loadPollCarousel()
