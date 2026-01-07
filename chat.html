@@ -284,85 +284,79 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   0%, 100% { transform: translate(-50%, -50%) translateY(0); }
   50% { transform: translate(-50%, -50%) translateY(-6px); }
 }
-/* 🔥 Keypad (chat input) - always at bottom */
-.send-area {
-  position: fixed;       
-  bottom: 0;           /* sits at the very bottom */
-  left: 0;
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--card);
-  padding: 10px;
-  border-radius: 999px;  
-  box-sizing: border-box;
-  z-index: 100;           
-}
-
-/* 🔥 Chat input area */
+/* 🔥 Send Area - Compact base */
 .send-area {
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* Critical — keeps buttons at bottom */
   gap: 8px;
   background: var(--card, #111);
   padding: 10px;
-  position: sticky;   /* sticky inside container */
-  bottom: 0;          /* always at bottom */
-  z-index: 10;
   border-radius: 999px;
   width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
   box-sizing: border-box;
   border-top: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.3s ease;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
-.send-area input {
+.input-wrapper {
   flex: 1;
-  padding: 12px 16px;       /* your preferred size */
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+#messageInput {
+  width: 100%;
+  min-height: 48px;
+  max-height: 180px;
+  padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
   background-color: #0e0e0e;
   color: #fff;
   font-size: 16px;
+  line-height: 1.4;
   outline: none;
-  transition: all 0.2s ease-in-out;
+  resize: none;
+  overflow-y: hidden;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
-.send-area input::placeholder {
-  color: var(--muted, #aaa);
-  opacity: 0.7;
+/* Expanded state */
+.send-area.expanded {
+  border-radius: 28px;
+  padding: 16px;
 }
 
-.send-area input:focus {
-  border-color: var(--accent, #FF1493);
-  box-shadow: 0 0 12px rgba(255, 20, 147, 0.15);
+.send-area.expanded .input-wrapper {
+  align-items: flex-start;
 }
 
+.send-area.expanded #messageInput {
+  border-radius: 24px;
+  min-height: 100px;
+  overflow-y: auto;
+}
+
+/* Send button (your original style) */
 .send-btn {
-  padding: 10px 16px;
-  border-radius: 999px;
-  background-color: var(--accent, #FF1493);
+  padding: 10px 20px;
+  background: var(--accent, #FF1493);
   color: #000;
-  cursor: pointer;
-  font-weight: 700;
   border: none;
+  border-radius: 999px;
+  font-weight: 700;
   font-size: 14px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  align-self: flex-end;
+  margin-bottom: 4px;
 }
-
-.send-btn:hover {
-  background-color: #a8d50a; /* slightly darker cube green */
-  transform: scale(1.05);
-}
-.send-btn:active {
-  background-color: #8eb308; /* deeper press shade */
-  transform: scale(0.98);    /* slight press-in effect */
-}
-
-
-
 #postLoginLoader {
   position: fixed;
   top: 0; left: 0;
@@ -485,10 +479,44 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   pointer-events: none; /* optional: avoids ghost clicks */
 }
 
-.buzz-btn{padding:10px 12px;border-radius:999px;background:#1d1d1d;color:var(--accent);cursor:pointer;font-weight:700;font-size:14px;border:1px solid rgba(255,20,147,0.18);}
-.buzz-btn:hover{animation:buzzPulse 1.5s infinite;}
-@keyframes buzzPulse{0%{box-shadow:0 0 0 0 rgba(255,20,147,0.18)}70%{box-shadow:0 0 0 12px rgba(255,20,147,0)}100%{box-shadow:0 0 0 0 rgba(255,20,147,0)}}
+/* 🔥 Buzz Button - Original Design Restored */
+.buzz-btn {
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: #1d1d1d;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  border: 1px solid rgba(255, 20, 147, 0.18);
+  transition: transform 0.2s ease;
+  align-self: flex-end; /* Keeps it at bottom when input expands */
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.buzz-btn:hover {
+  animation: buzzPulse 1.5s infinite;
+  transform: translateY(-2px);
+}
+
+.buzz-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes buzzPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 20, 147, 0.18);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(255, 20, 147, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 20, 147, 0);
+  }
+}
 /* profile glass bar */
 .profile{display:none;flex-direction:column;gap:8px;margin-top:10px;}
 .profile-card{background:var(--glass);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;}
@@ -3470,7 +3498,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
 <div class="send-area" id="sendArea" style="display:none;">
-  <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
+  <div class="input-wrapper">
+    <textarea 
+      id="messageInput" 
+      placeholder="Type your message..." 
+      autocomplete="off"
+      rows="1"
+    ></textarea>
+  </div>
   <button id="buzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
   <button id="sendBtn" class="send-btn">Send</button>
 </div>
