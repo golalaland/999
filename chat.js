@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — WHATSAPP/TELEGRAM STYLE (2026 EDITION)
+// RENDER MESSAGES — LIGHT & SMALL NORMAL TEXT (2026)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1451,10 +1451,10 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME (NO COLON, SUPER TIGHT) ===
+    // === USERNAME (tight, no colon) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
-    nameSpan.textContent = (m.chatId || "Guest") + " "; // space instead of colon
+    nameSpan.textContent = (m.chatId || "Guest") + " ";
 
     const realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown")
       .replace(/[.@/\\]/g, '_');
@@ -1475,7 +1475,6 @@ function renderMessagesFromArray(messages) {
       margin-right: 4px;
     `;
 
-    // Tap username to mention
     nameSpan.addEventListener("click", (e) => {
       e.stopPropagation();
       refs.messageInputEl.value += `@${m.chatId} `;
@@ -1519,18 +1518,21 @@ function renderMessagesFromArray(messages) {
     content.className = "content";
     content.textContent = m.content || "";
 
-    // Normal message styling — bold, wraps perfectly
-    content.style.cssText = `
-      font-weight: 600;
-      font-size: 15.5px;
-      line-height: 1.5;
-      color: #fff;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-      display: inline;
-    `;
+    // === NORMAL MESSAGES — LIGHT, SMALL, AIRY ===
+    if (!m.type === "buzz") {
+      content.style.cssText = `
+        font-weight: 400;           /* Light */
+        font-size: 14.5px;          /* Small & readable */
+        line-height: 1.55;          /* Airy spacing */
+        color: #d0d0d0;             /* Soft gray-white */
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        display: inline;
+        opacity: 0.95;
+      `;
+    }
 
-    // === SUPER STICKER BUZZ ===
+    // === BUZZ MESSAGES — KEEP EPIC & BOLD ===
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1564,7 +1566,7 @@ function renderMessagesFromArray(messages) {
         confettiContainer.remove();
       }, 20000);
 
-      // Buzz text — big, bold, wraps
+      // Buzz text — big and bold
       content.style.cssText = `
         font-size: 1.45em;
         font-weight: 900;
@@ -1611,6 +1613,7 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
+
 /* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
 function attachMessagesListener() {
   const q = query(collection(db, CHAT_COLLECTION), orderBy("timestamp", "asc"));
