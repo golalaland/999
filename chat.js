@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FINAL CLEAN VERSION (2026)
+// RENDER MESSAGES — SOCIAL CARD + REPLY/REPORT (2026 FINAL)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1451,7 +1451,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME (tight, no colon) ===
+    // === USERNAME (click → social card) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1475,11 +1475,14 @@ function renderMessagesFromArray(messages) {
       margin-right: 4px;
     `;
 
-    // ONLY username tap → mention user
+    // TAP USERNAME → SOCIAL CARD
     nameSpan.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent triggering message tap
-      refs.messageInputEl.value += `@${m.chatId} `;
-      refs.messageInputEl.focus();
+      e.stopPropagation(); // Prevent message tap
+      const chatIdLower = (m.chatId || "").toLowerCase();
+      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
+      if (user && user._docId !== currentUser?.uid) {
+        showSocialCard(user);
+      }
     });
 
     wrapper.appendChild(nameSpan);
@@ -1504,7 +1507,7 @@ function renderMessagesFromArray(messages) {
       preview.innerHTML = `<strong style="color:#999;">↩ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
 
       preview.onclick = (e) => {
-        e.stopPropagation(); // Prevent triggering message modal
+        e.stopPropagation();
         const target = document.getElementById(m.replyTo);
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1531,6 +1534,7 @@ function renderMessagesFromArray(messages) {
         white-space: pre-wrap;
         display: inline;
         opacity: 0.95;
+        cursor: pointer; /* Show it's tappable */
       `;
     }
 
@@ -1578,14 +1582,11 @@ function renderMessagesFromArray(messages) {
         word-wrap: break-word;
         white-space: pre-wrap;
         display: block;
+        cursor: pointer;
       `;
     }
 
-    wrapper.appendChild(content);
-
-    // === TAP BEHAVIOR ===
-    // Only the message CONTENT triggers reply/report modal
-    content.style.cursor = "pointer";
+    // TAP ON MESSAGE TEXT → REPLY/REPORT MODAL
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1599,13 +1600,11 @@ function renderMessagesFromArray(messages) {
       });
     });
 
-    // Wrapper itself does nothing on click (prevents bubble tap triggering modal)
+    wrapper.appendChild(content);
+
+    // Prevent wrapper click from triggering anything (only children handle clicks)
     wrapper.addEventListener("click", (e) => {
-      if (e.target === wrapper || e.target === content) {
-        // Do nothing — handled by content click above
-      } else {
-        e.stopPropagation();
-      }
+      e.stopPropagation();
     });
 
     refs.messagesEl.appendChild(wrapper);
