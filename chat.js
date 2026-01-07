@@ -6862,6 +6862,62 @@ function toggleHostFields() {
   }
 }
 
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const buzzBtn = document.getElementById("buzzBtn");
+const sendArea = document.getElementById("sendArea");
+
+// Auto-resize + expand logic
+function resizeAndExpand() {
+  // Reset height to auto to measure real content
+  messageInput.style.height = "auto";
+  messageInput.style.height = messageInput.scrollHeight + "px";
+
+  // Add/remove expanded class based on content
+  if (messageInput.scrollHeight > 60) { // ~2 lines
+    sendArea.classList.add("expanded");
+  } else {
+    sendArea.classList.remove("expanded");
+  }
+}
+
+messageInput.addEventListener("input", resizeAndExpand);
+
+// Shift + Enter = new line, Enter = send
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+  // Shift+Enter naturally adds line — no action needed
+});
+
+// Send function
+function sendMessage() {
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  console.log("Sending message:", text);
+  // Your actual send logic here (e.g., send to server, append to chat)
+
+  // Reset
+  messageInput.value = "";
+  resizeAndExpand();
+  messageInput.focus();
+}
+
+// Button clicks
+sendBtn.addEventListener("click", sendMessage);
+
+buzzBtn.addEventListener("click", () => {
+  // Your buzz logic
+  console.log("BUZZ sent!");
+  // Optionally clear input or do something special
+});
+
+// Initial setup
+resizeAndExpand();
+
 /*********************************
  * INIT
  *********************************/
