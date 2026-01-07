@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — LIGHT & SMALL NORMAL TEXT (2026)
+// RENDER MESSAGES — FINAL CLEAN VERSION (2026)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1475,8 +1475,9 @@ function renderMessagesFromArray(messages) {
       margin-right: 4px;
     `;
 
+    // ONLY username tap → mention user
     nameSpan.addEventListener("click", (e) => {
-      e.stopPropagation();
+      e.stopPropagation(); // Prevent triggering message tap
       refs.messageInputEl.value += `@${m.chatId} `;
       refs.messageInputEl.focus();
     });
@@ -1502,11 +1503,12 @@ function renderMessagesFromArray(messages) {
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
       preview.innerHTML = `<strong style="color:#999;">↩ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
 
-      preview.onclick = () => {
+      preview.onclick = (e) => {
+        e.stopPropagation(); // Prevent triggering message modal
         const target = document.getElementById(m.replyTo);
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "center" });
-          target.style.background = "rgba(180,180,180,0.15)";
+          target.style.background = "rgba(180,180,180,0.15)"; // YOUR ORIGINAL GREY
           setTimeout(() => target.style.background = "", 2000);
         }
       };
@@ -1518,13 +1520,13 @@ function renderMessagesFromArray(messages) {
     content.className = "content";
     content.textContent = m.content || "";
 
-    // === NORMAL MESSAGES — LIGHT, SMALL, AIRY ===
-    if (!m.type === "buzz") {
+    // NORMAL MESSAGES — LIGHT & SMALL
+    if (m.type !== "buzz") {
       content.style.cssText = `
-        font-weight: 400;           /* Light */
-        font-size: 14.5px;          /* Small & readable */
-        line-height: 1.55;          /* Airy spacing */
-        color: #d0d0d0;             /* Soft gray-white */
+        font-weight: 400;
+        font-size: 14.5px;
+        line-height: 1.55;
+        color: #d0d0d0;
         word-wrap: break-word;
         white-space: pre-wrap;
         display: inline;
@@ -1532,7 +1534,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // === BUZZ MESSAGES — KEEP EPIC & BOLD ===
+    // BUZZ MESSAGES — EPIC
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1566,7 +1568,6 @@ function renderMessagesFromArray(messages) {
         confettiContainer.remove();
       }, 20000);
 
-      // Buzz text — big and bold
       content.style.cssText = `
         font-size: 1.45em;
         font-weight: 900;
@@ -1582,8 +1583,10 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // TAP FOR MENU
-    wrapper.onclick = (e) => {
+    // === TAP BEHAVIOR ===
+    // Only the message CONTENT triggers reply/report modal
+    content.style.cursor = "pointer";
+    content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
         id: id,
@@ -1594,7 +1597,16 @@ function renderMessagesFromArray(messages) {
         replyToContent: m.replyToContent,
         replyToChatId: m.replyToChatId
       });
-    };
+    });
+
+    // Wrapper itself does nothing on click (prevents bubble tap triggering modal)
+    wrapper.addEventListener("click", (e) => {
+      if (e.target === wrapper || e.target === content) {
+        // Do nothing — handled by content click above
+      } else {
+        e.stopPropagation();
+      }
+    });
 
     refs.messagesEl.appendChild(wrapper);
   });
@@ -1613,7 +1625,6 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
-
 /* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
 function attachMessagesListener() {
   const q = query(collection(db, CHAT_COLLECTION), orderBy("timestamp", "asc"));
