@@ -285,9 +285,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   50% { transform: translate(-50%, -50%) translateY(-6px); }
 }
 /* 🔥 Send Area - Compact base */
+/* 🔥 SEND AREA — COMPACT, CUTE & ORIGINAL SIZE PRESERVED */
 .send-area {
   display: flex;
-  align-items: flex-end;
+  align-items: center; /* Centered vertically when single-line */
   gap: 8px;
   background: var(--card, #111);
   padding: 10px;
@@ -297,23 +298,24 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   margin: 0 auto;
   box-sizing: border-box;
   border-top: 1px solid rgba(255,255,255,0.04);
-  transition: all 0.3s ease;
+  transition: padding 0.3s ease, border-radius 0.3s ease, align-items 0.3s ease;
   position: sticky;
   bottom: 0;
   z-index: 10;
+  min-height: 48px;
 }
 
 .input-wrapper {
   flex: 1;
-  min-height: 48px;
   display: flex;
   align-items: center;
+  min-height: 48px;
 }
 
 #messageInput {
   width: 100%;
   min-height: 48px;
-  max-height: 180px;
+  max-height: 140px;
   padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
@@ -334,16 +336,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   opacity: 0.7;
 }
 
-/* RESTORED GLOW ON FOCUS */
+/* GLOW ON FOCUS — STRONG AND SEXY */
 #messageInput:focus {
   border-color: var(--accent, #FF1493);
   box-shadow: 0 0 12px rgba(255, 20, 147, 0.15);
 }
 
-/* Expanded state */
+/* EXPANDED STATE — TALL BUT STILL CUTE */
 .send-area.expanded {
   border-radius: 28px;
-  padding: 16px;
+  padding: 14px 16px;
+  align-items: flex-start; /* Buttons move to bottom */
 }
 
 .send-area.expanded .input-wrapper {
@@ -352,11 +355,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 .send-area.expanded #messageInput {
   border-radius: 24px;
-  min-height: 100px;
+  min-height: 80px;
   overflow-y: auto;
 }
 
-/* Buttons */
+/* BUZZ BUTTON — YOUR ORIGINAL PERFECTION */
 .buzz-btn {
   padding: 10px 12px;
   border-radius: 999px;
@@ -366,12 +369,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   font-weight: 700;
   font-size: 14px;
   border: 1px solid rgba(255,20,147,0.18);
-  align-self: flex-end;
+  align-self: center; /* Centered when single-line */
+  transition: align-self 0.3s ease, transform 0.2s ease;
+}
+
+.send-area.expanded .buzz-btn {
+  align-self: flex-end; /* Moves to bottom when expanded */
   margin-bottom: 4px;
 }
 
 .buzz-btn:hover {
   animation: buzzPulse 1.5s infinite;
+  transform: translateY(-1px);
 }
 
 @keyframes buzzPulse {
@@ -380,6 +389,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   100% { box-shadow: 0 0 0 0 rgba(255,20,147,0); }
 }
 
+/* SEND BUTTON — CLEAN AND BOLD */
 .send-btn {
   padding: 10px 20px;
   background: var(--accent, #FF1493);
@@ -389,6 +399,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
+  align-self: center;
+  transition: align-self 0.3s ease;
+}
+
+.send-area.expanded .send-btn {
   align-self: flex-end;
   margin-bottom: 4px;
 }
