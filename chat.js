@@ -6862,66 +6862,39 @@ function toggleHostFields() {
   }
 }
 
+// ——— NEW: EXPANDING INPUT (Grok-style) ———
+// This replaces your old input, but uses your original send/buzz logic
 const messageInput = document.getElementById("messageInput");
-const sendBtn = document.getElementById("sendBtn");
-const buzzBtn = document.getElementById("buzzBtn");
-const sendArea = document.getElementById("sendArea");
 
-// Auto-resize and expand
+// Auto-resize and expand like Grok
 function resizeAndExpand() {
   messageInput.style.height = "auto";
   messageInput.style.height = messageInput.scrollHeight + "px";
-
-  if (messageInput.scrollHeight > 60) {
-    sendArea.classList.add("expanded");
-  } else {
-    sendArea.classList.remove("expanded");
-  }
+  document.getElementById("sendArea").classList.toggle("expanded", messageInput.scrollHeight > 60);
 }
-
 messageInput.addEventListener("input", resizeAndExpand);
 
-// KEY FIX: On mobile, Return = new line (default textarea behavior)
-// On desktop & mobile: Enter WITHOUT Shift = send
+// Enter = send (mobile & desktop), Shift+Enter = new line
 messageInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault(); // Prevents new line on send
-    sendMessage();
+    e.preventDefault();
+    refs.sendBtn.click();  // Triggers your original send logic
   }
 });
 
-// Send function
-function sendMessage() {
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  // Your send logic here
-  console.log("Sending:", text);
-  // e.g., sendToServer(text);
-
-  // Reset
-  messageInput.value = "";
-  resizeAndExpand();
-  messageInput.focus();
-}
-
-// Button clicks (now reliable on mobile)
-sendBtn.addEventListener("click", sendMessage);
-sendBtn.addEventListener("touchend", (e) => {
+// Make send button work on mobile tap
+refs.sendBtn.addEventListener("touchend", (e) => {
   e.preventDefault();
-  sendMessage();
+  refs.sendBtn.click();
 });
 
-buzzBtn.addEventListener("click", () => {
-  // Your buzz logic
-  console.log("BUZZ!");
-});
-buzzBtn.addEventListener("touchend", (e) => {
+// Make buzz button work on mobile tap
+refs.buzzBtn.addEventListener("touchend", (e) => {
   e.preventDefault();
-  // Buzz logic
+  refs.buzzBtn.click();
 });
 
-// Initial
+// Initial resize
 resizeAndExpand();
 
 /*********************************
