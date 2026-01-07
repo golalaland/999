@@ -1432,10 +1432,10 @@ function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
 
   messages.forEach(function(item) {
-    var id = item.id || item.tempId || item.data?.id;
+    const id = item.id || item.tempId || item.data?.id;
     if (!id || document.getElementById(id)) return;
 
-    var m = item.data ?? item;
+    const m = item.data ?? item;
 
     // BLOCK ALL BANNERS
     if (
@@ -1447,180 +1447,137 @@ function renderMessagesFromArray(messages) {
       /system/i.test(m.uid || "")
     ) return;
 
-    var wrapper = document.createElement("div");
+    const wrapper = document.createElement("div");
     wrapper.className = "msg";
     wrapper.id = id;
 
+    // USERNAME META
+    const metaEl = document.createElement("span");
+    metaEl.className = "meta";
 
-// USERNAME — FULL REWRITE: ORIGINAL BEHAVIOR + SAME-COLOR COLON + TIGHTER SPACING
-// USERNAME — FINAL VERSION: SHORT TAP = USERNAME ACTION, LONG PRESS = REPLY/REPORT MODAL
-const metaEl = document.createElement("span");
-metaEl.className = "meta";
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "chat-username";
+    nameSpan.textContent = m.chatId || "Guest";
 
-const nameSpan = document.createElement("span");
-nameSpan.className = "chat-username";
-nameSpan.textContent = m.chatId || "Guest";
+    const realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown")
+      .replace(/[.@/\\]/g, '_');
+    nameSpan.dataset.userId = realUid;
 
-// Safe user ID for data attributes
-const realUid = (m.uid || 
-                (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || 
-                "unknown")
-                .replace(/[.@/\\]/g, '_');
-nameSpan.dataset.userId = realUid;
+    const usernameColor = refs.userColors && refs.userColors[m.uid]
+      ? refs.userColors[m.uid]
+      : "#ffffff";
 
-// User color logic (exactly like original)
-const usernameColor = refs.userColors && refs.userColors[m.uid] 
-                      ? refs.userColors[m.uid] 
-                      : "#ffffff";
+    nameSpan.style.cssText = `
+      cursor: pointer;
+      font-weight: 700;
+      padding: 0 4px 0 2px;
+      border-radius: 4px;
+      user-select: none;
+      color: ${usernameColor} !important;
+      display: inline-block;
+    `;
 
-nameSpan.style.cssText = `
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0 4px 0 2px;           /* Tight spacing to message */
-  border-radius: 4px;
-  user-select: none;
-  color: ${usernameColor} !important;
-  display: inline-block;
-`;
+    // Press feedback
+    nameSpan.addEventListener("pointerdown", () => nameSpan.style.background = "rgba(255,255,255,0.15)");
+    nameSpan.addEventListener("pointerup", () => setTimeout(() => nameSpan.style.background = "", 200));
+    nameSpan.addEventListener("pointercancel", () => nameSpan.style.background = "");
 
-// Visual feedback when pressing username
-nameSpan.addEventListener("pointerdown", () => {
-  nameSpan.style.background = "rgba(255, 255, 255, 0.15)";  // Clean pressed look
-});
+    // Tap username to mention
+    nameSpan.addEventListener("click", (e) => {
+      e.stopPropagation();
+      refs.messageInputEl.value += `@${m.chatId} `;
+      refs.messageInputEl.focus();
+    });
 
-nameSpan.addEventListener("pointerup", () => {
-  setTimeout(() => { nameSpan.style.background = ""; }, 200);
-});
+    const colonSpan = document.createElement("span");
+    colonSpan.textContent = ": ";
+    colonSpan.style.color = usernameColor;
 
-nameSpan.addEventListener("pointercancel", () => {
-  nameSpan.style.background = "";
-});
-    
-// SHORT TAP ON USERNAME → YOUR CUSTOM ACTION (e.g. open modal, mention user)
-nameSpan.addEventListener("click", (e) => {
-  e.stopPropagation();  // Prevents triggering message-level click if any
+    metaEl.appendChild(nameSpan);
+    metaEl.appendChild(colonSpan);
+    wrapper.appendChild(metaEl);
 
-  // ←←← PUT YOUR USERNAME MODAL / ACTION HERE ←←←
-  // Examples:
-  
-  // Option 1: Mention user in input
-  refs.messageInputEl.value += `@${m.chatId} `;
-  refs.messageInputEl.focus();
-
-  // Option 2: Open a user profile/info modal
-  // showUserModal(m.uid || m.chatId, m.chatId);
-
-  // Option 3: Custom modal just for username tap
-  // showUsernameTapModal(m);  // create your own modal here
-
-  // Replace the above with whatever you originally had!
-});
-
-// Colon — matches username color perfectly
-const colonSpan = document.createElement("span");
-colonSpan.textContent = ": ";
-colonSpan.style.color = usernameColor;
-
-metaEl.appendChild(nameSpan);
-metaEl.appendChild(colonSpan);
-wrapper.appendChild(metaEl);
-    
     // REPLY PREVIEW
     if (m.replyTo) {
-      var preview = document.createElement("div");
+      const preview = document.createElement("div");
       preview.className = "reply-preview";
       preview.style.cssText = "background:rgba(255,255,255,0.06);border-left:3px solid #b3b3b3;padding:6px 10px;margin:6px 0 4px;border-radius:0 6px 6px 0;font-size:13px;color:#aaa;cursor:pointer;line-height:1.4;";
-      var replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
-      var shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
+      const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
+      const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
       preview.innerHTML = `<strong style="color:#999;"> ⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
-      preview.onclick = function() {
-        var target = document.getElementById(m.replyTo);
+
+      preview.onclick = () => {
+        const target = document.getElementById(m.replyTo);
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "center" });
           target.style.background = "rgba(180,180,180,0.15)";
-          setTimeout(function() { target.style.background = ""; }, 2000);
+          setTimeout(() => target.style.background = "", 2000);
         }
       };
       wrapper.appendChild(preview);
     }
 
-  
-    // CONTENT SPAN — ALWAYS CREATED
-var content = document.createElement("span");
-content.className = "content";
-content.textContent = " " + (m.content || "");
-    
-// SUPER STICKER BUZZ — ONLY WHEN NEEDED
-if (m.type === "buzz" && m.stickerGradient) {
-  wrapper.className += " super-sticker";
-  wrapper.style.cssText = `
-    display: inline-block;
-    max-width: 85%;
-    margin: 14px 10px;
-    padding: 18px 24px;
-    border-radius: 28px;
-    background: ${m.stickerGradient};
-    box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
-    position: relative;
-    overflow: hidden;
-    border: 3px solid rgba(255,255,255,0.25);
-    animation: stickerPop 0.7s ease-out;
-    backdrop-filter: blur(4px);
-  `;
+    // CONTENT
+    const content = document.createElement("span");
+    content.className = "content";
+    content.textContent = " " + (m.content || "");
 
-  const confettiContainer = document.createElement("div");
-  confettiContainer.style.cssText =
-    "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
-  createConfettiInside(
-    confettiContainer,
-    extractColorsFromGradient(m.stickerGradient)
-  );
-  wrapper.appendChild(confettiContainer);
+    // SUPER STICKER BUZZ
+    if (m.type === "buzz" && m.stickerGradient) {
+      wrapper.className += " super-sticker";
+      wrapper.style.cssText = `
+        display: inline-block;
+        max-width: 85%;
+        margin: 14px 10px;
+        padding: 18px 24px;
+        border-radius: 28px;
+        background: ${m.stickerGradient};
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.25);
+        animation: stickerPop 0.7s ease-out;
+        backdrop-filter: blur(4px);
+      `;
 
-  wrapper.style.transition = "transform 0.2s";
-  wrapper.onmouseenter = () =>
-    (wrapper.style.transform = "scale(1.03) translateY(-4px)");
-  wrapper.onmouseleave = () =>
-    (wrapper.style.transform = "scale(1)");
+      const confettiContainer = document.createElement("div");
+      confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
+      createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
+      wrapper.appendChild(confettiContainer);
 
-  setTimeout(() => {
-    wrapper.style.background = "rgba(255,255,255,0.06)";
-    wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-    wrapper.style.border = "none";
-    confettiContainer.remove();
-  }, 20000);
+      wrapper.style.transition = "transform 0.2s";
+      wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
+      wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
 
-  /* ✅ STYLE ONLY — NO DOM MOVES */
-  content.style.cssText += `
-    font-size: 1.35em;
-    font-weight: 900;
-    line-height: 1.4;
-    letter-spacing: 0.8px;
-    white-space: nowrap;
-    display: inline;
-    vertical-align: middle;
-  `;
+      setTimeout(() => {
+        wrapper.style.background = "rgba(255,255,255,0.06)";
+        wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+        wrapper.style.border = "none";
+        confettiContainer.remove();
+      }, 20000);
 
-  /* 🔑 ADD: BOLD USERNAME INSIDE CONTENT (SAFE) */
-  if (!content.dataset.buzzUserStyled) {
-    const html = content.innerHTML;
-
-    // match "username:" ONLY at the start
-    const match = html.match(/^([^:]{1,32}:)/);
-
-    if (match) {
-      const userPart = match[1];
-      const rest = html.slice(userPart.length);
-
-      content.innerHTML =
-        `<span class="buzz-username">${userPart}</span>${rest}`;
-
-      content.dataset.buzzUserStyled = "true";
+      // Buzz text styling — allows wrapping
+      content.style.cssText = `
+        font-size: 1.35em;
+        font-weight: 900;
+        line-height: 1.4;
+        letter-spacing: 0.8px;
+        white-space: pre-wrap;     /* Allows line breaks and wrapping */
+        word-wrap: break-word;     /* Breaks long words */
+        display: block;            /* Block for proper wrapping */
+        margin: 0;
+      `;
+    } else {
+      // Normal messages — allow wrapping
+      content.style.cssText = `
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        display: block;
+        line-height: 1.4;
+      `;
     }
-  }
-}
 
-wrapper.appendChild(content);
+    wrapper.appendChild(content);
 
     // TAP FOR MENU
     wrapper.onclick = function(e) {
@@ -1639,25 +1596,20 @@ wrapper.appendChild(content);
     refs.messagesEl.appendChild(wrapper);
   });
 
-  // Auto-scroll only if user is near bottom (within 200px)
-const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
-if (distanceFromBottom < 200) {
-  refs.messagesEl.scrollTo({
-    top: refs.messagesEl.scrollHeight,
-    behavior: "smooth"  // Smooth scroll for better UX
-  });
-}
+  // Auto-scroll
+  const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+  if (distanceFromBottom < 200) {
+    refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
+  }
 
-  // AUTO-SCROLL
   if (!scrollPending) {
     scrollPending = true;
-    requestAnimationFrame(function() {
+    requestAnimationFrame(() => {
       refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
       scrollPending = false;
     });
   }
 }
-
 /* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
 function attachMessagesListener() {
   const q = query(collection(db, CHAT_COLLECTION), orderBy("timestamp", "asc"));
