@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FINAL FIXED VERSION (2025)
+// RENDER MESSAGES — WHATSAPP/TELEGRAM STYLE (2026 EDITION)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1437,7 +1437,7 @@ function renderMessagesFromArray(messages) {
 
     const m = item.data ?? item;
 
-    // BLOCK ALL BANNERS
+    // BLOCK BANNERS
     if (
       m.isBanner ||
       m.type === "banner" ||
@@ -1451,13 +1451,10 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // USERNAME META
-    const metaEl = document.createElement("span");
-    metaEl.className = "meta";
-
+    // === USERNAME (NO COLON, SUPER TIGHT) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
-    nameSpan.textContent = m.chatId || "Guest";
+    nameSpan.textContent = (m.chatId || "Guest") + " "; // space instead of colon
 
     const realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown")
       .replace(/[.@/\\]/g, '_');
@@ -1469,18 +1466,14 @@ function renderMessagesFromArray(messages) {
 
     nameSpan.style.cssText = `
       cursor: pointer;
-      font-weight: 700;
-      padding: 0 4px 0 2px;
-      border-radius: 4px;
+      font-weight: 600;
+      font-size: 14px;
+      color: ${usernameColor};
+      opacity: 0.9;
       user-select: none;
-      color: ${usernameColor} !important;
-      display: inline-block;
+      display: inline;
+      margin-right: 4px;
     `;
-
-    // Press feedback
-    nameSpan.addEventListener("pointerdown", () => nameSpan.style.background = "rgba(255,255,255,0.15)");
-    nameSpan.addEventListener("pointerup", () => setTimeout(() => nameSpan.style.background = "", 200));
-    nameSpan.addEventListener("pointercancel", () => nameSpan.style.background = "");
 
     // Tap username to mention
     nameSpan.addEventListener("click", (e) => {
@@ -1489,22 +1482,26 @@ function renderMessagesFromArray(messages) {
       refs.messageInputEl.focus();
     });
 
-    const colonSpan = document.createElement("span");
-    colonSpan.textContent = ": ";
-    colonSpan.style.color = usernameColor;
+    wrapper.appendChild(nameSpan);
 
-    metaEl.appendChild(nameSpan);
-    metaEl.appendChild(colonSpan);
-    wrapper.appendChild(metaEl);
-
-    // REPLY PREVIEW
+    // === REPLY PREVIEW ===
     if (m.replyTo) {
       const preview = document.createElement("div");
       preview.className = "reply-preview";
-      preview.style.cssText = "background:rgba(255,255,255,0.06);border-left:3px solid #b3b3b3;padding:6px 10px;margin:6px 0 4px;border-radius:0 6px 6px 0;font-size:13px;color:#aaa;cursor:pointer;line-height:1.4;";
+      preview.style.cssText = `
+        background:rgba(255,255,255,0.06);
+        border-left:3px solid #b3b3b3;
+        padding:6px 10px;
+        margin:6px 0 8px;
+        border-radius:0 8px 8px 0;
+        font-size:13px;
+        color:#aaa;
+        cursor:pointer;
+        line-height:1.4;
+      `;
       const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
-      preview.innerHTML = `<strong style="color:#999;"> ⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
+      preview.innerHTML = `<strong style="color:#999;">↩ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
 
       preview.onclick = () => {
         const target = document.getElementById(m.replyTo);
@@ -1517,19 +1514,30 @@ function renderMessagesFromArray(messages) {
       wrapper.appendChild(preview);
     }
 
-    // CONTENT
+    // === MESSAGE CONTENT ===
     const content = document.createElement("span");
     content.className = "content";
-    content.textContent = " " + (m.content || "");
+    content.textContent = m.content || "";
 
-    // SUPER STICKER BUZZ
+    // Normal message styling — bold, wraps perfectly
+    content.style.cssText = `
+      font-weight: 600;
+      font-size: 15.5px;
+      line-height: 1.5;
+      color: #fff;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      display: inline;
+    `;
+
+    // === SUPER STICKER BUZZ ===
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
         display: inline-block;
         max-width: 85%;
         margin: 14px 10px;
-        padding: 18px 24px;
+        padding: 20px 24px;
         border-radius: 28px;
         background: ${m.stickerGradient};
         box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
@@ -1556,31 +1564,24 @@ function renderMessagesFromArray(messages) {
         confettiContainer.remove();
       }, 20000);
 
-      // Buzz text styling — allows wrapping
+      // Buzz text — big, bold, wraps
       content.style.cssText = `
-        font-size: 1.35em;
+        font-size: 1.45em;
         font-weight: 900;
         line-height: 1.4;
-        letter-spacing: 0.8px;
-        white-space: pre-wrap;     /* Allows line breaks and wrapping */
-        word-wrap: break-word;     /* Breaks long words */
-        display: block;            /* Block for proper wrapping */
-        margin: 0;
-      `;
-    } else {
-      // Normal messages — allow wrapping
-      content.style.cssText = `
-        white-space: pre-wrap;
+        letter-spacing: 0.6px;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
         word-wrap: break-word;
+        white-space: pre-wrap;
         display: block;
-        line-height: 1.4;
       `;
     }
 
     wrapper.appendChild(content);
 
     // TAP FOR MENU
-    wrapper.onclick = function(e) {
+    wrapper.onclick = (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
         id: id,
