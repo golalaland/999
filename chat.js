@@ -6867,14 +6867,12 @@ const sendBtn = document.getElementById("sendBtn");
 const buzzBtn = document.getElementById("buzzBtn");
 const sendArea = document.getElementById("sendArea");
 
-// Auto-resize + expand logic
+// Auto-resize and expand
 function resizeAndExpand() {
-  // Reset height to auto to measure real content
   messageInput.style.height = "auto";
   messageInput.style.height = messageInput.scrollHeight + "px";
 
-  // Add/remove expanded class based on content
-  if (messageInput.scrollHeight > 60) { // ~2 lines
+  if (messageInput.scrollHeight > 60) {
     sendArea.classList.add("expanded");
   } else {
     sendArea.classList.remove("expanded");
@@ -6883,13 +6881,13 @@ function resizeAndExpand() {
 
 messageInput.addEventListener("input", resizeAndExpand);
 
-// Shift + Enter = new line, Enter = send
+// KEY FIX: On mobile, Return = new line (default textarea behavior)
+// On desktop & mobile: Enter WITHOUT Shift = send
 messageInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
+    e.preventDefault(); // Prevents new line on send
     sendMessage();
   }
-  // Shift+Enter naturally adds line — no action needed
 });
 
 // Send function
@@ -6897,8 +6895,9 @@ function sendMessage() {
   const text = messageInput.value.trim();
   if (!text) return;
 
-  console.log("Sending message:", text);
-  // Your actual send logic here (e.g., send to server, append to chat)
+  // Your send logic here
+  console.log("Sending:", text);
+  // e.g., sendToServer(text);
 
   // Reset
   messageInput.value = "";
@@ -6906,16 +6905,23 @@ function sendMessage() {
   messageInput.focus();
 }
 
-// Button clicks
+// Button clicks (now reliable on mobile)
 sendBtn.addEventListener("click", sendMessage);
+sendBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  sendMessage();
+});
 
 buzzBtn.addEventListener("click", () => {
   // Your buzz logic
-  console.log("BUZZ sent!");
-  // Optionally clear input or do something special
+  console.log("BUZZ!");
+});
+buzzBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  // Buzz logic
 });
 
-// Initial setup
+// Initial
 resizeAndExpand();
 
 /*********************************
