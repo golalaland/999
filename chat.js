@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FINAL CLEAN & PERFECT (2026 ETERNAL)
+// RENDER MESSAGES — FINAL SAFARI-FIXED + SMALLER FONT (2026 ETERNAL)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1437,7 +1437,7 @@ function renderMessagesFromArray(messages) {
 
     const m = item.data ?? item;
 
-    // BLOCK BANNERS & SYSTEM MESSAGES
+    // BLOCK BANNERS & SYSTEM
     if (
       m.isBanner ||
       m.type === "banner" ||
@@ -1451,7 +1451,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME — TAP → SOCIAL CARD ===
+    // === USERNAME — TAP → SOCIAL CARD (SAFARI-FRIENDLY) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1465,14 +1465,26 @@ function renderMessagesFromArray(messages) {
     nameSpan.style.cssText = `
       cursor: pointer;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13.5px;           /* Slightly smaller — cleaner look */
       color: ${usernameColor};
       opacity: 0.9;
       user-select: none;
       display: inline;
       margin-right: 4px;
+      -webkit-tap-highlight-color: transparent; /* Removes Safari blue flash */
     `;
 
+    // SAFARI-PROOF TAP: use 'touchend' + preventDefault + manual click
+    nameSpan.addEventListener("touchend", (e) => {
+      e.preventDefault(); // Stops Safari from ignoring the click
+      const chatIdLower = (m.chatId || "").toLowerCase();
+      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
+      if (user && user._docId !== currentUser?.uid) {
+        showSocialCard(user);
+      }
+    });
+
+    // Desktop click still works
     nameSpan.addEventListener("click", (e) => {
       e.stopPropagation();
       const chatIdLower = (m.chatId || "").toLowerCase();
@@ -1521,11 +1533,11 @@ function renderMessagesFromArray(messages) {
     content.className = "content";
     content.textContent = m.content || "";
 
-    // NORMAL MESSAGES — LIGHT & AIRY
+    // NORMAL MESSAGES — LIGHT, SMALLER & AIRY
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
-        font-size: 14.5px;
+        font-size: 14px;            /* Reduced from 14.5px — cleaner */
         line-height: 1.55;
         color: #d0d0d0;
         word-wrap: break-word;
@@ -1536,7 +1548,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // BUZZ MESSAGES — EPIC STICKER
+    // BUZZ MESSAGES — EPIC
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1584,7 +1596,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // TAP ON TEXT → REPLY/REPORT MODAL
+    // TAP ON TEXT → REPLY/REPORT
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1603,7 +1615,7 @@ function renderMessagesFromArray(messages) {
     // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
     wrapper.style.pointerEvents = "none";
 
-    // Re-enable taps on interactive parts
+    // Re-enable on interactive parts
     nameSpan.style.pointerEvents = "auto";
     if (preview) preview.style.pointerEvents = "auto";
     content.style.pointerEvents = "auto";
@@ -1611,13 +1623,12 @@ function renderMessagesFromArray(messages) {
     refs.messagesEl.appendChild(wrapper);
   });
 
-  // Auto-scroll to bottom if near
+  // Auto-scroll
   const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
   if (distanceFromBottom < 200) {
     refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
   }
 
-  // Fallback full scroll
   if (!scrollPending) {
     scrollPending = true;
     requestAnimationFrame(() => {
