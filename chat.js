@@ -1191,7 +1191,6 @@ observer.observe(refs.messagesEl, { childList: true, subtree: true });
 // CALL IT
 handleChatAutoScroll();
 
-// Cancel reply
 function cancelReply() {
   currentReplyTarget = null;
   refs.messageInputEl.placeholder = "Type a message...";
@@ -1208,19 +1207,20 @@ function cancelReply() {
 }
 
 // =============================
-// REPLY CANCEL BUTTON — COMPACT & BEAUTIFUL (2026)
+// REPLY CANCEL BUTTON — OLD LAYOUT + NEON "×" COLOR ONLY
 // =============================
 function showReplyCancelButton() {
   if (!refs.cancelReplyBtn) {
     const btn = document.createElement("button");
-    btn.textContent = "×"; // Keep "×" — old style
+    btn.textContent = "×";
     btn.style.marginLeft = "6px";
     btn.style.fontSize = "12px";
-    btn.style.color = "var(--accent, #FF1493)"; // ← ONLY THIS LINE ADDED: neon color
+    btn.style.color = "var(--accent, #FF1493)";     // ← Neon accent color
     btn.style.fontWeight = "700";
     btn.style.background = "none";
     btn.style.border = "none";
     btn.style.cursor = "pointer";
+    btn.style.outline = "none";                    // Clean focus
     btn.onclick = cancelReply;
     refs.cancelReplyBtn = btn;
     refs.messageInputEl.parentElement.appendChild(btn);
