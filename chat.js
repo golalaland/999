@@ -1533,7 +1533,7 @@ function renderMessagesFromArray(messages) {
         padding:6px 10px;
         margin:6px 0 8px;
         border-radius:0 8px 8px 0;
-        font-size:13px;
+        font-size:9px;
         color:#aaa;
         cursor:pointer;
         line-height:1.4;
@@ -1563,7 +1563,7 @@ function renderMessagesFromArray(messages) {
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
-        font-size: 14px;            /* Reduced from 14.5px — cleaner */
+        font-size: 13px;            /* Reduced from 14.5px — cleaner */
         line-height: 1.55;
         color: #d0d0d0;
         word-wrap: break-word;
