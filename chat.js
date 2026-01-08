@@ -1195,22 +1195,41 @@ handleChatAutoScroll();
 function cancelReply() {
   currentReplyTarget = null;
   refs.messageInputEl.placeholder = "Type a message...";
-  if (refs.cancelReplyBtn) {
+
+  if (refs.cancelReplyBtn && refs.cancelReplyBtn.parentNode) {
     refs.cancelReplyBtn.remove();
     refs.cancelReplyBtn = null;
   }
+
+  // Optional: collapse input if empty
+  if (!refs.messageInputEl.value.trim()) {
+    resizeAndExpand();
+  }
 }
 
+// =============================
+// REPLY CANCEL BUTTON — COMPACT & BEAUTIFUL (2026)
+// =============================
 function showReplyCancelButton() {
-  if (!refs.cancelReplyBtn) {
-    const btn = document.createElement("button");
-    btn.textContent = "×";
-    btn.style.marginLeft = "6px";
-    btn.style.fontSize = "12px";
-    btn.onclick = cancelReply;
-    refs.cancelReplyBtn = btn;
-    refs.messageInputEl.parentElement.appendChild(btn);
+  // Remove old button if exists
+  if (refs.cancelReplyBtn && refs.cancelReplyBtn.parentNode) {
+    refs.cancelReplyBtn.remove();
   }
+
+  const btn = document.createElement("div"); // Use div for better styling control
+  btn.className = "reply-cancel-btn";
+  btn.textContent = "×";
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    cancelReply();
+  };
+
+  // Insert next to input (inside send-area, after input-wrapper)
+  const sendArea = document.getElementById("sendArea");
+  const inputWrapper = sendArea.querySelector(".input-wrapper");
+  sendArea.insertBefore(btn, inputWrapper.nextSibling); // Places it right after input
+
+  refs.cancelReplyBtn = btn;
 }
 
 // Report a message
