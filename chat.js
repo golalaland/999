@@ -577,7 +577,7 @@ function setupUsersListener() {
       if (updated || Object.keys(refs.userColors).length === snap.size) {
         console.log("[COLORS] Colors updated — re-rendering messages");
         // Re-render all messages to apply new colors
-        renderMessagesFromArray(lastMessagesArray || []);
+        esFromArray(lastMessagesArray || []);
       }
     },
     (err) => {
@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — BUBBLE TAP FIXED + SOCIAL CARD (2026 FINAL)
+// RENDER MESSAGES — BUBBLE NOT TAPPABLE (FINAL)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1451,7 +1451,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME (tap → social card only) ===
+    // === USERNAME — TAP → SOCIAL CARD ONLY ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1475,7 +1475,6 @@ function renderMessagesFromArray(messages) {
       margin-right: 4px;
     `;
 
-    // TAP USERNAME → SOCIAL CARD
     nameSpan.addEventListener("click", (e) => {
       e.stopPropagation();
       const chatIdLower = (m.chatId || "").toLowerCase();
@@ -1511,19 +1510,19 @@ function renderMessagesFromArray(messages) {
         const target = document.getElementById(m.replyTo);
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "center" });
-          target.style.background = "rgba(180,180,180,0.15)"; // YOUR GREY
+          target.style.background = "rgba(180,180,180,0.15)";
           setTimeout(() => target.style.background = "", 2000);
         }
       };
       wrapper.appendChild(preview);
     }
 
-    // === MESSAGE CONTENT ===
+    // === MESSAGE CONTENT — TAP → REPLY/REPORT ONLY ===
     const content = document.createElement("span");
     content.className = "content";
     content.textContent = m.content || "";
 
-    // NORMAL MESSAGES — LIGHT & SMALL
+    // Normal messages
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
@@ -1538,7 +1537,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // BUZZ MESSAGES — EPIC
+    // Buzz messages
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1586,7 +1585,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // === ONLY TAP ON MESSAGE TEXT → REPLY/REPORT ===
+    // ONLY CONTENT TAP → REPLY/REPORT
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1602,10 +1601,13 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // === BUBBLE TAP DOES NOTHING ===
-    wrapper.addEventListener("click", (e) => {
-      e.stopPropagation(); // Blocks any parent listeners
-    });
+    // BUBBLE ITSELF IS COMPLETELY UNTAPPABLE
+    wrapper.style.pointerEvents = "none"; // Disable all pointer events on wrapper
+
+    // Re-enable on children that need it
+    nameSpan.style.pointerEvents = "auto";
+    if (preview) preview.style.pointerEvents = "auto";
+    content.style.pointerEvents = "auto";
 
     refs.messagesEl.appendChild(wrapper);
   });
