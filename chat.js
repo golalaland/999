@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — BUBBLE NOT TAPPABLE (FINAL)
+// RENDER MESSAGES — FINAL FIXED (NO ERRORS)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1487,8 +1487,9 @@ function renderMessagesFromArray(messages) {
     wrapper.appendChild(nameSpan);
 
     // === REPLY PREVIEW ===
+    let preview = null;
     if (m.replyTo) {
-      const preview = document.createElement("div");
+      preview = document.createElement("div");
       preview.className = "reply-preview";
       preview.style.cssText = `
         background:rgba(255,255,255,0.06);
@@ -1517,12 +1518,12 @@ function renderMessagesFromArray(messages) {
       wrapper.appendChild(preview);
     }
 
-    // === MESSAGE CONTENT — TAP → REPLY/REPORT ONLY ===
+    // === MESSAGE CONTENT ===
     const content = document.createElement("span");
     content.className = "content";
     content.textContent = m.content || "";
 
-    // Normal messages
+    // NORMAL MESSAGES
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
@@ -1537,7 +1538,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // Buzz messages
+    // BUZZ MESSAGES
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1585,7 +1586,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // ONLY CONTENT TAP → REPLY/REPORT
+    // TAP ON TEXT → REPLY/REPORT
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1601,10 +1602,10 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // BUBBLE ITSELF IS COMPLETELY UNTAPPABLE
-    wrapper.style.pointerEvents = "none"; // Disable all pointer events on wrapper
+    // BUBBLE ITSELF UNTAPPABLE
+    wrapper.style.pointerEvents = "none";
 
-    // Re-enable on children that need it
+    // Re-enable on interactive children
     nameSpan.style.pointerEvents = "auto";
     if (preview) preview.style.pointerEvents = "auto";
     content.style.pointerEvents = "auto";
