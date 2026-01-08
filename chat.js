@@ -1211,18 +1211,21 @@ function cancelReply() {
 // REPLY CANCEL BUTTON — COMPACT & BEAUTIFUL (2026)
 // =============================
 function showReplyCancelButton() {
-  // Remove old button if exists
-  if (refs.cancelReplyBtn && refs.cancelReplyBtn.parentNode) {
-    refs.cancelReplyBtn.remove();
+  if (!refs.cancelReplyBtn) {
+    const btn = document.createElement("button");
+    btn.textContent = "×"; // Keep "×" — old style
+    btn.style.marginLeft = "6px";
+    btn.style.fontSize = "12px";
+    btn.style.color = "var(--accent, #FF1493)"; // ← ONLY THIS LINE ADDED: neon color
+    btn.style.fontWeight = "700";
+    btn.style.background = "none";
+    btn.style.border = "none";
+    btn.style.cursor = "pointer";
+    btn.onclick = cancelReply;
+    refs.cancelReplyBtn = btn;
+    refs.messageInputEl.parentElement.appendChild(btn);
   }
-
-  const btn = document.createElement("div"); // Use div for better styling control
-  btn.className = "reply-cancel-btn";
-  btn.textContent = "×";
-  btn.onclick = (e) => {
-    e.stopPropagation();
-    cancelReply();
-  };
+}
 
   // Insert next to input (inside send-area, after input-wrapper)
   const sendArea = document.getElementById("sendArea");
