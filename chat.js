@@ -1255,8 +1255,6 @@ async function reportMessage(msgData) {
 // =============================
 // TAP MODAL — MINIMAL, CLEAN & MOBILE-PERFECT (2026 FINAL)
 // =============================
-let tapModalEl = null;
-
 function showTapModal(targetEl, msgData) {
   // Remove existing modal
   if (tapModalEl) {
