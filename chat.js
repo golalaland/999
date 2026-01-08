@@ -2794,21 +2794,21 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE
+// SEND REGULAR MESSAGE — FIXED COLLAPSE AFTER SEND
 refs.sendBtn?.addEventListener("click", async () => {
   try {
     if (!currentUser) return showStarPopup("Sign in to chat.");
+
     const txt = refs.messageInputEl?.value.trim();
     if (!txt) return showStarPopup("Type a message first.");
+
     if ((currentUser.stars || 0) < SEND_COST)
       return showStarPopup("Not enough stars to send message.");
 
     // Deduct stars
     currentUser.stars -= SEND_COST;
-    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      stars: increment(-SEND_COST)
-    });
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-SEND_COST) });
 
     // REPLY DATA
     const replyData = currentReplyTarget
@@ -2820,11 +2820,7 @@ refs.sendBtn?.addEventListener("click", async () => {
         }
       : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-    // RESET INPUT + CANCEL REPLY
-    refs.messageInputEl.value = "";
-    cancelReply();
-
-    // SEND TO FIRESTORE (NO LOCAL ECHO = NO DOUBLES)
+    // SEND TO FIRESTORE
     await addDoc(collection(db, CHAT_COLLECTION), {
       content: txt,
       uid: currentUser.uid,
@@ -2836,14 +2832,18 @@ refs.sendBtn?.addEventListener("click", async () => {
       ...replyData
     });
 
-    // SUCCESS — Auto-scroll happens automatically in onSnapshot (see below)
+    // === CRITICAL FIX: FULL RESET & COLLAPSE ===
+    refs.messageInputEl.value = "";
+    cancelReply?.(); // Clear reply preview
+    resizeAndExpand(); // Manually trigger resize → collapses to original pill
+
     console.log("Message sent to Firestore");
+
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
-    // Refund stars
     currentUser.stars += SEND_COST;
-    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 });
 
@@ -2931,58 +2931,46 @@ privateMsgInput.addEventListener('keydown', (e) => {
 });
   
 // =============================
-// BUZZ MESSAGE — SUPER STICKER STYLE, CLASSY NON-NEON GRADIENTS
+// BUZZ MESSAGE — CLEAN, ETERNAL & PERFECT (2026 FINAL)
 // =============================
 const buzzSound = document.getElementById("buzz-sound");
 
 if (!refs.buzzBtn) return;
 
 refs.buzzBtn.addEventListener("click", async () => {
-  // ─────────────────────────────────────
   // AUTH CHECK
-  // ─────────────────────────────────────
   if (!currentUser?.uid) {
     showStarPopup("Sign in to BUZZ.");
     return;
   }
 
-  // ─────────────────────────────────────
   // MESSAGE VALIDATION
-  // ─────────────────────────────────────
   const text = refs.messageInputEl?.value?.trim() || "";
-
   if (!text) {
     showStarPopup("Write something to make the chat SHAKE");
     return;
   }
 
   if (text.length > 21) {
-    showStarPopup("BUZZ messages are limited to 21 characters!", {
-      type: "error"
-    });
+    showStarPopup("BUZZ messages are limited to 21 characters!", { type: "error" });
     return;
   }
 
-  // ─────────────────────────────────────
   // STAR CHECK
-  // ─────────────────────────────────────
-  const userStars = currentUser.stars || 0;
-
-  if (userStars < BUZZ_COST) {
-    showStarPopup(
-      `BUZZ costs ${BUZZ_COST.toLocaleString()} stars!`,
-      { type: "error" }
-    );
+  if ((currentUser.stars || 0) < BUZZ_COST) {
+    showStarPopup(`BUZZ costs ${BUZZ_COST.toLocaleString()} stars!`, { type: "error" });
     return;
   }
 
-  // ─────────────────────────────────────
-  // TRANSACTION
-  // ─────────────────────────────────────
+  // DISABLE BUTTON TO PREVENT DOUBLE BUZZ
+  refs.buzzBtn.disabled = true;
+  refs.buzzBtn.style.opacity = "0.6";
+
   try {
     const gradient = randomStickerGradient();
     const newMsgRef = doc(collection(db, CHAT_COLLECTION));
 
+    // ATOMIC TRANSACTION: DEDUCT STARS + SEND BUZZ
     await runTransaction(db, async (transaction) => {
       transaction.update(doc(db, "users", currentUser.uid), {
         stars: increment(-BUZZ_COST)
@@ -2994,7 +2982,6 @@ refs.buzzBtn.addEventListener("click", async () => {
         chatId: currentUser.chatId,
         usernameColor: currentUser.usernameColor || "#ff69b4",
         timestamp: serverTimestamp(),
-
         type: "buzz",
         buzzLevel: "epic",
         highlight: true,
@@ -3004,22 +2991,18 @@ refs.buzzBtn.addEventListener("click", async () => {
       });
     });
 
-    // ─────────────────────────────────────
-    // LOCAL UI FEEDBACK
-    // ─────────────────────────────────────
+    // LOCAL UI UPDATE
     currentUser.stars -= BUZZ_COST;
-
     if (refs.starCountEl) {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
-    if (refs.messageInputEl) {
-      refs.messageInputEl.value = "";
-    }
+    // CLEAR INPUT & FORCE COLLAPSE TO ORIGINAL SIZE
+    refs.messageInputEl.value = "";
+    cancelReply?.();
+    resizeAndExpand(); // Critical: ensures perfect collapse to compact pill
 
-    cancelReply();
-
-    // 🔊 PLAY BUZZ SOUND
+    // SOUND & VISUAL MAGIC
     if (buzzSound) {
       buzzSound.currentTime = 0;
       buzzSound.play().catch(() => {});
@@ -3027,17 +3010,24 @@ refs.buzzBtn.addEventListener("click", async () => {
 
     triggerStickerBuzz(gradient, text, currentUser.chatId);
 
-    showStarPopup(
-      "STICKER BUZZ DROPPED — CONFETTI INSIDE!",
-      { type: "success", duration: 5000 }
-    );
+    showStarPopup("STICKER BUZZ DROPPED — CONFETTI INSIDE!", {
+      type: "success",
+      duration: 5000
+    });
 
   } catch (err) {
     console.error("BUZZ failed:", err);
-    showStarPopup(
-      "BUZZ failed — stars refunded",
-      { type: "error" }
-    );
+    showStarPopup("BUZZ failed — stars refunded", { type: "error" });
+
+    // REFUND ON ERROR
+    currentUser.stars += BUZZ_COST;
+    if (refs.starCountEl) {
+      refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    }
+  } finally {
+    // RE-ENABLE BUTTON
+    refs.buzzBtn.disabled = false;
+    refs.buzzBtn.style.opacity = "1";
   }
 });
 
