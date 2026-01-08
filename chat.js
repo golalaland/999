@@ -1288,18 +1288,19 @@ function showTapModal(targetEl, msgData) {
   // Reply button
   const replyBtn = document.createElement("button");
   replyBtn.textContent = "Reply";
-  replyBtn.onclick = (e) => {
-    e.stopPropagation();
-    currentReplyTarget = {
-      id: msgData.id,
-      chatId: msgData.chatId,
-      content: msgData.content
-    };
-    showReplyPreview(currentReplyTarget); // Use new dynamic preview
-    tapModalEl.remove();
-    tapModalEl = null;
+ replyBtn.onclick = (e) => {
+  e.stopPropagation();
+  currentReplyTarget = {
+    id: msgData.id,
+    chatId: msgData.chatId,
+    content: msgData.content
   };
-
+  refs.messageInputEl.placeholder = `Replying to ${msgData.chatId}: ${msgData.content.substring(0, 30)}...`;
+  refs.messageInputEl.focus();
+  showReplyCancelButton(); // ← This is your original working function
+  tapModalEl.remove();
+  tapModalEl = null;
+};
   // Report button
   const reportBtn = document.createElement("button");
   reportBtn.textContent = "Report";
