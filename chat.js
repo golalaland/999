@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — SOCIAL CARD + REPLY/REPORT (2026 FINAL)
+// RENDER MESSAGES — BUBBLE TAP FIXED + SOCIAL CARD (2026 FINAL)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1451,7 +1451,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME (click → social card) ===
+    // === USERNAME (tap → social card only) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1477,7 +1477,7 @@ function renderMessagesFromArray(messages) {
 
     // TAP USERNAME → SOCIAL CARD
     nameSpan.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent message tap
+      e.stopPropagation();
       const chatIdLower = (m.chatId || "").toLowerCase();
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
       if (user && user._docId !== currentUser?.uid) {
@@ -1504,14 +1504,14 @@ function renderMessagesFromArray(messages) {
       `;
       const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
-      preview.innerHTML = `<strong style="color:#999;">⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
+      preview.innerHTML = `<strong style="color:#999;">↩ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
 
       preview.onclick = (e) => {
         e.stopPropagation();
         const target = document.getElementById(m.replyTo);
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "center" });
-          target.style.background = "rgba(180,180,180,0.15)"; // YOUR ORIGINAL GREY
+          target.style.background = "rgba(180,180,180,0.15)"; // YOUR GREY
           setTimeout(() => target.style.background = "", 2000);
         }
       };
@@ -1534,7 +1534,7 @@ function renderMessagesFromArray(messages) {
         white-space: pre-wrap;
         display: inline;
         opacity: 0.95;
-        cursor: pointer; /* Show it's tappable */
+        cursor: pointer;
       `;
     }
 
@@ -1586,7 +1586,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // TAP ON MESSAGE TEXT → REPLY/REPORT MODAL
+    // === ONLY TAP ON MESSAGE TEXT → REPLY/REPORT ===
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1602,9 +1602,9 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // Prevent wrapper click from triggering anything (only children handle clicks)
+    // === BUBBLE TAP DOES NOTHING ===
     wrapper.addEventListener("click", (e) => {
-      e.stopPropagation();
+      e.stopPropagation(); // Blocks any parent listeners
     });
 
     refs.messagesEl.appendChild(wrapper);
