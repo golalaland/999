@@ -1219,7 +1219,7 @@ function showReplyCancelButton() {
   btn.textContent = "×";
   btn.style.marginLeft = "6px";
   btn.style.fontSize = "12px";
-  btn.style.color = "var(--accent, #FF1493)";  // ← Neon accent color
+  btn.style.color = "var(--accent, #FF1493)";  // Neon accent color
   btn.style.fontWeight = "700";
   btn.style.background = "none";
   btn.style.border = "none";
@@ -1228,14 +1228,6 @@ function showReplyCancelButton() {
   btn.onclick = cancelReply;
   refs.cancelReplyBtn = btn;
   refs.messageInputEl.parentElement.appendChild(btn);
-}
-
-  // Insert next to input (inside send-area, after input-wrapper)
-  const sendArea = document.getElementById("sendArea");
-  const inputWrapper = sendArea.querySelector(".input-wrapper");
-  sendArea.insertBefore(btn, inputWrapper.nextSibling); // Places it right after input
-
-  refs.cancelReplyBtn = btn;
 }
 
 // Report a message
