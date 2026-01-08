@@ -3329,7 +3329,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   border-radius: 50%;
   background: rgba(255,255,255,0.12);     /* Soft grey backdrop */
   color: var(--accent, #FF1493);           /* Your neon theme color */
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -3841,9 +3841,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     background: linear-gradient(180deg, #121212, #0a0a0a);
     border-radius: 24px;
     width: 92%;
-    max-width: 460px;
-    height: 85vh;
-    max-height: 680px;
+    max-width: 380px;        <!-- Reduced from 460px for a cuter, smaller feel -->
+    height: 78vh;            <!-- Slightly shorter -->
+    max-height: 580px;       <!-- Reduced from 680px -->
     border: 1px solid #262626;
     position: relative;
     overflow: hidden;
@@ -3854,15 +3854,15 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <!-- Close Button -->
     <button id="closeFruitGuide" style="
       position: absolute;
-      top: 16px;
-      right: 20px;
+      top: 12px;               <!-- Slightly higher to fit smaller modal -->
+      right: 16px;
       background: none;
       border: none;
-      font-size: 32px;
+      font-size: 28px;         <!-- Slightly smaller × -->
       color: #666;
       cursor: pointer;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -3872,40 +3872,39 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     onmouseover="this.style.background='rgba(255,255,255,0.1)'"
     onmouseout="this.style.background='none'">×</button>
 
- <!-- Title Section – Smaller, Perfectly Centered & Balanced -->
-<div style="padding: 24px 28px 12px; text-align:center;">
-  <h2 style="
-    font-size: 24px;               /* Reduced from 28px – fits better on mobile */
-    font-weight: 800;
-    margin: 0 0 12px;
-    background: linear-gradient(90deg, #c3f60c, #d9ff4d);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1.2;
-  ">
-    Fruit Guide
-  </h2>
+    <!-- Title Section – Smaller, Perfectly Centered & Balanced -->
+    <div style="padding: 20px 24px 10px; text-align:center;"> <!-- Reduced padding -->
+      <h2 style="
+        font-size: 22px;       <!-- Smaller title for cute compact look -->
+        font-weight: 800;
+        margin: 0 0 10px;
+        background: linear-gradient(90deg, #c3f60c, #d9ff4d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+      ">
+        Fruit Guide
+      </h2>
+      <p style="
+        color:#aaa;
+        font-size: 13.5px;
+        margin: 0 0 8px;
+        line-height: 1.5;
+      ">
+        Understand the vibe behind each fruit, so you know exactly what she’s open to.
+      </p>
+      <p style="
+        color:#888;
+        font-size: 12px;
+        margin: 0;
+        line-height: 1.4;
+        font-weight: 500;
+      ">
+        Swipe to see each vibe →
+      </p>
+    </div>
 
-  <p style="
-    color:#aaa; 
-    font-size: 14px;               /* Slightly larger for readability */
-    margin: 0 0 8px;
-    line-height: 1.5;
-  ">
-    Understand the vibe behind each fruit, so you know exactly what she’s open to.
-  </p>
-
-  <p style="
-    color:#888; 
-    font-size: 12px;               /* Small hint, subtle */
-    margin: 0;
-    line-height: 1.4;
-    font-weight: 500;
-  ">
-    Swipe to see each vibe →
-  </p>
-</div>
     <!-- Swipeable Carousel Container -->
     <div id="fruitCarousel" style="
       flex: 1;
@@ -3919,52 +3918,49 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
       ">
         <!-- Fruit 1: Grapes -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #9c72ff; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍇</div>
-            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
-              Grapes – Casual & Friends
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #9c72ff; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍇</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Grapes · Casual & Friends
             </strong>
-            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
               She's here for light, fun chats and friendships. No pressure, just good vibes, laughs, and easy connection.
             </p>
           </div>
         </div>
-
         <!-- Fruit 2: Peach -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #ff6b9d; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍑</div>
-            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
-              Peach – Thrills & Generosity
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff6b9d; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍑</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Peach · Thrills & Generosity
             </strong>
-            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
-              She's open to exciting, luxurious experiences where you spoil her. Think paid dates, gifts, and high-energy fun.
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
+              She's open to exciting experiences where you spoil her. Think paid dates, thoughtful gifts, and consensual fun.
             </p>
           </div>
         </div>
-
         <!-- Fruit 3: Cherries -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #ff4757; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍒</div>
-            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
-              Cherries – Passion & Romance
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff4757; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍒</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Cherries · Passion & Romance
             </strong>
-            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
-              All about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
+              She's all about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
             </p>
           </div>
         </div>
-
         <!-- Fruit 4: Strawberry -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 28px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:24px; border-radius:16px; border-left:4px solid #ff9f43; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:80px; text-align:center; margin-bottom:20px;">🍓</div>
-            <strong style="font-size:20px; color:#c3f60c; text-align:center; display:block; margin-bottom:12px;">
-              Strawberry – Love & Relationships
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff9f43; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍓</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Strawberry · Love & Relationships
             </strong>
-            <p style="color:#ccc; font-size:16px; line-height:1.6; margin:0;">
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
               She's ready for deeper emotions, commitment, and building something real. Perfect for love adventures and long-term vibes.
             </p>
           </div>
@@ -3973,7 +3969,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </div>
 
     <!-- Dots Indicator -->
-    <div style="padding: 20px 28px; text-align:center;">
+    <div style="padding: 16px 24px; text-align:center;">
       <div id="fruitDots" style="display:inline-flex; gap:10px;">
         <span class="dot active" data-slide="0"></span>
         <span class="dot" data-slide="1"></span>
@@ -3983,14 +3979,14 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </div>
 
     <!-- Bottom Close Button -->
-    <div style="padding: 0 28px 32px; text-align:center;">
+    <div style="padding: 0 24px 28px; text-align:center;">
       <button id="closeFruitGuideBottom" style="
-        padding:14px 44px;
+        padding:12px 40px;
         background:#151515;
         color:#c3f60c;
         border:1px solid #333;
         border-radius:18px;
-        font-size:16px;
+        font-size:15px;
         font-weight:700;
         cursor:pointer;
       ">
