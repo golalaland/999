@@ -1426,7 +1426,7 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FINAL FIXED (NO ERRORS)
+// RENDER MESSAGES — FINAL CLEAN & PERFECT (2026 ETERNAL)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
@@ -1437,7 +1437,7 @@ function renderMessagesFromArray(messages) {
 
     const m = item.data ?? item;
 
-    // BLOCK BANNERS
+    // BLOCK BANNERS & SYSTEM MESSAGES
     if (
       m.isBanner ||
       m.type === "banner" ||
@@ -1451,7 +1451,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME — TAP → SOCIAL CARD ONLY ===
+    // === USERNAME — TAP → SOCIAL CARD ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1460,9 +1460,7 @@ function renderMessagesFromArray(messages) {
       .replace(/[.@/\\]/g, '_');
     nameSpan.dataset.userId = realUid;
 
-    const usernameColor = refs.userColors && refs.userColors[m.uid]
-      ? refs.userColors[m.uid]
-      : "#ffffff";
+    const usernameColor = refs.userColors?.[m.uid] || "#ffffff";
 
     nameSpan.style.cssText = `
       cursor: pointer;
@@ -1523,7 +1521,7 @@ function renderMessagesFromArray(messages) {
     content.className = "content";
     content.textContent = m.content || "";
 
-    // NORMAL MESSAGES
+    // NORMAL MESSAGES — LIGHT & AIRY
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
@@ -1538,7 +1536,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // BUZZ MESSAGES
+    // BUZZ MESSAGES — EPIC STICKER
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1586,11 +1584,11 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // TAP ON TEXT → REPLY/REPORT
+    // TAP ON TEXT → REPLY/REPORT MODAL
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
-        id: id,
+        id,
         chatId: m.chatId,
         uid: realUid,
         content: m.content,
@@ -1602,10 +1600,10 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // BUBBLE ITSELF UNTAPPABLE
+    // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
     wrapper.style.pointerEvents = "none";
 
-    // Re-enable on interactive children
+    // Re-enable taps on interactive parts
     nameSpan.style.pointerEvents = "auto";
     if (preview) preview.style.pointerEvents = "auto";
     content.style.pointerEvents = "auto";
@@ -1613,12 +1611,13 @@ function renderMessagesFromArray(messages) {
     refs.messagesEl.appendChild(wrapper);
   });
 
-  // Auto-scroll
+  // Auto-scroll to bottom if near
   const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
   if (distanceFromBottom < 200) {
     refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
   }
 
+  // Fallback full scroll
   if (!scrollPending) {
     scrollPending = true;
     requestAnimationFrame(() => {
