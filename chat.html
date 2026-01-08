@@ -3322,6 +3322,34 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 .msg .content {
   color: #d0d0d0;
 }
+/* 🔥 REPLY CANCEL "×" — SMALL, GREY BACKDROP + NEON */
+.reply-cancel-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);     /* Soft grey backdrop */
+  color: var(--accent, #FF1493);           /* Your neon theme color */
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 8px;
+  margin-bottom: 2px; /* Aligns nicely with input */
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.reply-cancel-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.1);
+}
+
+.reply-cancel-btn:active {
+  transform: scale(0.95);
+}
 </style>
 </head>
 <body>
