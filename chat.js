@@ -1252,9 +1252,13 @@ async function reportMessage(msgData) {
   }
 }
 
-// Tap modal for Reply / Report — MINIMAL PLAIN BLACK VERSION
+// =============================
+// TAP MODAL — MINIMAL, CLEAN & MOBILE-PERFECT (2026 FINAL)
+// =============================
+let tapModalEl = null;
+
 function showTapModal(targetEl, msgData) {
-  // Remove any existing modal
+  // Remove existing modal
   if (tapModalEl) {
     tapModalEl.remove();
     tapModalEl = null;
@@ -1263,65 +1267,69 @@ function showTapModal(targetEl, msgData) {
   tapModalEl = document.createElement("div");
   tapModalEl.className = "tap-modal";
 
+  // Reply button
   const replyBtn = document.createElement("button");
   replyBtn.textContent = "Reply";
-  replyBtn.onclick = () => {
+  replyBtn.onclick = (e) => {
+    e.stopPropagation();
     currentReplyTarget = {
       id: msgData.id,
       chatId: msgData.chatId,
       content: msgData.content
     };
-    refs.messageInputEl.placeholder = `Replying to ${msgData.chatId}: ${msgData.content.substring(0, 30)}...`;
-    refs.messageInputEl.focus();
-    showReplyCancelButton();
+    showReplyPreview(currentReplyTarget); // Use new dynamic preview
     tapModalEl.remove();
     tapModalEl = null;
   };
 
+  // Report button
   const reportBtn = document.createElement("button");
   reportBtn.textContent = "Report";
-  reportBtn.onclick = async () => {
+  reportBtn.onclick = async (e) => {
+    e.stopPropagation();
     await reportMessage(msgData);
     tapModalEl.remove();
     tapModalEl = null;
   };
 
+  // Cancel "×" — grey backdrop + neon accent
   const cancelBtn = document.createElement("button");
   cancelBtn.textContent = "×";
-  cancelBtn.onclick = () => {
+  cancelBtn.onclick = (e) => {
+    e.stopPropagation();
     tapModalEl.remove();
     tapModalEl = null;
   };
 
+  // Assemble
   tapModalEl.append(replyBtn, reportBtn, cancelBtn);
   document.body.appendChild(tapModalEl);
 
+  // Position above tapped message
   const rect = targetEl.getBoundingClientRect();
-
-  // Minimal, plain black styling
   tapModalEl.style.cssText = `
     position: absolute;
-    top: ${rect.top - 50 + window.scrollY}px;
+    top: ${rect.top - 56 + window.scrollY}px;
     left: ${rect.left}px;
-    background: #000000;              /* Pure black */
-    color: #ffffff;                   /* White text */
-    padding: 7px 11px;                /* Much smaller */
-    border-radius: 8px;               /* Gentle corners */
-    font-size: 13px;
+    background: #000000;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13.5px;
     display: flex;
-    gap: 12px;                        /* Tighter spacing */
+    gap: 14px;
     align-items: center;
     z-index: 99999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.6);  /* Subtle shadow only */
-    border: none;                     /* No outline */
+    box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+    -webkit-tap-highlight-color: transparent;
   `;
 
-  // Plain, unstyled buttons
+  // Buttons — clean & minimal
   replyBtn.style.cssText = `
     background: transparent;
     color: #ffffff;
-    padding: 6px 10px;
-    border-radius: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
     font-weight: 500;
     cursor: pointer;
   `;
@@ -1329,18 +1337,20 @@ function showTapModal(targetEl, msgData) {
   reportBtn.style.cssText = `
     background: transparent;
     color: #ffffff;
-    padding: 6px 10px;
-    border-radius: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
     font-weight: 500;
     cursor: pointer;
   `;
 
+  // "×" — grey circle + neon
   cancelBtn.style.cssText = `
-    background: transparent;
-    color: #aaaaaa;
-    font-size: 18px;
-    width: 26px;
-    height: 26px;
+    background: rgba(255,255,255,0.12);
+    color: var(--accent, #FF1493);
+    font-size: 16px;
+    font-weight: 700;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
@@ -1357,7 +1367,6 @@ function showTapModal(targetEl, msgData) {
     }
   }, 4000);
 }
-
 // =============================
 // EXTRACT COLORS FROM GRADIENT — USED FOR CONFETTI
 // =============================
