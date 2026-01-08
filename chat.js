@@ -1533,7 +1533,7 @@ function renderMessagesFromArray(messages) {
         padding:6px 10px;
         margin:6px 0 8px;
         border-radius:0 8px 8px 0;
-        font-size:9px;
+        font-size:13px;
         color:#aaa;
         cursor:pointer;
         line-height:1.4;
