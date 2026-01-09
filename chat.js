@@ -4350,12 +4350,12 @@ confirmBtn.onclick = async () => {
         
 // ================================
 // UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload Only)
+// Path: users/{uid}/... (updated as requested)
 // ================================
-
 document.getElementById("uploadHighlightBtn")?.addEventListener("click", async () => {
   const btn = document.getElementById("uploadHighlightBtn");
 
-  // Reset button state at start (just in case)
+  // Reset button state at start
   resetButton();
 
   if (!currentUser?.uid) {
@@ -4380,11 +4380,9 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
 
   // ── VALIDATION ──
   if (!title) return showStarPopup("Title is required", "error");
-
   if (!isBoostTrending && price < 10) {
     return showStarPopup("Minimum unlock price is 10 STRZ", "error");
   }
-
   if (!fileInput.files?.[0]) {
     return showStarPopup("Please select a video file", "error");
   }
@@ -4424,12 +4422,17 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
   showStarPopup("Dropping your highlight...", "loading");
 
   try {
-    // Better filename: userId + timestamp + random + extension
+    // Clean filename: timestamp + random + original extension
     const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
-    const fileName = `${currentUser.uid}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
-    const storageRef = ref(storage, `highlights/${currentUser.uid}/${fileName}`);
+    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
-    // Optional: add metadata
+    // UPDATED PATH: users/{uid}/...
+    const storagePath = `users/${currentUser.uid}/${fileName}`;
+    const storageRef = ref(storage, storagePath);
+
+    console.log("Starting upload to path:", storagePath);
+
+    // Optional metadata
     const metadata = {
       contentType: file.type,
       customMetadata: {
@@ -4440,7 +4443,10 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
     };
 
     const snapshot = await uploadBytes(storageRef, file, metadata);
+    console.log("Upload complete! Full path:", snapshot.metadata.fullPath);
+
     const videoUrl = await getDownloadURL(snapshot.ref);
+    console.log("Generated public URL:", videoUrl);
 
     // ── Prepare Firestore document ──
     const clipData = {
@@ -4482,13 +4488,19 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
     setTimeout(resetButton, 3000);
 
   } catch (err) {
-    console.error("Upload failed:", err);
+    console.error("Upload failed:", {
+      code: err.code,
+      message: err.message,
+      fullError: err
+    });
+
     showStarPopup(
       err.code === "storage/unauthorized"
-        ? "Permission denied — check Firebase rules"
+        ? "Permission denied — check Storage rules (allow write to users/{uid}/...)"
         : "Upload failed — please try again",
       "error"
     );
+
     resetButton();
   }
 
@@ -4510,12 +4522,14 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
   }
 });
 
-// Tag toggle (unchanged — already good)
+// Tag toggle (unchanged)
 document.querySelectorAll(".tag-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     btn.classList.toggle("selected");
   });
 });
+
+
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
   const storageKey = 'fakeOnlineCount';
