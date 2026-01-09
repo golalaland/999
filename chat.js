@@ -4349,145 +4349,173 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// UPLOAD HIGHLIGHT — TAGS + CLEAN BUTTONS + NO ERRORS
+// UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload Only)
 // ================================
+
 document.getElementById("uploadHighlightBtn")?.addEventListener("click", async () => {
   const btn = document.getElementById("uploadHighlightBtn");
-  btn.disabled = false;
-  btn.classList.remove("uploading");
-  btn.textContent = "Post Highlight";
+
+  // Reset button state at start (just in case)
+  resetButton();
 
   if (!currentUser?.uid) {
-    showGiftAlert("Sign in to upload", "error");
+    showStarPopup("Please sign in to upload", "error");
     return;
   }
 
+  // Form elements
   const fileInput = document.getElementById("highlightUploadInput");
-  const videoUrlInput = document.getElementById("highlightVideoInput");
   const titleInput = document.getElementById("highlightTitleInput");
   const descInput = document.getElementById("highlightDescInput");
   const priceInput = document.getElementById("highlightPriceInput");
   const trendingCheckbox = document.getElementById("boostTrendingCheckbox");
 
   const title = titleInput.value.trim();
-  const desc = descInput.value.trim();
+  const description = descInput.value.trim();
   const price = parseInt(priceInput.value) || 0;
-  const boostTrending = trendingCheckbox?.checked || false;
+  const isBoostTrending = trendingCheckbox?.checked ?? false;
 
-  // Get selected tags
   const selectedTags = Array.from(document.querySelectorAll(".tag-btn.selected"))
     .map(btn => btn.dataset.tag);
 
-  // VALIDATION
-  if (!title) return showStarPopup("Title required", "error");
-  if (!boostTrending && price < 10) return showStarPopup("Minimum 10 STRZ", "error");
-  if (!fileInput.files[0] && !videoUrlInput.value.trim())
-    return showStarPopup("Add file or URL", "error");
+  // ── VALIDATION ──
+  if (!title) return showStarPopup("Title is required", "error");
 
-  // TRENDING BOOST COST
-  if (boostTrending) {
-    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-    const stars = userDoc.data()?.stars || 0;
-    if (stars < 500) {
-      showStarPopup("Not enough STRZ for trending boost (need 500)", "error");
-      return;
-    }
-    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-500) });
-    showStarPopup("500 STRZ spent — Trending boost activated!", "success");
+  if (!isBoostTrending && price < 10) {
+    return showStarPopup("Minimum unlock price is 10 STRZ", "error");
   }
 
-  btn.disabled = true;
-  btn.classList.add("uploading");
-  btn.textContent = "....";
-  showStarPopup("Dropping fire...", "loading");
+  if (!fileInput.files?.[0]) {
+    return showStarPopup("Please select a video file", "error");
+  }
 
-  try {
-    let finalVideoUrl = videoUrlInput.value.trim();
+  const file = fileInput.files[0];
 
-    if (fileInput.files[0]) {
-      const file = fileInput.files[0];
-      if (file.size > 500 * 1024 * 1024) {
-        showGiftAlert("Max 500MB", "error");
-        resetBtn();
+  if (file.size > 500 * 1024 * 1024) {
+    showStarPopup("Maximum file size is 500MB", "error");
+    return;
+  }
+
+  // ── Trending Boost Logic ──
+  if (isBoostTrending) {
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      const stars = userSnap.data()?.stars ?? 0;
+
+      if (stars < 500) {
+        showStarPopup("Not enough STRZ! Need 500 for trending boost", "error");
         return;
       }
-      const storageRef = ref(storage, `highlights/${currentUser.uid}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      finalVideoUrl = await getDownloadURL(snapshot.ref);
-    }
 
+      await updateDoc(userRef, { stars: increment(-500) });
+      showStarPopup("500 STRZ spent — Trending boost activated! 🔥", "success");
+    } catch (err) {
+      console.error("Boost payment failed:", err);
+      showStarPopup("Failed to activate boost — try again", "error");
+      return;
+    }
+  }
+
+  // ── Start upload UI ──
+  btn.disabled = true;
+  btn.classList.add("uploading");
+  btn.textContent = "Uploading...";
+  showStarPopup("Dropping your highlight...", "loading");
+
+  try {
+    // Better filename: userId + timestamp + random + extension
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
+    const fileName = `${currentUser.uid}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
+    const storageRef = ref(storage, `highlights/${currentUser.uid}/${fileName}`);
+
+    // Optional: add metadata
+    const metadata = {
+      contentType: file.type,
+      customMetadata: {
+        uploader: currentUser.uid,
+        originalName: file.name,
+        uploadedAt: new Date().toISOString()
+      }
+    };
+
+    const snapshot = await uploadBytes(storageRef, file, metadata);
+    const videoUrl = await getDownloadURL(snapshot.ref);
+
+    // ── Prepare Firestore document ──
     const clipData = {
       uploaderId: currentUser.uid,
       uploaderName: currentUser.chatId || "Legend",
-      videoUrl: finalVideoUrl,
-      highlightVideoPrice: boostTrending ? 0 : price,
-      title: boostTrending ? `@${currentUser.chatId || "Legend"}` : title,
-      description: desc || "",
+      videoUrl,
+      highlightVideoPrice: isBoostTrending ? 0 : price,
+      title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
+      description: description || "",
       uploadedAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       unlockedBy: [],
       views: 0,
-      isTrending: boostTrending || false,
-      tags: selectedTags
+      isTrending: isBoostTrending,
+      tags: selectedTags.length ? selectedTags : []
     };
 
-    if (boostTrending) {
-      clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    if (isBoostTrending) {
+      clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
     }
 
     await addDoc(collection(db, "highlightVideos"), clipData);
 
-    // Notify fans (keep your existing code here)
+    // ── Success feedback ──
+    showStarPopup("Highlight is LIVE! 🎉", "success");
 
-    showStarPopup("CLIP LIVE!", "success");
-    btn.textContent = boostTrending ? "TRENDING LIVE!" : "DROPPED!";
-    btn.style.background = boostTrending
-      ? "linear-gradient(90deg,#00ffea,#8a2be2,#ff00f2)"
-      : "linear-gradient(90deg,#00ff9d,#00cc66)";
+    btn.textContent = isBoostTrending ? "TRENDING LIVE!" : "DROPPED!";
+    btn.style.background = isBoostTrending
+      ? "linear-gradient(90deg, #00ffea, #8a2be2, #ff00f2)"
+      : "linear-gradient(90deg, #00ff9d, #00cc66)";
 
     // Reset form
+    resetForm();
+
+    // Optional: reload user's clips
+    if (typeof loadMyClips === "function") loadMyClips();
+
+    // Auto-reset button after 3 seconds
+    setTimeout(resetButton, 3000);
+
+  } catch (err) {
+    console.error("Upload failed:", err);
+    showStarPopup(
+      err.code === "storage/unauthorized"
+        ? "Permission denied — check Firebase rules"
+        : "Upload failed — please try again",
+      "error"
+    );
+    resetButton();
+  }
+
+  // ── Helper Functions ──
+  function resetButton() {
+    btn.disabled = false;
+    btn.classList.remove("uploading");
+    btn.textContent = "Post Highlight";
+    btn.style.background = "linear-gradient(90deg, #ff2e78, #ff5e2e)";
+  }
+
+  function resetForm() {
     fileInput.value = "";
-    videoUrlInput.value = "";
     titleInput.value = "";
     descInput.value = "";
     priceInput.value = "50";
     if (trendingCheckbox) trendingCheckbox.checked = false;
-
-    // Clear selected tags (or comment out to keep them)
     document.querySelectorAll(".tag-btn").forEach(btn => btn.classList.remove("selected"));
-
-    if (typeof loadMyClips === "function") loadMyClips();
-
-    // Smooth button reset — stays pretty
-    setTimeout(() => {
-      btn.textContent = "Post Highlight";
-      btn.classList.remove("uploading");
-      btn.disabled = false;
-      btn.style.background = "linear-gradient(90deg,#ff2e78,#ff5e2e)";
-    }, 3000);
-
-  } catch (err) {
-    console.error("Upload failed:", err);
-    showStarPopup("Upload failed — try again", "error");
-    resetBtn();
-  }
-
-  function resetBtn() {
-    btn.disabled = false;
-    btn.classList.remove("uploading");
-    btn.textContent = "Post Highlight";
-    btn.style.background = "linear-gradient(90deg,#ff2e78,#ff5e2e)";
-    if (trendingCheckbox) trendingCheckbox.checked = false;
   }
 });
 
-// Tag selector — toggle selected
+// Tag toggle (unchanged — already good)
 document.querySelectorAll(".tag-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     btn.classList.toggle("selected");
   });
 });
-
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
   const storageKey = 'fakeOnlineCount';
