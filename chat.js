@@ -1,7 +1,12 @@
-/* ---------- Firebase Modular Imports (v10+) ---------- */
+/* ==============================================
+   Firebase Modular SDK v10+ (January 2026)
+   Includes: App, Auth, Firestore, Realtime DB, Storage
+   ============================================== */
+
+// ── Core & Shared ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-// Firestore
+// ── Firestore ──
 import {
   getFirestore,
   doc,
@@ -24,7 +29,16 @@ import {
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Realtime Database
+// ── Storage (added for file/video uploads) ──
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,     // optional: for progress tracking
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+// ── Realtime Database ──
 import {
   getDatabase,
   ref as rtdbRef,
@@ -33,7 +47,7 @@ import {
   onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Auth
+// ── Authentication ──
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -41,7 +55,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* ---------- Firebase Config ---------- */
+/* ── Firebase Configuration ── */
 const firebaseConfig = {
   apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
   authDomain: "dettyverse.firebaseapp.com",
@@ -53,16 +67,30 @@ const firebaseConfig = {
   databaseURL: "https://dettyverse-default-rtdb.firebaseio.com/"
 };
 
-/* ---------- Firebase Initialization ---------- */
+/* ── Initialize Services ── */
 const app = initializeApp(firebaseConfig);
-console.log("🔥 FIREBASE PROJECT:", firebaseConfig.projectId);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const rtdb = getDatabase(app); // RTDB now properly initialized
+console.log("🔥 Firebase Project:", firebaseConfig.projectId);
 
-/* ---------- Exports for other scripts ---------- */
-export { app, db, auth, rtdb };
+const db     = getFirestore(app);
+const auth   = getAuth(app);
+const rtdb   = getDatabase(app);
+const storage = getStorage(app);           // ← Now initialized!
 
+console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
+
+/* ── Exports for other modules/scripts ── */
+export {
+  app,
+  db,
+  auth,
+  rtdb,
+  storage,                // ← Important: export storage
+  // Storage functions (optional - can import directly where needed)
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  getDownloadURL
+};
 /* ---------- Global State ---------- */
 const ROOM_ID = "room888";
 const CHAT_COLLECTION = "messages_room888";
