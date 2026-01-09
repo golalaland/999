@@ -4274,7 +4274,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div>
 </div>
     
-<!-- HIGHLIGHTS ($ELL CONTENT) — FINAL POLISHED VERSION -->
+<!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
 <div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
   <div style="text-align:center; margin-bottom:28px;">
     <h2 style="
@@ -4301,179 +4301,113 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <div style="position:absolute; inset:0; pointer-events:none;
                  background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
                  opacity:0.6;"></div>
-
+    
     <div style="position:relative; z-index:2;">
-
-      <!-- Video Upload (File or URL) — PERFECTLY CENTERED -->
-      <div style="margin-bottom:22px; text-align:center;">
-        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
-          Video <span style="color:#666; font-weight:500;">(MP4 • max 500MB)</span>
+      <!-- Video Upload – Bigger & more prominent now -->
+      <div style="margin-bottom:32px; text-align:center;">
+        <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
+          Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 500MB)</span>
         </div>
-
-        <!-- Upload Button (Small & Clean) -->
-        <label for="highlightUploadInput" style="
-          display:inline-block; padding:10px 20px; background:#111111; border:1px solid #333;
-          border-radius:12px; cursor:pointer; transition:0.25s;
-          color:#ff2e78; font-size:14px; font-weight:600;
-        "
-        onmouseover="this.style.background='#1a1a1a'; this.style.borderColor='#ff2e78'"
-        onmouseout="this.style.background='#111111'; this.style.borderColor='#333'">
-          Upload from device
-        </label>
-        <input type="file" id="highlightUploadInput" accept="video/*" style="display:none;">
-
-     <!-- OR Divider — Clean, uppercase, no background box -->
-<div style="margin:18px 0; position:relative; height:20px; overflow:hidden;">
-  <div style="
-    position:absolute; top:50%; left:0; right:0; height:1px; 
-    background:#333; transform:translateY(-50%);
-  "></div>
-  <div style="
-    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
-    color:#888; font-size:13px; font-weight:700; letter-spacing:1px;
-    text-transform:uppercase; padding:0 12px; background:transparent;
-    z-index:2;
-  ">
-    OR
-  </div>
-</div>
-
-      <!-- Video URL — with proper label, same style as others -->
-<div style="margin-bottom:20px;">
-  <label style="
-    display:flex; align-items:center; gap:8px;
-    color:#e0e0e0; font-size:14px; font-weight:600;
-    margin-bottom:10px; height:20px; line-height:1;
-  ">
-    <span>Video URL</span>
-    <!-- remove or uncomment if you want it later →
-    <span style="color:#666; font-weight:500; font-size:13.5px; white-space:nowrap;">(optional)</span>
-    ← -->
-  </label>
-
-  <input type="text" id="highlightVideoInput" placeholder="https://youtube.com/watch?v=..." 
-         style="
-           width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333;
-           border-radius:12px; color:#fff; font-size:14.5px; transition:0.25s;
-         "
-         onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
-         onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
-</div>
-   <!-- Title — now 100% aligned with Video URL & Description -->
-<div style="margin-bottom:20px;">
-  <label style="
-    display:flex; align-items:center; gap:8px;
-    color:#e0e0e0; font-size:14px; font-weight:600;
-    margin-bottom:10px; height:20px; line-height:1;
-  ">
-    <span>Title</span>
-  </label>
-
-  <input type="text" id="highlightTitleInput" placeholder="e.g. Insane 1v5 ace in OT"
-         style="
-           width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333;
-           border-radius:12px; color:#fff; font-size:15px; transition:0.25s;
-         "
-         onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
-         onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
-</div>
-
-<!-- Description — aligned left like Title -->
-<div style="margin-bottom:24px; text-align:left;">
-  <label style="
-    display:flex; align-items:center; gap:8px;
-    color:#e0e0e0; font-size:14px; font-weight:600;
-    margin-bottom:10px; height:20px; line-height:1;
-  ">
-    <span>Description</span>
-    <span style="color:#666; font-weight:500; font-size:13.5px; white-space:nowrap;">
-      (optional)
-    </span>
-  </label>
-
-  <textarea id="highlightDescInput" placeholder="What's the lore behind this clip?"
-            style="
-              width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333;
-              border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px;
-              resize:vertical; box-sizing:border-box; transition:0.25s;
-              text-align:left; /* ← THIS FIXES IT */
-            "
-            onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
-            onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
-</div>
-
-
-    <!-- Price — MAXIMUM COMPACT & PERFECTLY BALANCED -->
-<div style="margin-bottom:28px; text-align:center;">
-  <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">Unlock Price</div>
-  
-  <div style="
-    display:inline-flex; align-items:center; gap:9px;
-    background:#0a0a0a; padding:9px 16px; border-radius:14px;
-    border:1px solid #333; line-height:1;
-  ">
-    <input type="tel" id="highlightPriceInput" value="50" min="10" maxlength="5"
-           style="
-             width:78px; background:transparent; border:none; outline:none;
-             color:#00ff9d; font-size:25px; font-weight:800; text-align:center;
-             padding:0; margin:0; height:36px;
-           "
-           onfocus="this.parentNode.style.borderColor='#00ff9d'; this.parentNode.style.boxShadow='0 0 0 3px rgba(0,255,157,0.18)'"
-           onblur="this.parentNode.style.borderColor='#333'; this.parentNode.style.boxShadow='none'">
-
-    <span style="
-      font-size:25px; font-weight:800; color:#808080; letter-spacing:-0.5px;
-      margin-top:-1px; /* perfect optical alignment */
-    ">STRZ</span>
-  </div>
-</div>
-
-      <!-- TAGS SELECTOR — CUTE CLICKABLE BUTTONS -->
-<div style="margin:24px 0; text-align:center;">
-  <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
-    Tags <span style="color:#666; font-weight:500;">(click to select)</span>
-  </div>
-  <div id="tagSelector" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:360px; margin:0 auto;">
-    <div class="tag-btn" data-tag="hot">Hot</div>
-    <div class="tag-btn" data-tag="cute">Cute</div>
-    <div class="tag-btn" data-tag="dance">Dance</div>
-    <div class="tag-btn" data-tag="funny">Funny</div>
-    <div class="tag-btn" data-tag="sexy">Sexy</div>
-    <div class="tag-btn" data-tag="gaming">Gaming</div>
-    <div class="tag-btn" data-tag="lipsync">Lipsync</div>
-    <div class="tag-btn" data-tag="cosplay">Cosplay</div>
-    <div class="tag-btn" data-tag="beauty">Beauty</div>
-    <div class="tag-btn" data-tag="vibes">Vibes</div>
-  </div>
-</div>
         
-     <!-- Upload Button -->
-<div style="text-align:center;">
-  <button id="uploadHighlightBtn" style="
-    padding:10px 24px;
-    background:linear-gradient(90deg,#ff2e78,#ff5e2e);
-    color:#fff;
-    border:none;
-    border-radius:40px;
-    font-weight:600;
-    font-size:14px;
-    cursor:pointer;
-    letter-spacing:0.4px;
-    transition:all 0.3s ease;
-    position:relative;
-  "
-  onmouseover="this.style.opacity='0.9'"
-  onmouseout="this.style.opacity='1'">
-    <span class="btn-text">Post</span>
-  </button>
-</div>
+        <!-- Big beautiful upload area -->
+        <label for="highlightUploadInput" style="
+          display:block; padding:32px 24px;
+          background:#111111; border:2px dashed #444;
+          border-radius:16px; cursor:pointer; transition:all 0.3s ease;
+          color:#888; font-size:15px; font-weight:500;
+          margin:0 auto; max-width:340px;
+        "
+        onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
+        onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
+          <div style="margin-bottom:8px; font-size:36px;">↑</div>
+          Click or drag video here
+          <div style="margin-top:8px; font-size:13px; color:#666;">
+            MP4 • max 500MB
+          </div>
+        </label>
+        <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
+      </div>
 
-      <div id="highlightUploadStatus" style="margin-top:20px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity .4s;"></div>
+      <!-- Title -->
+      <div style="margin-bottom:20px;">
+        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+          Title <span style="color:#ff4444;">*</span>
+        </label>
+        <input type="text" id="highlightTitleInput" placeholder="e.g. Crazy 1v5 clutch in ranked"
+               style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#fff; font-size:15px;"
+               onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+               onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
+      </div>
+
+      <!-- Description -->
+      <div style="margin-bottom:24px;">
+        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+          Description <span style="color:#666; font-size:13px;">(optional)</span>
+        </label>
+        <textarea id="highlightDescInput" placeholder="What's the story behind this moment?"
+                  style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px; resize:vertical;"
+                  onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+                  onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
+      </div>
+
+      <!-- Price -->
+      <div style="margin-bottom:28px; text-align:center;">
+        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">Unlock Price</div>
+        <div style="display:inline-flex; align-items:center; gap:10px; background:#0a0a0a; padding:12px 20px; border-radius:16px; border:1px solid #333;">
+          <input type="tel" id="highlightPriceInput" value="50" min="10" maxlength="5"
+                 style="width:80px; background:transparent; border:none; outline:none; color:#00ff9d; font-size:28px; font-weight:800; text-align:center;"
+                 onfocus="this.parentNode.style.borderColor='#00ff9d'; this.parentNode.style.boxShadow='0 0 0 3px rgba(0,255,157,0.2)'"
+                 onblur="this.parentNode.style.borderColor='#333'; this.parentNode.style.boxShadow='none'">
+          <span style="font-size:26px; font-weight:800; color:#888;">STRZ</span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div style="margin:28px 0; text-align:center;">
+        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
+          Tags <span style="color:#666; font-weight:500;">(optional)</span>
+        </div>
+        <div id="tagSelector" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:360px; margin:0 auto;">
+          <div class="tag-btn" data-tag="hot">Hot</div>
+          <div class="tag-btn" data-tag="cute">Cute</div>
+          <div class="tag-btn" data-tag="dance">Dance</div>
+          <div class="tag-btn" data-tag="funny">Funny</div>
+          <div class="tag-btn" data-tag="sexy">Sexy</div>
+          <div class="tag-btn" data-tag="gaming">Gaming</div>
+          <div class="tag-btn" data-tag="lipsync">Lipsync</div>
+          <div class="tag-btn" data-tag="cosplay">Cosplay</div>
+          <div class="tag-btn" data-tag="beauty">Beauty</div>
+          <div class="tag-btn" data-tag="vibes">Vibes</div>
+        </div>
+      </div>
+
+      <!-- Upload Button -->
+      <div style="text-align:center; margin-top:32px;">
+        <button id="uploadHighlightBtn" style="
+          padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
+          color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
+          cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
+          transition:all 0.3s ease;
+        "
+        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
+          Post Highlight
+        </button>
+      </div>
+
+      <div id="highlightUploadStatus" style="margin-top:20px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;"></div>
     </div>
   </div>
 
   <style>
     @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    .tag-btn {
+      padding:8px 16px; background:#111; border:1px solid #333; border-radius:30px;
+      color:#ccc; font-size:13px; cursor:pointer; transition:all 0.2s;
+    }
+    .tag-btn.selected {
+      background:#ff2e78; color:white; border-color:#ff2e78;
+    }
   </style>
 </div>
 
