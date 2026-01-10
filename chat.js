@@ -4350,7 +4350,8 @@ confirmBtn.onclick = async () => {
         
 // ================================
 // UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload Only)
-// Path: users/{uid}/... (updated as requested)
+// Max file size: 50MB (updated)
+// Path: users/{uid}/...
 // ================================
 document.getElementById("uploadHighlightBtn")?.addEventListener("click", async () => {
   const btn = document.getElementById("uploadHighlightBtn");
@@ -4389,8 +4390,9 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
 
   const file = fileInput.files[0];
 
-  if (file.size > 500 * 1024 * 1024) {
-    showStarPopup("Maximum file size is 500MB", "error");
+  // UPDATED: Max 50MB
+  if (file.size > 50 * 1024 * 1024) {
+    showStarPopup("Maximum file size is 50MB", "error");
     return;
   }
 
@@ -4426,7 +4428,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
     const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
-    // UPDATED PATH: users/{uid}/...
+    // Path: users/{uid}/...
     const storagePath = `users/${currentUser.uid}/${fileName}`;
     const storageRef = ref(storage, storagePath);
 
@@ -4496,7 +4498,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
 
     showStarPopup(
       err.code === "storage/unauthorized"
-        ? "Permission denied — check Storage rules (allow write to users/{uid}/...)"
+        ? "Permission denied — check Storage rules"
         : "Upload failed — please try again",
       "error"
     );
@@ -4529,6 +4531,18 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
   });
 });
 
+const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+uploadTask.on('state_changed',
+  (snapshot) => {
+    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    btn.textContent = `Uploading... ${progress.toFixed(0)}%`;
+  },
+  (error) => { /* error */ },
+  async () => {
+    const videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+    // continue with Firestore save
+  }
+);
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
