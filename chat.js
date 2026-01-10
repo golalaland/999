@@ -4547,19 +4547,6 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
   });
 });
 
-const uploadTask = uploadBytesResumable(storageRef, file, metadata);
-uploadTask.on('state_changed',
-  (snapshot) => {
-    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    btn.textContent = `Uploading... ${progress.toFixed(0)}%`;
-  },
-  (error) => { /* error */ },
-  async () => {
-    const videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
-    // continue with Firestore save
-  }
-);
-
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
   const storageKey = 'fakeOnlineCount';
