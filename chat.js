@@ -4350,7 +4350,7 @@ confirmBtn.onclick = async () => {
         
 // ================================
 // UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload Only)
-// Max file size: 50MB (updated)
+// Max file size: 50MB | Resumable with progress bar
 // Path: users/{uid}/...
 // ================================
 document.getElementById("uploadHighlightBtn")?.addEventListener("click", async () => {
@@ -4390,7 +4390,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
 
   const file = fileInput.files[0];
 
-  // UPDATED: Max 50MB
+  // Max 50MB
   if (file.size > 50 * 1024 * 1024) {
     showStarPopup("Maximum file size is 50MB", "error");
     return;
@@ -4420,21 +4420,21 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
   // ── Start upload UI ──
   btn.disabled = true;
   btn.classList.add("uploading");
-  btn.textContent = "Uploading...";
+  btn.textContent = "Uploading... 0%";
   showStarPopup("Dropping your highlight...", "loading");
 
   try {
-    // Clean filename: timestamp + random + original extension
+    // 1. Prepare filename & path
     const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
-
-    // Path: users/{uid}/...
     const storagePath = `users/${currentUser.uid}/${fileName}`;
+
+    console.log("Preparing upload to:", storagePath);
+
+    // 2. Create storage reference FIRST
     const storageRef = ref(storage, storagePath);
 
-    console.log("Starting upload to path:", storagePath);
-
-    // Optional metadata
+    // 3. Metadata
     const metadata = {
       contentType: file.type,
       customMetadata: {
@@ -4444,50 +4444,66 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
       }
     };
 
-    const snapshot = await uploadBytes(storageRef, file, metadata);
-    console.log("Upload complete! Full path:", snapshot.metadata.fullPath);
+    // 4. Resumable upload with progress
+    const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
-    const videoUrl = await getDownloadURL(snapshot.ref);
-    console.log("Generated public URL:", videoUrl);
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        btn.textContent = `Uploading... ${progress.toFixed(0)}%`;
+      },
+      (error) => {
+        console.error("Upload error during progress:", error);
+        showStarPopup("Upload failed — please try again", "error");
+        resetButton();
+      },
+      async () => {
+        // Upload completed successfully
+        console.log("Upload complete! Full path:", uploadTask.snapshot.metadata.fullPath);
 
-    // ── Prepare Firestore document ──
-    const clipData = {
-      uploaderId: currentUser.uid,
-      uploaderName: currentUser.chatId || "Legend",
-      videoUrl,
-      highlightVideoPrice: isBoostTrending ? 0 : price,
-      title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
-      description: description || "",
-      uploadedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-      unlockedBy: [],
-      views: 0,
-      isTrending: isBoostTrending,
-      tags: selectedTags.length ? selectedTags : []
-    };
+        const videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log("Generated public URL:", videoUrl);
 
-    if (isBoostTrending) {
-      clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-    }
+        // ── Prepare Firestore document ──
+        const clipData = {
+          uploaderId: currentUser.uid,
+          uploaderName: currentUser.chatId || "Legend",
+          videoUrl,
+          highlightVideoPrice: isBoostTrending ? 0 : price,
+          title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
+          description: description || "",
+          uploadedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          unlockedBy: [],
+          views: 0,
+          isTrending: isBoostTrending,
+          tags: selectedTags.length ? selectedTags : []
+        };
 
-    await addDoc(collection(db, "highlightVideos"), clipData);
+        if (isBoostTrending) {
+          clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        }
 
-    // ── Success feedback ──
-    showStarPopup("Highlight is LIVE! 🎉", "success");
+        await addDoc(collection(db, "highlightVideos"), clipData);
 
-    btn.textContent = isBoostTrending ? "TRENDING LIVE!" : "DROPPED!";
-    btn.style.background = isBoostTrending
-      ? "linear-gradient(90deg, #00ffea, #8a2be2, #ff00f2)"
-      : "linear-gradient(90deg, #00ff9d, #00cc66)";
+        // ── Success feedback ──
+        showStarPopup("Highlight is LIVE! 🎉", "success");
 
-    // Reset form
-    resetForm();
+        btn.textContent = isBoostTrending ? "TRENDING LIVE!" : "DROPPED!";
+        btn.style.background = isBoostTrending
+          ? "linear-gradient(90deg, #00ffea, #8a2be2, #ff00f2)"
+          : "linear-gradient(90deg, #00ff9d, #00cc66)";
 
-    // Optional: reload user's clips
-    if (typeof loadMyClips === "function") loadMyClips();
+        // Reset form
+        resetForm();
 
-    // Auto-reset button after 3 seconds
-    setTimeout(resetButton, 3000);
+        // Optional: reload clips
+        if (typeof loadMyClips === "function") loadMyClips();
+
+        // Auto-reset button
+        setTimeout(resetButton, 3000);
+      }
+    );
 
   } catch (err) {
     console.error("Upload failed:", {
