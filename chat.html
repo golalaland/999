@@ -3773,55 +3773,50 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </select>
 </div>
   
-  <!-- FRUIT GUIDE BUTTON — AVAILABLE TO EVERYONE (inside Media tab) -->
-  <div style="margin:32px 0 20px; text-align:center;">
-    <button id="openFruitGuide" style="
-      padding:14px 36px;
-      background:linear-gradient(135deg,#1a1a1a,#0f0f0f);
-      color:#c3f60c;
-      border:1px solid #333;
-      border-radius:20px;
-      font-size:16px;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:0 6px 24px rgba(195,246,12,0.15);
-      transition:all 0.3s ease;
-    "
-    onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
-    onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
-     🍒Read 🍇the Fruit🍑 Guide🍓
-    </button>
-  </div>
+<!-- FRUIT GUIDE BUTTON — AVAILABLE TO EVERYONE (inside Media tab) -->
+<div style="margin:32px 0 20px; text-align:center;">
+  <button id="openFruitGuide" style="
+    padding:14px 36px;
+    background:linear-gradient(135deg,#1a1a1a,#0f0f0f);
+    color:#c3f60c;
+    border:1px solid #333;
+    border-radius:20px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 6px 24px rgba(195,246,12,0.15);
+    transition:all 0.3s ease;
+  "
+  onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
+  onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
+   🍒Read 🍇the Fruit🍑 Guide🍓
+  </button>
+</div>
+<hr class="divider" style="margin:20px 0;">
+<!-- Payments Section -->
+<h4 style="text-align:center; margin-bottom:10px;">Payments 🏦</h4>
+<label>Bank Name</label>
+<input type="text" id="bankName" placeholder="Enter your bank name">
 
-  <hr class="divider" style="margin:20px 0;">
+<label>Bank Number</label>
+<input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
+  oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
+<hr class="divider" style="margin:20px 0;">
+<!-- Socials Section -->
+<h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
+<label>WhatsApp</label>
+<input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
 
-  <!-- Payments Section -->
-  <h4 style="text-align:center; margin-bottom:10px;">Payments 🏦</h4>
-  <label>Bank Name</label>
-  <input type="text" id="bankName" placeholder="Enter your bank name">
-  
-  <label>Bank Number</label>
-  <input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
-    oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
+<label>Telegram</label>
+<input type="text" id="telegram" placeholder="@username">
 
-  <hr class="divider" style="margin:20px 0;">
+<label>TikTok</label>
+<input type="text" id="tiktok" placeholder="@username">
 
-  <!-- Socials Section -->
-  <h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
-  <label>WhatsApp</label>
-  <input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
-  
-  <label>Telegram</label>
-  <input type="text" id="telegram" placeholder="@username">
-  
-  <label>TikTok</label>
-  <input type="text" id="tiktok" placeholder="@username">
-  
-  <label>Instagram</label>
-  <input type="text" id="instagram" placeholder="@username">
-
-  <!-- ORIGINAL SAVE BUTTON SIZE -->
-  <button id="saveInfo" class="small-btn" style="margin-top:10px;">Save</button>
+<label>Instagram</label>
+<input type="text" id="instagram" placeholder="@username">
+<!-- ORIGINAL SAVE BUTTON SIZE -->
+<button id="saveInfo" class="small-btn" style="margin-top:10px;">Save</button>
 </div>
 
 <!-- FRUIT GUIDE MODAL – SWIPEABLE CARDS (ONE PER VIEW) -->
@@ -3841,9 +3836,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     background: linear-gradient(180deg, #121212, #0a0a0a);
     border-radius: 24px;
     width: 92%;
-    max-width: 380px;        <!-- Reduced from 460px for a cuter, smaller feel -->
-    height: 78vh;            <!-- Slightly shorter -->
-    max-height: 580px;       <!-- Reduced from 680px -->
+    max-width: 380px;
+    height: 78vh;
+    max-height: 580px;
     border: 1px solid #262626;
     position: relative;
     overflow: hidden;
@@ -3851,31 +3846,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     display: flex;
     flex-direction: column;
   ">
-    <!-- Close Button -->
-    <button id="closeFruitGuide" style="
-      position: absolute;
-      top: 12px;               <!-- Slightly higher to fit smaller modal -->
-      right: 16px;
-      background: none;
-      border: none;
-      font-size: 28px;         <!-- Slightly smaller × -->
-      color: #666;
-      cursor: pointer;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    "
-    onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-    onmouseout="this.style.background='none'">×</button>
-
     <!-- Title Section – Smaller, Perfectly Centered & Balanced -->
-    <div style="padding: 20px 24px 10px; text-align:center;"> <!-- Reduced padding -->
+    <div style="padding: 20px 24px 10px; text-align:center;">
       <h2 style="
-        font-size: 22px;       <!-- Smaller title for cute compact look -->
+        font-size: 22px;
         font-weight: 800;
         margin: 0 0 10px;
         background: linear-gradient(90deg, #c3f60c, #d9ff4d);
@@ -4075,151 +4049,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </p>
 </div>
 
-  
-
-<!-- REVENUE & ACTIONS – BANK APP STYLE -->
-<div style="margin: 32px 0;">
-  <h4 style="
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: 700;
-    font-size: 21px;
-    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  ">
-    REVENUE DASHBOARD
-  </h4>
-
-  <!-- Main Unified Card -->
-  <div style="
-    background: #000000;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(195, 246, 12, 0.4);
-    border-radius: 16px;
-    padding: 24px 20px;
-    max-width: 380px;
-    margin: 0 auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5),
-                0 0 15px rgba(195, 246, 12, 0.12);
-  ">
-    <!-- Balances Section – Exactly as you wanted, untouched sizes -->
-    <div style="font-size: 12px; color: #bbbbbb; margin-bottom: 6px;">Cash Balance</div>
-    <div style="font-size: 21px; font-weight: 800; color: #c3f60c; margin: 10px 0;">
-      ₦<span id="infoCashBalance">0</span>
-    </div>
-    
-    <div style="font-size: 12px; color: #bbbbbb; margin: 20px 0 6px;">STRZ Balance</div>
-    <div style="font-size: 21px; font-weight: 700; color: #fff;">
-      <span id="infoStarBalance">0</span> ⭐️
-    </div>
-    
-    <div style="color: #aaaaaa; font-size: 13px; margin-top: 16px; margin-bottom: 32px;">
-      Last earnings: ₦<span id="infoLastEarnings">0</span>
-    </div>
-
-    <!-- Divider -->
-    <div style="height: 1px; background: rgba(195, 246, 12, 0.2); margin: 0 0 28px;"></div>
-
-    <!-- SWAP SHOP Section -->
-    <p style="color: #cccccc; margin: 0 0 16px; font-size: 14px; font-weight: 600; text-align: center;">
-      STRZ ⇄ CASH
-    </p>
-    
-    <input
-      type="number"
-      id="convertAmount"
-      placeholder="Enter STRZ amount"
-      style="
-        width: 100%;
-        max-width: 280px;
-        padding: 13px;
-        border-radius: 12px;
-        background: #1a1a1a;
-        color: #fff;
-        border: 1px solid #444;
-        font-size: 16px;
-        text-align: center;
-        box-sizing: border-box;
-        margin: 0 auto 20px;
-        display: block;
-      "
-    />
-    
-    <div style="color: #c3f60c; font-size: 21px; font-weight: 800; margin: 20px 0;">
-      → ₦<span id="convertResult">0</span>
-    </div>
-    
-    <button id="convertBtn" style="
-      width: 100%;
-      max-width: 280px;
-      padding: 13px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-      color: #000;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 0 auto 28px;
-      display: block;
-    ">
-      SWAP
-    </button>
-
-    <!-- WITHDRAW Section -->
-    <p style="color: #cccccc; margin: 0 0 16px; font-size: 14px; font-weight: 600; text-align: center;">
-      WITHDRAW CASH
-    </p>
-    
-    <p style="color: #aaaaaa; margin: -12px 0 16px; font-size: 12.5px; text-align: center;">
-      Minimum: ₦5,000
-    </p>
-    
-    <input
-      type="number"
-      id="withdrawAmount"
-      placeholder="Enter amount"
-      style="
-        width: 100%;
-        max-width: 280px;
-        padding: 13px;
-        border-radius: 12px;
-        background: #1a1a1a;
-        color: #fff;
-        border: 1px solid #444;
-        font-size: 16px;
-        text-align: center;
-        box-sizing: border-box;
-        margin: 0 auto 20px;
-        display: block;
-      "
-    />
-    
-    <div style="color: #c3f60c; font-size: 21px; font-weight: 800; margin: 20px 0;">
-      → ₦<span id="withdrawPreview">0</span>
-    </div>
-    
-    <button id="withdrawCashBtn" style="
-      width: 100%;
-      max-width: 280px;
-      padding: 13px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-      color: #000;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 0 auto;
-      display: block;
-    ">
-      WITHDRAW
-    </button>
-  </div>
-</div>
-
-
  <!-- 🎉 INVITE FRIENDS SECTION -->
 <div style="margin: 24px 0 16px;">
   <h4 style="
@@ -4231,7 +4060,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   ">
-    PROMOTE & GET REWARDED
+    HOST & GET REWARDED
     <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; vertical-align: -4px; margin-left: 6px; fill: #c3f60c;">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
@@ -4245,8 +4074,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     margin: 0 auto 16px;
     line-height: 1.45;
   ">
-    Share your personal party link and grow your influence.<br>
-   Get <strong>100 STRZ</strong> for each new host that joins you & <strong>500 STRZ</strong> for each VIP invite!
+    Share your INVITE link and grow your influence.<br>
+   Get <strong>100 STRZ</strong> for each new host that joins you on cube & <strong>500 STRZ</strong> for each VIP invite!
   </p>
 
   <div style="display: flex; justify-content: center;">
@@ -4286,7 +4115,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       HIGHLIGHTS
     </h2>
     <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
-      Upload premium clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
+      Upload exclusive clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
     </p>
   </div>
 
