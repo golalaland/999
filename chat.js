@@ -55,6 +55,13 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+
+// 🔐 Firebase App Check (reCAPTCHA v3)
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
+  isTokenAutoRefreshEnabled: true
+});
+
 /* ── Firebase Configuration ── */
 const firebaseConfig = {
   apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
@@ -81,11 +88,6 @@ console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
 import { initializeAppCheck, ReCaptchaV3Provider } 
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
-// 🔐 Firebase App Check (reCAPTCHA v3)
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
-  isTokenAutoRefreshEnabled: true
-});
 
 
 /* ── Exports for other modules/scripts ── */
