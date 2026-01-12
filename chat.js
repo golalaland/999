@@ -5754,7 +5754,6 @@ function renderCards(videosToRender) {
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
             </svg>
-            ${video.highlightVideoPrice > 0 ? `<div style="margin-top:12px;font-size:18px;font-weight:800;color:#ff00f2;">${video.highlightVideoPrice} STRZ</div>` : ''}
           </div>
         </div>`;
       videoContainer.appendChild(lockedOverlay);
