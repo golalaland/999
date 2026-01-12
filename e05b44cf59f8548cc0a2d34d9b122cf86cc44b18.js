@@ -345,7 +345,8 @@ async function loadCurrentUserForGame() {
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
       if (storedUser?.uid) {
         uid = storedUser.uid;
-        console.log("%cLoaded from localStorage", "color:#00ffaa");
+        console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#00ffaa");
       }
     }
 
@@ -570,7 +571,8 @@ function maybeTriggerRedHot() {
 
   if (Math.random() > 0.33) return;
 
-  console.log("%c RED HOT TRIGGERED! ", "background:#900;color:#fff;padding:4px 8px;border-radius:4px;");
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "background:#900;color:#fff;padding:4px 8px;border-radius:4px;");
   RedHotMode.trigger();                       // THIS IS THE ONE THAT ACTUALLY WORKS
 }
 
@@ -718,8 +720,10 @@ async function processTapQueue() {
 // START SESSION — NOW USES PERSISTENT BONUS LEVEL
 // ======================================================
 function startSession() {
-  console.log("%cSTARTING NEW ROUND — USING PERSISTENT BONUS LEVEL", "color:#ff00aa;font-weight:bold");
-  console.log("Starting at Bonus Level:", persistentBonusLevel);
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#ff00aa;font-weight:bold");
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", persistentBonusLevel);
 
   sessionAlreadySaved = false;
 
@@ -814,7 +818,8 @@ async function endSessionRecord() {
   // === UPDATE PERSISTENT LEVEL IF NEW HIGH ACHIEVED THIS ROUND ===
   if (sessionBonusLevel > persistentBonusLevel) {
     persistentBonusLevel = sessionBonusLevel;
-    console.log("%cNEW BONUS LEVEL UNLOCKED:", "color:#ff00ff;font-weight:bold", persistentBonusLevel);
+    console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#ff00ff;font-weight:bold", persistentBonusLevel);
   }
 
   const userRef = doc(db, "users", currentUser.uid);
@@ -883,7 +888,8 @@ async function endSessionRecord() {
               taps: increment(sessionTaps),
               lastActive: serverTimestamp()
             });
-            console.log(`%cBid taps saved: +${sessionTaps} (Total on leaderboard will update instantly)`, "color:#00ffaa;font-weight:bold");
+            console.log(`// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+`, "color:#00ffaa;font-weight:bold");
             return true;
           } else {
             attempts++;
@@ -910,7 +916,8 @@ async function endSessionRecord() {
     currentUser.totalTaps = (currentUser.totalTaps || 0) + sessionTaps;
     currentUser.bonusLevel = persistentBonusLevel;
 
-    console.log("%cSESSION SAVED SUCCESSFULLY — Level:", "color:#00ffaa;font-weight:bold", persistentBonusLevel);
+    console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#00ffaa;font-weight:bold", persistentBonusLevel);
   } catch (error) {
     console.error("Failed to save session record:", error);
     sessionAlreadySaved = false; // Allow retry on next attempt if needed
@@ -1713,12 +1720,14 @@ function getTodayRound() {
 // Auto-update global round ID every minute (handles midnight perfectly)
 function initRoundSystem() {
   window.CURRENT_ROUND_ID = getTodayRound();
-  console.log("%c Bid Royale Active → " + window.CURRENT_ROUND_ID, "color:#0f9;font-size:16px;font-weight:bold");
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+" + window.CURRENT_ROUND_ID, "color:#0f9;font-size:16px;font-weight:bold");
 
   setInterval(() => {
     const newRound = getTodayRound();
     if (window.CURRENT_ROUND_ID !== newRound) {
-      console.log("%c MIDNIGHT ROLLOVER → NEW ROUND: " + newRound, "color:#ff0;font-size:20px;font-weight:900");
+      console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+" + newRound, "color:#ff0;font-size:20px;font-weight:900");
       window.CURRENT_ROUND_ID = newRound;
       // Optional: trigger UI refresh or sound
       // playSound('newday.mp3');
@@ -1783,9 +1792,12 @@ window.calculatePrizePool = calculatePrizePool;
 window.getTodayRound = getTodayRound;
 
 // INIT MESSAGE
-console.log("%c TAPMASTER CORE LOADED SUCCESSFULLY", "color:#0f9;background:#000;padding:10px;font-size:18px;font-weight:bold");
-console.log("%c Current Round → " + window.CURRENT_ROUND_ID, "color:#0f9;font-size:14px");
-console.log("%c Edit CONFIG at the top to control everything!", "color:#ff0;font-size:12px");
+console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#0f9;background:#000;padding:10px;font-size:18px;font-weight:bold");
+console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+" + window.CURRENT_ROUND_ID, "color:#0f9;font-size:14px");
+console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#ff0;font-size:12px");
 
 /* ====================== MODALS ====================== */
 document.getElementById('rulesBtn')?.addEventListener('click', e => {
@@ -2082,7 +2094,8 @@ async function saveTap(count = 1) {
 
 // ————————————————————————————————————————————————————————————————
 async function declareWinnersAndReset() {
-  console.log("%cBID ROYALE ENDED — PAYING TOP 5!", "color:#ff0;font-size:18px;font-weight:bold");
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#ff0;font-size:18px;font-weight:bold");
   // Your payout logic here (unchanged)
 }
 
