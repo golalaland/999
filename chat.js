@@ -5040,10 +5040,10 @@ window.startStream = startStream;
 
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
-  // Toggle dynamically in your app
-  const isHost = true; // Change to false for non-hosts
+  // Toggle this dynamically in your app
+  const isHost = true; // <-- make sure this equals true at runtime for hosts
 
-  // Helper: wait for elements (polling)
+  // Small helper: wait for elements (polling)
   function waitForElements(selectors = [], { timeout = 5000, interval = 80 } = {}) {
     const start = Date.now();
     return new Promise((resolve, reject) => {
@@ -5071,13 +5071,17 @@ window.startStream = startStream;
   ready(async () => {
     console.log("[host-init] DOM ready. isHost =", isHost);
     if (!isHost) {
-      console.log("[host-init] Not a host. Exiting host init.");
+      console.log("[host-init] not a host. exiting host init.");
       return;
     }
 
     try {
       // Wait for required elements
-      const [hostSettingsWrapperEl, hostModalEl, hostSettingsBtnEl] = await waitForElements(
+      const [
+        hostSettingsWrapperEl,
+        hostModalEl,
+        hostSettingsBtnEl,
+      ] = await waitForElements(
         ["#hostSettingsWrapper", "#hostModal", "#hostSettingsBtn"],
         { timeout: 7000 }
       );
@@ -5091,13 +5095,13 @@ window.startStream = startStream;
       // Show wrapper/button
       hostSettingsWrapperEl.style.display = "block";
 
-      // Close button (optional)
+      // Close button
       const closeModalEl = hostModalEl.querySelector(".close");
       if (!closeModalEl) {
         console.warn("[host-init] Close button (.close) not found inside #hostModal.");
       }
 
-      // Initialize tabs inside modal
+      // Tab initialization
       function initTabsForModal(modalEl) {
         modalEl.querySelectorAll(".tab-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
@@ -5112,7 +5116,7 @@ window.startStream = startStream;
       }
       initTabsForModal(hostModalEl);
 
-      // Open modal + populate fields
+      // Host settings button: open modal + populate
       hostSettingsBtnEl.addEventListener("click", async () => {
         try {
           hostModalEl.style.display = "block";
@@ -5151,7 +5155,7 @@ window.startStream = startStream;
           safeSet("naturePick", data.naturePick || "");
           safeSet("fruitPick", data.fruitPick || "");
 
-          // Existing photo preview (from Firestore)
+          // Load existing photo preview from Firestore
           if (data.popupPhoto) {
             const photoPreview = document.getElementById("photoPreview");
             const photoPlaceholder = document.getElementById("photoPlaceholder");
@@ -5167,21 +5171,21 @@ window.startStream = startStream;
             if (photoPlaceholder) photoPlaceholder.style.display = "inline-block";
           }
         } catch (err) {
-          console.error("[host-init] error in hostSettingsBtn click:", err);
+          console.error("[host-init] error opening host settings:", err);
           showStarPopup("⚠️ Failed to open settings. Check console.");
         }
       });
 
       // Close handlers
       if (closeModalEl) {
-        closeModalEl.addEventListener("click", () => (hostModalEl.style.display = "none"));
+        closeModalEl.addEventListener("click", () => hostModalEl.style.display = "none");
       }
 
       window.addEventListener("click", (e) => {
         if (e.target === hostModalEl) hostModalEl.style.display = "none";
       });
 
-      // --- Instant photo preview on selection (only image, no text)
+      // --- Instant local photo preview (only image, no text)
       document.addEventListener("change", (e) => {
         if (e.target && e.target.id === "popupPhoto") {
           const file = e.target.files?.[0];
@@ -5195,17 +5199,17 @@ window.startStream = startStream;
           // Hide placeholder, show preview
           placeholder.style.display = "none";
 
-          // Instant preview
+          // Local instant preview
           const objectUrl = URL.createObjectURL(file);
           preview.src = objectUrl;
           preview.style.display = "block";
 
-          // Clean up
+          // Clean up memory
           preview.onload = () => URL.revokeObjectURL(objectUrl);
         }
       });
 
-      // --- save info button (unchanged except photo handling)
+      // --- save info button (unchanged)
       const maybeSaveInfo = document.getElementById("saveInfo");
       if (maybeSaveInfo) {
         maybeSaveInfo.addEventListener("click", async () => {
@@ -5242,7 +5246,6 @@ window.startStream = startStream;
             const filteredData = Object.fromEntries(Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined));
             await updateDoc(userRef, { ...filteredData, lastUpdated: serverTimestamp() });
 
-            // Mirror to featuredHosts if exists
             const hostRef = doc(db, "featuredHosts", currentUser.uid);
             const hostSnap = await getDoc(hostRef);
             if (hostSnap.exists()) await updateDoc(hostRef, { ...filteredData, lastUpdated: serverTimestamp() });
@@ -5274,24 +5277,23 @@ window.startStream = startStream;
           try {
             showStarPopup("⏳ Uploading photo...");
 
-            // Prepare path
+            // Prepare path & upload
             const ext = popupPhotoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
             const fileName = `popup_${Date.now()}.${ext}`;
             const storagePath = `users/${currentUser.uid}/popup/${fileName}`;
             const storageRef = ref(storage, storagePath);
 
-            // Upload
             const snapshot = await uploadBytes(storageRef, popupPhotoFile);
             const photoUrl = await getDownloadURL(snapshot.ref);
 
-            // Save to Firestore
+            // Save URL to Firestore
             const userRef = doc(db, "users", currentUser.uid);
             await updateDoc(userRef, {
               popupPhoto: photoUrl,
               lastUpdated: serverTimestamp()
             });
 
-            // Mirror to featuredHosts if exists
+            // Mirror to featuredHosts
             const hostRef = doc(db, "featuredHosts", currentUser.uid);
             const hostSnap = await getDoc(hostRef);
             if (hostSnap.exists()) {
@@ -5301,7 +5303,7 @@ window.startStream = startStream;
               });
             }
 
-            // Update preview (already local, but confirm real URL)
+            // Update preview with real URL
             const photoPreview = document.getElementById("photoPreview");
             if (photoPreview) {
               photoPreview.src = photoUrl;
