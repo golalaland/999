@@ -3671,14 +3671,28 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div>
 </div>
 
-
 <!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
-<div class="buy-tickets-section">
-  <a href="https://paystack.com/buy/the-cube-xperience-bigogm" target="_blank" rel="noopener noreferrer" id="buyTicketsBtn" class="buy-tickets-btn">
-    VISIT CUBE
-  </a>
-  <p class="buy-tickets-note">
-    Want to book an experience? <a href="https://t.me/unlockye" target="_blank" rel="noopener noreferrer">Click here</a>
+<div class="buy-tickets-section" style="
+  text-align: center;
+  padding: 20px 0;
+  color: #ccc;
+  font-size: 13px;
+">
+  <p class="buy-tickets-note" style="margin: 0;">
+    Want to book an experience? 
+    <a href="https://t.me/unlockye" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       style="
+         color: #00ff9d;
+         text-decoration: underline;
+         font-weight: 600;
+         transition: color 0.3s;
+       "
+       onmouseover="this.style.color='#00ffea'"
+       onmouseout="this.style.color='#00ff9d'">
+      Click here
+    </a>
   </p>
 </div>
 
@@ -4240,60 +4254,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </button>
   </div>
 </div>
-    
 
 
-  
-<!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
-<div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
-  <h2 style="
-    text-align:center;
-    font-size:28px;
-    font-weight:900;
-    background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    margin:0 0 20px;
-    letter-spacing:1px;
-  ">
-    MY CLIPS LIST
-  </h2>
-  <p style="text-align:center; color:#aaa; font-size:14px; margin:-10px 0 30px;">
-    Your uploaded highlights · Delete anytime · Earn from your clips
-  </p>
-
-  <div id="myClipsGrid" style="
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
-    gap:18px;
-    padding:10px;
-  ">
-    <!-- CLIPS WILL BE INJECTED HERE BY JS -->
-  </div>
-
-  <div id="noClipsMessage" style="
-    text-align:center;
-    padding:60px 20px;
-    color:#666;
-    font-size:16px;
-    display:none;
-  ">
-    <div style="font-size:60px; margin-bottom:20px;">.____.</div>
-    You haven't uploaded any clips yet.<br>
-    <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
-  </div>
-</div>
-  
-      <!-- Messages / Additional Info -->
-      <div id="hostMessagesContainer" style="padding:6px 0;">
-        <!-- Messages or host-specific info will be dynamically loaded here -->
-      </div>
-    </div>
-  </div>
-</div>
-
-
-    <!-- POLL SECTION – ADMIN ONLY (Header + Form attached as one unit) -->
+      <!-- POLL SECTION – ADMIN ONLY (Header + Form attached as one unit) -->
 <div id="polls" class="section" style="margin:40px auto; max-width:900px;">
 
   <!-- Integrated Header – attached directly to the content below -->
@@ -4421,6 +4384,59 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div>
 
 </div>
+
+
+  
+<!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
+<div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
+  <h2 style="
+    text-align:center;
+    font-size:28px;
+    font-weight:900;
+    background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin:0 0 20px;
+    letter-spacing:1px;
+  ">
+    MY CLIPS LIST
+  </h2>
+  <p style="text-align:center; color:#aaa; font-size:14px; margin:-10px 0 30px;">
+    Your uploaded highlights · Delete anytime · Earn from your clips
+  </p>
+
+  <div id="myClipsGrid" style="
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:18px;
+    padding:10px;
+  ">
+    <!-- CLIPS WILL BE INJECTED HERE BY JS -->
+  </div>
+
+  <div id="noClipsMessage" style="
+    text-align:center;
+    padding:60px 20px;
+    color:#666;
+    font-size:16px;
+    display:none;
+  ">
+    <div style="font-size:60px; margin-bottom:20px;">.____.</div>
+    You haven't uploaded any clips yet.<br>
+    <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
+  </div>
+</div>
+  
+      <!-- Messages / Additional Info -->
+      <div id="hostMessagesContainer" style="padding:6px 0;">
+        <!-- Messages or host-specific info will be dynamically loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
 
 <div class="star-popup" id="starPopup">
