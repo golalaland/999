@@ -4542,55 +4542,55 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
   });
 });
 
-// Video preview when file is selected
+// Video preview (only video + size, no title/filename)
 document.getElementById("highlightUploadInput")?.addEventListener("change", function(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  const previewContainer = document.getElementById("videoPreviewContainer");
   const placeholder = document.getElementById("uploadPlaceholder");
-  const videoElement = document.getElementById("videoPreview");
-  const fileInfo = document.getElementById("fileInfo");
+  const previewContainer = document.getElementById("videoPreviewContainer");
+  const video = document.getElementById("videoPreview");
+  const sizeInfo = document.getElementById("fileSizeInfo");
 
-  // Show preview, hide placeholder
+  // Switch views
   placeholder.style.display = "none";
   previewContainer.style.display = "block";
 
-  // Instant preview using object URL
+  // Instant preview
   const objectUrl = URL.createObjectURL(file);
-  videoElement.src = objectUrl;
-  videoElement.load();
+  video.src = objectUrl;
+  video.load();
 
-  // Show file info
+  // Show only size (no name/title)
   const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-  fileInfo.textContent = `${file.name} • ${sizeMB} MB`;
+  sizeInfo.textContent = `${sizeMB} MB`;
 
-  // Clean up object URL when no longer needed
-  videoElement.onloadeddata = () => {
-    videoElement.currentTime = 0; // Ensure first frame
+  // First frame
+  video.onloadeddata = () => {
+    video.currentTime = 0;
   };
 });
 
-// Make sure resetForm also clears the preview
+// Make sure resetForm clears preview
 function resetForm() {
-  fileInput.value = "";
-  titleInput.value = "";
-  descInput.value = "";
-  priceInput.value = "50";
-  if (trendingCheckbox) trendingCheckbox.checked = false;
+  document.getElementById("highlightUploadInput").value = "";
+  document.getElementById("highlightTitleInput").value = "";
+  document.getElementById("highlightDescInput").value = "";
+  document.getElementById("highlightPriceInput").value = "50";
+  document.getElementById("boostTrendingCheckbox") && (document.getElementById("boostTrendingCheckbox").checked = false);
   document.querySelectorAll(".tag-btn").forEach(btn => btn.classList.remove("selected"));
 
   // Reset preview
-  const previewContainer = document.getElementById("videoPreviewContainer");
   const placeholder = document.getElementById("uploadPlaceholder");
-  const videoElement = document.getElementById("videoPreview");
-  const fileInfo = document.getElementById("fileInfo");
+  const previewContainer = document.getElementById("videoPreviewContainer");
+  const video = document.getElementById("videoPreview");
+  const sizeInfo = document.getElementById("fileSizeInfo");
 
-  if (previewContainer && placeholder && videoElement) {
-    videoElement.src = "";
+  if (placeholder && previewContainer && video) {
+    video.src = "";
     previewContainer.style.display = "none";
     placeholder.style.display = "block";
-    if (fileInfo) fileInfo.textContent = "";
+    if (sizeInfo) sizeInfo.textContent = "";
   }
 }
 
