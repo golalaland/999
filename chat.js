@@ -5040,7 +5040,7 @@ window.startStream = startStream;
 
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
-  const isHost = true; // Toggle dynamically
+  const isHost = true; // Change to false for non-hosts
 
   function waitForElements(selectors = [], { timeout = 5000, interval = 80 } = {}) {
     const start = Date.now();
@@ -5054,7 +5054,7 @@ window.startStream = startStream;
     });
   }
 
-  const $ = (sel) => document.querySelector(sel);
+  const $ = sel => document.querySelector(sel);
 
   function ready(fn) {
     if (document.readyState === "complete" || document.readyState === "interactive") {
@@ -5142,19 +5142,15 @@ window.startStream = startStream;
           safeSet("fruitPick", data.fruitPick || "");
 
           // Load existing photo from Firestore
-          if (data.popupPhoto) {
-            const preview = $("#photoPreview");
-            const placeholder = $("#photoPlaceholder");
-            if (preview) {
-              preview.src = data.popupPhoto;
-              preview.style.display = "block";
-            }
-            if (placeholder) placeholder.style.display = "none";
-          } else {
-            const preview = $("#photoPreview");
-            const placeholder = $("#photoPlaceholder");
-            if (preview) preview.style.display = "none";
-            if (placeholder) placeholder.style.display = "inline-block";
+          const photoPreview = $("#photoPreview");
+          const photoPlaceholder = $("#photoPlaceholder");
+          if (data.popupPhoto && photoPreview && photoPlaceholder) {
+            photoPreview.src = data.popupPhoto;
+            photoPreview.style.display = "block";
+            photoPlaceholder.style.display = "none";
+          } else if (photoPreview && photoPlaceholder) {
+            photoPreview.style.display = "none";
+            photoPlaceholder.style.display = "inline-block";
           }
         } catch (err) {
           console.error("[host-init] error opening settings:", err);
@@ -5163,9 +5159,7 @@ window.startStream = startStream;
       });
 
       // Close handlers
-      if (closeModalEl) {
-        closeModalEl.addEventListener("click", () => hostModalEl.style.display = "none");
-      }
+      if (closeModalEl) closeModalEl.addEventListener("click", () => hostModalEl.style.display = "none");
 
       window.addEventListener("click", e => {
         if (e.target === hostModalEl) hostModalEl.style.display = "none";
@@ -5247,7 +5241,7 @@ window.startStream = startStream;
         console.warn("[host-init] saveInfo button not found.");
       }
 
-      // Save media button (Firebase Storage)
+      // Save media (Firebase Storage)
       const maybeSaveMedia = document.getElementById("saveMedia");
       if (maybeSaveMedia) {
         maybeSaveMedia.addEventListener("click", async () => {
@@ -5307,6 +5301,7 @@ window.startStream = startStream;
     }
   });
 })();
+
 /* =======================================
    Dynamic Host Panel Greeting + Scroll Arrow
 ========================================== */
