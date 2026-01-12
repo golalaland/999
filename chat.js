@@ -6,6 +6,15 @@
 // ── Core & Shared ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
+import { initializeAppCheck, ReCaptchaV3Provider } 
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
+
+// 🔐 Firebase App Check (reCAPTCHA v3)
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
+  isTokenAutoRefreshEnabled: true
+});
+
 // ── Firestore ──
 import {
   getFirestore,
@@ -91,18 +100,6 @@ export {
   uploadBytesResumable,
   getDownloadURL
 };
-
-import { initializeAppCheck, ReCaptchaV3Provider } 
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-
-// ✅ Use the existing app — DO NOT redeclare
-// const app = initializeApp(firebaseConfig); <-- remove this duplicate
-
-// 🔐 Firebase App Check (reCAPTCHA v3)
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
-  isTokenAutoRefreshEnabled: true
-});
 
 
 /* ---------- Global State ---------- */
