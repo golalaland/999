@@ -4350,13 +4350,12 @@ confirmBtn.onclick = async () => {
         
 // ================================
 // UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload Only)
-// Max file size: 50MB | Resumable with progress bar
-// Path: users/{uid}/...
+// Max 50MB | Resumable progress | users/{uid}/ path
 // ================================
 document.getElementById("uploadHighlightBtn")?.addEventListener("click", async () => {
   const btn = document.getElementById("uploadHighlightBtn");
 
-  // Reset button state at start
+  // Reset button at start
   resetButton();
 
   if (!currentUser?.uid) {
@@ -4390,13 +4389,12 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
 
   const file = fileInput.files[0];
 
-  // Max 50MB
   if (file.size > 50 * 1024 * 1024) {
     showStarPopup("Maximum file size is 50MB", "error");
     return;
   }
 
-  // ── Trending Boost Logic ──
+  // ── Trending Boost ──
   if (isBoostTrending) {
     try {
       const userRef = doc(db, "users", currentUser.uid);
@@ -4417,24 +4415,22 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
     }
   }
 
-  // ── Start upload UI ──
+  // ── Upload UI ──
   btn.disabled = true;
   btn.classList.add("uploading");
   btn.textContent = "Uploading... 0%";
   showStarPopup("Dropping your highlight...", "loading");
 
   try {
-    // 1. Prepare filename & path
+    // Prepare filename & path
     const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
     const storagePath = `users/${currentUser.uid}/${fileName}`;
 
     console.log("Preparing upload to:", storagePath);
 
-    // 2. Create storage reference FIRST
     const storageRef = ref(storage, storagePath);
 
-    // 3. Metadata
     const metadata = {
       contentType: file.type,
       customMetadata: {
@@ -4444,27 +4440,31 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
       }
     };
 
-    // 4. Resumable upload with progress
+    // Resumable upload with progress
     const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
     uploadTask.on('state_changed',
       (snapshot) => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        btn.textContent = `Uploading... ${progress.toFixed(0)}%`;
+        btn.textContent = `Uploading... ${isNaN(progress) ? 0 : progress.toFixed(0)}%`;
       },
       (error) => {
         console.error("Upload error during progress:", error);
-        showStarPopup("Upload failed — please try again", "error");
+        showStarPopup(
+          error.code === "storage/unauthorized"
+            ? "Permission denied — check Storage rules"
+            : "Upload failed — please try again",
+          "error"
+        );
         resetButton();
       },
       async () => {
-        // Upload completed successfully
         console.log("Upload complete! Full path:", uploadTask.snapshot.metadata.fullPath);
 
         const videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
         console.log("Generated public URL:", videoUrl);
 
-        // ── Prepare Firestore document ──
+        // Prepare Firestore document
         const clipData = {
           uploaderId: currentUser.uid,
           uploaderName: currentUser.chatId || "Legend",
@@ -4481,12 +4481,12 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
         };
 
         if (isBoostTrending) {
-          clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+          clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
         }
 
         await addDoc(collection(db, "highlightVideos"), clipData);
 
-        // ── Success feedback ──
+        // Success
         showStarPopup("Highlight is LIVE! 🎉", "success");
 
         btn.textContent = isBoostTrending ? "TRENDING LIVE!" : "DROPPED!";
@@ -4494,13 +4494,8 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
           ? "linear-gradient(90deg, #00ffea, #8a2be2, #ff00f2)"
           : "linear-gradient(90deg, #00ff9d, #00cc66)";
 
-        // Reset form
         resetForm();
-
-        // Optional: reload clips
         if (typeof loadMyClips === "function") loadMyClips();
-
-        // Auto-reset button
         setTimeout(resetButton, 3000);
       }
     );
@@ -4522,7 +4517,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
     resetButton();
   }
 
-  // ── Helper Functions ──
+  // ── Helpers ──
   function resetButton() {
     btn.disabled = false;
     btn.classList.remove("uploading");
@@ -4540,12 +4535,64 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
   }
 });
 
-// Tag toggle (unchanged)
+// Tag toggle
 document.querySelectorAll(".tag-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     btn.classList.toggle("selected");
   });
 });
+
+// Video preview when file is selected
+document.getElementById("highlightUploadInput")?.addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const previewContainer = document.getElementById("videoPreviewContainer");
+  const placeholder = document.getElementById("uploadPlaceholder");
+  const videoElement = document.getElementById("videoPreview");
+  const fileInfo = document.getElementById("fileInfo");
+
+  // Show preview, hide placeholder
+  placeholder.style.display = "none";
+  previewContainer.style.display = "block";
+
+  // Instant preview using object URL
+  const objectUrl = URL.createObjectURL(file);
+  videoElement.src = objectUrl;
+  videoElement.load();
+
+  // Show file info
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+  fileInfo.textContent = `${file.name} • ${sizeMB} MB`;
+
+  // Clean up object URL when no longer needed
+  videoElement.onloadeddata = () => {
+    videoElement.currentTime = 0; // Ensure first frame
+  };
+});
+
+// Make sure resetForm also clears the preview
+function resetForm() {
+  fileInput.value = "";
+  titleInput.value = "";
+  descInput.value = "";
+  priceInput.value = "50";
+  if (trendingCheckbox) trendingCheckbox.checked = false;
+  document.querySelectorAll(".tag-btn").forEach(btn => btn.classList.remove("selected"));
+
+  // Reset preview
+  const previewContainer = document.getElementById("videoPreviewContainer");
+  const placeholder = document.getElementById("uploadPlaceholder");
+  const videoElement = document.getElementById("videoPreview");
+  const fileInfo = document.getElementById("fileInfo");
+
+  if (previewContainer && placeholder && videoElement) {
+    videoElement.src = "";
+    previewContainer.style.display = "none";
+    placeholder.style.display = "block";
+    if (fileInfo) fileInfo.textContent = "";
+  }
+}
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
