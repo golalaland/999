@@ -718,24 +718,28 @@ async function processTapQueue() {
 }
 
 // ======================================================
-// START SESSION — CLEAN, OPTIMIZED FOR 90s
+// START SESSION — NOW USES PERSISTENT BONUS LEVEL
 // ======================================================
 function startSession() {
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", "color:#ff00aa;font-weight:bold");
+  console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
+", persistentBonusLevel);
+
   sessionAlreadySaved = false;
 
-  // Full reset
   taps = 0;
   earnings = 0;
-  timer = SESSION_DURATION;  // 90s
+  timer = SESSION_DURATION;
 
-  // Persistent power + fresh grind
-  bonusLevel = persistentBonusLevel;
-  sessionBonusLevel = bonusLevel;
-  progress = 0;
-  tapsForNext = 100 + (bonusLevel - 1) * 50;
+  // === CORRECT: Use the persisted/unlocked level ===
+  bonusLevel = persistentBonusLevel;           // Start from saved level
+  sessionBonusLevel = bonusLevel;              // Track for saving at end
+  progress = 0;                                // Always reset progress (fresh grind)
+  tapsForNext = 100 + (bonusLevel - 1) * 50;   // Correct requirement for next level
 
   cashCounter = 0;
-  cashThreshold = 5 + bonusLevel * 2;  // Scaled: fairer, bonus-rewarding
+  cashThreshold = randomInt(1, 12);
   sessionTaps = 0;
   sessionEarnings = 0;
 
@@ -744,19 +748,16 @@ function startSession() {
   tapButton.disabled = false;
   RedHotMode.reset();
 
-  // UI instant sync
-  updateBonusBar();
-  updateUI();
+  // Timer bar full at start
   trainBar && (trainBar.style.width = "100%");
 
-  // START HYPE: Sound/haptic (add if you have)
-  playSound('start');  // Optional: beep or whoosh
-  navigator.vibrate?.(50);  // Subtle buzz
+  // Update UI immediately with correct level + 0% progress
+  updateBonusBar();  // ← This now also updates #bonusLevelVal text!
+  updateUI();
 
   if (intervalId) clearInterval(intervalId);
   intervalId = setInterval(() => {
     if (!running) return;
-
     timer--;
     if (timer <= 0) {
       timer = 0;
@@ -767,16 +768,12 @@ function startSession() {
       endSessionRecord();
       return;
     }
-
-    // BATCH: Update every 2s for perf + trigger every 6s (90s sweet spot: 5-6 triggers)
-    if (timer % 2 === 0) updateUI();
+    updateUI();
     trainBar && (trainBar.style.width = (timer / SESSION_DURATION) * 100 + "%");
-
-    // Optimized trigger: Every 6s, >20s left (75s window = ~12 calls, 7% = 4-6 triggers)
     if (timer % 6 === 0 && timer > 21) {
       maybeTriggerRedHot();
     }
-  }, 1000);  // Keep 1s for smooth bar
+  }, 1000);
 }
 
 // ======================================================
