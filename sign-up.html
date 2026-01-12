@@ -1012,32 +1012,42 @@ if (inviterDocId) {
     }
   };
 
-// === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE) ===
+// === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE - ₦19,999) ===
 vipPayBtn.onclick = () => {
   const email = emailInput.value.trim().toLowerCase();
+  
   if (!email || !/@/.test(email)) {
     showPopup('Enter a valid email before paying');
     return;
   }
+
   vipPayBtn.classList.add('loading');
+  messageEl.textContent = "Initiating payment...";
 
   const handler = PaystackPop.setup({
     key: 'pk_live_b1f53de46eded7175f91c345548365902b4b6d67',
     email: email,
-    amount: 19999 * 100,           // 19,999 NGN in kobo
+    amount: 19999 * 100,           // ₦19,999 in kobo (required by Paystack)
     currency: 'NGN',
     ref: 'VIP_' + Date.now(),
     metadata: { type: 'vip_activation' },
+    
     callback: async function(response) {
       vipPayBtn.classList.remove('loading');
+      
       console.log('Paystack callback received:', response);
 
       if (response.status !== 'success' || !response.reference) {
         showPopup('Payment completed but no reference received');
+        messageEl.textContent = "";
         return;
       }
 
-      console.log('Sending verification with:', { reference: response.reference, email });
+      console.log('Sending verification with:', {
+        reference: response.reference,
+        email,
+        emailType: typeof email
+      });
 
       try {
         const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
@@ -1059,7 +1069,7 @@ vipPayBtn.onclick = () => {
           return;
         }
 
-        // === Server confirmed → proceed with VIP logic ===
+        // === Server confirmed payment → proceed with VIP logic ===
         messageEl.textContent = "VIP Activated!! ✌︎㋡";
 
         const docId = sanitizeKey(email);
@@ -1085,7 +1095,7 @@ vipPayBtn.onclick = () => {
             lastUpdated: serverTimestamp()
           });
 
-          // Reward inviter (onboarder/host) with stars
+          // Reward inviter (onboarder/host)
           if (inviterId) {
             await updateDoc(doc(db, "users", inviterId), {
               stars: increment(250),
@@ -1099,7 +1109,7 @@ vipPayBtn.onclick = () => {
                 recipientId: inviterId,
                 type: "vip_activated",
                 title: "A VIP Joined Through Your Link!",
-                message: `@${userData.chatId || 'Someone'} just became VIP for ₦19,999!\nYou earned +250 STRZ`,
+                message: `@${userData.chatId || 'Someone'} just paid ₦19,999 to become VIP!\nYou earned +250 STRZ`,
                 vipUserId: userData.uid,
                 vipUserName: userData.chatId,
                 read: false,
@@ -1131,6 +1141,7 @@ vipPayBtn.onclick = () => {
 
         } catch (err) {
           console.error("VIP activation processing failed:", err);
+          // Payment succeeded → still redirect
           setTimeout(() => window.location.href = "/chat.html", 1800);
         }
 
@@ -1145,8 +1156,7 @@ vipPayBtn.onclick = () => {
       vipPayBtn.classList.remove('loading');
       messageEl.textContent = "Payment cancelled";
     }
-  });
-
+  }); 
   handler.openIframe();
 };
 });
