@@ -285,48 +285,48 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   50% { transform: translate(-50%, -50%) translateY(-6px); }
 }
 /* 🔥 Send Area - Compact base */
-/* 🔥 SEND AREA — FINAL CLEAN & COMPACT (2026 ETERNAL) */
+/* 🔥 SEND AREA — COMPACT MOBILE VERSION (2026) */
 .send-area {
   display: flex;
-  align-items: center;               /* Perfect vertical center when single-line */
+  align-items: center;
   gap: 8px;
   background: var(--card, #111);
-  padding: 10px;
+  padding: 8px 10px;              /* reduced padding */
   border-radius: 999px;
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;               /* slightly narrower */
   margin: 0 auto;
   box-sizing: border-box;
   border-top: 1px solid rgba(255,255,255,0.04);
   position: sticky;
   bottom: 0;
   z-index: 10;
-  min-height: 48px;                  /* Exact original height */
+  min-height: 44px;               /* noticeably shorter */
   transition: 
     padding 0.3s ease,
     border-radius 0.3s ease,
-    align-items 0.3s ease;
+    min-height 0.3s ease;
 }
 
 .input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
-  min-height: 48px;
+  min-height: 44px;
 }
 
-/* Textarea — Grok-style expanding */
+/* Textarea – smaller base size */
 #messageInput {
   width: 100%;
-  min-height: 48px;
-  max-height: 140px;
-  padding: 12px 16px;
+  min-height: 38px;               /* smaller default */
+  max-height: 110px;              /* less room to grow */
+  padding: 10px 14px;             /* tighter padding */
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.07);
   background-color: #0e0e0e;
   color: #fff;
-  font-size: 16px;
-  line-height: 1.4;
+  font-size: 15px;                /* slightly smaller text */
+  line-height: 1.35;
   outline: none;
   resize: none;
   overflow-y: hidden;
@@ -337,20 +337,21 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 #messageInput::placeholder {
   color: var(--muted, #aaa);
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
-/* GLOW ON FOCUS — STRONG & SEXY */
+/* Focus glow – kept sexy but softer */
 #messageInput:focus {
   border-color: var(--accent, #FF1493);
-  box-shadow: 0 0 12px rgba(255, 20, 147, 0.15);
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.13);
 }
 
-/* EXPANDED STATE — TALL, CLEAN & CUTE */
+/* EXPANDED STATE – still grows, but more controlled */
 .send-area.expanded {
-  border-radius: 28px;
-  padding: 14px 16px;
-  align-items: flex-start;           /* Buttons drop to bottom */
+  border-radius: 24px;
+  padding: 12px 14px;
+  min-height: 70px;
+  align-items: flex-start;
 }
 
 .send-area.expanded .input-wrapper {
@@ -358,23 +359,23 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 
 .send-area.expanded #messageInput {
-  border-radius: 24px;
-  min-height: 80px;
+  border-radius: 20px;
+  min-height: 64px;
   overflow-y: auto;
 }
 
-/* BUZZ BUTTON — ORIGINAL PERFECTION PRESERVED */
+/* BUZZ BUTTON – smaller & tighter */
 .buzz-btn {
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: #1d1d1d;
   color: var(--accent);
   cursor: pointer;
   font-weight: 700;
-  font-size: 14px;
-  border: 1px solid rgba(255,20,147,0.18);
+  font-size: 13px;                /* smaller text */
+  border: 1px solid rgba(255,20,147,0.16);
   align-self: center;
-  transition: align-self 0.3s ease, transform 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .send-area.expanded .buzz-btn {
@@ -383,28 +384,22 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 
 .buzz-btn:hover {
-  animation: buzzPulse 1.5s infinite;
+  animation: buzzPulse 1.4s infinite;
   transform: translateY(-1px);
 }
 
-@keyframes buzzPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255,20,147,0.18); }
-  70%  { box-shadow: 0 0 0 12px rgba(255,20,147,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,20,147,0); }
-}
-
-/* SEND BUTTON — CLEAN, BOLD & ORIGINAL */
+/* SEND BUTTON – more compact */
 .send-btn {
-  padding: 10px 20px;
+  padding: 8px 18px;
   background: var(--accent, #FF1493);
   color: #000;
   border: none;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   align-self: center;
-  transition: align-self 0.3s ease, background 0.2s ease, transform 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .send-area.expanded .send-btn {
@@ -414,12 +409,20 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 .send-btn:hover {
   background: #ff33a1;
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .send-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
+
+/* Pulse animation (kept but slightly faster) */
+@keyframes buzzPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,20,147,0.18); }
+  70%  { box-shadow: 0 0 0 10px rgba(255,20,147,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,20,147,0); }
+}
+
 #postLoginLoader {
   position: fixed;
   top: 0; left: 0;
