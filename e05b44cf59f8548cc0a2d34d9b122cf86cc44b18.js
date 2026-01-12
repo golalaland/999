@@ -564,11 +564,11 @@ function triggerConfetti() {
 // ======================================================
 function maybeTriggerRedHot() {
   if (!running) return;
-  if (timer <= 15) return;                    // don't trigger in final 15 sec
+  if (timer <= 21) return;                    // don't trigger in final 15 sec
   if (RedHotMode.active) return;              // already active
 
-  // 15% chance — feels rare but guaranteed to appear
-  if (Math.random() > 0.7) return;
+
+  if (Math.random() > 0.33) return;
 
   console.log("%c RED HOT TRIGGERED! ", "background:#900;color:#fff;padding:4px 8px;border-radius:4px;");
   RedHotMode.trigger();                       // THIS IS THE ONE THAT ACTUALLY WORKS
@@ -765,7 +765,7 @@ function startSession() {
     }
     updateUI();
     trainBar && (trainBar.style.width = (timer / SESSION_DURATION) * 100 + "%");
-    if (timer % 6 === 0 && timer > 21) {
+    if (timer % 8 === 0 && timer > 21) {
       maybeTriggerRedHot();
     }
   }, 1000);
