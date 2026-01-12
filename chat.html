@@ -4078,7 +4078,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       Upload premium clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
     </p>
   </div>
-
   <!-- Main Card -->
   <div style="
     background:rgba(12,12,14,0.75); backdrop-filter:blur(20px);
@@ -4090,15 +4089,15 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <div style="position:absolute; inset:0; pointer-events:none;
                  background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
                  opacity:0.6;"></div>
-    
+   
     <div style="position:relative; z-index:2;">
       <!-- Video Upload – Bigger & more prominent now -->
       <div style="margin-bottom:32px; text-align:center;">
         <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
           Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
         </div>
-        
-        <!-- Big beautiful upload area -->
+       
+        <!-- Big beautiful upload area with preview -->
         <label for="highlightUploadInput" style="
           display:block; padding:32px 24px;
           background:#111111; border:2px dashed #444;
@@ -4108,13 +4107,31 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         "
         onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
         onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
-          <div style="margin-bottom:8px; font-size:36px;">↑</div>
-          Click or drag video here
-          <div style="margin-top:8px; font-size:13px; color:#666;">
-            MP4 • max 500MB
+
+          <!-- Placeholder (visible before selection) -->
+          <div id="uploadPlaceholder">
+            <div style="margin-bottom:8px; font-size:36px;">↑</div>
+            Click or drag video here
+            <div style="margin-top:8px; font-size:13px; color:#666;">
+              MP4 • max 50MB
+            </div>
           </div>
+
+          <!-- Preview container (hidden until file selected) -->
+          <div id="videoPreviewContainer" style="display:none;">
+            <video id="videoPreview" controls muted style="
+              width:100%;
+              max-height:220px;
+              border-radius:12px;
+              background:#000;
+              object-fit:contain;
+            "></video>
+            <div id="fileInfo" style="margin-top:12px; font-size:13px; color:#888;"></div>
+          </div>
+
+          <!-- Hidden file input -->
+          <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
         </label>
-        <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
       </div>
 
       <!-- Title -->
@@ -4127,7 +4144,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
                onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
                onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
       </div>
-
       <!-- Description -->
       <div style="margin-bottom:24px;">
         <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
@@ -4138,7 +4154,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
                   onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
                   onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
       </div>
-
       <!-- Price -->
       <div style="margin-bottom:28px; text-align:center;">
         <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">Unlock Price</div>
@@ -4150,7 +4165,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <span style="font-size:26px; font-weight:800; color:#888;">STRZ</span>
         </div>
       </div>
-
       <!-- Tags -->
       <div style="margin:28px 0; text-align:center;">
         <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
@@ -4160,16 +4174,15 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <div class="tag-btn" data-tag="hot">Hot</div>
           <div class="tag-btn" data-tag="cute">Cute</div>
           <div class="tag-btn" data-tag="dance">Dance</div>
-          <div class="tag-btn" data-tag="funny">Funny</div>
+          <div class="tag-btn" data-tag="funny">Twerk</div>
           <div class="tag-btn" data-tag="sexy">Sexy</div>
-          <div class="tag-btn" data-tag="gaming">Gaming</div>
-          <div class="tag-btn" data-tag="lipsync">Lipsync</div>
+          <div class="tag-btn" data-tag="gaming">NSFW</div>
+          <div class="tag-btn" data-tag="lipsync">Tease</div>
           <div class="tag-btn" data-tag="cosplay">Cosplay</div>
           <div class="tag-btn" data-tag="beauty">Beauty</div>
           <div class="tag-btn" data-tag="vibes">Vibes</div>
         </div>
       </div>
-
       <!-- Upload Button -->
       <div style="text-align:center; margin-top:32px;">
         <button id="uploadHighlightBtn" style="
@@ -4183,11 +4196,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           Post Highlight
         </button>
       </div>
-
       <div id="highlightUploadStatus" style="margin-top:20px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;"></div>
     </div>
   </div>
-
   <style>
     @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
     .tag-btn {
