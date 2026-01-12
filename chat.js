@@ -56,11 +56,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 
-// 🔐 Firebase App Check (reCAPTCHA v3)
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
-  isTokenAutoRefreshEnabled: true
-});
 
 /* ── Firebase Configuration ── */
 const firebaseConfig = {
@@ -77,6 +72,12 @@ const firebaseConfig = {
 /* ── Initialize Services ── */
 const app = initializeApp(firebaseConfig);
 console.log("🔥 Firebase Project:", firebaseConfig.projectId);
+
+// 🔐 Firebase App Check (reCAPTCHA v3)
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
+  isTokenAutoRefreshEnabled: true
+});
 
 const db     = getFirestore(app);
 const auth   = getAuth(app);
