@@ -336,8 +336,7 @@ async function loadCurrentUserForGame() {
     const token = urlParams.get("t");
     if (token) {
       uid = await loadUserFromToken(token);
-      if (uid) console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
-", uid);
+      if (uid) console.log("", uid);
     }
 
     // 2️⃣ Fallback to localStorage
