@@ -5313,7 +5313,7 @@ window.startStream = startStream;
   }); // ready
 })();
 /* =======================================
-   Dynamic Host Panel Greeting + Scroll Arrow
+   Dynamic Host Panel Greeting (No Images)
 ========================================== */
 function capitalizeFirstLetter(str) {
   if (!str) return "Guest";
@@ -5328,34 +5328,19 @@ function setGreeting() {
 
   const name = capitalizeFirstLetter(currentUser.chatId.replace(/_/g, " "));
   const hour = new Date().getHours();
-  
-  let greetingText;
-  let emojiSrc;
 
+  let greetingText;
   if (hour < 12) {
-    // Morning: Bright sun
     greetingText = `Good Morning, ${name}!`;
-    emojiSrc = "x";
   } else if (hour < 18) {
-    // Afternoon: Sunny behind cloud
     greetingText = `Good Afternoon, ${name}!`;
-    emojiSrc = "x";
   } else {
-    // Evening/Night: First quarter moon face
     greetingText = `Good Evening, ${name}!`;
-    emojiSrc = "x";
   }
 
   const titleEl = document.getElementById("hostPanelTitle");
   if (titleEl) {
-    titleEl.innerHTML = `
-      ${greetingText}
-      <img src="${emojiSrc}" 
-           alt="Greeting Emoji" 
-           width="25" 
-           height="25" 
-           style="vertical-align: middle; margin-left: 8px;">
-    `;
+    titleEl.textContent = greetingText;  // Plain text only
   }
 }
 
@@ -5363,7 +5348,6 @@ function setGreeting() {
 document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
-
 
 // === SINGLE FULL-SCREEN VIDEO MODAL (GLOBAL, CREATED ONCE) ===
 let fullScreenVideoModal = null;
