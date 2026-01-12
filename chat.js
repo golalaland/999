@@ -1,7 +1,16 @@
 /* ==============================================
    Firebase Modular SDK v10+ (January 2026)
-   Includes: App, Auth, Firestore, Realtime DB, Storage
+   Includes: App, Auth, Firestore, Realtime DB, Storage, ReCaptcha
    ============================================== */
+import { initializeAppCheck, ReCaptchaV3Provider } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
+
+const app = initializeApp(firebaseConfig);
+// 🔐 Firebase App Check (reCAPTCHA v3)
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
+  isTokenAutoRefreshEnabled: true
+});
 
 // ── Core & Shared ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -99,6 +108,8 @@ const SEND_COST = 1;
 let lastMessagesArray = [];
 let starInterval = null;
 let refs = {};  
+
+
 
 // Make Firebase objects available globally (for debugging or reuse)
 window.app = app;
