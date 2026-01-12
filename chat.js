@@ -74,10 +74,10 @@ const app = initializeApp(firebaseConfig);
 console.log("🔥 Firebase Project:", firebaseConfig.projectId);
 
 // 🔐 Firebase App Check (reCAPTCHA v3)
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
-  isTokenAutoRefreshEnabled: true
-});
+//const appCheck = initializeAppCheck(app, {
+//  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
+ // isTokenAutoRefreshEnabled: true
+//});
 
 const db     = getFirestore(app);
 const auth   = getAuth(app);
@@ -86,8 +86,8 @@ const storage = getStorage(app);           // ← Now initialized!
 
 console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
 
-import { initializeAppCheck, ReCaptchaV3Provider } 
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
+//import { initializeAppCheck, ReCaptchaV3Provider } 
+ // from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
 
 
