@@ -5040,10 +5040,10 @@ window.startStream = startStream;
 
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
-  // Toggle this dynamically in your app
-  const isHost = true; // <-- make sure this equals true at runtime for hosts
+  // Toggle dynamically in your app
+  const isHost = true; // Change to false for non-hosts
 
-  // Small helper: wait for a set of elements to exist (polling)
+  // Helper: wait for elements (polling)
   function waitForElements(selectors = [], { timeout = 5000, interval = 80 } = {}) {
     const start = Date.now();
     return new Promise((resolve, reject) => {
@@ -5056,10 +5056,10 @@ window.startStream = startStream;
     });
   }
 
-  // Safe getter w/ default
+  // Safe DOM query
   const $ = (sel) => document.querySelector(sel);
 
-  // run everything after DOM ready (and still robust if DOM already loaded)
+  // Run after DOM ready
   function ready(fn) {
     if (document.readyState === "complete" || document.readyState === "interactive") {
       setTimeout(fn, 0);
@@ -5070,19 +5070,14 @@ window.startStream = startStream;
 
   ready(async () => {
     console.log("[host-init] DOM ready. isHost =", isHost);
-
     if (!isHost) {
-      console.log("[host-init] not a host. exiting host init.");
+      console.log("[host-init] Not a host. Exiting host init.");
       return;
     }
 
-    // 1) Wait for the most important elements that must exist for host flow.
     try {
-      const [
-        hostSettingsWrapperEl,
-        hostModalEl,
-        hostSettingsBtnEl,
-      ] = await waitForElements(
+      // Wait for required elements
+      const [hostSettingsWrapperEl, hostModalEl, hostSettingsBtnEl] = await waitForElements(
         ["#hostSettingsWrapper", "#hostModal", "#hostSettingsBtn"],
         { timeout: 7000 }
       );
@@ -5096,29 +5091,28 @@ window.startStream = startStream;
       // Show wrapper/button
       hostSettingsWrapperEl.style.display = "block";
 
-      // close button - optional but preferred
+      // Close button (optional)
       const closeModalEl = hostModalEl.querySelector(".close");
       if (!closeModalEl) {
-        console.warn("[host-init] close button (.close) not found inside #hostModal.");
+        console.warn("[host-init] Close button (.close) not found inside #hostModal.");
       }
 
-      // --- attach tab init (shared across modals)
+      // Initialize tabs inside modal
       function initTabsForModal(modalEl) {
         modalEl.querySelectorAll(".tab-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
             modalEl.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-            // Hide only tab-content referenced by dataset or global shared notifications
             document.querySelectorAll(".tab-content").forEach((tab) => (tab.style.display = "none"));
             btn.classList.add("active");
             const target = document.getElementById(btn.dataset.tab);
             if (target) target.style.display = "block";
-            else console.warn("[host-init] tab target not found:", btn.dataset.tab);
+            else console.warn("[host-init] Tab target not found:", btn.dataset.tab);
           });
         });
       }
       initTabsForModal(hostModalEl);
 
-      // --- host button click: show modal + populate
+      // Open modal + populate fields
       hostSettingsBtnEl.addEventListener("click", async () => {
         try {
           hostModalEl.style.display = "block";
@@ -5130,12 +5124,15 @@ window.startStream = startStream;
 
           const userRef = doc(db, "users", currentUser.uid);
           const snap = await getDoc(userRef);
+
           if (!snap.exists()) {
-            console.warn("[host-init] user doc not found for uid:", currentUser.uid);
+            console.warn("[host-init] User doc not found for uid:", currentUser.uid);
             return showStarPopup("⚠️ User data not found.");
           }
+
           const data = snap.data() || {};
-          // populate safely (guard each element)
+
+          // Safe populate
           const safeSet = (id, value) => {
             const el = document.getElementById(id);
             if (el) el.value = value ?? "";
@@ -5151,13 +5148,10 @@ window.startStream = startStream;
           safeSet("tiktok", data.tiktok || "");
           safeSet("whatsapp", data.whatsapp || "");
           safeSet("instagram", data.instagram || "");
-          // picks
-          const natureEl = document.getElementById("naturePick");
-          if (natureEl) natureEl.value = data.naturePick || "";
-          const fruitEl = document.getElementById("fruitPick");
-          if (fruitEl) fruitEl.value = data.fruitPick || "";
+          safeSet("naturePick", data.naturePick || "");
+          safeSet("fruitPick", data.fruitPick || "");
 
-          // preview photo
+          // Existing photo preview (from Firestore)
           if (data.popupPhoto) {
             const photoPreview = document.getElementById("photoPreview");
             const photoPlaceholder = document.getElementById("photoPlaceholder");
@@ -5167,165 +5161,171 @@ window.startStream = startStream;
             }
             if (photoPlaceholder) photoPlaceholder.style.display = "none";
           } else {
-            // ensure preview hidden if no photo
             const photoPreview = document.getElementById("photoPreview");
             const photoPlaceholder = document.getElementById("photoPlaceholder");
             if (photoPreview) photoPreview.style.display = "none";
             if (photoPlaceholder) photoPlaceholder.style.display = "inline-block";
           }
-
         } catch (err) {
           console.error("[host-init] error in hostSettingsBtn click:", err);
           showStarPopup("⚠️ Failed to open settings. Check console.");
         }
       });
 
-      // --- close handlers
+      // Close handlers
       if (closeModalEl) {
         closeModalEl.addEventListener("click", () => (hostModalEl.style.display = "none"));
       }
+
       window.addEventListener("click", (e) => {
         if (e.target === hostModalEl) hostModalEl.style.display = "none";
       });
 
-// --- photo preview handler (instant local preview on selection)
-document.addEventListener("change", (e) => {
-  if (e.target && e.target.id === "popupPhoto") {
-    const file = e.target.files?.[0];
-    if (!file) return;
+      // --- Instant photo preview on selection (only image, no text)
+      document.addEventListener("change", (e) => {
+        if (e.target && e.target.id === "popupPhoto") {
+          const file = e.target.files?.[0];
+          if (!file) return;
 
-    const preview = document.getElementById("photoPreview");
-    const placeholder = document.getElementById("photoPlaceholder");
+          const preview = document.getElementById("photoPreview");
+          const placeholder = document.getElementById("photoPlaceholder");
 
-    if (!preview || !placeholder) return;
+          if (!preview || !placeholder) return;
 
-    // Instant local preview
-    const objectUrl = URL.createObjectURL(file);
-    preview.src = objectUrl;
-    preview.style.display = "block";
-    placeholder.style.display = "none";
+          // Hide placeholder, show preview
+          placeholder.style.display = "none";
 
-    // Clean up when image loads
-    preview.onload = () => URL.revokeObjectURL(objectUrl);
-  }
-});
+          // Instant preview
+          const objectUrl = URL.createObjectURL(file);
+          preview.src = objectUrl;
+          preview.style.display = "block";
 
-// --- save info button (safe, unchanged except for photo handling)
-const maybeSaveInfo = document.getElementById("saveInfo");
-if (maybeSaveInfo) {
-  maybeSaveInfo.addEventListener("click", async () => {
-    if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
-
-    const getVal = id => document.getElementById(id)?.value ?? "";
-
-    const dataToUpdate = {
-      fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
-      city: getVal("city"),
-      location: getVal("location"),
-      bioPick: getVal("bio"),
-      bankAccountNumber: getVal("bankAccountNumber"),
-      bankName: getVal("bankName"),
-      telegram: getVal("telegram"),
-      tiktok: getVal("tiktok"),
-      whatsapp: getVal("whatsapp"),
-      instagram: getVal("instagram"),
-      naturePick: getVal("naturePick"),
-      fruitPick: getVal("fruitPick"),
-    };
-
-    if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber))
-      return showStarPopup("⚠️ Bank account number must be digits only (max 11).");
-    if (dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp))
-      return showStarPopup("⚠️ WhatsApp number must be numbers only.");
-
-    const originalHTML = maybeSaveInfo.innerHTML;
-    maybeSaveInfo.innerHTML = `<div class="spinner" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation: spin 0.6s linear infinite;margin:auto;"></div>`;
-    maybeSaveInfo.disabled = true;
-
-    try {
-      const userRef = doc(db, "users", currentUser.uid);
-      const filteredData = Object.fromEntries(Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined));
-      await updateDoc(userRef, { ...filteredData, lastUpdated: serverTimestamp() });
-
-      // Mirror to featuredHosts if exists
-      const hostRef = doc(db, "featuredHosts", currentUser.uid);
-      const hostSnap = await getDoc(hostRef);
-      if (hostSnap.exists()) await updateDoc(hostRef, { ...filteredData, lastUpdated: serverTimestamp() });
-
-      showStarPopup("✅ Profile updated successfully!");
-      document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
-    } catch (err) {
-      console.error("[host-init] saveInfo error:", err);
-      showStarPopup("⚠️ Failed to update info. Please try again.");
-    } finally {
-      maybeSaveInfo.innerHTML = originalHTML;
-      maybeSaveInfo.disabled = false;
-    }
-  });
-} else {
-  console.warn("[host-init] saveInfo button not found.");
-}
-
-// --- save media button (now uses Firebase Storage for photo)
-const maybeSaveMedia = document.getElementById("saveMedia");
-if (maybeSaveMedia) {
-  maybeSaveMedia.addEventListener("click", async () => {
-    if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
-
-    const popupPhotoFile = document.getElementById("popupPhoto")?.files?.[0];
-
-    if (!popupPhotoFile) return showStarPopup("⚠️ Please select a photo to upload.");
-
-    try {
-      showStarPopup("⏳ Uploading photo...");
-
-      // 1. Prepare Firebase Storage path
-      const ext = popupPhotoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `popup_${Date.now()}.${ext}`;
-      const storagePath = `users/${currentUser.uid}/popup/${fileName}`;
-      const storageRef = ref(storage, storagePath);
-
-      // 2. Upload to Firebase Storage
-      const snapshot = await uploadBytes(storageRef, popupPhotoFile);
-      const photoUrl = await getDownloadURL(snapshot.ref);
-
-      // 3. Save URL to user's Firestore document
-      const userRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userRef, {
-        popupPhoto: photoUrl,
-        lastUpdated: serverTimestamp()
+          // Clean up
+          preview.onload = () => URL.revokeObjectURL(objectUrl);
+        }
       });
 
-      // Mirror to featuredHosts if exists
-      const hostRef = doc(db, "featuredHosts", currentUser.uid);
-      const hostSnap = await getDoc(hostRef);
-      if (hostSnap.exists()) {
-        await updateDoc(hostRef, {
-          popupPhoto: photoUrl,
-          lastUpdated: serverTimestamp()
+      // --- save info button (unchanged except photo handling)
+      const maybeSaveInfo = document.getElementById("saveInfo");
+      if (maybeSaveInfo) {
+        maybeSaveInfo.addEventListener("click", async () => {
+          if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
+
+          const getVal = id => document.getElementById(id)?.value ?? "";
+
+          const dataToUpdate = {
+            fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
+            city: getVal("city"),
+            location: getVal("location"),
+            bioPick: getVal("bio"),
+            bankAccountNumber: getVal("bankAccountNumber"),
+            bankName: getVal("bankName"),
+            telegram: getVal("telegram"),
+            tiktok: getVal("tiktok"),
+            whatsapp: getVal("whatsapp"),
+            instagram: getVal("instagram"),
+            naturePick: getVal("naturePick"),
+            fruitPick: getVal("fruitPick"),
+          };
+
+          if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber))
+            return showStarPopup("⚠️ Bank account number must be digits only (max 11).");
+          if (dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp))
+            return showStarPopup("⚠️ WhatsApp number must be numbers only.");
+
+          const originalHTML = maybeSaveInfo.innerHTML;
+          maybeSaveInfo.innerHTML = `<div class="spinner" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation: spin 0.6s linear infinite;margin:auto;"></div>`;
+          maybeSaveInfo.disabled = true;
+
+          try {
+            const userRef = doc(db, "users", currentUser.uid);
+            const filteredData = Object.fromEntries(Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined));
+            await updateDoc(userRef, { ...filteredData, lastUpdated: serverTimestamp() });
+
+            // Mirror to featuredHosts if exists
+            const hostRef = doc(db, "featuredHosts", currentUser.uid);
+            const hostSnap = await getDoc(hostRef);
+            if (hostSnap.exists()) await updateDoc(hostRef, { ...filteredData, lastUpdated: serverTimestamp() });
+
+            showStarPopup("✅ Profile updated successfully!");
+            document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
+          } catch (err) {
+            console.error("[host-init] saveInfo error:", err);
+            showStarPopup("⚠️ Failed to update info. Please try again.");
+          } finally {
+            maybeSaveInfo.innerHTML = originalHTML;
+            maybeSaveInfo.disabled = false;
+          }
         });
+      } else {
+        console.warn("[host-init] saveInfo button not found.");
       }
 
-      // 4. Update preview (already done locally, but confirm)
-      const photoPreview = document.getElementById("photoPreview");
-      if (photoPreview) {
-        photoPreview.src = photoUrl;
-        photoPreview.style.display = "block";
-      }
-      document.getElementById("photoPlaceholder")?.style.display = "none";
+      // --- save media button (Firebase Storage upload)
+      const maybeSaveMedia = document.getElementById("saveMedia");
+      if (maybeSaveMedia) {
+        maybeSaveMedia.addEventListener("click", async () => {
+          if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
 
-      showStarPopup("✅ Photo uploaded and saved!");
+          const popupPhotoFile = document.getElementById("popupPhoto")?.files?.[0];
+
+          if (!popupPhotoFile) return showStarPopup("⚠️ Please select a photo to upload.");
+
+          try {
+            showStarPopup("⏳ Uploading photo...");
+
+            // Prepare path
+            const ext = popupPhotoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+            const fileName = `popup_${Date.now()}.${ext}`;
+            const storagePath = `users/${currentUser.uid}/popup/${fileName}`;
+            const storageRef = ref(storage, storagePath);
+
+            // Upload
+            const snapshot = await uploadBytes(storageRef, popupPhotoFile);
+            const photoUrl = await getDownloadURL(snapshot.ref);
+
+            // Save to Firestore
+            const userRef = doc(db, "users", currentUser.uid);
+            await updateDoc(userRef, {
+              popupPhoto: photoUrl,
+              lastUpdated: serverTimestamp()
+            });
+
+            // Mirror to featuredHosts if exists
+            const hostRef = doc(db, "featuredHosts", currentUser.uid);
+            const hostSnap = await getDoc(hostRef);
+            if (hostSnap.exists()) {
+              await updateDoc(hostRef, {
+                popupPhoto: photoUrl,
+                lastUpdated: serverTimestamp()
+              });
+            }
+
+            // Update preview (already local, but confirm real URL)
+            const photoPreview = document.getElementById("photoPreview");
+            if (photoPreview) {
+              photoPreview.src = photoUrl;
+              photoPreview.style.display = "block";
+            }
+            document.getElementById("photoPlaceholder")?.style.display = "none";
+
+            showStarPopup("✅ Photo uploaded and saved!");
+          } catch (err) {
+            console.error("[host-init] photo upload error:", err);
+            showStarPopup(`⚠️ Failed to upload photo: ${err.message || "check rules"}`);
+          }
+        });
+      } else {
+        console.info("[host-init] saveMedia button not present (ok if VIP-only UI).");
+      }
+
+      console.log("[host-init] Host logic initialized successfully.");
     } catch (err) {
-      console.error("[host-init] photo upload error:", err);
-      showStarPopup(`⚠️ Failed to upload photo: ${err.message || "check rules"}`);
+      console.error("[host-init] Could not find required host elements:", err);
+      showStarPopup("⚠️ Host UI failed to initialize. Check console for details.");
     }
   });
-} else {
-  console.info("[host-init] saveMedia button not present (ok if VIP-only UI).");
-}
-  }); // ready
 })();
-
 
 /* =======================================
    Dynamic Host Panel Greeting + Scroll Arrow
