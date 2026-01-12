@@ -4242,88 +4242,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
     
 
- <!-- POLL SECTION – ADMIN ONLY -->
-<div class="poll-section-header">
-  <span class="poll-section-eyebrow">ADMIN</span>
-  <h2 class="poll-section-title">POLL</h2>
-</div>
-
-<div id="polls" class="section">
-  <div class="poll-admin-title">
-    <h3>Create Win $STRZ Poll</h3>
-    <p class="admin-subtitle">Daily community poll with rewards</p>
-  </div>
-
-  <!-- Question -->
-  <input
-    id="poll-question"
-    class="poll-input"
-    placeholder="Who has the cutest vibe today?"
-    maxlength="120"
-  />
-
-  <!-- Options -->
-  <div id="poll-options-container" class="options-grid">
-    <input
-      class="poll-option-input"
-      placeholder="Option 1"
-      maxlength="60"
-      required
-    />
-    <input
-      class="poll-option-input"
-      placeholder="Option 2"
-      maxlength="60"
-      required
-    />
-    <input
-      class="poll-option-input"
-      placeholder="Option 3 (optional)"
-      maxlength="60"
-    />
-    <input
-      class="poll-option-input"
-      placeholder="Option 4 (optional)"
-      maxlength="60"
-    />
-  </div>
-
-  <!-- Reward + Duration -->
-  <div class="poll-meta-row">
-    <div class="meta-field">
-      <label for="poll-reward">Reward ($STRZ)</label>
-      <input
-        id="poll-reward"
-        type="number"
-        min="10"
-        max="1000"
-        value="50"
-        class="poll-meta-input"
-      />
-    </div>
-    <div class="meta-field">
-      <label for="poll-duration">Duration (hours)</label>
-      <input
-        id="poll-duration"
-        type="number"
-        min="1"
-        max="168"
-        value="24"
-        class="poll-meta-input"
-      />
-    </div>
-  </div>
-
-  <!-- Create Button -->
-  <button id="create-new-poll" class="create-btn">
-    Create Poll
-  </button>
-
-  <!-- Current Poll Preview Area -->
-  <div id="current-poll-admin" class="preview-box">
-    <p class="preview-placeholder">Preview will appear here after creation</p>
-  </div>
-</div>
 
   
 <!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
@@ -4375,6 +4293,136 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
+    <!-- POLL SECTION – ADMIN ONLY (Header + Form attached as one unit) -->
+<div id="polls" class="section" style="margin:40px auto; max-width:900px;">
+
+  <!-- Integrated Header – attached directly to the content below -->
+  <div style="text-align:center; padding:0 0 24px 0;">
+    <span style="
+      display:block;
+      color:#00ff9d;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:3px;
+      text-transform:uppercase;
+      margin-bottom:8px;
+      opacity:0.9;
+    ">ADMIN CONTROL</span>
+    
+    <h2 style="
+      font-size:32px;
+      font-weight:900;
+      background:linear-gradient(90deg, #00ffea, #ff00c8, #ffea00);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin:0 0 12px 0;
+      letter-spacing:1.5px;
+      text-shadow:0 2px 10px rgba(0,255,234,0.3);
+    ">
+      POLL
+    </h2>
+    
+    <p style="
+      color:#aaa;
+      font-size:15px;
+      margin:0;
+      font-weight:500;
+    ">
+      Create daily community polls & reward winners with $STRZ
+    </p>
+  </div>
+
+  <!-- Poll Creation Box – directly follows the header with no extra gap -->
+  <div class="poll-creation-box" style="
+    background:#111;
+    border-radius:16px;
+    border:1px solid #222;
+    padding:24px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  ">
+    <!-- Question -->
+    <div style="margin-bottom:24px;">
+      <label for="poll-question" style="
+        display:block;
+        color:#ccc;
+        font-size:14px;
+        font-weight:600;
+        margin-bottom:8px;
+      ">Poll Question</label>
+      <input
+        id="poll-question"
+        class="poll-input"
+        placeholder="Who has the cutest vibe today?"
+        maxlength="120"
+        style="width:100%;"
+      />
+    </div>
+
+    <!-- Options -->
+    <div style="margin-bottom:24px;">
+      <label style="
+        display:block;
+        color:#ccc;
+        font-size:14px;
+        font-weight:600;
+        margin-bottom:8px;
+      ">Options</label>
+      <div id="poll-options-container" class="options-grid" style="display:grid; grid-template-columns:1fr; gap:12px;">
+        <input class="poll-option-input" placeholder="Option 1 (required)" maxlength="60" required />
+        <input class="poll-option-input" placeholder="Option 2 (required)" maxlength="60" required />
+        <input class="poll-option-input" placeholder="Option 3 (optional)" maxlength="60" />
+        <input class="poll-option-input" placeholder="Option 4 (optional)" maxlength="60" />
+      </div>
+    </div>
+
+    <!-- Reward + Duration -->
+    <div class="poll-meta-row" style="display:flex; flex-wrap:wrap; gap:16px;">
+      <div class="meta-field" style="flex:1; min-width:140px;">
+        <label for="poll-reward" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
+          Reward ($STRZ)
+        </label>
+        <input
+          id="poll-reward"
+          type="number"
+          min="10"
+          max="1000"
+          value="50"
+          class="poll-meta-input"
+          style="width:100%;"
+        />
+      </div>
+      <div class="meta-field" style="flex:1; min-width:140px;">
+        <label for="poll-duration" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
+          Duration (hours)
+        </label>
+        <input
+          id="poll-duration"
+          type="number"
+          min="1"
+          max="168"
+          value="24"
+          class="poll-meta-input"
+          style="width:100%;"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Button -->
+  <div style="text-align:center; margin:24px 0;">
+    <button id="create-new-poll" class="create-btn">
+      Create Poll
+    </button>
+  </div>
+
+  <!-- Preview Area -->
+  <div id="current-poll-admin" class="preview-box">
+    <p class="preview-placeholder">Preview will appear here after creation</p>
+  </div>
+
+</div>
+
+
 <div class="star-popup" id="starPopup">
   <div id="starText">You've just earned +1 STRZ! ⭐</div>
 </div>
@@ -4416,10 +4464,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
   
- <div id="loaderOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);align-items:center;justify-content:center;flex-direction:column;z-index:999999;color:#ff006e;font-size:24px;">
-  <div>Processing...</div>
-  <div id="loaderText" style="font-size:18px;margin-top:10px;"></div>
-</div>
 
 <!-- Gift Alert -->
 <div id="giftAlert" class="gift-alert"></div>
