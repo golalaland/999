@@ -5040,10 +5040,8 @@ window.startStream = startStream;
 
 // ---------- DEBUGGABLE HOST INIT (drop-in) ----------
 (function () {
-  // Toggle this dynamically in your app
-  const isHost = true; // <-- make sure this equals true at runtime for hosts
+  const isHost = true; // Toggle dynamically
 
-  // Small helper: wait for elements (polling)
   function waitForElements(selectors = [], { timeout = 5000, interval = 80 } = {}) {
     const start = Date.now();
     return new Promise((resolve, reject) => {
@@ -5056,10 +5054,8 @@ window.startStream = startStream;
     });
   }
 
-  // Safe DOM query
   const $ = (sel) => document.querySelector(sel);
 
-  // Run after DOM ready
   function ready(fn) {
     if (document.readyState === "complete" || document.readyState === "interactive") {
       setTimeout(fn, 0);
@@ -5071,17 +5067,12 @@ window.startStream = startStream;
   ready(async () => {
     console.log("[host-init] DOM ready. isHost =", isHost);
     if (!isHost) {
-      console.log("[host-init] not a host. exiting host init.");
+      console.log("[host-init] Not a host. Exiting.");
       return;
     }
 
     try {
-      // Wait for required elements
-      const [
-        hostSettingsWrapperEl,
-        hostModalEl,
-        hostSettingsBtnEl,
-      ] = await waitForElements(
+      const [hostSettingsWrapperEl, hostModalEl, hostSettingsBtnEl] = await waitForElements(
         ["#hostSettingsWrapper", "#hostModal", "#hostSettingsBtn"],
         { timeout: 7000 }
       );
@@ -5092,21 +5083,17 @@ window.startStream = startStream;
         hostSettingsBtn: !!hostSettingsBtnEl,
       });
 
-      // Show wrapper/button
       hostSettingsWrapperEl.style.display = "block";
 
-      // Close button
       const closeModalEl = hostModalEl.querySelector(".close");
-      if (!closeModalEl) {
-        console.warn("[host-init] Close button (.close) not found inside #hostModal.");
-      }
+      if (!closeModalEl) console.warn("[host-init] Close button (.close) not found.");
 
-      // Tab initialization
+      // Tab init
       function initTabsForModal(modalEl) {
-        modalEl.querySelectorAll(".tab-btn").forEach((btn) => {
+        modalEl.querySelectorAll(".tab-btn").forEach(btn => {
           btn.addEventListener("click", () => {
-            modalEl.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-            document.querySelectorAll(".tab-content").forEach((tab) => (tab.style.display = "none"));
+            modalEl.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
             btn.classList.add("active");
             const target = document.getElementById(btn.dataset.tab);
             if (target) target.style.display = "block";
@@ -5116,7 +5103,7 @@ window.startStream = startStream;
       }
       initTabsForModal(hostModalEl);
 
-      // Host settings button: open modal + populate
+      // Open modal + populate
       hostSettingsBtnEl.addEventListener("click", async () => {
         try {
           hostModalEl.style.display = "block";
@@ -5136,7 +5123,6 @@ window.startStream = startStream;
 
           const data = snap.data() || {};
 
-          // Safe populate
           const safeSet = (id, value) => {
             const el = document.getElementById(id);
             if (el) el.value = value ?? "";
@@ -5155,23 +5141,23 @@ window.startStream = startStream;
           safeSet("naturePick", data.naturePick || "");
           safeSet("fruitPick", data.fruitPick || "");
 
-          // Load existing photo preview from Firestore
+          // Load existing photo from Firestore
           if (data.popupPhoto) {
-            const photoPreview = document.getElementById("photoPreview");
-            const photoPlaceholder = document.getElementById("photoPlaceholder");
-            if (photoPreview) {
-              photoPreview.src = data.popupPhoto;
-              photoPreview.style.display = "block";
+            const preview = $("#photoPreview");
+            const placeholder = $("#photoPlaceholder");
+            if (preview) {
+              preview.src = data.popupPhoto;
+              preview.style.display = "block";
             }
-            if (photoPlaceholder) photoPlaceholder.style.display = "none";
+            if (placeholder) placeholder.style.display = "none";
           } else {
-            const photoPreview = document.getElementById("photoPreview");
-            const photoPlaceholder = document.getElementById("photoPlaceholder");
-            if (photoPreview) photoPreview.style.display = "none";
-            if (photoPlaceholder) photoPlaceholder.style.display = "inline-block";
+            const preview = $("#photoPreview");
+            const placeholder = $("#photoPlaceholder");
+            if (preview) preview.style.display = "none";
+            if (placeholder) placeholder.style.display = "inline-block";
           }
         } catch (err) {
-          console.error("[host-init] error opening host settings:", err);
+          console.error("[host-init] error opening settings:", err);
           showStarPopup("⚠️ Failed to open settings. Check console.");
         }
       });
@@ -5181,41 +5167,38 @@ window.startStream = startStream;
         closeModalEl.addEventListener("click", () => hostModalEl.style.display = "none");
       }
 
-      window.addEventListener("click", (e) => {
+      window.addEventListener("click", e => {
         if (e.target === hostModalEl) hostModalEl.style.display = "none";
       });
 
-      // --- Instant local photo preview (only image, no text)
-      document.addEventListener("change", (e) => {
-        if (e.target && e.target.id === "popupPhoto") {
+      // Instant local photo preview (clean: only image)
+      document.addEventListener("change", e => {
+        if (e.target?.id === "popupPhoto") {
           const file = e.target.files?.[0];
           if (!file) return;
 
-          const preview = document.getElementById("photoPreview");
-          const placeholder = document.getElementById("photoPlaceholder");
+          const preview = $("#photoPreview");
+          const placeholder = $("#photoPlaceholder");
 
           if (!preview || !placeholder) return;
 
-          // Hide placeholder, show preview
           placeholder.style.display = "none";
 
-          // Local instant preview
           const objectUrl = URL.createObjectURL(file);
           preview.src = objectUrl;
           preview.style.display = "block";
 
-          // Clean up memory
           preview.onload = () => URL.revokeObjectURL(objectUrl);
         }
       });
 
-      // --- save info button (unchanged)
-      const maybeSaveInfo = document.getElementById("saveInfo");
+      // Save info button
+      const maybeSaveInfo = $("#saveInfo");
       if (maybeSaveInfo) {
         maybeSaveInfo.addEventListener("click", async () => {
           if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
 
-          const getVal = id => document.getElementById(id)?.value ?? "";
+          const getVal = id => $("#" + id)?.value ?? "";
 
           const dataToUpdate = {
             fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
@@ -5264,7 +5247,7 @@ window.startStream = startStream;
         console.warn("[host-init] saveInfo button not found.");
       }
 
-      // --- save media button (Firebase Storage upload)
+      // Save media button (Firebase Storage)
       const maybeSaveMedia = document.getElementById("saveMedia");
       if (maybeSaveMedia) {
         maybeSaveMedia.addEventListener("click", async () => {
@@ -5277,7 +5260,6 @@ window.startStream = startStream;
           try {
             showStarPopup("⏳ Uploading photo...");
 
-            // Prepare path & upload
             const ext = popupPhotoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
             const fileName = `popup_${Date.now()}.${ext}`;
             const storagePath = `users/${currentUser.uid}/popup/${fileName}`;
@@ -5286,14 +5268,12 @@ window.startStream = startStream;
             const snapshot = await uploadBytes(storageRef, popupPhotoFile);
             const photoUrl = await getDownloadURL(snapshot.ref);
 
-            // Save URL to Firestore
             const userRef = doc(db, "users", currentUser.uid);
             await updateDoc(userRef, {
               popupPhoto: photoUrl,
               lastUpdated: serverTimestamp()
             });
 
-            // Mirror to featuredHosts
             const hostRef = doc(db, "featuredHosts", currentUser.uid);
             const hostSnap = await getDoc(hostRef);
             if (hostSnap.exists()) {
@@ -5303,7 +5283,6 @@ window.startStream = startStream;
               });
             }
 
-            // Update preview with real URL
             const photoPreview = document.getElementById("photoPreview");
             if (photoPreview) {
               photoPreview.src = photoUrl;
@@ -5328,7 +5307,6 @@ window.startStream = startStream;
     }
   });
 })();
-
 /* =======================================
    Dynamic Host Panel Greeting + Scroll Arrow
 ========================================== */
