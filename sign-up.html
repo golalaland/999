@@ -1024,47 +1024,42 @@ vipPayBtn.onclick = () => {
   const handler = PaystackPop.setup({
     key: 'pk_live_b1f53de46eded7175f91c345548365902b4b6d67',
     email: email,
-    amount: 100 * 100, // ← better to send in kobo
+    amount: 19999 * 100,           // 19,999 NGN in kobo
     currency: 'NGN',
     ref: 'VIP_' + Date.now(),
     metadata: { type: 'vip_activation' },
-  callback: async function(response) {
-  vipPayBtn.classList.remove('loading');
+    callback: async function(response) {
+      vipPayBtn.classList.remove('loading');
+      console.log('Paystack callback received:', response);
 
-  console.log('Paystack callback received:', response);  // ← VERY IMPORTANT
+      if (response.status !== 'success' || !response.reference) {
+        showPopup('Payment completed but no reference received');
+        return;
+      }
 
-  if (response.status !== 'success' || !response.reference) {
-    showPopup('Payment completed but no reference received');
-    return;
-  }
+      console.log('Sending verification with:', { reference: response.reference, email });
 
-  console.log('Sending verification with:', {
-    reference: response.reference,
-    email: email,                    // make sure this prints a real email
-    emailType: typeof email
-  });
+      try {
+        const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reference: response.reference,
+            email: email
+          })
+        });
 
-  try {
-    const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reference: response.reference,
-        email: email
-      })
-    });
+        console.log('Server status code:', verifyRes.status);
+        const verifyData = await verifyRes.json();
+        console.log('Server full response:', verifyData);
 
-    console.log('Server status code:', verifyRes.status);  // ← should be 400 in your case
-
-    const verifyData = await verifyRes.json();
-    console.log('Server full response:', verifyData);
         if (!verifyData.success) {
           showPopup('Payment verification failed: ' + (verifyData.message || 'Unknown error'));
           messageEl.textContent = "";
           return;
         }
 
-        // === Only if server confirmed payment → proceed with VIP logic ===
+        // === Server confirmed → proceed with VIP logic ===
         messageEl.textContent = "VIP Activated!! ✌︎㋡";
 
         const docId = sanitizeKey(email);
@@ -1090,7 +1085,7 @@ vipPayBtn.onclick = () => {
             lastUpdated: serverTimestamp()
           });
 
-          // 2. Reward inviter 250 STRZ if exists
+          // Reward inviter (onboarder/host) with stars
           if (inviterId) {
             await updateDoc(doc(db, "users", inviterId), {
               stars: increment(250),
@@ -1098,30 +1093,30 @@ vipPayBtn.onclick = () => {
               lastUpdated: serverTimestamp()
             });
 
-            // === INVITER NOTIFICATION — VISIBLE LIKE RIPPLE ===
+            // Inviter notification
             try {
               await addDoc(collection(db, "notifications"), {
                 recipientId: inviterId,
                 type: "vip_activated",
-                title: "A VIP Activated in Your Cube!",
-                message: `@${userData.chatId} just went VIP!\nYou earned +250 STRZ `,
+                title: "A VIP Joined Through Your Link!",
+                message: `@${userData.chatId || 'Someone'} just became VIP for ₦19,999!\nYou earned +250 STRZ`,
                 vipUserId: userData.uid,
                 vipUserName: userData.chatId,
                 read: false,
                 createdAt: serverTimestamp()
               });
             } catch (err) {
-              console.warn("Inviter VIP notification failed:", err);
+              console.warn("Inviter notification failed:", err);
             }
           }
 
-          // === WELCOME NOTIFICATION TO NEW VIP — VISIBLE LIKE RIPPLE ===
+          // Welcome notification for new VIP
           try {
             await addDoc(collection(db, "notifications"), {
               recipientId: userData.uid,
               type: "vip_bonus",
-              title: "Welcome to cube VIP! 🎉",
-              message: "You received 2,500 STRZ as a welcome bonus!\nEnjoy your elite status",
+              title: "Welcome to Cube VIP! 🎉",
+              message: "You paid ₦19,999 and received 2,500 STRZ bonus!\nEnjoy your elite status",
               read: false,
               createdAt: serverTimestamp()
             });
@@ -1136,10 +1131,7 @@ vipPayBtn.onclick = () => {
 
         } catch (err) {
           console.error("VIP activation processing failed:", err);
-          // Payment succeeded → still redirect
-          setTimeout(() => {
-            window.location.href = "/chat.html";
-          }, 1800);
+          setTimeout(() => window.location.href = "/chat.html", 1800);
         }
 
       } catch (fetchError) {
