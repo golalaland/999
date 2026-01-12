@@ -6056,6 +6056,7 @@ async function loadMyClips() {
       if (noMsg) noMsg.style.display = "block";
       return;
     }
+
     if (noMsg) noMsg.style.display = "none";
     grid.innerHTML = "";
 
@@ -6075,79 +6076,92 @@ async function loadMyClips() {
         border:1px solid #333;
         display:flex;
         flex-direction:column;
+        height:220px;           /* fixed height for consistent grid */
+        transition:transform 0.2s;
       `;
 
-card.innerHTML = `
-  <div style="background:#0d0d0d;border-radius:16px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.8);border:1px solid #222;display:flex;gap:0;height:136px;position:relative;">
-    
-    <!-- Video thumbnail – finally zoomed out for real -->
-<div style="width:136px;height:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-  <video src="${videoSrc}" muted loop playsinline 
-         style="position:absolute;
-                top:50%;left:50%;
-                width:200%;height:200%;
-                object-fit:cover;
-                transform:translate(-50%,-50%) scale(0.52);
-                filter:brightness(0.96);">
-  </video>
-  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
-  <div style="position:absolute;bottom:7px;left:9px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
-        ▶ CLIP
-      </div>
-    </div>
+      card.innerHTML = `
+        <div style="display:flex;height:100%;background:#0d0d0d;">
+          <!-- Left: Video thumbnail (zoomed out & sexy) -->
+          <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+            <video src="${videoSrc}" muted loop playsinline
+                   style="position:absolute;top:50%;left:50%;
+                          width:220%;height:220%;
+                          object-fit:cover;
+                          transform:translate(-50%,-50%) scale(0.52);
+                          filter:brightness(0.96);">
+            </video>
+            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
+            <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+              ▶ CLIP
+            </div>
+          </div>
 
-    <!-- Right side -->
-    <div style="flex-grow:1;padding:16px 20px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(90deg,#0f0f0f,#111 50%);">
-      
-      <div>
-        <div style="color:#fff;font-weight:800;font-size:13.5px;letter-spacing:0.6px;text-shadow:0 1px 3px #000;">
-          ${v.title || "Untitled Drop"}
-        </div>
+          <!-- Right: Content + Delete at bottom -->
+          <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+            <!-- Title & Description -->
+            <div style="flex-grow:1;">
+              <div style="
+                color:#fff;font-weight:800;font-size:14px;line-height:1.3;
+                margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+                overflow:hidden;text-overflow:ellipsis;
+              ">
+                ${v.title || "Untitled Drop"}
+              </div>
 
-        ${v.description ? `
-          <div style="color:#999;font-size:10.5px;margin-top:4px;line-height:1.3;
-                      overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;opacity:0.88;">
-            ${v.description}
-          </div>` : ''}
+              ${v.description ? `
+                <div style="
+                  color:#aaa;font-size:11px;line-height:1.35;
+                  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+                  overflow:hidden;text-overflow:ellipsis;opacity:0.9;
+                ">
+                  ${v.description}
+                </div>
+              ` : ''}
 
-        <div style="color:#666;font-size:10px;margin-top:${v.description ? '6px' : '3px'};opacity:0.75;">
-          ID: ${v.id.slice(-8)}
-        </div>
-      </div>
+              <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                ID: ${v.id.slice(-8)}
+              </div>
+            </div>
 
-      <!-- Stats – perfectly centered numbers -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:10px;text-align:center;">
-        <div>
-          <div style="color:#666;font-size:9px;text-transform:uppercase;letter-spacing:1px;">Price</div>
-          <div style="color:#00ff9d;font-weight:900;font-size:11px;margin-top:4px;">${price} STRZ</div>
-        </div>
-        <div>
-          <div style="color:#666;font-size:9px;text-transform:uppercase;letter-spacing:1px;">Unlocks</div>
-          <div style="color:#00ffea;font-weight:900;font-size:14px;margin-top:4px;">${unlocks}x</div>
-        </div>
-        <div>
-          <div style="color:#666;font-size:9px;text-transform:uppercase;letter-spacing:1px;">Revenue</div>
-          <div style="color:#ff00ff;font-weight:900;font-size:14px;margin-top:4px;">${earnings} ⭐</div>
-        </div>
-      </div>
+            <!-- Stats row -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
+                <div style="color:#00ff9d;font-weight:900;font-size:12px;">${price} STRZ</div>
+              </div>
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Unlocks</div>
+                <div style="color:#00ffea;font-weight:900;font-size:13px;">${unlocks}x</div>
+              </div>
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Revenue</div>
+                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${earnings} ⭐</div>
+              </div>
+            </div>
 
-      <!-- Your signature gradient delete button -->
-    <button class="delete-clip-btn" data-id="${v.id}" data-title="${(v.title||'Clip').replace(/"/g,'&quot;')}"
-  style="position:absolute;top:8px;right:8px;
-         background:linear-gradient(90deg,#ff0099,#ff6600);
-         border:none;color:#fff;
-         padding:7px 11px;border-radius:8px;
-         font-size:8px;font-weight:800;letter-spacing:0.5px;
-         cursor:pointer;opacity:0.95;
-         box-shadow:none;   /* ← GLOW REMOVED */
-         transition:all .25s ease;"
-  onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)'; this.style.transform='translateY(-1px)'; this.style.opacity='1'"
-  onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)'; this.style.transform='translateY(0)'; this.style.opacity='0.95'">
-  DELETE
-</button>
-    </div>
-  </div>
-`;
+            <!-- Delete button – bottom right, always safe -->
+            <button class="delete-clip-btn" 
+                    data-id="${v.id}" 
+                    data-title="${(v.title||'Clip').replace(/"/g,'&quot;')}"
+                    style="
+                      position:absolute;bottom:12px;right:12px;
+                      background:linear-gradient(90deg,#ff0099,#ff6600);
+                      border:none;color:#fff;
+                      padding:8px 14px;border-radius:10px;
+                      font-size:10px;font-weight:800;letter-spacing:0.6px;
+                      cursor:pointer;opacity:0.92;
+                      box-shadow:0 2px 12px rgba(255,0,100,0.4);
+                      transition:all .25s ease;
+                    "
+                    onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
+                    onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
+              DELETE
+            </button>
+          </div>
+        </div>
+      `;
+
       // Hover video play
       const videos = card.querySelectorAll("video");
       card.addEventListener("mouseenter", () => videos.forEach(vid => vid.play().catch(() => {})));
@@ -6166,7 +6180,6 @@ card.innerHTML = `
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
   }
 }
-
 function showDeleteConfirm(id, title) {
   const modal = document.createElement("div");
   modal.style.cssText = `
@@ -6870,9 +6883,8 @@ currentIndex = (currentIndex + 1) % totalSlides;
   updateCarousel();
  }, 4000);
 }
-/*********************************
- * Nature!!
- *********************************/
+
+
 /*********************************
  * fruity punch!!
  *********************************/
@@ -6890,15 +6902,12 @@ function updateFruitCarousel() {
 // Touch/Swipe Support
 let touchStartX = 0;
 const carousel = document.getElementById("fruitCarousel");
-
 carousel.addEventListener("touchstart", e => {
   touchStartX = e.touches[0].clientX;
 });
-
 carousel.addEventListener("touchend", e => {
   const touchEndX = e.changedTouches[0].clientX;
   const diff = touchStartX - touchEndX;
-
   if (Math.abs(diff) > 50) { // minimum swipe distance
     if (diff > 0 && currentFruitSlide < totalFruitSlides - 1) {
       currentFruitSlide++;
@@ -6917,17 +6926,14 @@ document.querySelectorAll("#fruitDots .dot").forEach(dot => {
   });
 });
 
-// Open/Close (your existing)
+// Open & Close
 document.getElementById("openFruitGuide").addEventListener("click", () => {
   currentFruitSlide = 0;
   updateFruitCarousel();
   document.getElementById("fruitGuideModal").style.display = "flex";
 });
 
-document.getElementById("closeFruitGuide").addEventListener("click", () => {
-  document.getElementById("fruitGuideModal").style.display = "none";
-});
-
+// Only the bottom button remains (top × is gone)
 document.getElementById("closeFruitGuideBottom").addEventListener("click", () => {
   document.getElementById("fruitGuideModal").style.display = "none";
 });
