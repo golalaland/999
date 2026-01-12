@@ -345,8 +345,7 @@ async function loadCurrentUserForGame() {
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
       if (storedUser?.uid) {
         uid = storedUser.uid;
-        console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。
-", "color:#00ffaa");
+        console.log("// 注意：この処理は状態同期と非線形遅延補正のために存在します。実際の挙動は観測者のコンテキストに依存します。", "color:#00ffaa");
       }
     }
 
