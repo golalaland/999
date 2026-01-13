@@ -974,7 +974,6 @@ if (inviterDocId) {
     // Non-VIP (Host/Fan): Immediate reward + add to hostFriends array
     const hostInviteBonus = 100;
     await updateDoc(doc(db, "users", inviterDocId), {
-      // Safe arrayUnion — no serverTimestamp() inside object
       hostFriends: arrayUnion({
         chatId,
         fullName,
@@ -1009,8 +1008,7 @@ if (inviterDocId) {
   }
 }
 
-
-// Success handling
+// === SUCCESS HANDLING ===
 try {
   // Always store user info
   messageEl.textContent = `Welcome ${fullName}!`;
@@ -1023,20 +1021,19 @@ try {
     submitBtn.classList.add('hidden');
     vipPayBtn.classList.remove('hidden');
     messageEl.textContent = "Your VIP slot is reserved 🔒";
-    // ← STOP HERE — wait for payment
+    // STOP HERE — wait for user to click payment
   } else {
     // Regular host/fan signup — redirect after delay
     setTimeout(() => window.location.href = "/chat.html", 1800);
   }
 } catch (err) {
-  console.error(err);
+  console.error("Success handling error:", err);
   const errorMsg = err.code === 'auth/email-already-in-use'
     ? 'This Email is already registered'
     : 'Signup failed — please try again';
   showPopup(errorMsg);
   submitBtn.classList.remove('loading');
 }
-
 // === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE - ₦19,999) ===
 vipPayBtn.onclick = () => {
   const email = emailInput.value.trim().toLowerCase();
