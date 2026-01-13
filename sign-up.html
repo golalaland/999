@@ -1098,7 +1098,6 @@ vipPayBtn.onclick = () => {
 
             await updateDoc(inviterRef, {
               stars: increment(250),
-              vipCount: increment(1),
               cash: increment(cashRewardAmount),          // ← CASH added here
               cashReward: increment(cashRewardAmount),    // ← Cumulative total
               lastUpdated: serverTimestamp()
