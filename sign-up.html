@@ -511,6 +511,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// At the top of your script (outside any function)
+const VIP_FEE_NGN = 19999;
+const HOST_CASH_AMOUNT = 8000; // fixed or dynamic
+const HIVE_BONUS_PERCENTAGE = 0.05; // 5%
+  
 function showPopup(message, duration = 3500) {
   const existing = document.getElementById('toastPopup');
   if (existing) existing.remove();
@@ -564,6 +570,7 @@ function showPopup(message, duration = 3500) {
 }
 
 document.getElementById('dob').max = new Date().toISOString().split('T')[0];
+
   
 // === CONFETTI SPRAY EFFECT ===
 function triggerSprayConfetti() {
@@ -1091,7 +1098,7 @@ await updateDoc(userRef, {
   hasPaid: true,
   vipActivatedAt: serverTimestamp(),
   vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
-  stars: increment(2500),
+  stars: increment(5000),
   lastUpdated: serverTimestamp()
 });
 
@@ -1106,8 +1113,7 @@ if (userData.hiveName) {
     const partnerId = partnerDoc.id;
 
     // Dynamic: 5% of current VIP fee (use the same fee as payment)
-    const hiveBonusAmount = Math.round(19999 * 0.05); // ₦999.95 — will auto-update if you change fee later
-
+    const hiveBonusAmount = Math.round(VIP_FEE_NGN * HIVE_BONUS_PERCENTAGE);
     await updateDoc(doc(db, "users", partnerId), {
       hiveBonus: increment(hiveBonusAmount),
       lastUpdated: serverTimestamp()
@@ -1119,7 +1125,7 @@ if (userData.hiveName) {
         recipientId: partnerId,
         type: "hive_vip_bonus",
         title: "VIP Onboarded in Your Hive!",
-        message: `A host in your hive (${userData.chatId || 'someone'}) paid ₦19,999 for VIP!\nYou earned ₦${hiveBonusAmount} hive bonus`,
+        message: `A host in your hive (${userData.chatId || 'someone'}) activated VIP!\nYou earned ₦${hiveBonusAmount} hive bonus`,
         vipUserId: userData.uid,
         read: false,
         createdAt: serverTimestamp()
@@ -1133,7 +1139,7 @@ if (userData.hiveName) {
 // Reward inviter/host (stars + CASH + vipCount)
 if (inviterId) {
   const inviterRef = doc(db, "users", inviterId);
-  const cashRewardAmount = 8000; // Or calculate dynamically if needed
+  const cashRewardAmount = Math.round(VIP_FEE_NGN * 0.40); // Or calculate dynamically if needed
 
   await updateDoc(inviterRef, {
     stars: increment(250),
@@ -1148,7 +1154,7 @@ if (inviterId) {
       recipientId: inviterId,
       type: "vip_cash_reward",
       title: "₦8,000 Cash Reward Earned!",
-      message: `@${userData.chatId || 'Someone'} just paid ₦19,999 to become VIP!\n+250 STRZ + ₦8,000 added to your cash`,
+      message: `@${userData.chatId || 'Someone'} just activated VIP!\n+250 STRZ + ₦8,000 added to your cash`,
       vipUserId: userData.uid,
       vipUserName: userData.chatId,
       read: false,
@@ -1165,7 +1171,7 @@ try {
     recipientId: userData.uid,
     type: "vip_bonus",
     title: "Welcome to Cube VIP! 🎉",
-    message: "You paid ₦19,999 and received 2,500 STRZ bonus!\nEnjoy your elite status",
+    message: "You activated VIP received 5,000 STRZ bonus!\nEnjoy your elite status",
     read: false,
     createdAt: serverTimestamp()
   });
