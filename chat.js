@@ -7030,6 +7030,58 @@ refs.buzzBtn.addEventListener("touchend", (e) => {
 // Initial resize
 resizeAndExpand();
 
+const paystackNigeriaBanks = [
+  "Access Bank",
+  "Access Bank (Diamond)",
+  "Abbey Mortgage Bank",
+  "Above Only MFB",
+  "ALAT by Wema",
+  "ASOSavings",
+  "Bowen Microfinance Bank",
+  "Carbon",
+  "Citibank Nigeria",
+  "Coronation Merchant Bank",
+  "Ecobank Nigeria",
+  "FairMoney Microfinance Bank",
+  "Fidelity Bank",
+  "First Bank of Nigeria",
+  "First City Monument Bank (FCMB)",
+  "Globus Bank",
+  "Guaranty Trust Bank (GTBank)",
+  "Heritage Bank",
+  "Jaiz Bank",
+  "Keystone Bank",
+  "Kuda Bank",
+  "Moniepoint MFB",
+  "Opay",
+  "PalmPay",
+  "Parallex Bank",
+  "Paycom (Opay)",
+  "Polaris Bank",
+  "PremiumTrust Bank",
+  "Providus Bank",
+  "Stanbic IBTC Bank",
+  "Standard Chartered Bank",
+  "Sterling Bank",
+  "Suntrust Bank",
+  "TAJ Bank",
+  "Titan Trust Bank",
+  "Union Bank of Nigeria",
+  "United Bank for Africa (UBA)",
+  "Unity Bank",
+  "VFD Microfinance Bank",
+  "Wema Bank",
+  "Zenith Bank"
+];
+
+const bankSelect = document.getElementById("bankName");
+
+paystackNigeriaBanks.forEach(bank => {
+  const option = document.createElement("option");
+  option.value = bank;
+  option.textContent = bank;
+  bankSelect.appendChild(option);
+});
 /*********************************
  * INIT
  *********************************/
