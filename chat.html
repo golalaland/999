@@ -4062,6 +4062,127 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </p>
 </div>
 
+
+
+  <!-- REVENUE & ACTIONS – CASH WITHDRAW ONLY (SMALL & CUTE) -->
+<div style="margin: 24px 0;">
+  <h4 style="
+    text-align: center;
+    margin-bottom: 16px;
+    font-weight: 700;
+    font-size: 18px;                  /* Smaller title */
+    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  ">
+   REVENUE DASHBOARD
+  </h4>
+
+  <!-- Tiny Cute Card -->
+  <div style="
+    background: #000000;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(195, 246, 12, 0.35);
+    border-radius: 16px;
+    padding: 18px 16px;               /* Reduced padding */
+    max-width: 340px;                 /* Narrower for mobile */
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5),
+                0 0 12px rgba(195, 246, 12, 0.1);
+  ">
+    <!-- Cash Balance – Smaller & Centered -->
+    <div style="font-size: 11px; color: #bbbbbb; margin-bottom: 4px; text-align:center;">
+      Cash Balance
+    </div>
+    <div style="
+      font-size: 20px;
+      font-weight: 800;
+      color: #c3f60c;
+      text-align: center;
+      margin: 6px 0 16px;
+    ">
+      ₦<span id="infoCashBalance">0</span>
+    </div>
+
+    <!-- Last Earnings – Tiny -->
+    <div style="
+      color: #aaaaaa;
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 20px;
+    ">
+      Last earnings: ₦<span id="infoLastEarnings">0</span>
+    </div>
+
+    <!-- WITHDRAW SECTION – Only this remains -->
+    <p style="
+      color: #cccccc;
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    ">
+      WITHDRAW CASH
+    </p>
+
+    <p style="
+      color: #aaaaaa;
+      margin: -8px 0 12px;
+      font-size: 11.5px;
+      text-align: center;
+    ">
+      Min: ₦5,000
+    </p>
+
+    <input
+      type="number"
+      id="withdrawAmount"
+      placeholder="Enter amount"
+      style="
+        width: 100%;
+        max-width: 260px;
+        padding: 11px;
+        border-radius: 12px;
+        background: #1a1a1a;
+        color: #fff;
+        border: 1px solid #444;
+        font-size: 15px;
+        text-align: center;
+        box-sizing: border-box;
+        margin: 0 auto 16px;
+        display: block;
+      "
+    />
+
+    <div style="
+      color: #c3f60c;
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      margin: 12px 0;
+    ">
+      → ₦<span id="withdrawPreview">0</span>
+    </div>
+
+    <button id="withdrawCashBtn" style="
+      width: 100%;
+      max-width: 260px;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+      color: #000;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      margin: 0 auto;
+      display: block;
+    ">
+      WITHDRAW
+    </button>
+  </div>
+
+
 <!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
 <div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
   <div style="text-align:center; margin-bottom:28px;">
