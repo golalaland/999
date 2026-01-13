@@ -929,7 +929,6 @@ if (inviterDocId) {
     // VIP signup: Only count — full rewards + timer on payment
     await updateDoc(doc(db, "users", inviterDocId), {
       referralCount: increment(1),
-      vipCount: increment(1),
       lastUpdated: serverTimestamp()
     }).catch(err => console.warn("Inviter VIP count update failed:", err));
 
