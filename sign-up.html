@@ -1025,9 +1025,9 @@ vipPayBtn.onclick = () => {
   messageEl.textContent = "Initiating payment...";
 
   const handler = PaystackPop.setup({
-    key: 'pk_live_b1f53de46eded7175f91c345548365902b4b6d67',
+    key: 'pk_test_9446fa6b81888ffce77cc94294530d761aac4ccd',
     email: email,
-    amount: 19999 * 100,           // ₦19,999 in kobo (required by Paystack)
+    amount: 19999 * 100,           // ₦19,999 in kobo
     currency: 'NGN',
     ref: 'VIP_' + Date.now(),
     metadata: { type: 'vip_activation' },
@@ -1043,11 +1043,7 @@ vipPayBtn.onclick = () => {
         return;
       }
 
-      console.log('Sending verification with:', {
-        reference: response.reference,
-        email,
-        emailType: typeof email
-      });
+      console.log('Sending verification with:', { reference: response.reference, email });
 
       try {
         const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
@@ -1069,7 +1065,7 @@ vipPayBtn.onclick = () => {
           return;
         }
 
-        // === Server confirmed payment → proceed with VIP logic ===
+        // === Server confirmed → do ALL rewards + notifications on frontend ===
         messageEl.textContent = "VIP Activated!! ✌︎㋡";
 
         const docId = sanitizeKey(email);
@@ -1086,37 +1082,43 @@ vipPayBtn.onclick = () => {
           const userData = userSnap.data();
           const inviterId = userData.invitedBy;
 
+          // Update current user (VIP)
           await updateDoc(userRef, {
             isVIP: true,
             hasPaid: true,
             vipActivatedAt: serverTimestamp(),
-            vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000), // +31 days
+            vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
             stars: increment(2500),
             lastUpdated: serverTimestamp()
           });
 
-          // Reward inviter (onboarder/host)
+          // Reward inviter/host (stars + CASH + vipCount)
           if (inviterId) {
-            await updateDoc(doc(db, "users", inviterId), {
+            const inviterRef = doc(db, "users", inviterId);
+            const cashRewardAmount = 8000; // Or calculate dynamically if needed
+
+            await updateDoc(inviterRef, {
               stars: increment(250),
               vipCount: increment(1),
+              cash: increment(cashRewardAmount),          // ← CASH added here
+              cashReward: increment(cashRewardAmount),    // ← Cumulative total
               lastUpdated: serverTimestamp()
             });
 
-            // Inviter notification
+            // Cash reward notification to host
             try {
               await addDoc(collection(db, "notifications"), {
                 recipientId: inviterId,
-                type: "vip_activated",
-                title: "A VIP Joined Through Your Link!",
-                message: `@${userData.chatId || 'Someone'} just paid ₦19,999 to become VIP!\nYou earned +250 STRZ`,
+                type: "vip_cash_reward",
+                title: "₦8,000 Cash Reward Earned!",
+                message: `@${userData.chatId || 'Someone'} just paid ₦19,999 to become VIP!\n+250 STRZ + ₦8,000 added to your cash`,
                 vipUserId: userData.uid,
                 vipUserName: userData.chatId,
                 read: false,
                 createdAt: serverTimestamp()
               });
             } catch (err) {
-              console.warn("Inviter notification failed:", err);
+              console.warn("Cash reward notification failed:", err);
             }
           }
 
@@ -1141,7 +1143,6 @@ vipPayBtn.onclick = () => {
 
         } catch (err) {
           console.error("VIP activation processing failed:", err);
-          // Payment succeeded → still redirect
           setTimeout(() => window.location.href = "/chat.html", 1800);
         }
 
@@ -1156,7 +1157,8 @@ vipPayBtn.onclick = () => {
       vipPayBtn.classList.remove('loading');
       messageEl.textContent = "Payment cancelled";
     }
-  }); 
+  });
+
   handler.openIframe();
 };
 });
