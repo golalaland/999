@@ -866,7 +866,7 @@ if (cleanRef) {
         country = data.country_name || 'Unknown';
       } catch (e) {}
 
-    // === CREATE NEW USER ===
+  // === CREATE NEW USER ===
 const userData = {
   uid: userCredential.user.uid,
   fullName,
@@ -891,17 +891,19 @@ const userData = {
   fruitPick: "",
   videoUrl: "",
   popupPhoto: "",
-  isVIP: !!isVIP,                              // true if they toggled VIP (payment pending)
-  hasPaid: false,                              // ← NEW: only true after successful payment
+  isVIP: !!isVIP, // true if they toggled VIP (payment pending)
+  hasPaid: false, // only true after successful payment
   isHost: gender === 'Female' && !isVIP,
   isTrending: false,
   isAdmin: false,
   featuredHosts: false,
   invitedBy: inviterDocId,
   referral: rawRef || null,
-  hiveName,
-  hostLink: (!isVIP && gender === 'Female') 
-    ? `https://cube.xixi.com/signup?ref=${chatId}` 
+  hiveName: "", // ← default empty — only admin sets it manually
+  phoneVerified: false,       // ← NEW
+  emailVerified: false,       // ← NEW
+  hostLink: (!isVIP && gender === 'Female')
+    ? `https://cube.xixi.com/signup?ref=${chatId}`
     : null,
   vipName: isVIP ? chatId : null,
   socialShare: gender === 'Female' && !isVIP,
@@ -915,21 +917,33 @@ const userData = {
   views: 0,
   inviteeGiftStars: 0,
   inviteeGiftShown: false,
-  hostFriends: [],                             // ← Starts empty — populated below
+  hostFriends: [], // ← Starts empty — populated below
   usernameColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
   createdAt: serverTimestamp(),
   lastUpdated: serverTimestamp()
 };
+
+// === NEW: Inherit hiveName from inviter (if they have one) ===
+if (inviterDocId) {
+  const inviterRef = doc(db, "users", inviterDocId);
+  const inviterSnap = await getDoc(inviterRef);
+  if (inviterSnap.exists()) {
+    const inviterData = inviterSnap.data();
+    if (inviterData.hiveName && inviterData.isHost) { // only inherit if inviter is a host
+      userData.hiveName = inviterData.hiveName; // ← carry over!
+    }
+  }
+}
 
 await setDoc(userRef, userData);
 
 // === UPDATE INVITER ON SIGNUP (SAFE ARRAY + TIMER FIELDS READY) ===
 if (inviterDocId) {
   if (isVIP) {
-    // VIP signup: Only count — full rewards + timer on payment
+    // VIP signup: Only count — full rewards on payment
     await updateDoc(doc(db, "users", inviterDocId), {
       referralCount: increment(1),
-      vipCount: increment (1),
+      vipCount: increment(1),
       lastUpdated: serverTimestamp()
     }).catch(err => console.warn("Inviter VIP count update failed:", err));
 
@@ -948,13 +962,10 @@ if (inviterDocId) {
     } catch (notifErr) {
       console.warn("VIP pending notification failed:", notifErr);
     }
-
   } else {
     // Non-VIP (Host/Fan): Immediate reward + add to hostFriends array
     const hostInviteBonus = 100;
-
     await updateDoc(doc(db, "users", inviterDocId), {
-      // Safe arrayUnion — no serverTimestamp() inside object
       hostFriends: arrayUnion({
         chatId,
         fullName,
@@ -962,7 +973,7 @@ if (inviterDocId) {
         phone,
         isVIP: false,
         isHost: gender === 'Female',
-        joinedAt: Date.now()  // client timestamp — safe & works
+        joinedAt: Date.now() // client timestamp
       }),
       stars: increment(hostInviteBonus),
       referralCount: increment(1),
@@ -971,7 +982,7 @@ if (inviterDocId) {
       lastUpdated: serverTimestamp()
     }).catch(err => console.warn("Inviter host bonus failed:", err));
 
-    // Visible notification (like ripple)
+    // Visible notification
     try {
       await addDoc(collection(db, "notifications"), {
         recipientId: inviterDocId,
@@ -988,19 +999,19 @@ if (inviterDocId) {
     }
   }
 }
-      // Success
-      messageEl.textContent = `Welcome ${fullName}!`;
-      localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
 
-      if (isVIP) {
-        triggerSprayConfetti();
-        submitBtn.classList.remove('loading');
-        submitBtn.classList.add('hidden');
-        vipPayBtn.classList.remove('hidden');
-        messageEl.textContent = "Your VIP slot is reserved 🔒";
-      } else {
-        setTimeout(() => window.location.href = "/chat.html", 1800);
-      }
+// Success
+messageEl.textContent = `Welcome ${fullName}!`;
+localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
+if (isVIP) {
+  triggerSprayConfetti();
+  submitBtn.classList.remove('loading');
+  submitBtn.classList.add('hidden');
+  vipPayBtn.classList.remove('hidden');
+  messageEl.textContent = "Your VIP slot is reserved 🔒";
+} else {
+  setTimeout(() => window.location.href = "/chat.html", 1800);
+}
 
     } catch (err) {
       console.error(err);
