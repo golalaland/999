@@ -1083,12 +1083,17 @@ body {
 <!-- FOOTER -->
 <footer class="cube-footer">
   <div class="footer-container">
-    <div class="footer-brand">
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962" 
-           alt="CUBE" class="footer-logo-img">
-      <p class="footer-tagline">UNLOCK YOUR EDGE</p>
-      <p class="footer-subtitle">Premium Experiences • Real Rewards • Exclusive Connections</p>
-    </div>
+
+    <!-- WRAPPER FOR ALL COLUMNS -->
+    <div class="footer-columns">
+
+      <!-- BRAND -->
+      <div class="footer-brand">
+        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962" 
+             alt="CUBE" class="footer-logo-img">
+        <p class="footer-tagline">UNLOCK YOUR EDGE</p>
+        <p class="footer-subtitle">Premium Experiences • Real Rewards • Exclusive Connections</p>
+      </div>
 
       <!-- EXPLORE -->
       <div class="footer-col">
@@ -1097,95 +1102,100 @@ body {
         <a href="#tapmaster">Games</a>
         <a href="#cuties">Liveshows</a>
         <a href="#siphouse">SipHouse</a>
-          <a href="#lounge">Quests</a>
+        <a href="#lounge">Quests</a>
       </div>
 
-    <!-- COMMUNITY -->
-<div class="footer-col">
-  <h4>Community</h4>
-  <a href="#rewards" id="openEarningsCalc">Earnings Calculator</a>
-  <a href="#events">Visit CUBE</a>
-  <a href="/terms">Terms & Privacy</a>
-</div>
-
-      <!-- EARNINGS CALCULATOR POP-UP -->
-<div id="earningsCalcModal1" class="earnings-modal">
-  <div class="earnings-content">
-    <span class="earnings-close">&times;</span>
-    <h2>Membership</h2>
-
-    <div class="calc-grid">
-      <div class="calc-item">
-        <label>VIP Invites (max 10)</label>
-        <input type="range" id="vipCount" min="1" max="10" value="3">
-        <span id="vipDisplay">5 VIPs</span>
+      <!-- COMMUNITY -->
+      <div class="footer-col">
+        <h4>Community</h4>
+        <a href="#rewards" id="openEarningsCalc">Earnings Calculator</a>
+        <a href="#events">Visit CUBE</a>
+        <a href="/terms">Terms & Privacy</a>
       </div>
 
-      <div class="calc-item">
-        <label>Onboarded Hosts (Your Friends) </label>
-        <input type="number" id="hostCount" min="0" value="100" placeholder="e.g. 100">
+      <!-- SOCIAL -->
+      <div class="footer-col social-col">
+        <h4>Get Notified!</h4>
+        <div class="social-icons">
+          <a href="https://t.me/visitcube" aria-label="Telegram"
+             style="
+               width: 56px;
+               height: 56px;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               border-radius: 50%;
+               border: 1px solid rgba(195,246,12,0.7);
+               background: rgba(10,20,0,0.85);
+               box-shadow: 0 0 14px rgba(195,246,12,0.35);
+               transition: transform 0.3s ease, box-shadow 0.3s ease;
+             ">
+            <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/telegram.png?v=1766429753"
+                 alt="Telegram"
+                 style="
+                   width: 36%;
+                   height: 36%;
+                   object-fit: contain;
+                   border-radius: 0;
+                 ">
+          </a>
+        </div>
+      </div>
+
+    </div> <!-- /.footer-columns -->
+
+    <!-- EARNINGS CALCULATOR POP-UP -->
+    <div id="earningsCalcModal1" class="earnings-modal">
+      <div class="earnings-content">
+        <span class="earnings-close">&times;</span>
+        <h2>Membership</h2>
+
+        <div class="calc-grid">
+          <div class="calc-item">
+            <label>VIP Invites (max 10)</label>
+            <input type="range" id="vipCount" min="1" max="10" value="3">
+            <span id="vipDisplay">5 VIPs</span>
+          </div>
+
+          <div class="calc-item">
+            <label>Onboarded Hosts (Your Friends) </label>
+            <input type="number" id="hostCount" min="0" value="100" placeholder="e.g. 100">
+          </div>
+        </div>
+
+        <div class="earnings-results">
+          <div class="result-row">
+            <span>From your VIPs</span>
+            <strong id="vipEarnings">₦60,000</strong>
+          </div>
+          <div class="result-row">
+            <span>From your Hosts</span>
+            <strong id="hostEarnings">₦150,000</strong>
+          </div>
+          <div class="result-row total">
+            <span>Total Monthly</span>
+            <strong id="totalEarnings">₦210,000</strong>
+          </div>
+        </div>
+
+        <p class="disclaimer">
+          * Earnings are based on average calculations, earnings may be more.<br>
+          cuties can earn up ₦500k+ monthly— The sky is the limit!
+        </p>
       </div>
     </div>
 
-    <div class="earnings-results">
-      <div class="result-row">
-        <span>From your VIPs</span>
-        <strong id="vipEarnings">₦60,000</strong>
-      </div>
-      <div class="result-row">
-        <span>From your Hosts</span>
-        <strong id="hostEarnings">₦150,000</strong>
-      </div>
-      <div class="result-row total">
-        <span>Total Monthly</span>
-        <strong id="totalEarnings">₦210,000</strong>
-      </div>
+    <!-- FOOTER BOTTOM -->
+    <div class="footer-bottom">
+      <div class="scanline"></div>
+      <p>
+        © 2026 CUBE • XIXI.LIVE • UYE™<br>
+        Africa, Nigeria | Curated membership experiences
+      </p>
     </div>
 
-    <p class="disclaimer">
-      * Earnings are based on average calculations, earnings may be more.<br>
-       cuties can earn up ₦500k+ monthly— The sky is the limit!
-    </p>
-  </div>
-</div>
-<!-- JOIN THE VIBE — TELEGRAM ICON (MAX ZOOMED-OUT, MICRO CIRCLE) -->
-<div class="footer-col social-col">
-  <h4>Get Notified!</h4>
-
-  <div class="social-icons">
-    <a href="https://t.me/visitcube" aria-label="Telegram"
-       style="
-         width: 56px;                 /* 🔽 VERY small circle */
-         height: 56px;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         border-radius: 50%;
-         border: 1px solid rgba(195,246,12,0.7); /* thinner border */
-         background: rgba(10,20,0,0.85);
-         box-shadow: 0 0 14px rgba(195,246,12,0.35); /* subtle, classy glow */
-         transition: transform 0.3s ease, box-shadow 0.3s ease;
-       ">
-
-      <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/telegram.png?v=1766429753"
-           alt="Telegram"
-           style="
-             width: 36%;              /* 🔽 MAX zoomed-out logo */
-             height: 36%;
-             object-fit: contain;
-             border-radius: 0;
-           ">
-    </a>
-  </div>
-</div>
-
-<div class="footer-bottom">
-  <div class="scanline"></div>
-  <p>
-    © 2026 CUBE • XIXI.LIVE • UYE™<br>
-    Africa, Nigeria | Curated membership experiences
-  </p>
-</div>
+  </div> <!-- /.footer-container -->
+</footer>
 
 
 <style>
