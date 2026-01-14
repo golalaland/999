@@ -5224,60 +5224,94 @@ window.startStream = startStream;
         }
       });
 
-      // --- save info button (safe)
-      const maybeSaveInfo = document.getElementById("saveInfo");
-      if (maybeSaveInfo) {
-        maybeSaveInfo.addEventListener("click", async () => {
-          if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
-          const getVal = id => document.getElementById(id)?.value ?? "";
+    // --- save info button (safe)
+const maybeSaveInfo = document.getElementById("saveInfo");
+if (maybeSaveInfo) {
+  maybeSaveInfo.addEventListener("click", async () => {
+    if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
 
-          const dataToUpdate = {
-            fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
-            city: getVal("city"),
-            location: getVal("location"),
-            bioPick: getVal("bio"),
-            bankAccountNumber: getVal("bankAccountNumber"),
-            bankName: getVal("bankName"),
-            telegram: getVal("telegram"),
-            tiktok: getVal("tiktok"),
-            whatsapp: getVal("whatsapp"),
-            instagram: getVal("instagram"),
-            naturePick: getVal("naturePick"),
-            fruitPick: getVal("fruitPick"),
-          };
+    const getVal = id => document.getElementById(id)?.value ?? "";
 
-          if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber))
-            return showStarPopup("⚠️ Bank account number must be digits only (max 11).");
-          if (dataToUpdate.whatsapp && dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp))
-            return showStarPopup("⚠️ WhatsApp number must be numbers only.");
+    // Collect all form values
+    let dataToUpdate = {
+      fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
+      city: getVal("city"),
+      location: getVal("location"),
+      bioPick: getVal("bio"),
+      bankAccountNumber: getVal("bankAccountNumber"),
+      bankName: getVal("bankName"),                    // ← comes from your <select id="bankName">
+      telegram: getVal("telegram"),
+      tiktok: getVal("tiktok"),
+      whatsapp: getVal("whatsapp"),
+      instagram: getVal("instagram"),
+      naturePick: getVal("naturePick"),
+      fruitPick: getVal("fruitPick"),
+    };
 
-          const originalHTML = maybeSaveInfo.innerHTML;
-          maybeSaveInfo.innerHTML = `<div class="spinner" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation: spin 0.6s linear infinite;margin:auto;"></div>`;
-          maybeSaveInfo.disabled = true;
+    // ───────────────────────────────────────────────────────────────
+    // ADD BANK NORMALIZATION + SLUG GENERATION HERE
+    if (dataToUpdate.bankName) {
+      const selectedBankName = dataToUpdate.bankName.trim();
 
-          try {
-            const userRef = doc(db, "users", currentUser.uid);
-            const filteredData = Object.fromEntries(Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined));
-            await updateDoc(userRef, { ...filteredData, lastUpdated: serverTimestamp() });
-            // mirror to featuredHosts if exists
-            const hostRef = doc(db, "featuredHosts", currentUser.uid);
-            const hostSnap = await getDoc(hostRef);
-            if (hostSnap.exists()) await updateDoc(hostRef, { ...filteredData, lastUpdated: serverTimestamp() });
+      // Clean and normalize the name (just in case user typed manually — though unlikely with <select>)
+      const normalizedBankName = selectedBankName
+        .replace(/\s+/g, ' ')           // normalize multiple spaces
+        .trim();
 
-            showStarPopup("✅ Profile updated successfully!");
-            // blur inputs for UX
-            document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
-          } catch (err) {
-            console.error("[host-init] saveInfo error:", err);
-            showStarPopup("⚠️ Failed to update info. Please try again.");
-          } finally {
-            maybeSaveInfo.innerHTML = originalHTML;
-            maybeSaveInfo.disabled = false;
-          }
-        });
-      } else {
-        console.warn("[host-init] saveInfo button not found.");
+      // Generate slug (Paystack-compatible format)
+      const bankSlug = normalizedBankName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')   // remove special chars except letters, numbers, space, hyphen
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      // Update the data object with both versions
+      dataToUpdate.bankName = normalizedBankName;   // "Guaranty Trust Bank (GTBank)"
+      dataToUpdate.bankSlug = bankSlug;             // "guaranty-trust-bank-gtbank"
+    }
+    // ───────────────────────────────────────────────────────────────
+
+    // Validation (existing)
+    if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber))
+      return showStarPopup("⚠️ Bank account number must be digits only (max 11).");
+
+    if (dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp))
+      return showStarPopup("⚠️ WhatsApp number must be numbers only.");
+
+    const originalHTML = maybeSaveInfo.innerHTML;
+    maybeSaveInfo.innerHTML = `<div class="spinner" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation: spin 0.6s linear infinite;margin:auto;"></div>`;
+    maybeSaveInfo.disabled = true;
+
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      const filteredData = Object.fromEntries(
+        Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined && v !== "")
+      );
+
+      await updateDoc(userRef, { ...filteredData, lastUpdated: serverTimestamp() });
+
+      // mirror to featuredHosts if exists
+      const hostRef = doc(db, "featuredHosts", currentUser.uid);
+      const hostSnap = await getDoc(hostRef);
+      if (hostSnap.exists()) {
+        await updateDoc(hostRef, { ...filteredData, lastUpdated: serverTimestamp() });
       }
+
+      showStarPopup("✅ Profile updated successfully!");
+
+      // blur inputs for UX
+      document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
+    } catch (err) {
+      console.error("[host-init] saveInfo error:", err);
+      showStarPopup("⚠️ Failed to update info. Please try again.");
+    } finally {
+      maybeSaveInfo.innerHTML = originalHTML;
+      maybeSaveInfo.disabled = false;
+    }
+  });
+} else {
+  console.warn("[host-init] saveInfo button not found.");
+}
 
       // --- save media button (optional)
       const maybeSaveMedia = document.getElementById("saveMedia");
