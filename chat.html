@@ -4063,65 +4063,81 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
-   <!-- REVENUE & ACTIONS – CASH WITHDRAW ONLY (SMALL & CUTE) -->
+<!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
   <h4 style="
     text-align: center;
     margin-bottom: 16px;
     font-weight: 700;
-    font-size: 18px;                  /* Smaller title */
+    font-size: 18px;
     background: linear-gradient(90deg, #c3f60c, #e8ff6a);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   ">
-   REVENUE DASHBOARD
+    REVENUE DASHBOARD
   </h4>
 
-  <!-- Tiny Cute Card -->
+  <!-- One Unified Cute Card -->
   <div style="
     background: #000000;
     backdrop-filter: blur(12px);
     border: 1px solid rgba(195, 246, 12, 0.35);
-    border-radius: 16px;
-    padding: 18px 16px;               /* Reduced padding */
-    max-width: 340px;                 /* Narrower for mobile */
+    border-radius: 20px;
+    padding: 20px 16px;
+    max-width: 340px;
     margin: 0 auto;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5),
-                0 0 12px rgba(195, 246, 12, 0.1);
+                0 0 12px rgba(195, 246, 12, 0.12);
   ">
-    <!-- Cash Balance – Smaller & Centered -->
-    <div style="font-size: 11px; color: #bbbbbb; margin-bottom: 4px; text-align:center;">
-    CASH BALANCE
+    <!-- Cash Balance (top, prominent) -->
+    <div style="
+      font-size: 11px;
+      color: #bbbbbb;
+      margin-bottom: 4px;
+      text-align: center;
+    ">
+      CASH BALANCE
     </div>
     <div style="
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 22px;
+      font-weight: 900;
       color: #c3f60c;
       text-align: center;
-      margin: 6px 0 16px;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
     ">
       ₦<span id="infoCashBalance">0</span>
     </div>
 
+    <!-- Last Earnings (tiny hint) -->
+    <div style="
+      color: #aaaaaa;
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 24px;
+    ">
+      Last earnings: ₦<span id="infoLastEarnings">0</span>
+    </div>
 
-    <!-- WITHDRAW SECTION – Only this remains -->
+    <!-- Withdraw Section (flows naturally below balance) -->
     <p style="
       color: #cccccc;
       margin: 0 0 12px;
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 600;
       text-align: center;
     ">
-      WITHDRAW CASH TO BANK ACCOUNT
+      WITHDRAW CASH TO BANK
     </p>
 
     <p style="
       color: #aaaaaa;
-      margin: -8px 0 12px;
+      margin: -6px 0 16px;
       font-size: 11.5px;
       text-align: center;
+      line-height: 1.4;
     ">
-Fill in bank details in profile before requesting cash withdrawal
+      Fill bank details in profile before withdrawal request<br>Minimum: ₦5,000
     </p>
 
     <input
@@ -4149,7 +4165,7 @@ Fill in bank details in profile before requesting cash withdrawal
       font-size: 18px;
       font-weight: 800;
       text-align: center;
-      margin: 12px 0;
+      margin: 12px 0 20px;
     ">
       → ₦<span id="withdrawPreview">0</span>
     </div>
@@ -4167,10 +4183,12 @@ Fill in bank details in profile before requesting cash withdrawal
       cursor: pointer;
       margin: 0 auto;
       display: block;
+      box-shadow: 0 4px 12px rgba(195,246,12,0.25);
     ">
-      WITHDRAW
+      WITHDRAW NOW
     </button>
   </div>
+</div>
   
 
    <!-- 🎉 INVITE FRIENDS SECTION -->
