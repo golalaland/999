@@ -1026,7 +1026,7 @@ if (isVIP) {
 // === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE - ₦19,999) ===
 vipPayBtn.onclick = () => {
   const email = emailInput.value.trim().toLowerCase();
-  
+
   if (!email || !/@/.test(email)) {
     showPopup('Enter a valid email before paying');
     return;
@@ -1038,14 +1038,14 @@ vipPayBtn.onclick = () => {
   const handler = PaystackPop.setup({
     key: 'pk_test_9446fa6b81888ffce77cc94294530d761aac4ccd',
     email: email,
-    amount: 19999 * 100,           // ₦19,999 in kobo
+    amount: 19999 * 100,
     currency: 'NGN',
     ref: 'VIP_' + Date.now(),
     metadata: { type: 'vip_activation' },
-    
+
     callback: async function(response) {
       vipPayBtn.classList.remove('loading');
-      
+
       console.log('Paystack callback received:', response);
 
       if (response.status !== 'success' || !response.reference) {
@@ -1066,9 +1066,8 @@ vipPayBtn.onclick = () => {
           })
         });
 
-        console.log('Server status code:', verifyRes.status);
         const verifyData = await verifyRes.json();
-        console.log('Server full response:', verifyData);
+        console.log('Server response:', verifyData);
 
         if (!verifyData.success) {
           showPopup('Payment verification failed: ' + (verifyData.message || 'Unknown error'));
@@ -1076,90 +1075,40 @@ vipPayBtn.onclick = () => {
           return;
         }
 
-        // === Server confirmed → do ALL rewards + notifications on frontend ===
-        messageEl.textContent = "VIP Activated!! ✌︎㋡";
+        // Retrieve fullName from localStorage
+        const fullName = localStorage.getItem("fullName") || 'N/A';
 
+        // === Fetch user data for location (safe fallback) ===
         const docId = sanitizeKey(email);
         const userRef = doc(db, "users", docId);
+        const userSnap = await getDoc(userRef);
+        const userCountry = userSnap.exists() ? (userSnap.data().country || 'N/A') : 'N/A';
 
-        try {
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            console.error("User not found after payment");
-            setTimeout(() => window.location.href = "/chat.html", 1800);
-            return;
-          }
+        // === Payment successful → redirect to WhatsApp ===
+        messageEl.textContent = "Application Received! Redirecting to WhatsApp...";
 
-          const userData = userSnap.data();
-          const inviterId = userData.invitedBy;
+        const whatsappNumber = "234xxxxxxxxxx"; // ← YOUR REAL NUMBER (international format, no +)
+        const message = encodeURIComponent(
+          `Hello Cube Team,\n\n` +
+          `I’ve completed payment for Cube membership and would like to confirm my application.\n\n` +
+          `Name: ${fullName}\n` +
+          `Email: ${email}\n` +
+          `Location: ${userCountry}\n` +
+          `Transaction Reference: ${response.reference}\n\n` +
+          `Please let me know the next steps and upcoming events or hangouts in my area.\n\n` +
+          `Thank you!`
+        );
 
-          // Update current user (VIP)
-          await updateDoc(userRef, {
-            isVIP: true,
-            hasPaid: true,
-            vipActivatedAt: serverTimestamp(),
-            vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
-            stars: increment(2500),
-            lastUpdated: serverTimestamp()
-          });
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
 
-          // Reward inviter/host (stars + CASH + vipCount)
-          if (inviterId) {
-            const inviterRef = doc(db, "users", inviterId);
-            const cashRewardAmount = 8000; // Or calculate dynamically if needed
+        setTimeout(() => {
+          window.location.href = whatsappUrl;
+        }, 1500);
 
-            await updateDoc(inviterRef, {
-              stars: increment(250),
-              cash: increment(cashRewardAmount),          // ← CASH added here
-              cashReward: increment(cashRewardAmount),    // ← Cumulative total
-              lastUpdated: serverTimestamp()
-            });
-
-            // Cash reward notification to host
-            try {
-              await addDoc(collection(db, "notifications"), {
-                recipientId: inviterId,
-                type: "vip_cash_reward",
-                title: "₦8,000 Cash Reward Earned!",
-                message: `@${userData.chatId || 'Someone'} just paid ₦19,999 to become VIP!\n+250 STRZ + ₦8,000 added to your cash`,
-                vipUserId: userData.uid,
-                vipUserName: userData.chatId,
-                read: false,
-                createdAt: serverTimestamp()
-              });
-            } catch (err) {
-              console.warn("Cash reward notification failed:", err);
-            }
-          }
-
-          // Welcome notification for new VIP
-          try {
-            await addDoc(collection(db, "notifications"), {
-              recipientId: userData.uid,
-              type: "vip_bonus",
-              title: "Welcome to Cube VIP! 🎉",
-              message: "You paid ₦19,999 and received 2,500 STRZ bonus!\nEnjoy your elite status",
-              read: false,
-              createdAt: serverTimestamp()
-            });
-          } catch (err) {
-            console.warn("VIP welcome notification failed:", err);
-          }
-
-          // Success redirect
-          setTimeout(() => {
-            window.location.href = "/chat.html";
-          }, 1800);
-
-        } catch (err) {
-          console.error("VIP activation processing failed:", err);
-          setTimeout(() => window.location.href = "/chat.html", 1800);
-        }
-
-      } catch (fetchError) {
-        console.error("Failed to contact verification server:", fetchError);
-        showPopup("Could not verify payment. Please contact support.");
-        messageEl.textContent = "";
+      } catch (error) {
+        console.error("Payment processing error:", error);
+        showPopup("Something went wrong after payment. Please contact support.");
+        messageEl.textContent = "Error occurred";
       }
     },
 
