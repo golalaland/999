@@ -5534,66 +5534,57 @@ function showHighlightsModal(videos) {
     overflowY: "auto", padding: "20px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-
-// === STICKY INTRO ===
-const intro = document.createElement("div");
-intro.innerHTML = `
-  <div style="
-    text-align:center;
-    color:#e0b0ff;
-    max-width:640px;
-    margin:0 auto;
-    line-height:1.6;
-    font-size:14px;
-    background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
-    padding:14px 32px;
-    border:1px solid rgba(138,43,226,0.5);
-    box-shadow:0 0 16px rgba(255,0,242,0.25);
-    border-radius:12px;
-    position:relative;
-  ">
-
-    <!-- Header -->
-    <div style="margin-bottom:6px;">
-      <span style="
-        background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
-        -webkit-background-clip:text;
-        -webkit-text-fill-color:transparent;
-        font-weight:700;
-        display:inline-block;
-        transform:translateX(2px);
-        letter-spacing:0.2px;
-      ">
-        Cuties💕
-      </span>
+  // === STICKY INTRO ===
+  const intro = document.createElement("div");
+  intro.innerHTML = `
+    <div style="
+      text-align:center;
+      color:#e0b0ff;
+      max-width:640px;
+      margin:0 auto;
+      line-height:1.6;
+      font-size:14px;
+      background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
+      padding:14px 32px;
+      border:1px solid rgba(138,43,226,0.5);
+      box-shadow:0 0 16px rgba(255,0,242,0.25);
+      border-radius:12px;
+      position:relative;
+    ">
+      <!-- Header -->
+      <div style="margin-bottom:6px;">
+        <span style="
+          background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
+          -webkit-background-clip:text;
+          -webkit-text-fill-color:transparent;
+          font-weight:700;
+          display:inline-block;
+          transform:translateX(2px);
+          letter-spacing:0.2px;
+        ">
+          Cuties💕
+        </span>
+      </div>
+      <!-- Body text -->
+      <p style="margin:0 0 3px;">
+        Cam-worthy moments from girls on cube.
+      </p>
+      <p style="margin:0;">
+        Unlock a cutie’s clip with STRZ and get closer.
+      </p>
     </div>
-
-
-    <!-- Body text -->
-    <p style="margin:0 0 3px;">
-      Cam-worthy moments from girls on cube.
-    </p>
-    <p style="margin:0;">
-      Unlock a cutie’s clip with STRZ and get closer.
-    </p>
-
-  </div>
-`;
-
-Object.assign(intro.style, {
-  position: "sticky",
-  top: "10px",
-  zIndex: "1001",
-  marginBottom: "12px"
-});
-
-modal.appendChild(intro);
-
-modal.addEventListener("scroll", () => {
-  intro.style.opacity = modal.scrollTop > 50 ? "0.7" : "1";
-});
-
-   // === CLOSE BUTTON (YOUR DOPE X – MORPHINE EDITION) ===
+  `;
+  Object.assign(intro.style, {
+    position: "sticky",
+    top: "10px",
+    zIndex: "1001",
+    marginBottom: "12px"
+  });
+  modal.appendChild(intro);
+  modal.addEventListener("scroll", () => {
+    intro.style.opacity = modal.scrollTop > 50 ? "0.7" : "1";
+  });
+  // === CLOSE BUTTON (YOUR DOPE X – MORPHINE EDITION) ===
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5605,48 +5596,40 @@ modal.addEventListener("scroll", () => {
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.15)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
-closeBtn.onclick = (e) => {
-  e.stopPropagation();
-  e.preventDefault();
-
-  // Your iconic spin animation — untouched and perfect
-  closeBtn.style.transform = "rotate(180deg) scale(1.3)";
-
-  function closeFullScreenVideoModal() {
-  if (!fullScreenVideoModal) return;
-
-  currentFullVideo.pause();
-  currentFullVideo.src = ""; // Clear source
-  fullScreenVideoModal.style.display = "none";
-
-  // Optional: Exit fullscreen if active
-  if (document.fullscreenElement) {
-    document.exitFullscreen?.();
-  }
-}
-
-  // === FIX: Close any open full-screen video ===
-  closeFullScreenVideoModal();
-
-  // Optional: Add blocker for mobile tap-through safety
-  const clickBlocker = document.createElement("div");
-  clickBlocker.id = "temporary-click-blocker";
-  Object.assign(clickBlocker.style, {
-    position: "fixed", top: "0", left: "0",
-    width: "100vw", height: "100vh",
-    background: "transparent", zIndex: "999999", pointerEvents: "auto"
-  });
-  clickBlocker.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
-  document.body.appendChild(clickBlocker);
-
-  setTimeout(() => {
-    modal.remove();
-    clickBlocker.remove();
-  }, 300);
-};
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    // Your iconic spin animation — untouched and perfect
+    closeBtn.style.transform = "rotate(180deg) scale(1.3)";
+    function closeFullScreenVideoModal() {
+      if (!fullScreenVideoModal) return;
+      currentFullVideo.pause();
+      currentFullVideo.src = ""; // Clear source
+      fullScreenVideoModal.style.display = "none";
+      // Optional: Exit fullscreen if active
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+      }
+    }
+    // === FIX: Close any open full-screen video ===
+    closeFullScreenVideoModal();
+    // Optional: Add blocker for mobile tap-through safety
+    const clickBlocker = document.createElement("div");
+    clickBlocker.id = "temporary-click-blocker";
+    Object.assign(clickBlocker.style, {
+      position: "fixed", top: "0", left: "0",
+      width: "100vw", height: "100vh",
+      background: "transparent", zIndex: "999999", pointerEvents: "auto"
+    });
+    clickBlocker.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+    document.body.appendChild(clickBlocker);
+    setTimeout(() => {
+      modal.remove();
+      clickBlocker.remove();
+    }, 300);
+  };
   intro.firstElementChild.appendChild(closeBtn);
-
-   // === SEARCH + FILTER BUTTONS ===
+  // === SEARCH + FILTER BUTTONS ===
   const searchWrap = document.createElement("div");
   Object.assign(searchWrap.style, {
     position: "sticky", top: "84px", zIndex: "1001", marginBottom: "20px",
@@ -5667,11 +5650,10 @@ closeBtn.onclick = (e) => {
         <stop stop-color="#00ffea"/><stop offset="1" stop-color="#ff00f2"/>
       </linearGradient></defs>
     </svg>
-    <input id="highlightSearchInput" type="text" placeholder="Search by ChatID..."
+    <input id="highlightSearchInput" type="text" placeholder="Search by ChatID or #tag..."
            style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:13px;"/>
   `;
   searchWrap.appendChild(searchInputWrap);
-
   const buttonRow = document.createElement("div");
   buttonRow.style.cssText = "display:flex;gap:8px;align-items:center;";
   const toggleBtn = document.createElement("button");
@@ -5694,293 +5676,295 @@ closeBtn.onclick = (e) => {
   buttonRow.append(toggleBtn, trendingBtn);
   searchWrap.appendChild(buttonRow);
   modal.appendChild(searchWrap);
-  
-// === CONTENT AREA ===
-const content = document.createElement("div");
-Object.assign(content.style, {
-  display: "flex", gap: "16px", flexWrap: "nowrap", overflowX: "auto",
-  paddingBottom: "40px", scrollBehavior: "smooth", width: "100%", justifyContent: "flex-start"
-});
-modal.appendChild(content);
 
-// State
-let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-let filterMode = "all";
-function renderCards(videosToRender) {
-  content.innerHTML = "";
-
-  const filtered = videosToRender.filter(video => {
-    if (filterMode === "unlocked") return unlockedVideos.includes(video.id);
-    if (filterMode === "trending") return video.isTrending === true;
-    return true;
-  });
-
-  // Always horizontal scroll
+  // === CONTENT AREA ===
+  const content = document.createElement("div");
   Object.assign(content.style, {
     display: "flex", gap: "16px", flexWrap: "nowrap", overflowX: "auto",
     paddingBottom: "40px", scrollBehavior: "smooth", width: "100%", justifyContent: "flex-start"
   });
-
-  // Empty state for trending
-  if (filterMode === "trending" && filtered.length === 0) {
-    const emptyMsg = document.createElement("div");
-    emptyMsg.textContent = "No one is trending right now.";
-    emptyMsg.style.cssText = "width:100%; text-align:center; padding:60px 20px; color:#888; font-size:16px; font-weight:600; opacity:0.8;";
-    content.appendChild(emptyMsg);
-    return;
-  }
-
-  // Collect all unique tags for filter chips
-  const allTags = new Set();
-  filtered.forEach(video => {
-    (video.tags || []).forEach(tag => allTags.add(tag.trim().toLowerCase()));
-  });
-
-  filtered.forEach((video) => {
-    const isUnlocked = unlockedVideos.includes(video.id);
-
-    const card = document.createElement("div");
-    card.className = "videoCard";
-    card.setAttribute("data-uploader", (video.uploaderName || "Anonymous").toLowerCase());
-    card.setAttribute("data-title", (video.title || "").toLowerCase());
-    card.setAttribute("data-location", (video.location || "").toLowerCase());
-    card.setAttribute("data-tags", (video.tags || []).join(" ").toLowerCase());
-
-    Object.assign(card.style, {
-      minWidth: "230px", maxWidth: "230px", background: "#0f0a1a", borderRadius: "12px",
-      overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer",
-      flexShrink: 0, boxShadow: "0 4px 20px rgba(138,43,226,0.4)",
-      transition: "transform 0.3s ease, box-shadow 0.3s ease",
-      border: "1px solid rgba(138,43,226,0.5)"
+  modal.appendChild(content);
+  // State
+  let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+  let filterMode = "all";
+  function renderCards(videosToRender) {
+    content.innerHTML = "";
+    // Collect all unique tags from all videos (before filtering)
+    const allTags = new Set();
+    videosToRender.forEach(video => {
+      (video.tags || []).forEach(tag => allTags.add(tag.trim().toLowerCase()));
     });
-
-    card.onmouseenter = () => {
-      card.style.transform = "scale(1.03)";
-      card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.6)";
-    };
-    card.onmouseleave = () => {
-      card.style.transform = "scale(1)";
-      card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.4)";
-    };
-
-    // Video container — your exact favorite
-    const videoContainer = document.createElement("div");
-    videoContainer.style.cssText = `
-      height: 320px;
-      overflow: hidden;
-      position: relative;
-      background: #000;
-      cursor: pointer;
-      border-radius: 12px 12px 0 0;
-    `;
-
-    const videoEl = document.createElement("video");
-    videoEl.muted = true;
-    videoEl.loop = true;
-    videoEl.preload = "metadata";
-    videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-
-    if (isUnlocked) {
-      videoEl.src = video.previewClip || video.highlightVideo || video.videoUrl || "";
-      videoEl.load();
-      videoContainer.onmouseenter = () => videoEl.play().catch(() => {});
-      videoContainer.onmouseleave = () => {
-        videoEl.pause();
-        videoEl.currentTime = 0;
-      };
-    } else {
-      videoEl.src = "";
-      const lockedOverlay = document.createElement("div");
-      lockedOverlay.innerHTML = `
-        <div style="
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(10,5,30,0.85);
-          z-index: 2;
-        ">
-          <div style="text-align:center;">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
-            </svg>
-          </div>
-        </div>`;
-      videoContainer.appendChild(lockedOverlay);
+    const sortedTags = Array.from(allTags).sort();
+    const filtered = videosToRender.filter(video => {
+      if (filterMode === "unlocked") return unlockedVideos.includes(video.id);
+      if (filterMode === "trending") return video.isTrending === true;
+      return true;
+    });
+    // Always horizontal scroll
+    Object.assign(content.style, {
+      display: "flex", gap: "16px", flexWrap: "nowrap", overflowX: "auto",
+      paddingBottom: "40px", scrollBehavior: "smooth", width: "100%", justifyContent: "flex-start"
+    });
+    // Empty state for trending
+    if (filterMode === "trending" && filtered.length === 0) {
+      const emptyMsg = document.createElement("div");
+      emptyMsg.textContent = "No one is trending right now.";
+      emptyMsg.style.cssText = "width:100%; text-align:center; padding:60px 20px; color:#888; font-size:16px; font-weight:600; opacity:0.8;";
+      content.appendChild(emptyMsg);
+      return;
     }
-
-videoContainer.onclick = (e) => {
-  e.stopPropagation();
-
-  if (!isUnlocked) {
-    showUnlockConfirm(video, () => renderCards(videosToRender));
-    return;
-  }
-
-  // Open the single reusable full-screen modal with autoplay + fullscreen
-  openFullScreenVideo(video.videoUrl || "");
-};
-
-videoContainer.appendChild(videoEl);
-
-
-    // Info panel
-    const infoPanel = document.createElement("div");
-    infoPanel.style.cssText = "background:linear-gradient(180deg,#1a0b2e,#0f0519);padding:12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #8a2be2;";
-
-    const title = document.createElement("div");
-    title.textContent = video.title || "Untitled";
-    title.style.cssText = "font-weight:800;color:#e0b0ff;font-size:15px;";
-
-    const uploader = document.createElement("div");
-    const usernameSpan = document.createElement("span");
-    usernameSpan.textContent = `@${video.uploaderName || "Anonymous"}`;
-    usernameSpan.style.cssText = "color:#00ffea; font-size:12px; cursor:pointer; font-weight:600;";
-    usernameSpan.onclick = (e) => {
-      e.stopPropagation();
-      (async () => {
-        if (video.uploaderId) {
-          try {
-            const userSnap = await getDoc(doc(db, "users", video.uploaderId));
-            if (userSnap.exists()) showSocialCard(userSnap.data());
-          } catch (err) {}
-        }
-      })();
-    };
-    uploader.appendChild(usernameSpan);
-    uploader.style.opacity = "0.9";
-
-    // Tags — visible on card (cute pink chips)
-    const tagsArray = video.tags || [];
-    const tagsEl = document.createElement("div");
-    tagsEl.style.cssText = "margin-top:4px; display:flex; flex-wrap:wrap; gap:6px;";
-    tagsArray.forEach(tag => {
-      const tagSpan = document.createElement("span");
-      tagSpan.textContent = `#${tag}`;
-      tagSpan.style.cssText = "font-size:11px; color:#ff2e78; background:rgba(255,46,120,0.15); padding:2px 8px; border-radius:8px; opacity:0.9;";
-      tagsEl.appendChild(tagSpan);
-    });
-
-    // Unlock button
-    const unlockBtn = document.createElement("button");
-    unlockBtn.textContent = isUnlocked ? "Unlocked ♡" : `Unlock ${video.highlightVideoPrice || 100} ⭐️`;
-    Object.assign(unlockBtn.style, {
-      background: isUnlocked ? "rgba(138,43,226,0.3)" : "linear-gradient(135deg, #ff00f2, #8a2be2, #00ffea)",
-      border: "1px solid #ff00f2", borderRadius: "6px", padding: "8px 0", fontWeight: "800",
-      color: "#fff", cursor: isUnlocked ? "default" : "pointer",
-      transition: "all 0.3s ease", fontSize: "13px", textShadow: "0 0 10px rgba(255,0,242,0.8)",
-      boxShadow: isUnlocked ? "inset 0 2px 10px rgba(0,0,0,0.5)" : "0 0 20px rgba(255,0,242,0.6)"
-    });
-
-    if (!isUnlocked) {
-      unlockBtn.onmouseenter = () => {
-        unlockBtn.style.background = "linear-gradient(135deg, #00ffea, #ff00f2, #8a2be2)";
-        unlockBtn.style.transform = "translateY(-2px)";
-        unlockBtn.style.boxShadow = "0 0 30px rgba(0,255,234,0.8)";
-      };
-      unlockBtn.onmouseleave = () => {
-        unlockBtn.style.background = "linear-gradient(135deg, #ff00f2, #8a2be2, #00ffea)";
-        unlockBtn.style.transform = "translateY(0)";
-        unlockBtn.style.boxShadow = "0 0 20px rgba(255,0,242,0.6)";
-      };
-      unlockBtn.onclick = (e) => {
-        e.stopPropagation();
-        showUnlockConfirm(video, () => renderCards(videosToRender));
-      };
-    } else {
-      unlockBtn.disabled = true;
-    }
-
-    infoPanel.append(title, uploader, tagsEl, unlockBtn);
-    card.append(videoContainer, infoPanel);
-    content.appendChild(card);
-  });
-
-  // Pornhub-style search + filter chips
-  const searchInput = document.getElementById("highlightSearchInput");
-  if (searchInput) {
-    // Clear old chips
-    const oldChips = searchInput.parentNode.parentNode.querySelector("#filterChips");
-    if (oldChips) oldChips.remove();
-
-    const filterChips = document.createElement("div");
-    filterChips.id = "filterChips";
-    filterChips.style.cssText = "display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0 20px; max-width:380px;";
-
-    // Add all unique tags as clickable chips
-    allTags.forEach(tag => {
-      const chip = document.createElement("div");
-      chip.textContent = `#${tag}`;
-      chip.style.cssText = `
-        padding:8px 16px; background:rgba(255,46,120,0.15); color:#ff2e78;
-        border:1px solid rgba(255,46,120,0.4); border-radius:20px;
-        font-size:13px; font-weight:600; cursor:pointer; transition:all 0.3s;
-      `;
-      chip.onclick = () => {
-        searchInput.value = tag;
-        searchInput.focus();
-        searchInput.dispatchEvent(new Event('input'));
-      };
-      chip.onmouseenter = () => chip.style.background = "rgba(255,46,120,0.3)";
-      chip.onmouseleave = () => chip.style.background = "rgba(255,46,120,0.15)";
-      filterChips.appendChild(chip);
-    });
-
-    // Insert chips below search bar
-    searchInput.parentNode.parentNode.appendChild(filterChips);
-
-    // Search logic
-    searchInput.oninput = (e) => {
-      const term = e.target.value.trim().toLowerCase();
-      content.querySelectorAll(".videoCard").forEach(card => {
-        const title = card.getAttribute("data-title") || "";
-        const uploader = card.getAttribute("data-uploader") || "";
-        const location = card.getAttribute("data-location") || "";
-        const tags = card.getAttribute("data-tags") || "";
-        const matches = title.includes(term) || uploader.includes(term) || location.includes(term) || tags.includes(term);
-        card.style.display = matches ? "flex" : "none";
+    filtered.forEach((video) => {
+      const isUnlocked = unlockedVideos.includes(video.id);
+      const card = document.createElement("div");
+      card.className = "videoCard";
+      card.setAttribute("data-uploader", (video.uploaderName || "Anonymous").toLowerCase());
+      card.setAttribute("data-title", (video.title || "").toLowerCase());
+      card.setAttribute("data-location", (video.location || "").toLowerCase());
+      card.setAttribute("data-tags", (video.tags || []).join(" ").toLowerCase());
+      Object.assign(card.style, {
+        minWidth: "230px", maxWidth: "230px", background: "#0f0a1a", borderRadius: "12px",
+        overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer",
+        flexShrink: 0, boxShadow: "0 4px 20px rgba(138,43,226,0.4)",
+        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+        border: "1px solid rgba(138,43,226,0.5)"
       });
-    };
-  }
-}
-function updateButtonStates() {
-  toggleBtn.textContent = "Show Unlocked";
-  toggleBtn.style.background = "linear-gradient(135deg, #240046, #3c0b5e)";
-  trendingBtn.textContent = "Trending";
-  trendingBtn.style.background = "linear-gradient(135deg, #8a2be2, #ff00f2)";
-  if (filterMode === "unlocked") {
-    toggleBtn.textContent = "All Videos";
-    toggleBtn.style.background = "linear-gradient(135deg, #ff00f2, #00ffea)";
-    toggleBtn.style.boxShadow = "0 0 20px rgba(0,255,234,0.7)";
-  } else if (filterMode === "trending") {
-    trendingBtn.textContent = "All Videos";
-    trendingBtn.style.background = "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)";
-    trendingBtn.style.boxShadow = "0 0 25px rgba(255,0,242,0.8)";
-  }
-}
-
-toggleBtn.addEventListener("click", () => {
-  filterMode = filterMode === "unlocked" ? "all" : "unlocked";
-  updateButtonStates();
-  renderCards(videos);
-});
-
-trendingBtn.addEventListener("click", () => {
-  filterMode = filterMode === "trending" ? "all" : "trending";
-  updateButtonStates();
-  renderCards(videos);
-});
-
-  searchInputWrap.querySelector("#highlightSearchInput").addEventListener("input", e => {
-    const term = e.target.value.trim().toLowerCase();
-    content.querySelectorAll(".videoCard").forEach(card => {
-      const uploader = (card.getAttribute("data-uploader") || "").toLowerCase();
-      const title = (card.getAttribute("data-title") || "").toLowerCase();
-      card.style.display = (uploader.includes(term) || title.includes(term)) ? "flex" : "none";
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.03)";
+        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.6)";
+      };
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1)";
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.4)";
+      };
+      // Video container — your exact favorite
+      const videoContainer = document.createElement("div");
+      videoContainer.style.cssText = `
+        height: 320px;
+        overflow: hidden;
+        position: relative;
+        background: #000;
+        cursor: pointer;
+        border-radius: 12px 12px 0 0;
+      `;
+      const videoEl = document.createElement("video");
+      videoEl.muted = true;
+      videoEl.loop = true;
+      videoEl.preload = "metadata";
+      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+      if (isUnlocked) {
+        videoEl.src = video.previewClip || video.highlightVideo || video.videoUrl || "";
+        videoEl.load();
+        videoContainer.onmouseenter = () => videoEl.play().catch(() => {});
+        videoContainer.onmouseleave = () => {
+          videoEl.pause();
+          videoEl.currentTime = 0;
+        };
+      } else {
+        videoEl.src = "";
+        const lockedOverlay = document.createElement("div");
+        lockedOverlay.innerHTML = `
+          <div style="
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,5,30,0.85);
+            z-index: 2;
+          ">
+            <div style="text-align:center;">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
+              </svg>
+            </div>
+          </div>`;
+        videoContainer.appendChild(lockedOverlay);
+      }
+      videoContainer.onclick = (e) => {
+        e.stopPropagation();
+        if (!isUnlocked) {
+          showUnlockConfirm(video, () => renderCards(videosToRender));
+          return;
+        }
+        // Open the single reusable full-screen modal with autoplay + fullscreen
+        openFullScreenVideo(video.videoUrl || "");
+      };
+      videoContainer.appendChild(videoEl);
+      // Info panel
+      const infoPanel = document.createElement("div");
+      infoPanel.style.cssText = "background:linear-gradient(180deg,#1a0b2e,#0f0519);padding:12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #8a2be2;";
+      const title = document.createElement("div");
+      title.textContent = video.title || "Untitled";
+      title.style.cssText = "font-weight:800;color:#e0b0ff;font-size:15px;";
+      const uploader = document.createElement("div");
+      const usernameSpan = document.createElement("span");
+      usernameSpan.textContent = `@${video.uploaderName || "Anonymous"}`;
+      usernameSpan.style.cssText = "color:#00ffea; font-size:12px; cursor:pointer; font-weight:600;";
+      usernameSpan.onclick = (e) => {
+        e.stopPropagation();
+        (async () => {
+          if (video.uploaderId) {
+            try {
+              const userSnap = await getDoc(doc(db, "users", video.uploaderId));
+              if (userSnap.exists()) showSocialCard(userSnap.data());
+            } catch (err) {}
+          }
+        })();
+      };
+      uploader.appendChild(usernameSpan);
+      uploader.style.opacity = "0.9";
+      // Tags — visible on card (cute pink chips)
+      const tagsArray = video.tags || [];
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "margin-top:4px; display:flex; flex-wrap:wrap; gap:6px;";
+      tagsArray.forEach(tag => {
+        const tagSpan = document.createElement("span");
+        tagSpan.textContent = `#${tag}`;
+        tagSpan.style.cssText = "font-size:11px; color:#ff2e78; background:rgba(255,46,120,0.15); padding:2px 8px; border-radius:8px; opacity:0.9;";
+        tagsEl.appendChild(tagSpan);
+      });
+      // Unlock button
+      const unlockBtn = document.createElement("button");
+      unlockBtn.textContent = isUnlocked ? "Unlocked ♡" : `Unlock ${video.highlightVideoPrice || 100} ⭐️`;
+      Object.assign(unlockBtn.style, {
+        background: isUnlocked ? "rgba(138,43,226,0.3)" : "linear-gradient(135deg, #ff00f2, #8a2be2, #00ffea)",
+        border: "1px solid #ff00f2", borderRadius: "6px", padding: "8px 0", fontWeight: "800",
+        color: "#fff", cursor: isUnlocked ? "default" : "pointer",
+        transition: "all 0.3s ease", fontSize: "13px", textShadow: "0 0 10px rgba(255,0,242,0.8)",
+        boxShadow: isUnlocked ? "inset 0 2px 10px rgba(0,0,0,0.5)" : "0 0 20px rgba(255,0,242,0.6)"
+      });
+      if (!isUnlocked) {
+        unlockBtn.onmouseenter = () => {
+          unlockBtn.style.background = "linear-gradient(135deg, #00ffea, #ff00f2, #8a2be2)";
+          unlockBtn.style.transform = "translateY(-2px)";
+          unlockBtn.style.boxShadow = "0 0 30px rgba(0,255,234,0.8)";
+        };
+        unlockBtn.onmouseleave = () => {
+          unlockBtn.style.background = "linear-gradient(135deg, #ff00f2, #8a2be2, #00ffea)";
+          unlockBtn.style.transform = "translateY(0)";
+          unlockBtn.style.boxShadow = "0 0 20px rgba(255,0,242,0.6)";
+        };
+        unlockBtn.onclick = (e) => {
+          e.stopPropagation();
+          showUnlockConfirm(video, () => renderCards(videosToRender));
+        };
+      } else {
+        unlockBtn.disabled = true;
+      }
+      infoPanel.append(title, uploader, tagsEl, unlockBtn);
+      card.append(videoContainer, infoPanel);
+      content.appendChild(card);
     });
+    // Pornhub-style search + filter chips
+    const searchInput = document.getElementById("highlightSearchInput");
+    if (searchInput) {
+      // Clear old chips
+      const oldChips = searchWrap.querySelector("#filterChips");
+      if (oldChips) oldChips.remove();
+      const filterChips = document.createElement("div");
+      filterChips.id = "filterChips";
+      filterChips.style.cssText = "display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0 20px; max-width:380px;";
+      // Add all unique tags as clickable chips
+      sortedTags.forEach(tag => {
+        const chip = document.createElement("div");
+        chip.dataset.tag = tag;
+        chip.textContent = `#${tag}`;
+        chip.style.cssText = `
+          padding:8px 16px; background:rgba(255,46,120,0.15); color:#ff2e78;
+          border:1px solid rgba(255,46,120,0.4); border-radius:20px;
+          font-size:13px; font-weight:600; cursor:pointer; transition:all 0.3s;
+        `;
+        chip.onclick = () => {
+          const currentValue = searchInput.value.trim().toLowerCase();
+          const addTag = `#${tag}`;
+          if (currentValue.includes(addTag)) {
+            searchInput.value = currentValue.replace(new RegExp(addTag, 'gi'), "").trim();
+          } else {
+            searchInput.value = `${currentValue ? currentValue + " " : ""}${addTag}`.trim();
+          }
+          searchInput.focus();
+          searchInput.dispatchEvent(new Event('input'));
+        };
+        chip.onmouseenter = () => {
+          if (!chip.classList.contains("selected")) {
+            chip.style.background = "rgba(255,46,120,0.3)";
+          }
+        };
+        chip.onmouseleave = () => {
+          if (!chip.classList.contains("selected")) {
+            chip.style.background = "rgba(255,46,120,0.15)";
+          }
+        };
+        filterChips.appendChild(chip);
+      });
+      // Insert chips below button row
+      searchWrap.appendChild(filterChips);
+      // Smart search logic
+      searchInput.oninput = (e) => {
+        const term = e.target.value.trim().toLowerCase();
+        const terms = term.split(/\s+/).filter(t => t.length > 0);
+        content.querySelectorAll(".videoCard").forEach(card => {
+          const title = card.getAttribute("data-title") || "";
+          const uploader = card.getAttribute("data-uploader") || "";
+          const location = card.getAttribute("data-location") || "";
+          const tagsStr = card.getAttribute("data-tags") || "";
+          const tagsArray = tagsStr.split(" ").filter(tag => tag.length > 0);
+          let matches = terms.length === 0;
+          if (!matches) {
+            matches = terms.every(t => {
+              if (t.startsWith("#")) {
+                const tagQuery = t.slice(1);
+                return tagsArray.includes(tagQuery);
+              } else {
+                return title.includes(t) || uploader.includes(t) || location.includes(t) || tagsArray.some(tag => tag.includes(t));
+              }
+            });
+          }
+          card.style.display = matches ? "flex" : "none";
+        });
+        // Update chip selected states
+        const activeTags = terms.filter(t => t.startsWith("#")).map(t => t.slice(1));
+        filterChips.querySelectorAll("div").forEach(chip => {
+          const isSelected = activeTags.includes(chip.dataset.tag);
+          chip.classList.toggle("selected", isSelected);
+          if (isSelected) {
+            chip.style.background = "rgba(255,46,120,0.3)";
+            chip.style.border = "1px solid rgba(255,46,120,0.7)";
+            chip.style.boxShadow = "0 0 10px rgba(255,46,120,0.5)";
+          } else {
+            chip.style.background = "rgba(255,46,120,0.15)";
+            chip.style.border = "1px solid rgba(255,46,120,0.4)";
+            chip.style.boxShadow = "none";
+          }
+        });
+      };
+    }
+  }
+  function updateButtonStates() {
+    toggleBtn.textContent = "Show Unlocked";
+    toggleBtn.style.background = "linear-gradient(135deg, #240046, #3c0b5e)";
+    trendingBtn.textContent = "Trending";
+    trendingBtn.style.background = "linear-gradient(135deg, #8a2be2, #ff00f2)";
+    if (filterMode === "unlocked") {
+      toggleBtn.textContent = "All Videos";
+      toggleBtn.style.background = "linear-gradient(135deg, #ff00f2, #00ffea)";
+      toggleBtn.style.boxShadow = "0 0 20px rgba(0,255,234,0.7)";
+    } else if (filterMode === "trending") {
+      trendingBtn.textContent = "All Videos";
+      trendingBtn.style.background = "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)";
+      trendingBtn.style.boxShadow = "0 0 25px rgba(255,0,242,0.8)";
+    }
+  }
+  toggleBtn.addEventListener("click", () => {
+    filterMode = filterMode === "unlocked" ? "all" : "unlocked";
+    updateButtonStates();
+    renderCards(videos);
   });
-
+  trendingBtn.addEventListener("click", () => {
+    filterMode = filterMode === "trending" ? "all" : "trending";
+    updateButtonStates();
+    renderCards(videos);
+  });
   renderCards(videos);
   updateButtonStates();
   document.body.appendChild(modal);
