@@ -5520,7 +5520,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (Full Rewrite – All Fixed) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH + TAGS + SOCIAL CARD FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5583,7 +5583,7 @@ function showHighlightsModal(videos) {
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Search bar (shorter, only for @chatId)
+  // Search bar - only by @chatId
   const searchWrap = document.createElement("div");
   searchWrap.style.cssText = `
     display:flex; align-items:center; gap:10px;
@@ -5600,7 +5600,7 @@ function showHighlightsModal(videos) {
         <stop stop-color="#00ffea"/><stop offset="1" stop-color="#ff00f2"/>
       </linearGradient></defs>
     </svg>
-    <input id="highlightSearchInput" type="text" placeholder="Search @chatId only..."
+    <input id="highlightSearchInput" type="text" placeholder="Search @chatId..."
            style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:14px;"/>
   `;
   controls.appendChild(searchWrap);
@@ -5630,18 +5630,18 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
-  // Tag filter buttons (small, visible, toggle multiple)
+  // === TAG FILTER BUTTONS – SMALL & VISIBLE ===
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
-    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
-    margin-top:8px;
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:500px;
+    margin-top:10px; padding:0 10px;
   `;
   controls.appendChild(tagContainer);
 
   modal.appendChild(controls);
 
-  // GRID
+  // === GRID ===
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
@@ -5659,21 +5659,32 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // Collect unique tags
+    // Collect ALL unique tags from ALL videos (so buttons show even when filtered)
     const allTags = new Set();
-    videos.forEach(v => (v.tags || []).forEach(t => allTags.add(t.trim().toLowerCase())));
+    videos.forEach(v => {
+      if (Array.isArray(v.tags)) {
+        v.tags.forEach(t => {
+          if (t && typeof t === "string") allTags.add(t.trim().toLowerCase());
+        });
+      }
+    });
+
     const sortedTags = [...allTags].sort();
 
-    // Create small tag buttons
+    // Create tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
-        padding: "5px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "600",
+        padding: "5px 12px",
+        borderRadius: "20px",
+        fontSize: "11px",
+        fontWeight: "600",
         background: activeTags.has(tag) ? "rgba(255,46,120,0.45)" : "rgba(255,46,120,0.15)",
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.5)", cursor: "pointer",
+        border: "1px solid rgba(255,46,120,0.5)",
+        cursor: "pointer",
         transition: "all 0.25s"
       });
       btn.onclick = () => {
@@ -5684,7 +5695,7 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
-    // Filter videos
+    // Apply filters
     let filtered = videos.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -5693,7 +5704,7 @@ function showHighlightsModal(videos) {
 
     if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
-        const videoTags = (v.tags || []).map(t => t.toLowerCase());
+        const videoTags = Array.isArray(v.tags) ? v.tags.map(t => t.toLowerCase()) : [];
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
@@ -5713,11 +5724,17 @@ function showHighlightsModal(videos) {
 
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative",
+        aspectRatio: "9/16",
+        borderRadius: "16px",
+        overflow: "hidden",
+        background: "#0f0a1a",
+        cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
+
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -5727,12 +5744,13 @@ function showHighlightsModal(videos) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
-      // Video container
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+      videoEl.muted = true;
+      videoEl.loop = true;
+      videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
       if (isUnlocked) {
@@ -5778,17 +5796,17 @@ function showHighlightsModal(videos) {
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
 
-      // Click username → open social card
+      // Click username → social card
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
               if (userSnap.exists()) {
-                showSocialCard(userSnap.data()); // Use the exported function!
+                showSocialCard(userSnap.data()); // Correct exported function
               }
             })
-            .catch(err => console.error("Failed to load user:", err));
+            .catch(err => console.error("Failed to load user for social card:", err));
         }
       };
 
@@ -5822,7 +5840,7 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Filter buttons
+  // Filter buttons logic
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -5841,7 +5859,7 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // Search: ONLY by @chatId / username
+  // Search: ONLY by chatId / username (live filtering)
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", () => {
@@ -5850,8 +5868,10 @@ function showHighlightsModal(videos) {
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const usernameEl = card.querySelector("div[style*='color:#00ffea']");
-        const username = usernameEl?.textContent?.toLowerCase().replace("@", "") || "";
-        card.style.display = !searchTerm || username.includes(searchTerm) ? "" : "none";
+        const username = usernameEl?.textContent?.toLowerCase()?.replace("@", "") || "";
+
+        const matches = !searchTerm || username.includes(searchTerm);
+        card.style.display = matches ? "" : "none";
       });
     });
   }
