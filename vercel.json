@@ -3,8 +3,6 @@
     { "source": "/tm", "destination": "/tm.html" },
        { "source": "/tapmaster", "destination": "/tm.html" },
     { "source": "/sign-up", "destination": "/qO0MyUROl4CoH8Wo1UDa1DrCtEKmVQuZ.html" },
-      { "source": "qO0MyUROl4CoH8Wo1UDa1DrCtEKmVQuZ", "destination": "/qO0MyUROl4CoH8Wo1UDa1DrCtEKmVQuZ.html" },
-       { "source": "/su", "destination": "/sign-up.html" },
     { "source": "/chat", "destination": "/chat.html" },
         { "source": "/shop", "destination": "/shop.html" },
         { "source": "/game", "destination": "/game.html" },
