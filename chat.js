@@ -5801,7 +5801,7 @@ function showHighlightsModal(videos) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
-      // === ADDED HERE: data attributes for search (only uploader/chatId used) ===
+      // === FIXED: ADD DATA ATTRIBUTES HERE (this is the correct place) ===
       card.setAttribute("data-uploader", (video.uploaderName || "Anonymous").toLowerCase());
       card.setAttribute("data-title", (video.title || "").toLowerCase());
       card.setAttribute("data-tags", (video.tags || []).join(" ").toLowerCase());
@@ -5912,13 +5912,14 @@ function showHighlightsModal(videos) {
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderCards();
   };
-  // SEARCH – FIXED: only by uploaderName/chatId
+  // SEARCH – FIXED: only by uploaderName/chatId, live filtering
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       const term = e.target.value.trim().toLowerCase();
       const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
 
+      // Use the data attribute we added
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const uploader = card.getAttribute("data-uploader") || "";
         const matches = !searchTerm || uploader.includes(searchTerm);
