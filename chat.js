@@ -5751,7 +5751,6 @@ function showHighlightsModal(videos) {
       // Video
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%;height:100%;position:relative;background:#000;";
-      const video = document.createElement("video");
       video.muted = true; video.loop = true; video.preload = "metadata";
       video.style.cssText = "width:100%;height:100%;object-fit:cover;";
 
