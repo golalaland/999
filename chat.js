@@ -5496,28 +5496,28 @@ highlightsBtn.onclick = async () => {
       return;
     }
 
-    const videos = snapshot.docs.map(docSnap => {
-      const d = docSnap.data();
-      const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
-      return {
-        id: docSnap.id,
-        highlightVideo: d.highlightVideo,
-        highlightVideoPrice: d.highlightVideoPrice || 0,
-        title: d.title || "Untitled",
-        uploaderName,
-        uploaderId: d.uploaderId || "",
-        uploaderEmail: d.uploaderEmail || "unknown",
-        description: d.description || "",
-        thumbnail: d.thumbnail || "",
-        createdAt: d.createdAt || null,
-        unlockedBy: d.unlockedBy || [],
-        previewClip: d.previewClip || "",
-        videoUrl: d.videoUrl || "",
-        isTrending: d.isTrending || false,
-        tags: d.tags || []  // ← FIXED: always include tags array
-        chatId: d.chatId || ""  // ← ADD THIS for accurate search 
-      };
-    });
+   const videos = snapshot.docs.map(docSnap => {
+  const d = docSnap.data();
+  const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
+  return {
+    id: docSnap.id,
+    highlightVideo: d.highlightVideo,
+    highlightVideoPrice: d.highlightVideoPrice || 0,
+    title: d.title || "Untitled",
+    uploaderName,
+    uploaderId: d.uploaderId || "",
+    uploaderEmail: d.uploaderEmail || "unknown",
+    description: d.description || "",
+    thumbnail: d.thumbnail || "",
+    createdAt: d.createdAt || null,
+    unlockedBy: d.unlockedBy || [],
+    previewClip: d.previewClip || "",
+    videoUrl: d.videoUrl || "",
+    isTrending: d.isTrending || false,
+    tags: d.tags || [],          // ← comma here is fine
+    chatId: d.chatId || ""       // ← FIXED: added missing comma above it
+  };
+});
 
     showHighlightsModal(videos);
   } catch (err) {
