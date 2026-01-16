@@ -5568,7 +5568,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH + UNLOCK FIXED) ---------- */
+/* ---------- Highlights Modal – FINAL WORKING VERSION (Search Fixed + Unlock Fixed) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5584,7 +5584,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER
+  // HEADER (unchanged)
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -5605,7 +5605,7 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(intro);
 
-  // CLOSE BUTTON
+  // CLOSE BUTTON (unchanged)
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5719,6 +5719,7 @@ function showHighlightsModal(videos) {
 
     const sortedTags = [...allTags].sort();
 
+    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5810,22 +5811,15 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
-      // FIXED UNLOCK
+      // FIXED: Unlock works again
       vidContainer.addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
         if (!isUnlocked) {
-          if (typeof showUnlockConfirm === "function") {
-            showUnlockConfirm(video, () => renderCards());
-          } else {
-            console.warn("showUnlockConfirm not defined – unlock disabled");
-            alert("Unlock feature not available. Please contact support.");
-          }
+          showUnlockConfirm(video, renderCards);  // Restored exactly as original
           return;
         }
-        if (typeof openFullScreenVideo === "function") {
-          openFullScreenVideo(video.videoUrl || "");
-        }
+        openFullScreenVideo(video.videoUrl || "");
       });
 
       vidContainer.appendChild(videoEl);
@@ -5909,25 +5903,17 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH – FIXED: live, case-insensitive, only username/chatId
+  // SEARCH – FIXED & WORKING (only username/chatId, live filtering)
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      const term = e.target.value.trim().toLowerCase();
-      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
-
-      console.log("Searching for:", searchTerm);
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.trim().toLowerCase();
+      const searchTerm = term.startsWith("@") ? term.slice(1) : term;
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const userEl = card.querySelector("div[style*='color:#00ffea']");
-        if (!userEl) {
-          card.style.display = "none"; // hide if no username element
-          return;
-        }
-        let username = userEl.textContent || "";
-        username = username.replace("@", "").trim().toLowerCase();
-
-        console.log("Username found:", username); // debug
+        const usernameText = userEl ? userEl.textContent : "";
+        const username = usernameText.replace("@", "").trim().toLowerCase();
 
         const matches = !searchTerm || username.includes(searchTerm);
         card.style.display = matches ? "" : "none";
