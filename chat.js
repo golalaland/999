@@ -5605,7 +5605,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH FIXED + UNLOCK REFRESH + NOTIFICATIONS) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH FIXED – ONLY USERNAME) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5824,6 +5824,11 @@ function showHighlightsModal(videos) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
+      // === ADD DATA ATTRIBUTES HERE (this is where they belong) ===
+      card.setAttribute("data-uploader", (video.uploaderName || "Anonymous").toLowerCase());
+      card.setAttribute("data-title", (video.title || "").toLowerCase());
+      card.setAttribute("data-tags", (video.tags || []).join(" ").toLowerCase());
+
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
@@ -5852,11 +5857,8 @@ function showHighlightsModal(videos) {
         e.stopPropagation();
         if (!isUnlocked) {
           showUnlockConfirm(video, () => {
-            // Refresh unlockedVideos from localStorage
             unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            // Re-render cards
             renderCards(videos);
-            // Show success notification
             showStarPopup("Video unlocked! 🎉", "success");
           });
           return;
@@ -5945,19 +5947,15 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH – live, case-insensitive, only username/chatId
+  // SEARCH – RESTORED WORKING LOGIC (only username/chatId)
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       const term = e.target.value.trim().toLowerCase();
-      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
-        const userEl = card.querySelector("div[style*='color:#00ffea']");
-        let username = userEl?.textContent || "";
-        username = username.replace("@", "").trim().toLowerCase();
-
-        const matches = !searchTerm || username.includes(searchTerm);
+        const uploader = card.getAttribute("data-uploader") || "";
+        const matches = uploader.includes(term);
         card.style.display = matches ? "" : "none";
       });
     });
