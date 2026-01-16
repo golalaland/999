@@ -5520,7 +5520,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (All Fixed: Search + Tags + Social Card) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (Full Rewrite – All Fixed) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5536,7 +5536,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER
+  // === HEADER ===
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -5557,7 +5557,7 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(intro);
 
-  // CLOSE BUTTON
+  // === CLOSE BUTTON ===
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5576,14 +5576,14 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS
+  // === CONTROLS ===
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Search bar (only by @chatId)
+  // Search bar (shorter, only for @chatId)
   const searchWrap = document.createElement("div");
   searchWrap.style.cssText = `
     display:flex; align-items:center; gap:10px;
@@ -5630,10 +5630,13 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
-  // Tag filter buttons (small & visible)
+  // Tag filter buttons (small, visible, toggle multiple)
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
-  tagContainer.style.cssText = "display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px; margin-top:8px;";
+  tagContainer.style.cssText = `
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
+    margin-top:8px;
+  `;
   controls.appendChild(tagContainer);
 
   modal.appendChild(controls);
@@ -5656,12 +5659,12 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // Collect tags from ALL videos (so buttons always show even if filtered)
+    // Collect unique tags
     const allTags = new Set();
     videos.forEach(v => (v.tags || []).forEach(t => allTags.add(t.trim().toLowerCase())));
     const sortedTags = [...allTags].sort();
 
-    // Create tag buttons
+    // Create small tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5724,6 +5727,7 @@ function showHighlightsModal(videos) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
+      // Video container
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
@@ -5774,17 +5778,17 @@ function showHighlightsModal(videos) {
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
 
-      // FIXED: Click username → opens social card
+      // Click username → open social card
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
               if (userSnap.exists()) {
-                showSocialCard(userSnap.data());  // Use the exported function
+                showSocialCard(userSnap.data()); // Use the exported function!
               }
             })
-            .catch(err => console.error("Failed to load user for social card:", err));
+            .catch(err => console.error("Failed to load user:", err));
         }
       };
 
@@ -5837,7 +5841,7 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // Search: ONLY by chatId/username
+  // Search: ONLY by @chatId / username
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", () => {
@@ -5846,14 +5850,13 @@ function showHighlightsModal(videos) {
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const usernameEl = card.querySelector("div[style*='color:#00ffea']");
-        const username = usernameEl?.textContent.toLowerCase().replace("@", "") || "";
-
+        const username = usernameEl?.textContent?.toLowerCase().replace("@", "") || "";
         card.style.display = !searchTerm || username.includes(searchTerm) ? "" : "none";
       });
     });
   }
 
-  // Initial render (tags will appear if they exist in data)
+  // Initial render
   renderCards();
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
