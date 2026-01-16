@@ -5520,7 +5520,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (Final Fixes) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (All Fixed: Search + Tags + Social Card) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5583,7 +5583,7 @@ function showHighlightsModal(videos) {
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Search bar (shorter)
+  // Search bar (only by @chatId)
   const searchWrap = document.createElement("div");
   searchWrap.style.cssText = `
     display:flex; align-items:center; gap:10px;
@@ -5600,7 +5600,7 @@ function showHighlightsModal(videos) {
         <stop stop-color="#00ffea"/><stop offset="1" stop-color="#ff00f2"/>
       </linearGradient></defs>
     </svg>
-    <input id="highlightSearchInput" type="text" placeholder="Search by @chatId only..."
+    <input id="highlightSearchInput" type="text" placeholder="Search @chatId only..."
            style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:14px;"/>
   `;
   controls.appendChild(searchWrap);
@@ -5630,13 +5630,10 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
-  // Small tag filter buttons (exactly like your upload selector style)
+  // Tag filter buttons (small & visible)
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
-  tagContainer.style.cssText = `
-    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
-    margin-top:8px;
-  `;
+  tagContainer.style.cssText = "display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px; margin-top:8px;";
   controls.appendChild(tagContainer);
 
   modal.appendChild(controls);
@@ -5659,12 +5656,12 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // Collect unique tags from all videos (not just filtered)
+    // Collect tags from ALL videos (so buttons always show even if filtered)
     const allTags = new Set();
     videos.forEach(v => (v.tags || []).forEach(t => allTags.add(t.trim().toLowerCase())));
     const sortedTags = [...allTags].sort();
 
-    // Create small tag buttons (toggle multiple)
+    // Create tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5684,7 +5681,7 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
-    // Apply filters
+    // Filter videos
     let filtered = videos.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -5727,7 +5724,6 @@ function showHighlightsModal(videos) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
-      // Video container
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
@@ -5778,14 +5774,14 @@ function showHighlightsModal(videos) {
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
 
-      // FIXED: Click on username opens social card
+      // FIXED: Click username → opens social card
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
               if (userSnap.exists()) {
-                showUnifiedCard(userSnap.data());
+                showSocialCard(userSnap.data());  // Use the exported function
               }
             })
             .catch(err => console.error("Failed to load user for social card:", err));
@@ -5822,7 +5818,7 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Filter buttons logic
+  // Filter buttons
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -5841,7 +5837,7 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // Search → only by @chatId / username
+  // Search: ONLY by chatId/username
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", () => {
@@ -5857,7 +5853,7 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Initial render
+  // Initial render (tags will appear if they exist in data)
   renderCards();
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
