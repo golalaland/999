@@ -5520,9 +5520,8 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (Safe & Complete) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (Fixed Visibility + Tag Filters) ---------- */
 function showHighlightsModal(videos) {
-  // Clean up any existing modal
   document.getElementById("highlightsModal")?.remove();
 
   const modal = document.createElement("div");
@@ -5534,24 +5533,23 @@ function showHighlightsModal(videos) {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "flex-start",
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
-    fontFamily: "system-ui, sans-serif", color: "#e0e0ff"
+    fontFamily: "system-ui, sans-serif"
   });
 
   // === HEADER ===
   const intro = document.createElement("div");
   intro.innerHTML = `
-    <div style="
-      text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px; line-height:1.6;
-      font-size:14px; background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
-      padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
-      box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;
-    ">
+    <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
+                line-height:1.6; font-size:14px;
+                background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
+                padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
+                box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
       <div style="margin-bottom:8px;">
-        <span style="
-          background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
-          -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-          font-weight:800; font-size:22px; letter-spacing:0.4px;
-        ">Cuties💕</span>
+        <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
+                     -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                     font-weight:800; font-size:22px; letter-spacing:0.4px;">
+          Cuties💕
+        </span>
       </div>
       <p style="margin:0 0 4px;">Cam-worthy moments from girls on cube.</p>
       <p style="margin:0;">Unlock a cutie’s clip with STRZ and get closer.</p>
@@ -5567,176 +5565,153 @@ function showHighlightsModal(videos) {
   Object.assign(closeBtn.style, {
     position: "absolute", top: "16px", right: "16px", width: "32px", height: "32px",
     display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-    transition: "all 0.25s ease", filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+    zIndex: "1002", transition: "all 0.25s ease", filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = () => {
     closeBtn.style.transform = "rotate(180deg) scale(1.35)";
-    setTimeout(() => modal.remove(), 300);
+    setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // === CONTROLS SECTION ===
+  // === CONTROLS ===
   const controls = document.createElement("div");
   controls.style.cssText = `
-    width:100%; max-width:640px; margin:0 auto 24px;
+    width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Search bar
+  // Search
   const searchWrap = document.createElement("div");
   searchWrap.style.cssText = `
-    display:flex; align-items:center; width:100%; max-width:380px;
+    display:flex; align-items:center; gap:10px;
     background:linear-gradient(135deg,rgba(255,0,242,0.12),rgba(138,43,226,0.09));
     border:1px solid rgba(138,43,226,0.55); border-radius:30px; padding:10px 16px;
-    backdrop-filter:blur(10px); box-shadow:0 0 20px rgba(255,0,242,0.25);
+    width:100%; max-width:380px; backdrop-filter:blur(10px);
+    box-shadow:0 0 20px rgba(255,0,242,0.25);
   `;
   searchWrap.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path d="M15 15L21 21M10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10C17 13.866 13.866 17 10 17Z"
-            stroke="url(#grad)" stroke-width="2.5" stroke-linecap="round"/>
-      <defs><linearGradient id="grad" x1="0" y1="0" x2="24" y2="24">
+            stroke="url(#gradSearch)" stroke-width="2.5"/>
+      <defs><linearGradient id="gradSearch" x1="0" y1="0" x2="24" y2="24">
         <stop stop-color="#00ffea"/><stop offset="1" stop-color="#ff00f2"/>
       </linearGradient></defs>
     </svg>
-    <input id="highlightSearchInput" type="text" placeholder="Search @user, title, #tag..."
-           style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;"/>
+    <input id="highlightSearchInput" type="text" placeholder="Search @user, title or #tag..."
+           style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:15px;"/>
   `;
   controls.appendChild(searchWrap);
 
-  // Toggle buttons row
-  const btnRow = document.createElement("div");
-  btnRow.style.cssText = "display:flex; gap:10px; flex-wrap:wrap; justify-content:center;";
+  // Main filter buttons
+  const mainButtons = document.createElement("div");
+  mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
 
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
-    padding: "6px 14px", borderRadius: "8px",
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
     background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)", fontSize: "13px", fontWeight: "600",
-    cursor: "pointer", transition: "all 0.2s", boxShadow: "0 3px 12px rgba(138,43,226,0.4)"
+    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
 
   const trendingBtn = document.createElement("button");
   trendingBtn.textContent = "Trending";
   Object.assign(trendingBtn.style, {
-    padding: "6px 14px", borderRadius: "8px",
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
     background: "linear-gradient(135deg, #8a2be2, #ff00f2)", color: "#fff",
-    border: "1px solid rgba(255,0,242,0.7)", fontSize: "13px", fontWeight: "600",
-    cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
+    border: "1px solid rgba(255,0,242,0.7)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
   });
 
-  btnRow.append(unlockedBtn, trendingBtn);
-  controls.appendChild(btnRow);
+  mainButtons.append(unlockedBtn, trendingBtn);
+  controls.appendChild(mainButtons);
 
-  // Tag chips row
-  const tagChips = document.createElement("div");
-  tagChips.id = "tagChipsContainer";
-  tagChips.style.cssText = `
-    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:480px;
-  `;
-  controls.appendChild(tagChips);
+  // Tag filter buttons
+  const tagContainer = document.createElement("div");
+  tagContainer.id = "tagButtons";
+  tagContainer.style.cssText = "display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;";
+  controls.appendChild(tagContainer);
 
   modal.appendChild(controls);
 
   // === GRID ===
   const grid = document.createElement("div");
+  grid.id = "highlightsGrid";
   grid.style.cssText = `
     display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px; width: 100%; max-width: 960px; margin: 0 auto;
-    padding: 0 8px 80px;
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
 
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-  let filterMode = "all"; // "all" | "unlocked" | "trending"
-  let searchTerm = "";
+  let filterMode = "all";
+  let activeTags = new Set();
 
-  function updateButtonStates() {
-    unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
-    unlockedBtn.style.background = filterMode === "unlocked"
-      ? "linear-gradient(135deg, #ff00f2, #00ffea)"
-      : "linear-gradient(135deg, #240046, #3c0b5e)";
-    unlockedBtn.style.boxShadow = filterMode === "unlocked"
-      ? "0 0 20px rgba(0,255,234,0.7)" : "0 3px 12px rgba(138,43,226,0.4)";
-
-    trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
-    trendingBtn.style.background = filterMode === "trending"
-      ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
-      : "linear-gradient(135deg, #8a2be2, #ff00f2)";
-    trendingBtn.style.boxShadow = filterMode === "trending"
-      ? "0 0 25px rgba(255,0,242,0.8)" : "0 4px 14px rgba(255,0,242,0.5)";
-  }
-
-  function render() {
+  function renderCards() {
     grid.innerHTML = "";
-    tagChips.innerHTML = "";
+    tagContainer.innerHTML = "";
 
-    // 1. Mode filter
+    // Collect tags
+    const allTags = new Set();
+    videos.forEach(v => (v.tags || []).forEach(t => allTags.add(t.trim().toLowerCase())));
+    const sortedTags = [...allTags].sort();
+
+    // Tag buttons
+    sortedTags.forEach(tag => {
+      const btn = document.createElement("button");
+      btn.textContent = `#${tag}`;
+      btn.dataset.tag = tag;
+      Object.assign(btn.style, {
+        padding: "6px 14px", borderRadius: "30px", fontSize: "12px", fontWeight: "600",
+        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.18)",
+        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+        border: "1px solid rgba(255,46,120,0.5)", cursor: "pointer",
+        transition: "all 0.3s", boxShadow: activeTags.has(tag) ? "0 0 14px rgba(255,46,120,0.6)" : "none"
+      });
+      btn.onclick = () => {
+        if (activeTags.has(tag)) activeTags.delete(tag);
+        else activeTags.add(tag);
+        renderCards();
+      };
+      tagContainer.appendChild(btn);
+    });
+
+    // Filter videos
     let filtered = videos.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
       return true;
     });
 
-    // 2. Collect tags for chips
-    const allTags = new Set();
-    filtered.forEach(v => (v.tags || []).forEach(t => allTags.add(t.trim().toLowerCase())));
-    const sortedTags = [...allTags].sort();
-
-    // 3. Tag chips
-    sortedTags.forEach(tag => {
-      const chip = document.createElement("div");
-      chip.textContent = `#${tag}`;
-      chip.dataset.tag = tag;
-      chip.style.cssText = `
-        padding:6px 12px; background:rgba(255,46,120,0.18); color:#ff4d8a;
-        border:1px solid rgba(255,46,120,0.45); border-radius:20px;
-        font-size:13px; font-weight:600; cursor:pointer; transition:all 0.25s;
-      `;
-      chip.onclick = () => {
-        const input = document.getElementById("highlightSearchInput");
-        if (!input) return;
-        const current = input.value.trim();
-        const tagStr = `#${tag}`;
-        input.value = current.includes(tagStr)
-          ? current.replace(tagStr, "").trim()
-          : `${current ? current + " " : ""}${tagStr}`.trim();
-        input.dispatchEvent(new Event("input"));
-      };
-      tagChips.appendChild(chip);
-    });
-
-    // 4. Search filter
-    if (searchTerm.trim()) {
-      const terms = searchTerm.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
-        const title = (v.title || "").toLowerCase();
-        const user = (v.uploaderName || "").toLowerCase();
-        const tagsStr = (v.tags || []).join(" ").toLowerCase();
-        return terms.every(t => {
-          if (t.startsWith("#")) return tagsStr.includes(t.slice(1));
-          return title.includes(t) || user.includes(t) || tagsStr.includes(t);
-        });
+        const videoTags = (v.tags || []).map(t => t.toLowerCase());
+        return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
 
-    // 5. Render cards
+    // Empty state
+    if (filtered.length === 0) {
+      const empty = document.createElement("div");
+      empty.textContent = filterMode === "trending" ? "No trending clips right now." : "No clips match your filters.";
+      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
+      grid.appendChild(empty);
+      return;
+    }
+
+    // Render cards
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
+
       const card = document.createElement("div");
-      card.className = "reel-card";
       Object.assign(card.style, {
-        position: "relative",
-        aspectRatio: "9/16",
-        borderRadius: "16px",
-        overflow: "hidden",
-        background: "#0f0a1a",
-        cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-        transition: "all 0.25s ease",
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
       card.onmouseenter = () => {
@@ -5748,23 +5723,25 @@ function showHighlightsModal(videos) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
-      // Video
+      // Video container
       const vidContainer = document.createElement("div");
-      vidContainer.style.cssText = "width:100%;height:100%;position:relative;background:#000;";
-      video.muted = true; video.loop = true; video.preload = "metadata";
-      video.style.cssText = "width:100%;height:100%;object-fit:cover;";
+      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+
+      const videoEl = document.createElement("video");
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
       if (isUnlocked) {
-        video.src = video.previewClip || video.videoUrl || "";
-        video.load();
-        vidContainer.onmouseenter = () => video.play().catch(() => {});
-        vidContainer.onmouseleave = () => { video.pause(); video.currentTime = 0; };
+        videoEl.src = video.previewClip || video.videoUrl || "";
+        videoEl.load();
+        vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
+        vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
         lock.innerHTML = `
-          <div style="position:absolute;inset:0;background:rgba(10,5,30,0.85);
-                      display:flex;align-items:center;justify-content:center;">
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
+          <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
+                      display:flex; align-items:center; justify-content:center;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
             </svg>
           </div>`;
@@ -5773,98 +5750,109 @@ function showHighlightsModal(videos) {
 
       vidContainer.onclick = (e) => {
         e.stopPropagation();
-        if (!isUnlocked) return showUnlockConfirm?.(video, () => render());
+        if (!isUnlocked) return showUnlockConfirm?.(video, renderCards);
         openFullScreenVideo?.(video.videoUrl || "");
       };
-      vidContainer.appendChild(video);
+      vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // Bottom info
+      // Info overlay
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
         background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-        padding:50px 12px 12px; color:#fff;
+        padding:60px 12px 12px;
       `;
+
       info.innerHTML = `
-        <div style="font-weight:700;font-size:14px;color:#e0b0ff;margin-bottom:4px;">
+        <div style="font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;">
           ${video.title || "Cute moment"}
         </div>
-        <div style="font-size:12px;color:#00ffea;font-weight:600;">
+        <div style="font-size:12px; color:#00ffea; font-weight:600;">
           @${video.uploaderName || "cutie"}
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
-          ${(video.tags || []).slice(0,3).map(t => `<span style="
-            font-size:10px;padding:2px 6px;border-radius:8px;
-            background:rgba(255,46,120,0.22);color:#ff4d8a;
-          ">#${t}</span>`).join("")}
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+          ${(video.tags || []).map(t => `
+            <span style="font-size:11px; padding:2px 8px; border-radius:10px;
+                         background:rgba(255,46,120,0.22); color:#ff4d8a;">
+              #${t}
+            </span>
+          `).join("")}
         </div>
       `;
       card.appendChild(info);
 
-      // Price / unlocked badge
+      // Badge - improved visibility
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
-        position: "absolute", top: "8px", right: "8px", padding: "4px 8px",
-        borderRadius: "10px", fontSize: "11px", fontWeight: "700",
-        background: isUnlocked ? "rgba(0,255,234,0.25)" : "linear-gradient(135deg,#ff00f2,#8a2be2)",
-        color: isUnlocked ? "#00ffea" : "#fff",
-        border: `1px solid ${isUnlocked ? "rgba(0,255,234,0.5)" : "rgba(255,0,242,0.7)"}`,
-        boxShadow: `0 0 8px ${isUnlocked ? "rgba(0,255,234,0.5)" : "rgba(255,0,242,0.6)"}`
+        position: "absolute", top: "12px", right: "12px",
+        padding: "6px 12px", borderRadius: "12px",
+        fontSize: "12px", fontWeight: "700", color: "#fff",
+        background: isUnlocked 
+          ? "rgba(0,255,234,0.45)" 
+          : "linear-gradient(135deg, #ff00f2, #8a2be2)",
+        boxShadow: isUnlocked 
+          ? "0 0 16px rgba(0,255,234,0.8)" 
+          : "0 0 14px rgba(255,0,242,0.7)",
+        border: "1px solid rgba(255,255,255,0.25)",
+        textShadow: "0 0 4px rgba(0,0,0,0.6)"
       });
       card.appendChild(badge);
 
       grid.appendChild(card);
     });
-
-    // Empty state
-    if (filtered.length === 0) {
-      const empty = document.createElement("div");
-      empty.style.cssText = "grid-column:1/-1;text-align:center;padding:80px 20px;color:#888;font-size:16px;";
-      empty.textContent = filterMode === "trending" ? "No trending cuties right now..." : "Nothing found...";
-      grid.appendChild(empty);
-    }
   }
 
-  // === EVENT LISTENERS ===
+  // === FILTER BUTTONS LOGIC ===
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
-    updateButtonStates();
-    render();
+    unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
+    unlockedBtn.style.background = filterMode === "unlocked" 
+      ? "linear-gradient(135deg, #ff00f2, #00ffea)" 
+      : "linear-gradient(135deg, #240046, #3c0b5e)";
+    renderCards();
   };
 
   trendingBtn.onclick = () => {
     filterMode = filterMode === "trending" ? "all" : "trending";
-    updateButtonStates();
-    render();
+    trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
+    trendingBtn.style.background = filterMode === "trending" 
+      ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)" 
+      : "linear-gradient(135deg, #8a2be2, #ff00f2)";
+    renderCards();
   };
 
-  // Safe search listener
+  // === SEARCH ===
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      searchTerm = e.target.value;
-      render();
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.trim().toLowerCase();
+      const terms = term.split(/\s+/).filter(Boolean);
 
-      // Highlight active tags
-      const activeTags = searchTerm.toLowerCase().split(/\s+/).filter(t => t.startsWith("#")).map(t => t.slice(1));
-      tagChips.querySelectorAll("div").forEach(chip => {
-        const isActive = activeTags.includes(chip.dataset.tag);
-        chip.style.background = isActive ? "rgba(255,46,120,0.35)" : "rgba(255,46,120,0.18)";
-        chip.style.transform = isActive ? "scale(1.05)" : "scale(1)";
+      grid.querySelectorAll(".reel-item").forEach(card => {
+        const titleEl = card.querySelector("div[style*='font-weight:700']");
+        const userEl = card.querySelector("div[style*='color:#00ffea']");
+        const tagEls = card.querySelectorAll("span[style*='background:rgba(255,46,120,0.22']");
+
+        const title = titleEl?.textContent.toLowerCase() || "";
+        const user = userEl?.textContent.toLowerCase() || "";
+        const cardTags = Array.from(tagEls).map(el => el.textContent.slice(1).toLowerCase());
+
+        const matches = terms.length === 0 || terms.every(t => {
+          if (t.startsWith("#")) return cardTags.includes(t.slice(1));
+          return title.includes(t) || user.includes(t) || cardTags.some(tag => tag.includes(t));
+        });
+
+        card.style.display = matches ? "" : "none";
       });
     });
-  } else {
-    console.warn("[Highlights Modal] Search input element not found");
   }
 
   // Initial render
-  updateButtonStates();
-  render();
-
+  renderCards();
   document.body.appendChild(modal);
-  setTimeout(() => searchInput?.focus(), 300);
+  setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 }
 
 function showUnlockConfirm(video, onUnlockCallback) {
