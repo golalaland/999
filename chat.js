@@ -5568,7 +5568,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (UNLOCK + SEARCH FIXED) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (FULLY FIXED: SEARCH + UNLOCK + TAGS) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5703,10 +5703,11 @@ function showHighlightsModal(videos) {
   let filterMode = "all";
   let activeTags = new Set();
 
-  function renderCards(videosToRender = videos) {  // ← added param for callback refresh
+  function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
+    // Collect tags
     const allTags = new Set();
     videosToRender.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -5718,6 +5719,7 @@ function showHighlightsModal(videos) {
 
     const sortedTags = [...allTags].sort();
 
+    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5741,6 +5743,7 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
+    // Filter videos
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -5754,6 +5757,7 @@ function showHighlightsModal(videos) {
       });
     }
 
+    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
@@ -5762,6 +5766,7 @@ function showHighlightsModal(videos) {
       return;
     }
 
+    // Render cards
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
 
@@ -5806,22 +5811,18 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
-   vidContainer.onclick = (e) => {
-  e.stopPropagation();
-  if (!isUnlocked) {
-    // Safe call with fallback (prevents crash)
-    if (typeof showUnlockConfirm === "function") {
-      showUnlockConfirm(video, () => renderCards(videos));
-    } else {
-      console.error("showUnlockConfirm is not defined! Unlock blocked.");
-      // Friendly user fallback (customize or remove)
-      alert("Unlock feature is temporarily unavailable. Please refresh or contact support.");
-    }
-    return;
-  }
-  // Open full screen (original behavior)
-  openFullScreenVideo(video.videoUrl || "");
-};
+      // RESTORED: exact original unlock call
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        if (!isUnlocked) {
+          showUnlockConfirm(video, () => renderCards(videos));
+          return;
+        }
+        openFullScreenVideo(video.videoUrl || "");
+      };
+
+      vidContainer.appendChild(videoEl);
+      card.appendChild(vidContainer);
 
       // Info overlay
       const info = document.createElement("div");
@@ -5910,7 +5911,11 @@ function showHighlightsModal(videos) {
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const userEl = card.querySelector("div[style*='color:#00ffea']");
-        let username = userEl?.textContent || "";
+        if (!userEl) {
+          card.style.display = "none";
+          return;
+        }
+        let username = userEl.textContent || "";
         username = username.replace("@", "").trim().toLowerCase();
 
         const matches = !searchTerm || username.includes(searchTerm);
