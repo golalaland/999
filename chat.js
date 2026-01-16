@@ -5520,7 +5520,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (TAGS VISIBLE + SEARCH FIXED) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (FINAL: Tags Visible + Search + Unlock Fixed) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5583,7 +5583,7 @@ function showHighlightsModal(videos) {
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Search bar
+  // Search bar – only chatId
   const searchWrap = document.createElement("div");
   searchWrap.style.cssText = `
     display:flex; align-items:center; gap:10px;
@@ -5605,7 +5605,7 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(searchWrap);
 
-  // Main buttons (unchanged)
+  // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
 
@@ -5630,7 +5630,7 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
-  // TAG FILTER BUTTONS (made super visible & robust)
+  // TAG FILTER BUTTONS – guaranteed visible if tags exist
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -5659,13 +5659,15 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // ROBUST TAG COLLECTION – debug friendly
+    // SUPER ROBUST TAG COLLECTION
     const allTags = new Set();
     videos.forEach((v, index) => {
-      const tags = v.tags || [];
+      let tags = v.tags;
+      // Handle common Firestore quirks (sometimes tags arrive as undefined/null/object)
+      if (!tags) tags = [];
       if (!Array.isArray(tags)) {
-        console.warn(`Video ${index} has invalid tags field:`, tags);
-        return;
+        console.warn(`Video ${index} tags not array:`, tags);
+        tags = [];
       }
       tags.forEach(t => {
         if (t && typeof t === 'string' && t.trim()) {
@@ -5674,11 +5676,11 @@ function showHighlightsModal(videos) {
       });
     });
 
-    console.log("Collected unique tags:", [...allTags]); // ← CHECK THIS IN CONSOLE!
+    console.log("Collected unique tags from all videos:", [...allTags]);
 
     const sortedTags = [...allTags].sort();
 
-    // Create buttons
+    // Create tag buttons
     if (sortedTags.length === 0) {
       const noTagMsg = document.createElement("div");
       noTagMsg.textContent = "No tags available in clips";
@@ -5743,6 +5745,7 @@ function showHighlightsModal(videos) {
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
+
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -5779,8 +5782,17 @@ function showHighlightsModal(videos) {
       vidContainer.addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        if (!isUnlocked) return showUnlockConfirm?.(video, renderCards);
-        openFullScreenVideo?.(video.videoUrl || "");
+        if (!isUnlocked) {
+          if (typeof showUnlockConfirm === "function") {
+            showUnlockConfirm(video, renderCards);
+          } else {
+            console.warn("showUnlockConfirm is not defined – unlock feature disabled");
+          }
+          return;
+        }
+        if (typeof openFullScreenVideo === "function") {
+          openFullScreenVideo(video.videoUrl || "");
+        }
       });
 
       vidContainer.appendChild(videoEl);
@@ -5808,7 +5820,11 @@ function showHighlightsModal(videos) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
               if (userSnap.exists()) {
-                showSocialCard(userSnap.data());
+                if (typeof showSocialCard === "function") {
+                  showSocialCard(userSnap.data());
+                } else {
+                  console.warn("showSocialCard is not defined");
+                }
               }
             })
             .catch(err => console.error("Failed to load user:", err));
@@ -5827,7 +5843,7 @@ function showHighlightsModal(videos) {
       info.append(title, user, tagsEl);
       card.appendChild(info);
 
-      // Badge (unchanged)
+      // Badge
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
@@ -5864,19 +5880,19 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH – only username/chatId, live & case-insensitive
+  // SEARCH: live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       const term = e.target.value.trim().toLowerCase();
       const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
 
-      console.log("Searching for:", searchTerm); // debug
+      console.log("Searching for username:", searchTerm);
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const userEl = card.querySelector("div[style*='color:#00ffea']");
-        let username = userEl?.textContent?.toLowerCase() || "";
-        username = username.replace("@", "").trim(); // clean @
+        let username = userEl?.textContent || "";
+        username = username.replace("@", "").trim().toLowerCase();
 
         const matches = !searchTerm || username.includes(searchTerm);
         card.style.display = matches ? "" : "none";
@@ -5884,8 +5900,9 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Initial render + debug
-  console.log("Total videos loaded:", videos.length);
+  // Initial render + extra debug
+  console.log("Videos loaded (count):", videos.length);
+  console.log("First video sample:", videos[0] || "No videos");
   renderCards();
   document.body.appendChild(modal);
   setTimeout(() => {
