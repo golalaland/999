@@ -761,6 +761,12 @@ submitBtn.onclick = async () => {
     return;
   }
 
+  // === NEW: Males can ONLY sign up as VIPs ===
+  if (gender === 'Male' && !isVIP) {
+    showPopup('Males can only join as VIPs. Please toggle VIP on.');
+    return;
+  }
+
   submitBtn.classList.add('loading');
   messageEl.textContent = 'Creating your account...';
 
@@ -809,9 +815,7 @@ submitBtn.onclick = async () => {
       }
     }
 
-    // === NEW: Gatekeeper for Hosts ===
-    // Hosts can ONLY sign up if they inherit a hiveName (from a valid inviter)
-    // Direct signups or fake referrals → force to non-host
+    // === Gatekeeper for Hosts (Females only) ===
     const isHost = gender === 'Female' && !isVIP;
     if (isHost && !hiveName) {
       showPopup('Host signups require an invitation from an existing host. Please use a valid referral link.');
@@ -857,13 +861,13 @@ submitBtn.onclick = async () => {
       popupPhoto: "",
       isVIP: !!isVIP,
       hasPaid: false,
-      isHost: isHost && hiveName, // ← Only true if they have hiveName (gatekeeper enforced)
+      isHost: isHost && hiveName, // Gatekeeper: only true if they have hiveName
       isTrending: false,
       isAdmin: false,
       featuredHosts: false,
       invitedBy: inviterDocId,
       referral: rawRef || null,
-      hiveName: hiveName, // ← Inherited or empty
+      hiveName: hiveName,
       phoneVerified: false,
       emailVerified: false,
       hostLink: (!isVIP && isHost && hiveName)
@@ -953,7 +957,6 @@ submitBtn.onclick = async () => {
     localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
     localStorage.setItem("fullName", fullName || '');
 
-    // Clear loading state
     submitBtn.classList.remove('loading');
 
     if (isVIP) {
