@@ -5568,7 +5568,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH + UNLOCK RESTORED) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH + UNLOCK FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5584,7 +5584,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // === HEADER ===
+  // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -5605,7 +5605,7 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(intro);
 
-  // === CLOSE BUTTON ===
+  // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5624,7 +5624,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // === CONTROLS ===
+  // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -5719,7 +5719,6 @@ function showHighlightsModal(videos) {
 
     const sortedTags = [...allTags].sort();
 
-    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5811,16 +5810,16 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
+      // FIXED UNLOCK
       vidContainer.addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
         if (!isUnlocked) {
-          // Safely call unlock confirm
           if (typeof showUnlockConfirm === "function") {
             showUnlockConfirm(video, () => renderCards());
           } else {
-            console.warn("showUnlockConfirm not defined");
-            alert("Unlock feature not available at the moment.");
+            console.warn("showUnlockConfirm not defined – unlock disabled");
+            alert("Unlock feature not available. Please contact support.");
           }
           return;
         }
@@ -5910,17 +5909,25 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH – fixed, live, only username/chatId
+  // SEARCH – FIXED: live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       const term = e.target.value.trim().toLowerCase();
       const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
 
+      console.log("Searching for:", searchTerm);
+
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const userEl = card.querySelector("div[style*='color:#00ffea']");
-        let username = userEl?.textContent || "";
+        if (!userEl) {
+          card.style.display = "none"; // hide if no username element
+          return;
+        }
+        let username = userEl.textContent || "";
         username = username.replace("@", "").trim().toLowerCase();
+
+        console.log("Username found:", username); // debug
 
         const matches = !searchTerm || username.includes(searchTerm);
         card.style.display = matches ? "" : "none";
@@ -5933,6 +5940,7 @@ function showHighlightsModal(videos) {
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 }
+
 async function unlockVideo(video) {
   if (!currentUser?.uid) {
     return showGoldAlert("Login required");
