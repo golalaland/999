@@ -5520,7 +5520,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH + TAGS + SOCIAL CARD FIXED) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (TAGS VISIBLE + SEARCH FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5536,7 +5536,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // === HEADER ===
+  // HEADER (unchanged)
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -5557,7 +5557,7 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(intro);
 
-  // === CLOSE BUTTON ===
+  // CLOSE BUTTON (unchanged)
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5576,14 +5576,14 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // === CONTROLS ===
+  // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Search bar - only by @chatId
+  // Search bar
   const searchWrap = document.createElement("div");
   searchWrap.style.cssText = `
     display:flex; align-items:center; gap:10px;
@@ -5605,7 +5605,7 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(searchWrap);
 
-  // Main filter buttons
+  // Main buttons (unchanged)
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
 
@@ -5630,18 +5630,18 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
-  // === TAG FILTER BUTTONS – SMALL & VISIBLE ===
+  // TAG FILTER BUTTONS (made super visible & robust)
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
-    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:500px;
-    margin-top:10px; padding:0 10px;
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
+    margin-top:12px; padding:8px 0;
   `;
   controls.appendChild(tagContainer);
 
   modal.appendChild(controls);
 
-  // === GRID ===
+  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
@@ -5659,43 +5659,57 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // Collect ALL unique tags from ALL videos (so buttons show even when filtered)
+    // ROBUST TAG COLLECTION – debug friendly
     const allTags = new Set();
-    videos.forEach(v => {
-      if (Array.isArray(v.tags)) {
-        v.tags.forEach(t => {
-          if (t && typeof t === "string") allTags.add(t.trim().toLowerCase());
-        });
+    videos.forEach((v, index) => {
+      const tags = v.tags || [];
+      if (!Array.isArray(tags)) {
+        console.warn(`Video ${index} has invalid tags field:`, tags);
+        return;
       }
+      tags.forEach(t => {
+        if (t && typeof t === 'string' && t.trim()) {
+          allTags.add(t.trim().toLowerCase());
+        }
+      });
     });
+
+    console.log("Collected unique tags:", [...allTags]); // ← CHECK THIS IN CONSOLE!
 
     const sortedTags = [...allTags].sort();
 
-    // Create tag buttons
-    sortedTags.forEach(tag => {
-      const btn = document.createElement("button");
-      btn.textContent = `#${tag}`;
-      btn.dataset.tag = tag;
-      Object.assign(btn.style, {
-        padding: "5px 12px",
-        borderRadius: "20px",
-        fontSize: "11px",
-        fontWeight: "600",
-        background: activeTags.has(tag) ? "rgba(255,46,120,0.45)" : "rgba(255,46,120,0.15)",
-        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.5)",
-        cursor: "pointer",
-        transition: "all 0.25s"
+    // Create buttons
+    if (sortedTags.length === 0) {
+      const noTagMsg = document.createElement("div");
+      noTagMsg.textContent = "No tags available in clips";
+      noTagMsg.style.cssText = "color:#888; font-size:13px; padding:8px;";
+      tagContainer.appendChild(noTagMsg);
+    } else {
+      sortedTags.forEach(tag => {
+        const btn = document.createElement("button");
+        btn.textContent = `#${tag}`;
+        btn.dataset.tag = tag;
+        Object.assign(btn.style, {
+          padding: "6px 14px",
+          borderRadius: "24px",
+          fontSize: "12px",
+          fontWeight: "600",
+          background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+          color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+          border: "1px solid rgba(255,46,120,0.6)",
+          cursor: "pointer",
+          transition: "all 0.25s"
+        });
+        btn.onclick = () => {
+          if (activeTags.has(tag)) activeTags.delete(tag);
+          else activeTags.add(tag);
+          renderCards();
+        };
+        tagContainer.appendChild(btn);
       });
-      btn.onclick = () => {
-        if (activeTags.has(tag)) activeTags.delete(tag);
-        else activeTags.add(tag);
-        renderCards();
-      };
-      tagContainer.appendChild(btn);
-    });
+    }
 
-    // Apply filters
+    // Filter videos
     let filtered = videos.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -5704,7 +5718,7 @@ function showHighlightsModal(videos) {
 
     if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
-        const videoTags = Array.isArray(v.tags) ? v.tags.map(t => t.toLowerCase()) : [];
+        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
@@ -5724,17 +5738,11 @@ function showHighlightsModal(videos) {
 
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative",
-        aspectRatio: "9/16",
-        borderRadius: "16px",
-        overflow: "hidden",
-        background: "#0f0a1a",
-        cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
-
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -5748,9 +5756,7 @@ function showHighlightsModal(videos) {
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = "metadata";
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
       if (isUnlocked) {
@@ -5796,17 +5802,16 @@ function showHighlightsModal(videos) {
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
 
-      // Click username → social card
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
               if (userSnap.exists()) {
-                showSocialCard(userSnap.data()); // Correct exported function
+                showSocialCard(userSnap.data());
               }
             })
-            .catch(err => console.error("Failed to load user for social card:", err));
+            .catch(err => console.error("Failed to load user:", err));
         }
       };
 
@@ -5822,7 +5827,7 @@ function showHighlightsModal(videos) {
       info.append(title, user, tagsEl);
       card.appendChild(info);
 
-      // Badge
+      // Badge (unchanged)
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
@@ -5840,7 +5845,7 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Filter buttons logic
+  // Filter buttons
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -5859,16 +5864,19 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // Search: ONLY by chatId / username (live filtering)
+  // SEARCH – only username/chatId, live & case-insensitive
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      const term = searchInput.value.trim().toLowerCase();
-      const searchTerm = term.startsWith("@") ? term.slice(1) : term;
+    searchInput.addEventListener("input", (e) => {
+      const term = e.target.value.trim().toLowerCase();
+      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
+
+      console.log("Searching for:", searchTerm); // debug
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
-        const usernameEl = card.querySelector("div[style*='color:#00ffea']");
-        const username = usernameEl?.textContent?.toLowerCase()?.replace("@", "") || "";
+        const userEl = card.querySelector("div[style*='color:#00ffea']");
+        let username = userEl?.textContent?.toLowerCase() || "";
+        username = username.replace("@", "").trim(); // clean @
 
         const matches = !searchTerm || username.includes(searchTerm);
         card.style.display = matches ? "" : "none";
@@ -5876,50 +5884,15 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Initial render
+  // Initial render + debug
+  console.log("Total videos loaded:", videos.length);
   renderCards();
   document.body.appendChild(modal);
-  setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
-}
-
-function showUnlockConfirm(video, onUnlockCallback) {
-  document.querySelectorAll("video").forEach(v => v.pause());
-  document.getElementById("unlockConfirmModal")?.remove();
-
-   const modal = document.createElement("div");
-  modal.id = "unlockConfirmModal";
-  Object.assign(modal.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    background: "rgba(0,0,0,0.93)",
-    backdropFilter: "blur(8px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: "1000001",
-    opacity: "1",
-  });
-  modal.innerHTML = `
-    <div style="background:#111;padding:20px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
-      <h3 style="margin-bottom:10px;font-weight:600;">Unlock "${video.title}"?</h3>
-      <p style="margin-bottom:16px;">This will cost <b>${video.highlightVideoPrice} STRZ</b></p>
-      <div style="display:flex;gap:12px;justify-content:center;">
-        <button id="cancelUnlock" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
-        <button id="confirmUnlock" style="padding:8px 16px;background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-
-  modal.querySelector("#cancelUnlock").onclick = () => modal.remove();
-  modal.querySelector("#confirmUnlock").onclick = async () => {
-    modal.remove();
-    await unlockVideo(video);
-  };
+  setTimeout(() => {
+    const input = document.getElementById("highlightSearchInput");
+    if (input) input.focus();
+    console.log("Tag buttons count after render:", document.querySelectorAll('#tagButtons button').length);
+  }, 300);
 }
 
 async function unlockVideo(video) {
