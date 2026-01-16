@@ -725,286 +725,254 @@ vipToggle.onclick = () => {
   }
 };
 
-  // === MAIN SIGNUP BUTTON ===
-  submitBtn.onclick = async () => {
-    const fullName = nameInput.value.trim();
-    const chatId = cleanChatId(chatIdInput.value.trim());
-    const phone = phoneInput.value.trim();
-    const email = emailInput.value.trim().toLowerCase();
-    const dob = dobInput.value;
-    const password = passwordInput.value.trim();
-    const confirmPassword = confirmPasswordInput?.value.trim() || '';
+// === MAIN SIGNUP BUTTON ===
+submitBtn.onclick = async () => {
+  const fullName = nameInput.value.trim();
+  const chatId = cleanChatId(chatIdInput.value.trim());
+  const phone = phoneInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
+  const dob = dobInput.value;
+  const password = passwordInput.value.trim();
+  const confirmPassword = confirmPasswordInput?.value.trim() || '';
 
-    // === VALIDATIONS WITH POPUPS ===
-    if (!fullName || !chatId || !phone || !email || !gender || !dob || !password || !confirmPassword) {
-      showPopup('Please fill all fields');
-      return;
-    }
-    if (chatId.length < 5 || chatId.length > 15) {
-      showPopup('Username must be 5–15 characters');
-      return;
-    }
-    if (password.length < 8) {
-      showPopup('Password must be at least 8 characters');
-      return;
-    }
-    if (password !== confirmPassword) {
-      showPopup('Passwords do not match');
-      return;
-    }
-    if (calculateAge(dob) < 18) {
-      showPopup('You must be 18 or older to join');
-      return;
-    }
-    if (!/@(gmail|yahoo|icloud|proton|hotmail|outlook)\.(com|me)$/.test(email)) {
-      showPopup('Please use a valid email provider');
-      return;
-    }
-
-    submitBtn.classList.add('loading');
-    messageEl.textContent = 'Creating your account...';
-
-    const docId = sanitizeKey(email);
-    const userRef = doc(db, "users", docId);
-
-    try {
-      // Check duplicates
-      const [docSnap, chatTaken] = await Promise.all([
-        getDoc(userRef),
-        isChatIdTaken(chatId)
-      ]);
-
-      if (docSnap.exists()) {
-        showPopup('Email already registered');
-        return;
-      }
-      if (chatTaken) {
-        showPopup('Username already taken');
-        return;
-      }
-
-
-// Real-time username availability check
-const usernameInput = document.getElementById('chatId');
-let usernameTimeout = null;
-
-usernameInput.addEventListener('input', () => {
-  clearTimeout(usernameTimeout);
-  usernameTimeout = setTimeout(async () => {
-    const chatId = cleanChatId(usernameInput.value.trim());
-    if (chatId.length < 5 || chatId.length > 15) {
-      usernameInput.style.borderColor = '#ff4444';
-      showPopup('Username must be 5–15 characters');
-      return;
-    }
-
-    usernameInput.style.borderColor = '#c3f60c'; // reset
-    try {
-      const taken = await isChatIdTaken(chatId);
-      if (taken) {
-        usernameInput.style.borderColor = '#ff4444';
-        showPopup('Username already taken – choose another!');
-      } else {
-        usernameInput.style.borderColor = '#c3f60c';
-        // Optional: green success message
-        // showPopup('Username available! 🎉', 1500);
-      }
-    } catch (err) {
-      console.error("Username check failed:", err);
-    }
-  }, 600); // debounce 600ms – only check after user stops typing
-});
-
-// Optional: also check on blur (when user clicks away)
-usernameInput.addEventListener('blur', async () => {
-  const chatId = cleanChatId(usernameInput.value.trim());
-  if (chatId.length >= 5 && chatId.length <= 15) {
-    const taken = await isChatIdTaken(chatId);
-    if (taken) {
-      usernameInput.style.borderColor = '#ff4444';
-      showPopup('Username already taken');
-    }
+  // === VALIDATIONS WITH POPUPS ===
+  if (!fullName || !chatId || !phone || !email || !gender || !dob || !password || !confirmPassword) {
+    showPopup('Please fill all fields');
+    return;
   }
-});
-
-      
-  // === REFERRAL CHECK + LIMIT (MAX 5 VIPs ONLY) ===
-let inviterDocId = null;
-let hiveName = '';
-if (cleanRef) {
-  inviterDocId = await getInviterDocId(cleanRef);
-  if (inviterDocId) {
-    const invSnap = await getDoc(doc(db, 'users', inviterDocId));
-    if (invSnap.exists()) {
-      const inviterData = invSnap.data();
-      const currentVIPs = inviterData.vipCount || 0;
-      if (isVIP && currentVIPs >= 5) {
-        showPopup('This host has reached their VIP invite limit (5 max)');
-        submitBtn.classList.remove('loading');
-        return;
-      }
-      // Inherit hiveName only if inviter is a host
-      if (!isVIP && inviterData.isHost && inviterData.hiveName) {
-        hiveName = inviterData.hiveName;
-      }
-    } else {
-      inviterDocId = null;
-    }
+  if (chatId.length < 5 || chatId.length > 15) {
+    showPopup('Username must be 5–15 characters');
+    return;
   }
-}
-
-// === NEW: Gatekeeper for Hosts ===
-// Hosts can ONLY sign up if they inherit a hiveName (from a valid inviter)
-// Direct signups or fake referrals → force to non-host
-if (isHost && !hiveName) {
-  showPopup('Host signups require an invitation from an existing host. Please use a valid referral link.');
-  submitBtn.classList.remove('loading');
-  return;
-}
-
-// === CREATE NEW USER ===
-const userData = {
-  uid: userCredential.user.uid,
-  fullName,
-  chatId,
-  chatIdLower: chatId,
-  email,
-  phone,
-  dob,
-  age: calculateAge(dob),
-  gender,
-  country,
-  city: "",
-  location: "",
-  bankName: "",
-  bankAccountNumber: "",
-  instagram: "",
-  tiktok: "",
-  whatsapp: "",
-  telegram: "",
-  bioPick: "",
-  naturePick: "",
-  fruitPick: "",
-  videoUrl: "",
-  popupPhoto: "",
-  isVIP: !!isVIP,
-  hasPaid: false,
-  isHost: gender === 'Female' && !isVIP && hiveName, // ← Only true if they have hiveName
-  isTrending: false,
-  isAdmin: false,
-  featuredHosts: false,
-  invitedBy: inviterDocId,
-  referral: rawRef || null,
-  hiveName: hiveName, // ← Set inherited value (or empty)
-  phoneVerified: false,
-  emailVerified: false,
-  hostLink: (!isVIP && gender === 'Female' && hiveName)
-    ? `https://cube.xixi.com/signup?ref=${chatId}`
-    : null,
-  vipName: isVIP ? chatId : null,
-  socialShare: gender === 'Female' && !isVIP,
-  stars: 50,
-  starsToday: 0,
-  starsGifted: 0,
-  lastStarDate: new Date().toISOString().split("T")[0],
-  cash: 0,
-  points: 0,
-  gifts: 0,
-  views: 0,
-  inviteeGiftStars: 0,
-  inviteeGiftShown: false,
-  hostFriends: [],
-  usernameColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
-  createdAt: serverTimestamp(),
-  lastUpdated: serverTimestamp()
-};
-
-await setDoc(userRef, userData);
-
-// === UPDATE INVITER ON SIGNUP (SAFE ARRAY + TIMER FIELDS READY) ===
-if (inviterDocId) {
-  if (isVIP) {
-    await updateDoc(doc(db, "users", inviterDocId), {
-      referralCount: increment(1),
-      vipCount: increment(1),
-      lastUpdated: serverTimestamp()
-    }).catch(err => console.warn("Inviter VIP count update failed:", err));
-
-    try {
-      await addDoc(collection(db, "notifications"), {
-        recipientId: inviterDocId,
-        type: "new_vip_pending",
-        title: "A VIP in Your Cube!",
-        message: `@${chatId} just signed up as VIP using your invite link!`,
-        vipUserId: userCredential.user.uid,
-        vipUserName: chatId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-    } catch (notifErr) {
-      console.warn("VIP pending notification failed:", notifErr);
-    }
-  } else {
-    const hostInviteBonus = 100;
-    await updateDoc(doc(db, "users", inviterDocId), {
-      hostFriends: arrayUnion({
-        chatId,
-        fullName,
-        email,
-        phone,
-        isVIP: false,
-        isHost: gender === 'Female',
-        joinedAt: Date.now()
-      }),
-      stars: increment(hostInviteBonus),
-      referralCount: increment(1),
-      hostReferralCount: increment(1),
-      hostFriendsLastUpdated: serverTimestamp(),
-      lastUpdated: serverTimestamp()
-    }).catch(err => console.warn("Inviter host bonus failed:", err));
-
-    try {
-      await addDoc(collection(db, "notifications"), {
-        recipientId: inviterDocId,
-        type: "new_host_join",
-        title: "A Host Joined Your Cube!",
-        message: `@${chatId} just joined as a Host using your link!\n+${hostInviteBonus} STRZ `,
-        newUserId: userCredential.user.uid,
-        newUserName: chatId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-    } catch (notifErr) {
-      console.warn("Host join notification failed:", notifErr);
-    }
+  if (password.length < 8) {
+    showPopup('Password must be at least 8 characters');
+    return;
   }
-}
+  if (password !== confirmPassword) {
+    showPopup('Passwords do not match');
+    return;
+  }
+  if (calculateAge(dob) < 18) {
+    showPopup('You must be 18 or older to join');
+    return;
+  }
+  if (!/@(gmail|yahoo|icloud|proton|hotmail|outlook)\.(com|me)$/.test(email)) {
+    showPopup('Please use a valid email provider');
+    return;
+  }
 
-// Success
-messageEl.textContent = `Welcome ${fullName}!`;
-localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
-localStorage.setItem("fullName", fullName || '');
-submitBtn.classList.remove('loading');
+  submitBtn.classList.add('loading');
+  messageEl.textContent = 'Creating your account...';
 
-if (isVIP) {
-  triggerSprayConfetti();
-  submitBtn.classList.add('hidden');
-  vipPayBtn.classList.remove('hidden');
-  messageEl.textContent = "Your VIP slot is reserved 🔒";
-} else {
-  setTimeout(() => window.location.href = "/chat.html", 1800);
-}
+  const docId = sanitizeKey(email);
+  const userRef = doc(db, "users", docId);
 
-
-    } catch (err) {
-      console.error(err);
-      const errorMsg = err.code === 'auth/email-already-in-use'
-        ? 'This Email is already registered'
-        : 'Signup failed — please try again';
-      showPopup(errorMsg);
+  try {
+    // Check duplicates
+    const [docSnap, chatTaken] = await Promise.all([
+      getDoc(userRef),
+      isChatIdTaken(chatId)
+    ]);
+    if (docSnap.exists()) {
+      showPopup('Email already registered');
       submitBtn.classList.remove('loading');
+      return;
     }
-  };
+    if (chatTaken) {
+      showPopup('Username already taken');
+      submitBtn.classList.remove('loading');
+      return;
+    }
+
+    // === REFERRAL CHECK + LIMIT (MAX 5 VIPs ONLY) ===
+    let inviterDocId = null;
+    let hiveName = '';
+    if (cleanRef) {
+      inviterDocId = await getInviterDocId(cleanRef);
+      if (inviterDocId) {
+        const invSnap = await getDoc(doc(db, 'users', inviterDocId));
+        if (invSnap.exists()) {
+          const inviterData = invSnap.data();
+          const currentVIPs = inviterData.vipCount || 0;
+          if (isVIP && currentVIPs >= 5) {
+            showPopup('This host has reached their VIP invite limit (5 max)');
+            submitBtn.classList.remove('loading');
+            return;
+          }
+          // Inherit hiveName only if inviter is a host
+          if (!isVIP && inviterData.isHost && inviterData.hiveName) {
+            hiveName = inviterData.hiveName;
+          }
+        } else {
+          inviterDocId = null;
+        }
+      }
+    }
+
+    // === NEW: Gatekeeper for Hosts ===
+    // Hosts can ONLY sign up if they inherit a hiveName (from a valid inviter)
+    // Direct signups or fake referrals → force to non-host
+    const isHost = gender === 'Female' && !isVIP;
+    if (isHost && !hiveName) {
+      showPopup('Host signups require an invitation from an existing host. Please use a valid referral link.');
+      submitBtn.classList.remove('loading');
+      return;
+    }
+
+    // Create Firebase Auth user
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Country detection
+    let country = 'Unknown';
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      country = data.country_name || 'Unknown';
+    } catch (e) {}
+
+    // === CREATE NEW USER ===
+    const userData = {
+      uid: userCredential.user.uid,
+      fullName,
+      chatId,
+      chatIdLower: chatId,
+      email,
+      phone,
+      dob,
+      age: calculateAge(dob),
+      gender,
+      country,
+      city: "",
+      location: "",
+      bankName: "",
+      bankAccountNumber: "",
+      instagram: "",
+      tiktok: "",
+      whatsapp: "",
+      telegram: "",
+      bioPick: "",
+      naturePick: "",
+      fruitPick: "",
+      videoUrl: "",
+      popupPhoto: "",
+      isVIP: !!isVIP,
+      hasPaid: false,
+      isHost: isHost && hiveName, // ← Only true if they have hiveName (gatekeeper enforced)
+      isTrending: false,
+      isAdmin: false,
+      featuredHosts: false,
+      invitedBy: inviterDocId,
+      referral: rawRef || null,
+      hiveName: hiveName, // ← Inherited or empty
+      phoneVerified: false,
+      emailVerified: false,
+      hostLink: (!isVIP && isHost && hiveName)
+        ? `https://cube.xixi.com/signup?ref=${chatId}`
+        : null,
+      vipName: isVIP ? chatId : null,
+      socialShare: gender === 'Female' && !isVIP,
+      stars: 50,
+      starsToday: 0,
+      starsGifted: 0,
+      lastStarDate: new Date().toISOString().split("T")[0],
+      cash: 0,
+      points: 0,
+      gifts: 0,
+      views: 0,
+      inviteeGiftStars: 0,
+      inviteeGiftShown: false,
+      hostFriends: [],
+      usernameColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
+      createdAt: serverTimestamp(),
+      lastUpdated: serverTimestamp()
+    };
+
+    await setDoc(userRef, userData);
+
+    // === UPDATE INVITER ON SIGNUP (SAFE ARRAY + TIMER FIELDS READY) ===
+    if (inviterDocId) {
+      if (isVIP) {
+        await updateDoc(doc(db, "users", inviterDocId), {
+          referralCount: increment(1),
+          vipCount: increment(1),
+          lastUpdated: serverTimestamp()
+        }).catch(err => console.warn("Inviter VIP count update failed:", err));
+
+        try {
+          await addDoc(collection(db, "notifications"), {
+            recipientId: inviterDocId,
+            type: "new_vip_pending",
+            title: "A VIP in Your Cube!",
+            message: `@${chatId} just signed up as VIP using your invite link!`,
+            vipUserId: userCredential.user.uid,
+            vipUserName: chatId,
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        } catch (notifErr) {
+          console.warn("VIP pending notification failed:", notifErr);
+        }
+      } else {
+        const hostInviteBonus = 100;
+        await updateDoc(doc(db, "users", inviterDocId), {
+          hostFriends: arrayUnion({
+            chatId,
+            fullName,
+            email,
+            phone,
+            isVIP: false,
+            isHost: gender === 'Female',
+            joinedAt: Date.now()
+          }),
+          stars: increment(hostInviteBonus),
+          referralCount: increment(1),
+          hostReferralCount: increment(1),
+          hostFriendsLastUpdated: serverTimestamp(),
+          lastUpdated: serverTimestamp()
+        }).catch(err => console.warn("Inviter host bonus failed:", err));
+
+        try {
+          await addDoc(collection(db, "notifications"), {
+            recipientId: inviterDocId,
+            type: "new_host_join",
+            title: "A Host Joined Your Cube!",
+            message: `@${chatId} just joined as a Host using your link!\n+${hostInviteBonus} STRZ `,
+            newUserId: userCredential.user.uid,
+            newUserName: chatId,
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        } catch (notifErr) {
+          console.warn("Host join notification failed:", notifErr);
+        }
+      }
+    }
+
+    // Success
+    messageEl.textContent = `Welcome ${fullName}!`;
+    localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
+    localStorage.setItem("fullName", fullName || '');
+
+    // Clear loading state
+    submitBtn.classList.remove('loading');
+
+    if (isVIP) {
+      triggerSprayConfetti();
+      submitBtn.classList.add('hidden');
+      vipPayBtn.classList.remove('hidden');
+      messageEl.textContent = "Your VIP slot is reserved 🔒";
+    } else {
+      setTimeout(() => window.location.href = "/chat.html", 1800);
+    }
+  } catch (err) {
+    console.error(err);
+    const errorMsg = err.code === 'auth/email-already-in-use'
+      ? 'This Email is already registered'
+      : 'Signup failed — please try again';
+    showPopup(errorMsg);
+    submitBtn.classList.remove('loading');
+  }
+};
 
 // === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE - ₦19,999) ===
 vipPayBtn.onclick = () => {
