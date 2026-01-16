@@ -5605,7 +5605,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (SEARCH FIXED – ONLY USERNAME) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
@@ -5644,11 +5644,20 @@ function showHighlightsModal(videos) {
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
-  Object.assign(closeBtn.style, {
-    position: "absolute", top: "16px", right: "16px", width: "32px", height: "32px",
-    display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-    zIndex: "1002", transition: "all 0.25s ease", filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
-  });
+ Object.assign(closeBtn.style, {
+  position: "absolute",
+  top: "8px",           // ← was 16px, now moved upward (smaller number = higher up)
+  right: "10px",        // ← was 16px, now moved a bit to the right (smaller number = more to the right)
+  width: "32px",
+  height: "32px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: "1002",
+  transition: "all 0.25s ease",
+  filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+});
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = (e) => {
@@ -5663,6 +5672,27 @@ function showHighlightsModal(videos) {
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
+  // Search bar (kept as-is, even though you're removing it later)
+  const searchWrap = document.createElement("div");
+  searchWrap.style.cssText = `
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg,rgba(255,0,242,0.12),rgba(138,43,226,0.09));
+    border:1px solid rgba(138,43,226,0.55); border-radius:30px; padding:10px 16px;
+    width:100%; max-width:320px; backdrop-filter:blur(10px);
+    box-shadow:0 0 20px rgba(255,0,242,0.25);
+  `;
+  searchWrap.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M15 15L21 21M10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10C17 13.866 13.866 17 10 17Z"
+            stroke="url(#gradSearch)" stroke-width="2.5"/>
+      <defs><linearGradient id="gradSearch" x1="0" y1="0" x2="24" y2="24">
+        <stop stop-color="#00ffea"/><stop offset="1" stop-color="#ff00f2"/>
+      </linearGradient></defs>
+    </svg>
+    <input id="highlightSearchInput" type="text" placeholder="Search @chatId..."
+           style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:14px;"/>
+  `;
+  controls.appendChild(searchWrap);
   // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
@@ -5753,6 +5783,9 @@ function showHighlightsModal(videos) {
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
+    // === FIXED: SHUFFLE THE FILTERED LIST FOR RANDOM ORDER EVERY TIME ===
+    filtered = filtered.sort(() => Math.random() - 0.5);
+
     // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
@@ -5779,12 +5812,6 @@ function showHighlightsModal(videos) {
         card.style.transform = "scale(1)";
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
-
-      // === FIXED: ADD DATA ATTRIBUTES HERE (this is the correct place) ===
-      card.setAttribute("data-uploader", (video.uploaderName || "Anonymous").toLowerCase());
-      card.setAttribute("data-title", (video.title || "").toLowerCase());
-      card.setAttribute("data-tags", (video.tags || []).join(" ").toLowerCase());
-
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
       const videoEl = document.createElement("video");
@@ -5812,7 +5839,7 @@ function showHighlightsModal(videos) {
           showUnlockConfirm(video, () => {
             // Refresh unlockedVideos from localStorage
             unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            // Re-render cards
+            // Re-render cards (with new random order)
             renderCards(videos);
             // Show success notification
             showStarPopup("Video unlocked! 🎉", "success");
@@ -5891,17 +5918,17 @@ function showHighlightsModal(videos) {
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderCards();
   };
-  // SEARCH – FIXED: only by uploaderName/chatId, live filtering
+  // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       const term = e.target.value.trim().toLowerCase();
       const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
-
-      // Use the data attribute we added
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
-        const uploader = card.getAttribute("data-uploader") || "";
-        const matches = !searchTerm || uploader.includes(searchTerm);
+        const userEl = card.querySelector("div[style*='color:#00ffea']");
+        let username = userEl?.textContent || "";
+        username = username.replace("@", "").trim().toLowerCase();
+        const matches = !searchTerm || username.includes(searchTerm);
         card.style.display = matches ? "" : "none";
       });
     });
