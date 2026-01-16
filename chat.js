@@ -5568,7 +5568,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – FINAL WORKING VERSION (Search Fixed + Unlock Fixed) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (UNLOCK + SEARCH FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
 
@@ -5584,7 +5584,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER (unchanged)
+  // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -5605,7 +5605,7 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(intro);
 
-  // CLOSE BUTTON (unchanged)
+  // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5703,13 +5703,12 @@ function showHighlightsModal(videos) {
   let filterMode = "all";
   let activeTags = new Set();
 
-  function renderCards() {
+  function renderCards(videosToRender = videos) {  // ← added param for callback refresh
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // Collect tags
     const allTags = new Set();
-    videos.forEach(v => {
+    videosToRender.forEach(v => {
       (v.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           allTags.add(t.trim().toLowerCase());
@@ -5719,7 +5718,6 @@ function showHighlightsModal(videos) {
 
     const sortedTags = [...allTags].sort();
 
-    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5738,13 +5736,12 @@ function showHighlightsModal(videos) {
       btn.onclick = () => {
         if (activeTags.has(tag)) activeTags.delete(tag);
         else activeTags.add(tag);
-        renderCards();
+        renderCards(videosToRender);
       };
       tagContainer.appendChild(btn);
     });
 
-    // Filter videos
-    let filtered = videos.filter(v => {
+    let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
       return true;
@@ -5757,7 +5754,6 @@ function showHighlightsModal(videos) {
       });
     }
 
-    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
@@ -5766,7 +5762,6 @@ function showHighlightsModal(videos) {
       return;
     }
 
-    // Render cards
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
 
@@ -5811,29 +5806,15 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
-    vidContainer.addEventListener("click", (e) => {
-  e.stopPropagation();
-  e.preventDefault();
-
-  if (!isUnlocked) {
-    // Safe call with fallback
-    if (typeof showUnlockConfirm === "function") {
-      showUnlockConfirm(video, () => renderCards());
-    } else {
-      console.error("showUnlockConfirm is not defined! Unlock blocked.");
-      // Optional fallback UI (you can remove or customize)
-      alert("Unlock feature temporarily unavailable. Please try again later or contact support.");
-    }
-    return;
-  }
-
-  // Play full video if unlocked
-  if (typeof openFullScreenVideo === "function") {
-    openFullScreenVideo(video.videoUrl || "");
-  } else {
-    console.warn("openFullScreenVideo not defined");
-  }
-});
+      // FIXED: exact original unlock call style
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        if (!isUnlocked) {
+          showUnlockConfirm(video, () => renderCards(videos));  // ← original working call
+          return;
+        }
+        openFullScreenVideo(video.videoUrl || "");
+      };
 
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
@@ -5916,17 +5897,17 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH – FIXED & WORKING (only username/chatId, live filtering)
+  // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      const term = searchInput.value.trim().toLowerCase();
-      const searchTerm = term.startsWith("@") ? term.slice(1) : term;
+    searchInput.addEventListener("input", (e) => {
+      const term = e.target.value.trim().toLowerCase();
+      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
 
       grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
         const userEl = card.querySelector("div[style*='color:#00ffea']");
-        const usernameText = userEl ? userEl.textContent : "";
-        const username = usernameText.replace("@", "").trim().toLowerCase();
+        let username = userEl?.textContent || "";
+        username = username.replace("@", "").trim().toLowerCase();
 
         const matches = !searchTerm || username.includes(searchTerm);
         card.style.display = matches ? "" : "none";
