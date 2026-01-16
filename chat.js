@@ -5811,16 +5811,29 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
-      // FIXED: Unlock works again
-      vidContainer.addEventListener("click", (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (!isUnlocked) {
-          showUnlockConfirm(video, renderCards);  // Restored exactly as original
-          return;
-        }
-        openFullScreenVideo(video.videoUrl || "");
-      });
+    vidContainer.addEventListener("click", (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+
+  if (!isUnlocked) {
+    // Safe call with fallback
+    if (typeof showUnlockConfirm === "function") {
+      showUnlockConfirm(video, () => renderCards());
+    } else {
+      console.error("showUnlockConfirm is not defined! Unlock blocked.");
+      // Optional fallback UI (you can remove or customize)
+      alert("Unlock feature temporarily unavailable. Please try again later or contact support.");
+    }
+    return;
+  }
+
+  // Play full video if unlocked
+  if (typeof openFullScreenVideo === "function") {
+    openFullScreenVideo(video.videoUrl || "");
+  } else {
+    console.warn("openFullScreenVideo not defined");
+  }
+});
 
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
