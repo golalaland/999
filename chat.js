@@ -5806,18 +5806,22 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
-      // FIXED: exact original unlock call style
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        if (!isUnlocked) {
-          showUnlockConfirm(video, () => renderCards(videos));  // ← original working call
-          return;
-        }
-        openFullScreenVideo(video.videoUrl || "");
-      };
-
-      vidContainer.appendChild(videoEl);
-      card.appendChild(vidContainer);
+   vidContainer.onclick = (e) => {
+  e.stopPropagation();
+  if (!isUnlocked) {
+    // Safe call with fallback (prevents crash)
+    if (typeof showUnlockConfirm === "function") {
+      showUnlockConfirm(video, () => renderCards(videos));
+    } else {
+      console.error("showUnlockConfirm is not defined! Unlock blocked.");
+      // Friendly user fallback (customize or remove)
+      alert("Unlock feature is temporarily unavailable. Please refresh or contact support.");
+    }
+    return;
+  }
+  // Open full screen (original behavior)
+  openFullScreenVideo(video.videoUrl || "");
+};
 
       // Info overlay
       const info = document.createElement("div");
