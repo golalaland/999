@@ -4368,8 +4368,7 @@ confirmBtn.onclick = async () => {
 // ================================
 // UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload + Cloudflare CDN)
 // Max 50MB | Resumable progress | users/{uid}/ path
-// Delivers via https://media.visitcube.xyz/ with full HTTPS & caching
-// Ready for Cloudflare Worker proxy (fixes cert + NoSuchBucket issues)
+// Delivers via https://media.visitcube.xyz/ for caching & cost savings
 // ================================
 
 // Helper: Transform Firebase Storage URL → Cloudflare custom domain URL
@@ -4454,7 +4453,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
 
     const metadata = {
       contentType: file.type,
-      cacheControl: "public, max-age=31536000, immutable", // Cloudflare will cache aggressively for 1 year
+      cacheControl: "public, max-age=31536000, immutable", // 1 year cache — Cloudflare loves this
       customMetadata: {
         uploader: currentUser.uid,
         originalName: file.name,
@@ -4494,7 +4493,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
           const clipData = {
             uploaderId: currentUser.uid,
             uploaderName: currentUser.chatId || "Legend",
-            videoUrl,  // ← Cloudflare URL saved here
+            videoUrl,  // ← now using the Cloudflare URL
             highlightVideoPrice: isBoostTrending ? 0 : price,
             title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
             description: description || "",
@@ -4566,14 +4565,14 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
   }
 });
 
-// ── Tag toggle ──
+// ── Tag toggle (unchanged) ──
 document.querySelectorAll(".tag-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     btn.classList.toggle("selected");
   });
 });
 
-// ── Video preview on file select ──
+// ── Video preview on file select (unchanged but cleaned up) ──
 document.getElementById("highlightUploadInput")?.addEventListener("change", function(e) {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -5615,7 +5614,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED + THUMBNAILS) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
@@ -5629,8 +5628,7 @@ function showHighlightsModal(videos) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-
-  // HEADER (unchanged)
+  // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -5650,20 +5648,25 @@ function showHighlightsModal(videos) {
     </div>
   `;
   modal.appendChild(intro);
-
-  // CLOSE BUTTON (unchanged)
+  // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
-  Object.assign(closeBtn.style, {
-    position: "absolute", top: "8px", right: "10px",
-    width: "32px", height: "32px",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", zIndex: "1002",
-    transition: "all 0.25s ease",
-    filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
-  });
+ Object.assign(closeBtn.style, {
+  position: "absolute",
+  top: "8px",           // ← was 16px, now moved upward (smaller number = higher up)
+  right: "10px",        // ← was 16px, now moved a bit to the right (smaller number = more to the right)
+  width: "32px",
+  height: "32px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: "1002",
+  transition: "all 0.25s ease",
+  filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+});
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = (e) => {
@@ -5672,13 +5675,13 @@ function showHighlightsModal(videos) {
     setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
-
-  // CONTROLS (unchanged)
+  // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
+  // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
   const unlockedBtn = document.createElement("button");
@@ -5699,7 +5702,7 @@ function showHighlightsModal(videos) {
   });
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
-
+  // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -5708,7 +5711,6 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
-
   // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
@@ -5717,68 +5719,47 @@ function showHighlightsModal(videos) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
-
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
-
-  // ── Thumbnail Generator (client-side canvas capture) ──
-  async function generateThumbnail(videoUrl) {
-    return new Promise((resolve) => {
-      const tempVideo = document.createElement("video");
-      tempVideo.crossOrigin = "anonymous"; // Important for Cloudflare-proxied URLs
-      tempVideo.preload = "metadata";
-      tempVideo.muted = true;
-      tempVideo.src = videoUrl;
-
-      tempVideo.onloadedmetadata = () => {
-        tempVideo.currentTime = Math.min(1.5, tempVideo.duration / 2); // Seek to ~1.5s or middle
-      };
-
-      tempVideo.onseeked = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = tempVideo.videoWidth;
-        canvas.height = tempVideo.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.8)); // Quality 80% for smaller size
-        tempVideo.remove(); // Cleanup
-      };
-
-      tempVideo.onerror = () => resolve(null); // Fallback on error
-    });
-  }
-
-  async function renderCards(videosToRender = videos) {
+  function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
-
-    // Collect & render tags (unchanged logic)
+    // Collect tags
     const allTags = new Set();
-    videosToRender.forEach(v => (v.tags || []).forEach(t => {
-      if (t && typeof t === "string" && t.trim()) allTags.add(t.trim().toLowerCase());
-    }));
+    videosToRender.forEach(v => {
+      (v.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim()) {
+          allTags.add(t.trim().toLowerCase());
+        }
+      });
+    });
     const sortedTags = [...allTags].sort();
+    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
-        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
+        padding: "6px 14px",
+        borderRadius: "24px",
+        fontSize: "12px",
+        fontWeight: "600",
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer",
+        border: "1px solid rgba(255,46,120,0.6)",
+        cursor: "pointer",
         transition: "all 0.25s"
       });
       btn.onclick = () => {
-        activeTags.has(tag) ? activeTags.delete(tag) : activeTags.add(tag);
+        if (activeTags.has(tag)) activeTags.delete(tag);
+        else activeTags.add(tag);
         renderCards(videosToRender);
       };
       tagContainer.appendChild(btn);
     });
-
-    // Filter logic (unchanged)
+    // Filter videos
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -5790,8 +5771,10 @@ function showHighlightsModal(videos) {
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
-    filtered = filtered.sort(() => Math.random() - 0.5); // Random shuffle
+    // === FIXED: SHUFFLE THE FILTERED LIST FOR RANDOM ORDER EVERY TIME ===
+    filtered = filtered.sort(() => Math.random() - 0.5);
 
+    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
@@ -5799,9 +5782,8 @@ function showHighlightsModal(videos) {
       grid.appendChild(empty);
       return;
     }
-
-    // Render cards with thumbnails
-    for (const video of filtered) {
+    // Render cards
+    filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
       Object.assign(card.style, {
@@ -5818,27 +5800,17 @@ function showHighlightsModal(videos) {
         card.style.transform = "scale(1)";
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
-
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-
       const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = "metadata";
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-
       if (isUnlocked) {
-        videoEl.src = video.videoUrl || ""; // Your Cloudflare URL
-        // Generate & set thumbnail
-        const thumbUrl = await generateThumbnail(video.videoUrl);
-        if (thumbUrl) {
-          videoEl.poster = thumbUrl; // Instant static preview
-        }
+        videoEl.src = video.previewClip || video.videoUrl || "";
+        videoEl.load();
         vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
         vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
-        // Lock overlay (unchanged)
         const lock = document.createElement("div");
         lock.innerHTML = `
           <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
@@ -5849,24 +5821,24 @@ function showHighlightsModal(videos) {
           </div>`;
         vidContainer.appendChild(lock);
       }
-
       vidContainer.onclick = (e) => {
         e.stopPropagation();
         if (!isUnlocked) {
           showUnlockConfirm(video, () => {
+            // Refresh unlockedVideos from localStorage
             unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+            // Re-render cards (with new random order)
             renderCards(videos);
+            // Show success notification
             showStarPopup("Video unlocked! 🎉", "success");
           });
           return;
         }
         openFullScreenVideo(video.videoUrl || "");
       };
-
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
-
-      // Info overlay (unchanged)
+      // Info overlay
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -5884,7 +5856,9 @@ function showHighlightsModal(videos) {
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
-              if (userSnap.exists()) showSocialCard(userSnap.data());
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              }
             })
             .catch(err => console.error("Failed to load user:", err));
         }
@@ -5899,8 +5873,7 @@ function showHighlightsModal(videos) {
       });
       info.append(title, user, tagsEl);
       card.appendChild(info);
-
-      // Badge (unchanged)
+      // Badge
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
@@ -5913,12 +5886,10 @@ function showHighlightsModal(videos) {
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
-
       grid.appendChild(card);
-    }
+    });
   }
-
-  // Filter button logic (unchanged)
+  // Filter buttons
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -5927,7 +5898,6 @@ function showHighlightsModal(videos) {
       : "linear-gradient(135deg, #240046, #3c0b5e)";
     renderCards();
   };
-
   trendingBtn.onclick = () => {
     filterMode = filterMode === "trending" ? "all" : "trending";
     trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
@@ -5936,8 +5906,7 @@ function showHighlightsModal(videos) {
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderCards();
   };
-
-  // Search (unchanged)
+  // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -5952,12 +5921,12 @@ function showHighlightsModal(videos) {
       });
     });
   }
-
-  // Initial render (now async-capable)
+  // Initial render
   renderCards();
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 }
+
 function showUnlockConfirm(video, onUnlockCallback) {
   document.querySelectorAll("video").forEach(v => v.pause());
   document.getElementById("unlockConfirmModal")?.remove();
