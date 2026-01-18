@@ -107,8 +107,8 @@ export {
 
 
 /* ---------- Global State ---------- */
-const ROOM_ID = "room888";
-const CHAT_COLLECTION = "messages_room888";
+const ROOM_ID = "room1010";
+const CHAT_COLLECTION = "messages_room1010";
 const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
@@ -4625,13 +4625,11 @@ function resetForm() {
   const storageKey = 'fakeOnlineCount';
 
   function formatCount(n) {
-    if (n >= 10000) return (n/10000).toFixed(1) + 'M';
-    if (n >= 100) return (n/100).toFixed(n%1000===0 ? 0 : 1) + 'K';
-    return n;
+    return n; // no K / M needed under 100
   }
 
-  // Start somewhere believable
-  let count = parseInt(localStorage.getItem(storageKey)) || 2857;
+  // Start somewhere believable (8–35)
+  let count = parseInt(localStorage.getItem(storageKey)) || (8 + Math.floor(Math.random() * 28));
 
   function updateDisplay() {
     onlineCountEl.textContent = formatCount(count);
@@ -4639,65 +4637,55 @@ function resetForm() {
   }
   updateDisplay();
 
-  let baseTrend = 0; // -1 = slowly going down, 0 = stable, 1 = slowly growing
+  let baseTrend = 0;
 
   setInterval(() => {
-    // 1. Random micro-fluctuations (most common)
     const dice = Math.random();
 
-    if (dice < 0.45) {
-      // 45% chance: tiny natural change (±1 to ±9)
-      count += Math.floor(Math.random() * 19) - 9;
+    if (dice < 0.5) {
+      // tiny natural change (±1–2)
+      count += Math.floor(Math.random() * 5) - 2;
     } 
     else if (dice < 0.75) {
-      // 30% chance: small wave (±10–40) – feels like people joining/leaving in groups
-      count += Math.floor(Math.random() * 61) - 30;
+      // small group join/leave (±3–6)
+      count += Math.floor(Math.random() * 9) - 4;
     }
-    else if (dice < 0.93) {
-      // 18% chance: noticeable surge (someone shared the link, new post, etc.)
-      count += Math.floor(Math.random() * 180) + 60; // +60 to +240
-    }
-    else if (dice < 0.98) {
-      // 5% chance: mini drop-off (people closing tabs)
-      count -= Math.floor(Math.random() * 120) + 40;
+    else if (dice < 0.9) {
+      // small surge (+4–9)
+      count += Math.floor(Math.random() * 6) + 4;
     }
     else {
-      // 2% chance: big viral spike (feels like something just happened)
-      count += Math.floor(Math.random() * 600) + 300; // +300–900
-      baseTrend = 1;
+      // mini drop-off (-4–8)
+      count -= Math.floor(Math.random() * 5) + 4;
     }
 
-    // Gentle global trend (mimics time of day)
+    // Time-of-day trend
     const hour = new Date().getHours();
-    if (hour >= 22 || hour < 7) baseTrend = -1;      // late night → slowly down
-    else if (hour >= 12 && hour <= 14) baseTrend = 1; // lunch/post time → up
-    else if (hour >= 18 && hour <= 21) baseTrend = 1; // evening peak
+    if (hour >= 22 || hour < 7) baseTrend = -1;
+    else if (hour >= 12 && hour <= 14) baseTrend = 1;
+    else if (hour >= 18 && hour <= 21) baseTrend = 1;
     else baseTrend = 0;
 
-    if (baseTrend === 1) count += Math.random() > 0.7 ? 3 : 1;
-    if (baseTrend === -1) count -= Math.random() > 0.7 ? 3 : 1;
+    if (baseTrend === 1 && Math.random() > 0.6) count += 1;
+    if (baseTrend === -1 && Math.random() > 0.6) count -= 1;
 
-    // Hard boundaries – change these to whatever range you want to live in
-    if (count < 220) count = 220 + Math.floor(Math.random() * 400);
-    if (count > 1840) count = 1840 - Math.floor(Math.random() * 800);
-
-    // Avoid perfectly round numbers too often
-    if (count % 1000 === 0 && Math.random() < 0.9) {
-      count += Math.floor(Math.random() * 80) - 40;
-    }
+    // HARD LIMITS
+    if (count < 8) count = 8 + Math.floor(Math.random() * 4);
+    if (count > 100) count = 95 + Math.floor(Math.random() * 3);
 
     updateDisplay();
 
-  }, 3500 + Math.floor(Math.random() * 2000)); // 3.5–5.5 second jitter
+  }, 3000 + Math.floor(Math.random() * 2000)); // 3–5 sec jitter
 
-  // Very slow periodic "reset" so it never looks stuck forever
+  // Gentle drift reset (keeps it alive)
   setInterval(() => {
-    const drift = Math.floor(Math.random() * 800) - 400;
-    count = Math.max(2200, Math.min(18400, count + drift));
+    const drift = Math.floor(Math.random() * 10) - 5;
+    count = Math.max(8, Math.min(100, count + drift));
     updateDisplay();
-  }, 5 * 60 * 1000); // every ~5 minutes
+  }, 4 * 60 * 1000);
 
 })();
+
 
 
 
