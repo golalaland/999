@@ -965,7 +965,7 @@ submitBtn.onclick = async () => {
       vipPayBtn.classList.remove('hidden');
       messageEl.textContent = "Your VIP slot is reserved 🔒";
     } else {
-      setTimeout(() => window.location.href = "/chat.html", 1800);
+      setTimeout(() => window.location.href = "/private-lounge.html", 1800);
     }
   } catch (err) {
     console.error(err);
@@ -1040,7 +1040,7 @@ vipPayBtn.onclick = () => {
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
             console.error("User not found after payment");
-            setTimeout(() => window.location.href = "/chat.html", 1800);
+            setTimeout(() => window.location.href = "/private-lounge1.html", 1800);
             return;
           }
 
@@ -1102,12 +1102,12 @@ vipPayBtn.onclick = () => {
 
           // Success redirect
           setTimeout(() => {
-            window.location.href = "/chat.html";
+            window.location.href = "/private-lounge.html";
           }, 1800);
 
         } catch (err) {
           console.error("VIP activation processing failed:", err);
-          setTimeout(() => window.location.href = "/chat.html", 1800);
+          setTimeout(() => window.location.href = "/private-lounge.html", 1800);
         }
 
       } catch (fetchError) {
