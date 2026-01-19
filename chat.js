@@ -4561,7 +4561,7 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
           // Optional: store doc ID in Firestore for future reference
           await updateDoc(newDocRef, { id: newDocRef.id });
 
-          showStarPopup("Highlight is LIVE! 🎉 Thumbnail generating...", "success");
+          showStarPopup("Your Video is LIVE! 🎉 ", "success");
 
           btn.textContent = isBoostTrending ? "TRENDING LIVE!" : "DROPPED!";
           btn.style.background = isBoostTrending
