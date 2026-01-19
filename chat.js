@@ -1708,80 +1708,125 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
-/* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
-function attachMessagesListener() {
-  const q = query(collection(db, CHAT_COLLECTION), orderBy("timestamp", "asc"));
+/* ---------- 🔔 Messages Listener – Optimized 2026 Version ---------- */
+// - Added limit(60) + orderBy desc to massively reduce initial reads
+// - Newest messages first (standard chat UX)
+// - Real-time only for recent messages
+// - Cache-aware logging (optional – remove later)
+// - Proper unsubscribe support
+// - Minor cleanups & safety checks
 
-  // 💾 Track shown gift alerts
-  const shownGiftAlerts = new Set(JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]"));
+let messagesUnsubscribe = null; // global or module-level to allow cleanup
+
+function attachMessagesListener() {
+  // Clean up any existing listener first (prevents duplicates on re-attach)
+  if (typeof messagesUnsubscribe === 'function') {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
+  }
+
+  const CHAT_LIMIT = 21; // adjust as needed: 40–100 is sweet spot for most chats
+
+  const q = query(
+    collection(db, CHAT_COLLECTION),
+    orderBy("timestamp", "desc"),           // ← newest first (recommended)
+    limit(CHAT_LIMIT)
+  );
+
+  // Load persisted state (gift alerts + pending messages)
+  const shownGiftAlerts = new Set(
+    JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
+  );
+
   function saveShownGift(id) {
     shownGiftAlerts.add(id);
     localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
   }
 
-  // 💾 Track local pending messages to prevent double rendering
-  let localPendingMsgs = JSON.parse(localStorage.getItem("localPendingMsgs") || "{}");
+  let localPendingMsgs = JSON.parse(
+    localStorage.getItem("localPendingMsgs") || "{}"
+  );
 
-  onSnapshot(q, snapshot => {
-    snapshot.docChanges().forEach(change => {
-      if (change.type !== "added") return;
+  messagesUnsubscribe = onSnapshot(
+    q,
+    { includeMetadataChanges: true }, // helps debug cache vs billed reads
+    (snapshot) => {
+      // Optional debug (remove or comment out in production)
+      console.log(
+        `Messages snapshot | fromCache: ${snapshot.metadata.fromCache ? '✓ cache' : 'server (billed)'} | ` +
+        `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
+      );
 
-      const msg = change.doc.data();
-      const msgId = change.doc.id;
+      // Process only newly added messages
+      snapshot.docChanges().forEach((change) => {
+        if (change.type !== "added") return;
 
-      // 🛑 Skip messages that look like local temp echoes
-      if (msg.tempId && msg.tempId.startsWith("temp_")) return;
+        const msg = change.doc.data();
+        const msgId = change.doc.id;
 
-      // 🛑 Skip already rendered messages
-      if (document.getElementById(msgId)) return;
+        // Skip temporary/echo messages
+        if (msg.tempId && msg.tempId.startsWith("temp_")) return;
 
-      // ✅ Match Firestore-confirmed message to a locally sent one
-      for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
-        const sameUser = pending.uid === msg.uid;
-        const sameText = pending.content === msg.content;
-        const createdAt = pending.createdAt || 0;
-        const msgTime = msg.timestamp?.toMillis?.() || 0;
-        const timeDiff = Math.abs(msgTime - createdAt);
+        // Skip if already rendered (defensive)
+        if (document.getElementById(msgId)) return;
 
-        if (sameUser && sameText && timeDiff < 7000) {
-          // 🔥 Remove local temp bubble
-          const tempEl = document.getElementById(tempId);
-          if (tempEl) tempEl.remove();
+        // Match & replace local optimistic message
+        let matched = false;
+        for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
+          const sameUser  = pending.uid === msg.uid;
+          const sameText  = pending.content === msg.content;
+          const timeDiff  = Math.abs(
+            (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
+          );
 
-          // 🧹 Clean up memory + storage
-          delete localPendingMsgs[tempId];
-          localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
-          break;
+          if (sameUser && sameText && timeDiff < 7000) {
+            const tempEl = document.getElementById(tempId);
+            if (tempEl) tempEl.remove();
+            delete localPendingMsgs[tempId];
+            localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
+            matched = true;
+            break;
+          }
         }
-      }
 
-      // ✅ Render message
-      renderMessagesFromArray([{ id: msgId, data: msg }]);
+        // Render the confirmed message
+        renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-      /* 💝 Gift Alert Logic */
-      if (msg.highlight && msg.content?.includes("gifted")) {
-        const myId = currentUser?.chatId?.toLowerCase();
-        if (!myId) return;
+        // Gift alert logic (only for receiver)
+        if (msg.highlight && msg.content?.includes("gifted")) {
+          const myId = currentUser?.chatId?.toLowerCase();
+          if (!myId) return;
 
-        const parts = msg.content.split(" ");
-        const sender = parts[0];
-        const receiver = parts[2];
-        const amount = parts[3];
-        if (!sender || !receiver || !amount) return;
+          const parts = msg.content.split(" ");
+          const sender   = parts[0];
+          const receiver = parts[2];
+          const amount   = parts[3];
 
-        if (receiver.toLowerCase() === myId && !shownGiftAlerts.has(msgId)) {
-          showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
-          saveShownGift(msgId);
+          if (sender && receiver && amount &&
+              receiver.toLowerCase() === myId &&
+              !shownGiftAlerts.has(msgId)) {
+            showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
+            saveShownGift(msgId);
+          }
         }
-      }
 
-      // 🌀 Keep scroll locked for your messages
-      if (refs.messagesEl && msg.uid === currentUser?.uid) {
-        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-      }
-    });
-  });
+        // Auto-scroll only for own messages
+        if (refs.messagesEl && msg.uid === currentUser?.uid) {
+          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+        }
+      });
+    },
+    (error) => {
+      console.error("Messages listener error:", error);
+      // Optional: show user-friendly message or retry logic
+    }
+  );
 }
+
+// Optional: Call this when user leaves chat / page unloads
+// window.addEventListener('beforeunload', () => {
+//   if (typeof messagesUnsubscribe === 'function') messagesUnsubscribe();
+// });
 
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
