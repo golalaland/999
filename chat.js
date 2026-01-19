@@ -3767,7 +3767,7 @@ function showMeetModal(host) {
       box-shadow:0 0 20px rgba(0,0,0,0.5);
     ">
       <h3 style="margin-bottom:10px;font-weight:600;">Meet ${host.chatId || "this host"}?</h3>
-      <p style="margin-bottom:16px;">Request meet with <b>21 stars ⭐</b>?</p>
+      <p style="margin-bottom:16px;">Request meet with <b>400 stars ⭐</b>?</p>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
         <button id="confirmMeet" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
@@ -3784,7 +3784,7 @@ function showMeetModal(host) {
   cancelBtn.onclick = () => modal.remove();
 
   confirmBtn.onclick = async () => {
-    const COST = 21;
+    const COST = 400;
 
     if (!currentUser?.uid) {
       showGiftAlert("⚠️ Please log in to request meets");
@@ -5592,7 +5592,7 @@ function showHighlightsModal(videos) {
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
-                line-height:1.6; font-size:14px;
+                line-height:1.6; font-size:13px;
                 background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
                 padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
                 box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
@@ -5611,7 +5611,7 @@ function showHighlightsModal(videos) {
 
   // CLOSE BUTTON
   const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+  closeBtn.innerHTML = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
   Object.assign(closeBtn.style, {
@@ -5774,6 +5774,7 @@ function showHighlightsModal(videos) {
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
         videoEl.poster = video.thumbnailUrl || "";  // ← THUMBNAIL ADDED HERE (auto-generated)
+       console.log("Video ID:", video.id, "Poster URL:", video.thumbnailUrl || "[MISSING]");
         videoEl.load();
         vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
         vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
