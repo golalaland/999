@@ -6129,7 +6129,7 @@ async function loadMyClips() {
               ` : ''}
 
               <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                ID: ${v.id.slice(-8)}
+                ID: ${v.id}
               </div>
             </div>
 
