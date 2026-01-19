@@ -4200,7 +4200,7 @@ if (!window.verifyHandlersInitialized) {
     modal.innerHTML = `
       <div style="background:#111;padding:16px 18px;border-radius:10px;text-align:center;color:#fff;max-width:280px;box-shadow:0 0 12px rgba(0,0,0,0.5);">
         <h3 style="margin-bottom:10px;font-weight:600;">Verification</h3>
-        <p>Scan phone number <b>${number}</b> for <b>${cost} stars ⭐</b>?</p>
+        <p>Scan phone number <b>${number}</b> for <b>${cost} STRZ ⭐</b>?</p>
         <div style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
           <button id="cancelVerify" style="padding:6px 12px;border:none;border-radius:6px;background:#333;color:#fff;font-weight:600;cursor:pointer;">Cancel</button>
           <button id="confirmVerify" style="padding:6px 12px;border:none;border-radius:6px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Yes</button>
@@ -4349,7 +4349,7 @@ confirmBtn.onclick = async () => {
             modalContent.innerHTML = user
               ? `<h3>Number Verified! ✅</h3>
                  <p>This number belongs to <b>${user.fullName}</b></p>
-                 <p style="margin-top:8px; font-size:13px; color:#ccc;">You’re free to chat — they’re legit 😌</p>
+                 <p style="margin-top:8px; font-size:13px; color:#ccc;">You’re free to chat, they’re legit 😌</p>
                  <button id="closeVerifyModal" style="margin-top:12px;padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Close</button>`
               : `<h3>Number Not Verified! ❌</h3>
                  <p>The number <b>${inputNumber}</b> does not exist on verified records — be careful!</p>
@@ -4621,85 +4621,108 @@ function resetForm() {
   }
 }
 
+
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
   const storageKey = 'fakeOnlineCount';
 
   function formatCount(n) {
-    if (n >= 10000) return (n/10000).toFixed(1) + 'M';
-    if (n >= 100) return (n/100).toFixed(n%1000===0 ? 0 : 1) + 'K';
+    if (n >= 10000) return (n / 10000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K';
     return n;
   }
 
-  // Start somewhere believable
-  let count = parseInt(localStorage.getItem(storageKey)) || 2857;
+  // Start in a realistic zone for a moderately active site
+  let count = parseInt(localStorage.getItem(storageKey)) || 1240;
 
   function updateDisplay() {
     onlineCountEl.textContent = formatCount(count);
     localStorage.setItem(storageKey, count);
   }
+
   updateDisplay();
 
-  let baseTrend = 0; // -1 = slowly going down, 0 = stable, 1 = slowly growing
+  let baseTrend = 0; // -1 = drifting down, 0 = neutral, 1 = drifting up
 
   setInterval(() => {
-    // 1. Random micro-fluctuations (most common)
     const dice = Math.random();
 
-    if (dice < 0.45) {
-      // 45% chance: tiny natural change (±1 to ±9)
-      count += Math.floor(Math.random() * 19) - 9;
-    } 
-    else if (dice < 0.75) {
-      // 30% chance: small wave (±10–40) – feels like people joining/leaving in groups
-      count += Math.floor(Math.random() * 61) - 30;
+    // 1. Most of the time: very small natural breathing (±1–8)
+    if (dice < 0.55) {
+      count += Math.floor(Math.random() * 17) - 8;
     }
-    else if (dice < 0.93) {
-      // 18% chance: noticeable surge (someone shared the link, new post, etc.)
-      count += Math.floor(Math.random() * 180) + 60; // +60 to +240
+    // 2. Small group join/leave waves (±10–35)
+    else if (dice < 0.82) {
+      count += Math.floor(Math.random() * 51) - 25;
     }
-    else if (dice < 0.98) {
-      // 5% chance: mini drop-off (people closing tabs)
-      count -= Math.floor(Math.random() * 120) + 40;
+    // 3. Occasional medium bump (new share / small promo / refresh wave) +45–+140
+    else if (dice < 0.94) {
+      count += Math.floor(Math.random() * 96) + 45;
+      // slightly increase upward pressure after a bump
+      baseTrend = Math.min(1, baseTrend + 0.3);
     }
+    // 4. Small drop-off after video ends / tab closed (±40–110 down)
+    else if (dice < 0.99) {
+      count -= Math.floor(Math.random() * 71) + 40;
+      // slight downward pressure
+      baseTrend = Math.max(-1, baseTrend - 0.3);
+    }
+    // 5. Rare bigger spike — feels like influencer just mentioned it
     else {
-      // 2% chance: big viral spike (feels like something just happened)
-      count += Math.floor(Math.random() * 600) + 300; // +300–900
+      count += Math.floor(Math.random() * 220) + 120; // +120–340
       baseTrend = 1;
     }
 
-    // Gentle global trend (mimics time of day)
+    // Gentle time-of-day influence (assumes your audience timezone)
     const hour = new Date().getHours();
-    if (hour >= 22 || hour < 7) baseTrend = -1;      // late night → slowly down
-    else if (hour >= 12 && hour <= 14) baseTrend = 1; // lunch/post time → up
-    else if (hour >= 18 && hour <= 21) baseTrend = 1; // evening peak
-    else baseTrend = 0;
-
-    if (baseTrend === 1) count += Math.random() > 0.7 ? 3 : 1;
-    if (baseTrend === -1) count -= Math.random() > 0.7 ? 3 : 1;
-
-    // Hard boundaries – change these to whatever range you want to live in
-    if (count < 220) count = 220 + Math.floor(Math.random() * 400);
-    if (count > 1840) count = 1840 - Math.floor(Math.random() * 800);
-
-    // Avoid perfectly round numbers too often
-    if (count % 1000 === 0 && Math.random() < 0.9) {
-      count += Math.floor(Math.random() * 80) - 40;
+    if (hour >= 23 || hour < 7) {
+      baseTrend = -1; // night → slow drain
+    } else if ((hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 22)) {
+      baseTrend = 1;  // lunch + evening = active
+    } else if (hour >= 8 && hour <= 11) {
+      baseTrend = 0.3; // morning slow build
+    } else {
+      baseTrend = 0;
     }
 
+    // Apply very gentle trend force
+    if (baseTrend > 0) {
+      count += Math.random() > 0.6 ? 2 : 1;
+    } else if (baseTrend < 0) {
+      count -= Math.random() > 0.6 ? 2 : 1;
+    }
+
+    // ------------------- Hard realistic boundaries -------------------
+    // Almost never go below ~650 or above ~1950
+    if (count < 650) {
+      count = 650 + Math.floor(Math.random() * 350); // jump back into believable range
+      baseTrend = 0.5; // give it some upward momentum after floor hit
+    }
+    if (count > 1950) {
+      count = 1950 - Math.floor(Math.random() * 450);
+      baseTrend = -0.5;
+    }
+
+    // Prevent staying stuck on xxx0 or xxx00 too long
+    if ((count % 100 === 0 || count % 1000 === 0) && Math.random() < 0.85) {
+      count += Math.floor(Math.random() * 70) - 35;
+    }
+
+    // Keep it integer
+    count = Math.round(count);
+
     updateDisplay();
+  }, 2800 + Math.floor(Math.random() * 3400)); // ~3–6 second updates → natural jitter
 
-  }, 3500 + Math.floor(Math.random() * 2000)); // 3.5–5.5 second jitter
-
-  // Very slow periodic "reset" so it never looks stuck forever
+  // Very gentle long-term recentering (prevents infinite upward/downward creep)
   setInterval(() => {
-    const drift = Math.floor(Math.random() * 800) - 400;
-    count = Math.max(2200, Math.min(18400, count + drift));
+    const target = 1100 + Math.floor(Math.random() * 700); // 1100–1800 zone
+    const diff = target - count;
+    count += Math.round(diff * 0.08); // move ~8% toward target
     updateDisplay();
-  }, 5 * 60 * 1000); // every ~5 minutes
+  }, 8 * 60 * 1000); // every ~8 minutes
 
 })();
-
 
 
 
