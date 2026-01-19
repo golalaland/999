@@ -5845,6 +5845,7 @@ function showHighlightsModal(videos) {
         videoEl.src = video.previewClip || video.videoUrl || "";
         videoEl.poster = video.thumbnailUrl || "";  // ← THUMBNAIL ADDED HERE (auto-generated)
        console.log("Video ID:", video.id, "Poster URL:", video.thumbnailUrl || "[MISSING]");
+       console.log(`Poster for video ${video.id}: ${video.thumbnailUrl || "[no url]"}`);
         videoEl.load();
         vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
         vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
