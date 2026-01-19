@@ -3766,7 +3766,7 @@ function showMeetModal(host) {
       box-shadow:0 0 20px rgba(0,0,0,0.5);
     ">
       <h3 style="margin-bottom:10px;font-weight:600;">Meet ${host.chatId || "this host"}?</h3>
-      <p style="margin-bottom:16px;">Request meet with <b>21 stars ⭐</b>?</p>
+      <p style="margin-bottom:16px;">Request meet with <b> 400 STRZ ⭐</b>?</p>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
         <button id="confirmMeet" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
@@ -3783,7 +3783,7 @@ function showMeetModal(host) {
   cancelBtn.onclick = () => modal.remove();
 
   confirmBtn.onclick = async () => {
-    const COST = 21;
+    const COST = 400;
 
     if (!currentUser?.uid) {
       showGiftAlert("⚠️ Please log in to request meets");
