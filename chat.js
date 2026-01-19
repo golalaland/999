@@ -5554,14 +5554,13 @@ highlightsBtn.onclick = async () => {
     uploaderId: d.uploaderId || "",
     uploaderEmail: d.uploaderEmail || "unknown",
     description: d.description || "",
-    thumbnail: d.thumbnail || "",
+    thumbnailUrl: d.thumbnailUrl || "",  // ← FIXED HERE (use thumbnailUrl)
     createdAt: d.createdAt || null,
     unlockedBy: d.unlockedBy || [],
     previewClip: d.previewClip || "",
     videoUrl: d.videoUrl || "",
     isTrending: d.isTrending || false,
-    tags: d.tags || [],          // ← comma here is fine
-    chatId: d.chatId || ""       // ← FIXED: added missing comma above it
+    tags: d.tags || []
   };
 });
 
