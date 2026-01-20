@@ -4432,16 +4432,50 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
   </div>
 
-<div id="tipsModal" style="display:none; position:fixed; inset:0; background:red; z-index:2147483647 !important; align-items:center; justify-content:center;">
-  <div style="background:#111; color:lime; padding:40px; border:4px solid yellow; border-radius:16px; max-width:340px; text-align:center; min-height:300px;">
-    <h2 style="color:yellow; margin-bottom:20px;">DEBUG MODAL — SHOULD BE VISIBLE</h2>
-    <p>If you see this yellow-bordered box on red background → modal works, problem is in original content</p>
-    <button id="closeTipsBtn" style="margin-top:20px; padding:12px 40px; background:#FF1493; color:white; border:none; border-radius:10px; font-size:16px;">
-      Close
+<!-- TEMP DEBUG VERSION – replace your #tipsModal with this entire block -->
+<div id="tipsModal" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 0, 0, 0.8);           /* strong red to see immediately */
+  z-index: 2147483647 !important;             /* absolute max z-index */
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto !important;
+  visibility: visible !important;
+">
+  <div style="
+    background: #000;
+    color: #0f0;
+    padding: 40px;
+    border: 6px solid #0f0;
+    border-radius: 16px;
+    max-width: 340px;
+    text-align: center;
+    min-height: 200px;
+    box-shadow: 0 0 40px #0f0;
+    font-size: 18px;
+    font-weight: bold;
+  ">
+    <div style="font-size: 32px; margin-bottom: 20px;">DEBUG TEST MODAL</div>
+    <p>If you see this bright green box on red background → modal system works</p>
+    <p style="color: #ff0; margin-top: 20px;">Problem is in your original content / CSS overrides</p>
+    
+    <button id="closeTipsBtn" style="
+      margin-top: 30px;
+      padding: 16px 60px;
+      background: #FF1493;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    ">
+      CLOSE DEBUG
     </button>
   </div>
 </div>
-  
       <!-- Messages / Additional Info -->
       <div id="hostMessagesContainer" style="padding:6px 0;">
         <!-- Messages or host-specific info will be dynamically loaded here -->
