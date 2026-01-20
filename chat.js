@@ -3712,16 +3712,6 @@ async function fetchFeaturedHostsPage(isFirstPage = false) {
   }
 }
 
-// ---------- CACHE HELPERS ----------
-function saveToCache() {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({
-    hosts,
-    lastVisibleDoc: lastVisibleDoc ? { id: lastVisibleDoc.id } : null, // only store ID
-    hasMoreHosts,
-    timestamp: Date.now()
-  }));
-}
-
 // ---------- RENDER AVATARS + LOAD MORE BUTTON ----------
 function renderHostAvatars() {
   hostListEl.innerHTML = "";
