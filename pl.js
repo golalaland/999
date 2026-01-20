@@ -108,8 +108,8 @@ export {
 
 
 /* ---------- Global State ---------- */
-const ROOM_ID = "room888";
-const CHAT_COLLECTION = "messages_room888";
+const ROOM_ID = "room1010";
+const CHAT_COLLECTION = "messages_room1010";
 const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
@@ -955,6 +955,7 @@ async function showConfirm(title, msg) {
     });
   });
 }
+
 // ==============================
 // CHAT.JS — CLEAN FULL VERSION
 // ==============================
