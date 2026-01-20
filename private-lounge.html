@@ -2878,7 +2878,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   text-align: center;
 }
 
-.poll-intro h3 {
+.-intro h3 {
   margin: 0 0 12px;
   font-size: 19px;
   font-weight: 700;
@@ -4433,138 +4433,78 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
   </div>
 
-
-      <!-- POLL SECTION – ADMIN ONLY (Header + Form attached as one unit) -->
-<div id="polls" class="section" style="margin:40px auto; max-width:900px;">
-
-  <!-- Integrated Header – attached directly to the content below -->
-  <div style="text-align:center; padding:0 0 24px 0;">
-    <span style="
-      display:block;
-      color:#00ff9d;
-      font-size:14px;
-      font-weight:800;
-      letter-spacing:3px;
-      text-transform:uppercase;
-      margin-bottom:8px;
-      opacity:0.9;
-    ">ADMIN CONTROL</span>
+<!-- Tips / Learn Modal -->
+<div id="tipsModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+  <div class="modal" style="width:90%; max-width:380px; background:#0f0f0f; border:2px solid #FF1493; border-radius:20px; overflow:hidden; box-shadow:0 0 40px rgba(255,20,147,0.6); color:#eee; font-family:system-ui,sans-serif;">
     
-    <h2 style="
-      font-size:32px;
-      font-weight:900;
-      background:linear-gradient(90deg, #00ffea, #ff00c8, #ffea00);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-      margin:0 0 12px 0;
-      letter-spacing:1.5px;
-      text-shadow:0 2px 10px rgba(0,255,234,0.3);
-    ">
-      POLL
-    </h2>
+    <!-- Header -->
+    <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.1); border-bottom:1px solid rgba(255,20,147,0.3);">
+      <h3 style="margin:0; font-size:20px; color:#FF1493; font-weight:900;">CUBE TIPS</h3>
+      <p style="margin:6px 0 0; font-size:14px; color:#00e676;">Level up • Earn more • Dominate</p>
+    </div>
     
-    <p style="
-      color:#aaa;
-      font-size:15px;
-      margin:0;
-      font-weight:500;
-    ">
-      Create daily community polls & reward winners with $STRZ
-    </p>
-  </div>
-
-  <!-- Poll Creation Box – directly follows the header with no extra gap -->
-  <div class="poll-creation-box" style="
-    background:#111;
-    border-radius:16px;
-    border:1px solid #222;
-    padding:24px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  ">
-    <!-- Question -->
-    <div style="margin-bottom:24px;">
-      <label for="poll-question" style="
-        display:block;
-        color:#ccc;
-        font-size:14px;
-        font-weight:600;
-        margin-bottom:8px;
-      ">Poll Question</label>
-      <input
-        id="poll-question"
-        class="poll-input"
-        placeholder="Who has the cutest vibe today?"
-        maxlength="120"
-        style="width:100%;"
-      />
-    </div>
-
-    <!-- Options -->
-    <div style="margin-bottom:24px;">
-      <label style="
-        display:block;
-        color:#ccc;
-        font-size:14px;
-        font-weight:600;
-        margin-bottom:8px;
-      ">Options</label>
-      <div id="poll-options-container" class="options-grid" style="display:grid; grid-template-columns:1fr; gap:12px;">
-        <input class="poll-option-input" placeholder="Option 1 (required)" maxlength="60" required />
-        <input class="poll-option-input" placeholder="Option 2 (required)" maxlength="60" required />
-        <input class="poll-option-input" placeholder="Option 3 (optional)" maxlength="60" />
-        <input class="poll-option-input" placeholder="Option 4 (optional)" maxlength="60" />
+    <!-- Carousel Container -->
+    <div id="tipsCarousel" style="position:relative; height:420px; overflow:hidden;">
+      <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
+        <!-- Tip Card 1 -->
+        <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
+          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #FF1493;">
+          <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
+            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
+              You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+            </p>
+          </div>
+        </div>
+        
+        <!-- Tip Card 2 -->
+        <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
+          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #00e676;">
+          <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
+            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
+              Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
+              Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
+              From STRZ in your wallet → real cash in your bank.<br><br>
+              <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
+            </p>
+          </div>
+        </div>
+        
+        <!-- Tip Card 3 -->
+        <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #FFD700;">
+          <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
+            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
+              The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
+              Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
+              Costs STRZ — use wisely to get attention.<br><br>
+              <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Dots -->
+      <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10;">
+        <div style="width:10px;height:10px;border-radius:50%;background:#FF1493;"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
       </div>
     </div>
-
-    <!-- Reward + Duration -->
-    <div class="poll-meta-row" style="display:flex; flex-wrap:wrap; gap:16px;">
-      <div class="meta-field" style="flex:1; min-width:140px;">
-        <label for="poll-reward" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
-          Reward ($STRZ)
-        </label>
-        <input
-          id="poll-reward"
-          type="number"
-          min="10"
-          max="1000"
-          value="50"
-          class="poll-meta-input"
-          style="width:100%;"
-        />
-      </div>
-      <div class="meta-field" style="flex:1; min-width:140px;">
-        <label for="poll-duration" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
-          Duration (hours)
-        </label>
-        <input
-          id="poll-duration"
-          type="number"
-          min="1"
-          max="168"
-          value="24"
-          class="poll-meta-input"
-          style="width:100%;"
-        />
-      </div>
+    
+    <!-- Footer / Close -->
+    <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,20,147,0.3);">
+      <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
+        GOT IT
+      </button>
     </div>
-  </div>
-
-  <!-- Create Button -->
-  <div style="text-align:center; margin:24px 0;">
-    <button id="create-new-poll" class="create-btn">
-      Create Poll
-    </button>
-  </div>
-
-  <!-- Preview Area -->
-  <div id="current-poll-admin" class="preview-box">
-    <p class="preview-placeholder">Preview will appear here after creation</p>
   </div>
 </div>
-</div>
 
-  
-  
+
+
   
       <!-- Messages / Additional Info -->
       <div id="hostMessagesContainer" style="padding:6px 0;">
