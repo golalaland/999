@@ -5729,7 +5729,7 @@ let allLoadedVideos = [];
 let lastVisibleVideoDoc = null;
 let hasMoreVideos = true;
 let isLoadingVideos = false;
-const VIDEOS_PAGE_SIZE = 21;
+const VIDEOS_PAGE_SIZE = 2;
 const VIDEOS_CACHE_KEY = "highlightsFeedCache_v1";
 
 async function loadVideosPage(isFirstPage = true) {
