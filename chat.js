@@ -4547,17 +4547,20 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
         const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
-        uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-                const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                btn.textContent = `Uploading... ${Math.round(percent)}%`;
+       uploadTask.on(
+  'state_changed',
+  (snapshot) => {
+    const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
 
-                const progressBar = document.getElementById('progressBar');
-                const progressText = document.getElementById('progressText');
-                if (progressBar) progressBar.style.width = `${percent}%`;
-                if (progressText) progressText.textContent = `${Math.round(percent)}%`;
-            },
+    // Button shows static "Uploading..." text
+    btn.textContent = 'Uploading...';
+
+    // Progress bar updates
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    if (progressBar) progressBar.style.width = `${percent}%`;
+    if (progressText) progressText.textContent = `${Math.round(percent)}%`;
+  },
             (error) => {
                 console.error('Upload failed:', error);
                 const msg = error.code === 'storage/unauthorized'
