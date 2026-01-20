@@ -4431,30 +4431,31 @@ function resetButton(btn) {
   btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
 }
 
-  const fileInput       = document.getElementById('highlightUploadInput');
-  const titleInput      = document.getElementById('highlightTitleInput');
-  const descInput       = document.getElementById('highlightDescInput');
-  const priceInput      = document.getElementById('highlightPriceInput');
+function resetForm() {
+  const fileInput        = document.getElementById('highlightUploadInput');
+  const titleInput       = document.getElementById('highlightTitleInput');
+  const descInput        = document.getElementById('highlightDescInput');
+  const priceInput       = document.getElementById('highlightPriceInput');
   const trendingCheckbox = document.getElementById('boostTrendingCheckbox');
 
-  fileInput.value = '';
-  titleInput.value = '';
-  descInput.value = '';
-  priceInput.value = '50';
+  if (fileInput)        fileInput.value = '';
+  if (titleInput)       titleInput.value = '';
+  if (descInput)        descInput.value = '';
+  if (priceInput)       priceInput.value = '50';
   if (trendingCheckbox) trendingCheckbox.checked = false;
 
   document.querySelectorAll('.tag-btn').forEach(el => el.classList.remove('selected'));
 
-  // Reset preview
-  const placeholder = document.getElementById('uploadPlaceholder');
-  const previewCont = document.getElementById('videoPreviewContainer');
-  const video       = document.getElementById('videoPreview');
-  const sizeInfo    = document.getElementById('fileSizeInfo');
+  // Reset video preview
+  const placeholder     = document.getElementById('uploadPlaceholder');
+  const previewCont     = document.getElementById('videoPreviewContainer');
+  const video           = document.getElementById('videoPreview');
+  const sizeInfo        = document.getElementById('fileSizeInfo');
 
-  if (video) video.src = '';
-  if (previewCont) previewCont.style.display = 'none';
-  if (placeholder) placeholder.style.display = 'block';
-  if (sizeInfo)    sizeInfo.textContent = '';
+  if (video)           video.src = '';
+  if (previewCont)     previewCont.style.display = 'none';
+  if (placeholder)     placeholder.style.display = 'block';
+  if (sizeInfo)        sizeInfo.textContent = '';
 }
 
 // ── Main upload handler ─────────────────────────────────────────────
@@ -4462,35 +4463,32 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   const btn = e.currentTarget;
   const fileInput = document.getElementById('highlightUploadInput');
 
-  // Early exit if already uploading
   if (btn.disabled) return;
 
   resetButton(btn);
 
-  // ── 1. Basic auth check ──
+  // 1. Auth check
   if (!currentUser?.uid) {
     showStarPopup('Please sign in to upload', 'error');
     return;
   }
 
-  // ── 2. Gather form values ──
-  const title       = document.getElementById('highlightTitleInput').value.trim();
-  const description = document.getElementById('highlightDescInput').value.trim();
-  const priceStr    = document.getElementById('highlightPriceInput').value;
-  const price       = parseInt(priceStr, 10) || 0;
+  // 2. Gather form values
+  const title       = document.getElementById('highlightTitleInput')?.value.trim() ?? '';
+  const description = document.getElementById('highlightDescInput')?.value.trim() ?? '';
+  const price       = parseInt(document.getElementById('highlightPriceInput')?.value ?? '0', 10) || 0;
   const isBoost     = document.getElementById('boostTrendingCheckbox')?.checked ?? false;
   const tags        = Array.from(document.querySelectorAll('.tag-btn.selected'))
                            .map(el => el.dataset.tag);
+  const file        = fileInput?.files?.[0];
 
-  const file = fileInput.files?.[0];
-
-  // ── 3. Validation ──
+  // 3. Validation
   if (!title)                        return showStarPopup('Title is required', 'error');
   if (!file)                         return showStarPopup('Please select a video', 'error');
   if (file.size > 50 * 1024 * 1024)  return showStarPopup('Maximum file size is 50MB', 'error');
   if (!isBoost && price < 10)        return showStarPopup('Minimum unlock price is 10 STRZ', 'error');
 
-  // ── 4. Handle trending boost payment ──
+  // 4. Handle trending boost payment
   if (isBoost) {
     try {
       const userRef = doc(db, 'users', currentUser.uid);
@@ -4511,7 +4509,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     }
   }
 
-  // ── 5. Prepare upload ──
+  // 5. Start upload
   btn.disabled = true;
   btn.classList.add('uploading');
   btn.textContent = 'Uploading... 0%';
@@ -4535,7 +4533,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
     const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
-    // Progress updates
     uploadTask.on(
       'state_changed',
       (snapshot) => {
@@ -4555,11 +4552,9 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           const rawUrl = await getDownloadURL(uploadTask.snapshot.ref);
           const cdnUrl = toCloudflareUrl(rawUrl);
 
-          console.log('[Upload success]');
-          console.log('Firebase:', rawUrl);
-          console.log('CDN     :', cdnUrl);
+          console.log('[Upload success] Firebase:', rawUrl);
+          console.log('CDN:', cdnUrl);
 
-          // ── Prepare Firestore document ──
           const clipData = {
             uploaderId: currentUser.uid,
             uploaderName: currentUser.chatId || 'Legend',
@@ -4583,7 +4578,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           const newDocRef = await addDoc(collection(db, 'highlightVideos'), clipData);
           await updateDoc(newDocRef, { id: newDocRef.id });
 
-          // ── Success UI ──
           showStarPopup('Your Video is LIVE! 🎉', 'success');
           btn.textContent = isBoost ? 'TRENDING LIVE!' : 'DROPPED!';
           btn.style.background = isBoost
@@ -4593,7 +4587,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           resetForm();
           if (typeof loadMyClips === 'function') loadMyClips();
 
-          // Auto-reset button after delay
           setTimeout(() => resetButton(btn), 2600);
         } catch (err) {
           console.error('Firestore save failed:', err);
@@ -4621,18 +4614,16 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
   const file = e.target.files?.[0];
   if (!file) return;
 
-  const placeholder = document.getElementById('uploadPlaceholder');
-  const previewCont = document.getElementById('videoPreviewContainer');
-  const video       = document.getElementById('videoPreview');
-  const sizeInfo    = document.getElementById('fileSizeInfo');
+  const placeholder     = document.getElementById('uploadPlaceholder');
+  const previewCont     = document.getElementById('videoPreviewContainer');
+  const video           = document.getElementById('videoPreview');
+  const sizeInfo        = document.getElementById('fileSizeInfo');
 
   if (!video || !previewCont || !placeholder) return;
 
-  placeholder.style.display = 'none';
-  previewCont.style.display = 'block';
-
-  const objectUrl = URL.createObjectURL(file);
-  video.src = objectUrl;
+  placeholder.style.display     = 'none';
+  previewCont.style.display     = 'block';
+  video.src = URL.createObjectURL(file);
   video.load();
 
   const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
