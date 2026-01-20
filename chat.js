@@ -4536,22 +4536,21 @@ document.getElementById("uploadHighlightBtn")?.addEventListener("click", async (
           console.log("Cloudflare CDN URL:", videoUrl);
 
           // ── Prepare Firestore document ──
-          const clipData = {
-            uploaderId: currentUser.uid,
-            uploaderName: currentUser.chatId || "Legend",
-            videoUrl,
-            storagePath,                 // ← Added: so Cloud Function can find this doc
-            highlightVideoPrice: isBoostTrending ? 0 : price,
-            title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
-            description: description || "",
-            uploadedAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            unlockedBy: [],
-            views: 0,
-            isTrending: isBoostTrending,
-            tags: selectedTags.length ? selectedTags : []
-          };
-
+       const clipData = {
+  uploaderId: currentUser.uid,
+  uploaderName: currentUser.chatId || "Legend",
+  videoUrl,
+  storagePath,               // ← ADD THIS LINE RIGHT HERE
+  highlightVideoPrice: isBoostTrending ? 0 : price,
+  title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
+  description: description || "",
+  uploadedAt: serverTimestamp(),
+  createdAt: serverTimestamp(),
+  unlockedBy: [],
+  views: 0,
+  isTrending: isBoostTrending,
+  tags: selectedTags.length ? selectedTags : []
+};
           if (isBoostTrending) {
             clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
           }
