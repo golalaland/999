@@ -6845,6 +6845,68 @@ function openTipsModal() {
   console.log("Debug modal appended & display forced");
 }
 
+// Mimic poll's render + show
+    hideLoader(); // Assume hideLoader from poll
+    modal.style.display = "flex";
+    initTipsCarousel();
+
+    // Attach close listener (since dynamic)
+    document.getElementById("closeTipsBtn").addEventListener("click", () => {
+      confetti({
+        particleCount: 180,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
+        zIndex: 2147483647
+      });
+      
+      setTimeout(() => {
+        modal.style.display = "none";
+        modal.remove(); // Clean up
+      }, 800);
+    });
+
+    console.log("Tips modal opened");
+  } catch (err) {
+    hideLoader();
+    console.error("Tips open error:", err);
+  }
+}
+
+function initTipsCarousel() {
+  const slides = document.getElementById("tipsSlides");
+  const dotsContainer = document.getElementById("tipsDots");
+  if (!slides || !dotsContainer) return;
+
+  const dots = dotsContainer.children;
+  let current = 0;
+  const total = dots.length;
+
+  function update() {
+    slides.style.transform = `translateX(-${current * 33.333}%)`;
+    for (let i = 0; i < total; i++) {
+      dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
+    }
+  }
+
+  // Touch swipe
+  let startX = 0;
+  const carousel = document.getElementById("tipsCarousel");
+  if (carousel) {
+    carousel.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+    carousel.addEventListener("touchend", e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 60) {
+        if (diff > 0 && current < total - 1) current++;
+        else if (diff < 0 && current > 0) current--;
+        update();
+      }
+    });
+  }
+}
+
 /*********************************
  * fruity punch!!
  *********************************/
