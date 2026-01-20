@@ -4434,15 +4434,16 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 <!-- TEMP DEBUG VERSION – replace your #tipsModal with this entire block -->
 <div id="tipsModal" style="
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(255, 0, 0, 0.8);           /* strong red to see immediately */
-  z-index: 2147483647 !important;             /* absolute max z-index */
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto !important;
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(255,0,0,0.9) !important;   /* screaming red so impossible to miss */
+  z-index: 2147483647 !important;             /* browser max */
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: all !important;
   visibility: visible !important;
+  opacity: 1 !important;
 ">
   <div style="
     background: #000;
