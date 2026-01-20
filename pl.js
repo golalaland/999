@@ -6835,7 +6835,7 @@ function initTipsCarousel() {
   const total = dots.length;
 
   function update() {
-    slides.style.transform = `translateX(-${current * 33.333}%)`;
+    slides.style.transform = `translateX(-${current * (100 / total)}%)`; // Dynamic width calc for any number of slides
     for (let i = 0; i < total; i++) {
       dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
     }
@@ -6843,13 +6843,23 @@ function initTipsCarousel() {
 
   // Touch swipe
   let startX = 0;
+  let isDragging = false;
   const carousel = document.getElementById("tipsCarousel");
   if (carousel) {
     carousel.addEventListener("touchstart", e => {
       startX = e.touches[0].clientX;
+      isDragging = true;
+    });
+
+    carousel.addEventListener("touchmove", e => {
+      if (!isDragging) return;
+      const diff = startX - e.touches[0].clientX;
+      // Optional: add smooth dragging preview if desired
     });
 
     carousel.addEventListener("touchend", e => {
+      if (!isDragging) return;
+      isDragging = false;
       const diff = startX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 60) {
         if (diff > 0 && current < total - 1) current++;
@@ -6858,27 +6868,63 @@ function initTipsCarousel() {
       }
     });
   }
+
+  // Add mouse support for desktop testing
+  carousel.addEventListener("mousedown", e => {
+    startX = e.clientX;
+    isDragging = true;
+  });
+
+  carousel.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    // Optional: dragging preview
+  });
+
+  carousel.addEventListener("mouseup", e => {
+    if (!isDragging) return;
+    isDragging = false;
+    const diff = startX - e.clientX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0 && current < total - 1) current++;
+      else if (diff < 0 && current > 0) current--;
+      update();
+    }
+  });
+
+  // Click dots to jump
+  dotsContainer.addEventListener("click", e => {
+    const dot = e.target;
+    if (dot.tagName === "DIV") {
+      current = Array.from(dots).indexOf(dot);
+      update();
+    }
+  });
+
+  // Auto-swipe (uncomment if wanted)
+  // setInterval(() => { current = (current + 1) % total; update(); }, 5000);
 }
 
 // Close with confetti
-const closeBtn = document.getElementById("closeTipsBtn");
-if (closeBtn) {
-  closeBtn.addEventListener("click", () => {
-    if (typeof confetti === "function") {
-      confetti({
-        particleCount: 180,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
-        zIndex: 100000
-      });
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  const closeBtn = document.getElementById("closeTipsBtn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 180,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
+          zIndex: 1000000 // Match high z-index
+        });
+      }
 
-    setTimeout(() => {
-      document.getElementById("tipsModal").style.display = "none";
-    }, 800);
-  });
-}
+      setTimeout(() => {
+        document.getElementById("tipsModal").style.display = "none";
+      }, 800);
+    });
+  }
+});
 
 /*********************************
  * fruity punch!!
@@ -7036,4 +7082,3 @@ paystackNigeriaBanks.forEach(bank => {
  * INIT
  *********************************/
 loadReels();
-loadPollCarousel()
