@@ -5818,59 +5818,170 @@ highlightsBtn.onclick = async () => {
 };
 
 /* ---------- Highlights Modal – Vertical Scroll Feed with Load More ---------- */
+/* ---------- Highlights Modal – Vertical Scroll Feed with Load More ---------- */
 function showHighlightsModal(initialVideos) {
+  // Remove any existing modal
   document.getElementById("highlightsModal")?.remove();
+
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "flex-start",
-    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    zIndex: "999999",
+    overflowY: "auto",
+    padding: "20px 12px",
+    boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER
-  const intro = document.createElement("div");
-  intro.innerHTML = `...`; // ← your header HTML here (unchanged)
+  // ====================
+  // HEADER – Built safely with elements (fixes null appendChild error)
+  // ====================
+  const introWrapper = document.createElement("div");
+  introWrapper.style.cssText = `
+    text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
+    line-height:1.6; font-size:13px;
+    background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
+    padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
+    box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;
+  `;
 
-  modal.appendChild(intro);
+  const innerDiv = document.createElement("div");
+  innerDiv.style.marginBottom = "8px";
 
-  // CLOSE BUTTON (your code)
+  const titleSpan = document.createElement("span");
+  titleSpan.style.cssText = `
+    background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    font-weight:800; font-size:22px; letter-spacing:0.4px;
+  `;
+  titleSpan.textContent = "Cuties💕";
+  innerDiv.appendChild(titleSpan);
+
+  const p1 = document.createElement("p");
+  p1.style.margin = "0 0 4px";
+  p1.textContent = "Cam-worthy moments from girls on cube.";
+
+  const p2 = document.createElement("p");
+  p2.style.margin = "0";
+  p2.textContent = "Unlock a cutie’s clip with STRZ and get closer.";
+
+  introWrapper.appendChild(innerDiv);
+  introWrapper.appendChild(p1);
+  introWrapper.appendChild(p2);
+
+  // CLOSE BUTTON – appended directly to introWrapper
   const closeBtn = document.createElement("div");
-  // ... your close button code ...
+  closeBtn.innerHTML = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+    <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "8px",
+    right: "10px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: "1002",
+    transition: "all 0.25s ease",
+    filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+  });
 
-  intro.firstElementChild.appendChild(closeBtn);
+  closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+  closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+    setTimeout(() => modal.remove(), 280);
+  };
 
+  introWrapper.appendChild(closeBtn);
+  modal.appendChild(introWrapper);
+
+  // ====================
   // CONTROLS
+  // ====================
   const controls = document.createElement("div");
-  // ... your controls code (unlockedBtn, trendingBtn, tagContainer) ...
+  controls.style.cssText = `
+    width:100%; max-width:640px; margin:0 auto 28px;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+  `;
 
+  const mainButtons = document.createElement("div");
+  mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
+
+  const unlockedBtn = document.createElement("button");
+  unlockedBtn.textContent = "Show Unlocked";
+  Object.assign(unlockedBtn.style, {
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
+  });
+
+  const trendingBtn = document.createElement("button");
+  trendingBtn.textContent = "Trending";
+  Object.assign(trendingBtn.style, {
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
+    background: "linear-gradient(135deg, #8a2be2, #ff00f2)", color: "#fff",
+    border: "1px solid rgba(255,0,242,0.7)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
+  });
+
+  mainButtons.append(unlockedBtn, trendingBtn);
+  controls.appendChild(mainButtons);
+
+  const tagContainer = document.createElement("div");
+  tagContainer.id = "tagButtons";
+  tagContainer.style.cssText = `
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
+    margin-top:12px; padding:8px 0;
+  `;
+  controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
+  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
-  grid.style.cssText = `display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;`;
+  grid.style.cssText = `
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
+  `;
   modal.appendChild(grid);
 
+  // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
-
-  // Declare loading state INSIDE the modal scope
-  let isLoadingMore = false;
+  let isLoadingMore = false;  // ← Fixed: declared here in modal scope
 
   function renderFeed() {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // 1. Generate tags from currently loaded videos
+    // Generate tags from all currently loaded videos
     const allTags = new Set();
-    allLoadedVideos.forEach(v => (v.tags || []).forEach(t => {
-      if (t && typeof t === "string" && t.trim()) allTags.add(t.trim().toLowerCase());
-    }));
+    allLoadedVideos.forEach(v => {
+      (v.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim()) {
+          allTags.add(t.trim().toLowerCase());
+        }
+      });
+    });
+
     const sortedTags = [...allTags].sort();
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
@@ -5895,7 +6006,7 @@ function showHighlightsModal(initialVideos) {
       tagContainer.appendChild(btn);
     });
 
-    // 2. Apply filters
+    // Apply filters
     let filtered = allLoadedVideos.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -5909,7 +6020,7 @@ function showHighlightsModal(initialVideos) {
       });
     }
 
-    // 3. Random sort
+    // Random sort
     filtered = filtered.sort(() => Math.random() - 0.5);
 
     if (filtered.length === 0) {
@@ -5920,13 +6031,17 @@ function showHighlightsModal(initialVideos) {
       return;
     }
 
-    // 4. Render each video card
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative",
+        aspectRatio: "9/16",
+        borderRadius: "16px",
+        overflow: "hidden",
+        background: "#0f0a1a",
+        cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
@@ -5954,11 +6069,17 @@ function showHighlightsModal(initialVideos) {
         videoEl.poster = video.thumbnailUrl || "";
         console.log("Video ID:", video.id, "Poster:", video.thumbnailUrl || "[MISSING]");
         videoEl.load();
-        vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
-        vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
+        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
-        lock.innerHTML = `...`; // your lock overlay HTML
+        lock.innerHTML = `
+          <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
+                      display:flex; align-items:center; justify-content:center;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
+            </svg>
+          </div>`;
         vidContainer.appendChild(lock);
       }
 
@@ -5978,7 +6099,6 @@ function showHighlightsModal(initialVideos) {
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // Info overlay (title, uploader, tags, badge)
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -5999,7 +6119,9 @@ function showHighlightsModal(initialVideos) {
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
-              if (userSnap.exists()) showSocialCard(userSnap.data());
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              }
             })
             .catch(err => console.error("Failed to load user:", err));
         }
@@ -6016,6 +6138,8 @@ function showHighlightsModal(initialVideos) {
       });
       info.appendChild(tagsEl);
 
+      card.appendChild(info);
+
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
@@ -6029,12 +6153,11 @@ function showHighlightsModal(initialVideos) {
       });
       card.appendChild(badge);
 
-      card.appendChild(info);
       grid.appendChild(card);
     });
 
     // ====================
-    // ADD LOAD MORE BUTTON
+    // LOAD MORE BUTTON
     // ====================
     if (hasMoreVideos && !isLoadingMore) {
       const loadMoreBtn = document.createElement("button");
@@ -6058,11 +6181,10 @@ function showHighlightsModal(initialVideos) {
         loadMoreBtn.disabled = true;
 
         try {
-          const nextPage = await loadVideosPage(false); // false = next page
+          const nextPage = await loadVideosPage(false);
           if (nextPage.length > 0) {
             allLoadedVideos.push(...nextPage);
             renderFeed();
-            // Update cache
             localStorage.setItem(CACHE_KEY, JSON.stringify({
               videos: allLoadedVideos,
               timestamp: Date.now(),
@@ -6087,22 +6209,34 @@ function showHighlightsModal(initialVideos) {
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
-    // update button style...
+    unlockedBtn.style.background = filterMode === "unlocked"
+      ? "linear-gradient(135deg, #ff00f2, #00ffea)"
+      : "linear-gradient(135deg, #240046, #3c0b5e)";
     renderFeed();
   };
 
   trendingBtn.onclick = () => {
     filterMode = filterMode === "trending" ? "all" : "trending";
     trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
-    // update button style...
+    trendingBtn.style.background = filterMode === "trending"
+      ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
+      : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderFeed();
   };
 
-  // Search (unchanged)
+  // Search input (if exists)
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-      // your search logic...
+      const term = e.target.value.trim().toLowerCase();
+      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
+      grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
+        const userEl = card.querySelector("div[style*='color:#00ffea']");
+        let username = userEl?.textContent || "";
+        username = username.replace("@", "").trim().toLowerCase();
+        const matches = !searchTerm || username.includes(searchTerm);
+        card.style.display = matches ? "" : "none";
+      });
     });
   }
 
