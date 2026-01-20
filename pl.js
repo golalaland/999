@@ -6800,16 +6800,37 @@ if (currentUser && currentUser.isLive) {
 }
 
 // Tips Modal + Swipe + Confetti on close
-document.getElementById("topBallersBtn")?.addEventListener("click", openTipsModal);
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("topBallersBtn");
+  
+  if (!btn) {
+    console.error("Button with id='topBallersBtn' not found in DOM");
+    return;
+  }
+
+  btn.addEventListener("click", openTipsModal);
+
+  // Optional: log to confirm attachment
+  console.log("Tips button listener attached successfully");
+});
 
 function openTipsModal() {
-  document.getElementById("tipsModal").style.display = "flex";
+  const modal = document.getElementById("tipsModal");
+  if (!modal) {
+    console.error("tipsModal not found");
+    return;
+  }
+  modal.style.display = "flex";
   initTipsCarousel();
+  console.log("Tips modal opened"); // for debugging
 }
 
 function initTipsCarousel() {
   const slides = document.getElementById("tipsSlides");
-  const dots = document.getElementById("tipsDots").children;
+  const dotsContainer = document.getElementById("tipsDots");
+  if (!slides || !dotsContainer) return;
+
+  const dots = dotsContainer.children;
   let current = 0;
   const total = dots.length;
 
@@ -6822,37 +6843,42 @@ function initTipsCarousel() {
 
   // Touch swipe
   let startX = 0;
-  document.getElementById("tipsCarousel").addEventListener("touchstart", e => {
-    startX = e.touches[0].clientX;
-  });
+  const carousel = document.getElementById("tipsCarousel");
+  if (carousel) {
+    carousel.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
 
-  document.getElementById("tipsCarousel").addEventListener("touchend", e => {
-    const diff = startX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 60) {
-      if (diff > 0 && current < total - 1) current++;
-      else if (diff < 0 && current > 0) current--;
-      update();
-    }
-  });
-
-  // Optional: auto-swipe every 6s
-  // setInterval(() => { current = (current + 1) % total; update(); }, 6000);
+    carousel.addEventListener("touchend", e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 60) {
+        if (diff > 0 && current < total - 1) current++;
+        else if (diff < 0 && current > 0) current--;
+        update();
+      }
+    });
+  }
 }
 
 // Close with confetti
-document.getElementById("closeTipsBtn")?.addEventListener("click", () => {
-  confetti({
-    particleCount: 180,
-    spread: 80,
-    origin: { y: 0.6 },
-    colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
-    zIndex: 100000
+const closeBtn = document.getElementById("closeTipsBtn");
+if (closeBtn) {
+  closeBtn.addEventListener("click", () => {
+    if (typeof confetti === "function") {
+      confetti({
+        particleCount: 180,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
+        zIndex: 100000
+      });
+    }
+
+    setTimeout(() => {
+      document.getElementById("tipsModal").style.display = "none";
+    }, 800);
   });
-  
-  setTimeout(() => {
-    document.getElementById("tipsModal").style.display = "none";
-  }, 800); // let confetti show a bit
-});
+}
 
 /*********************************
  * fruity punch!!
