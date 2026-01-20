@@ -4437,7 +4437,6 @@ function resetButton(btn) {
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             if (progressBar) progressBar.style.width = '0%';
-            if (progressText) progressText.textContent = '0%';
         }, 450); // after fade-out transition
     }
 }
@@ -4523,7 +4522,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     // 5. Start upload + show progress bar
     btn.disabled = true;
     btn.classList.add('uploading');
-    btn.textContent = 'Uploading... 0%';
+    btn.textContent = 'Uploading...';
 
     if (progressContainer) progressContainer.style.opacity = '1';
 
@@ -4559,7 +4558,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     if (progressBar) progressBar.style.width = `${percent}%`;
-    if (progressText) progressText.textContent = `${Math.round(percent)}%`;
   },
             (error) => {
                 console.error('Upload failed:', error);
