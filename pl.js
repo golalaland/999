@@ -3306,7 +3306,6 @@ function extractColorsFromGradient(gradient) {
 
   // 🎞️ Video list (Shopify video)
   const videos = [
-    "https://cdn.shopify.com/videos/c/o/v/aa400d8029e14264bc1ba0a47babce47.mp4",
     "https://cdn.shopify.com/videos/c/o/v/45c20ba8df2c42d89807c79609fe85ac.mp4"
   ];
 
