@@ -622,7 +622,7 @@ function setupUsersListener() {
       if (updated || Object.keys(refs.userColors).length === snap.size) {
         console.log("[COLORS] Colors updated — re-rendering messages");
         // Re-render all messages to apply new colors
-        esFromArray(lastMessagesArray || []);
+        renderMessagesFromArray(lastMessagesArray || []);
       }
     },
     (err) => {
