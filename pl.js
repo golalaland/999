@@ -6800,87 +6800,180 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
-document.getElementById("topBallersBtn")?.addEventListener("click", openTipsModal);
-
-// Ultra-minimal debug modal to confirm modal visibility works
 function openTipsModal() {
-  console.log("Attempting to open ultra-minimal debug modal");
+  console.log("Opening real CUBE TIPS modal");
 
   // Remove any existing modal to prevent duplicates
   let modal = document.getElementById("tipsModal");
-  if (modal) {
-    modal.remove();
-  }
+  if (modal) modal.remove();
 
-  // Create fresh modal and force it to body
+  // Create modal and force to body root
   modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
     position: fixed;
     inset: 0;
-    background: rgba(255, 0, 0, 0.85) !important;
-    z-index: 2147483647 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    background: rgba(0,0,0,0.85);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    visibility: visible;
+    opacity: 1;
   `;
 
-  // Very obvious content so we can see if anything renders at all
+  // Full tips content (same as before, but with safeguards)
   modal.innerHTML = `
-    <div style="
-      background: #000 !important;
-      color: #0f0 !important;
-      padding: 60px 40px !important;
-      border: 8px solid #0f0 !important;
-      border-radius: 20px !important;
-      min-width: 300px !important;
-      min-height: 200px !important;
-      text-align: center !important;
-      font-size: 24px !important;
-      font-weight: bold !important;
-      box-shadow: 0 0 60px #0f0 !important;
-      line-height: 1.5 !important;
+    <div class="modal" style="
+      width: 90%;
+      max-width: 380px;
+      background: #0f0f0f;
+      border: 2px solid #FF1493;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(255,20,147,0.6);
+      color: #eee;
+      font-family: system-ui, sans-serif;
+      min-height: 500px;                /* prevent collapse */
+      display: flex;
+      flex-direction: column;
     ">
-      DEBUG TEST MODAL<br><br>
-      SHOULD SEE:<br>
-      • Bright RED background covering the whole screen<br>
-      • BLACK BOX with GREEN BORDER & GREEN TEXT in center<br><br>
-      If you see this → modal stacking & visibility work<br>
-      If you see only red → inner content issue<br>
-      If nothing → stacking context / parent transform problem<br><br>
-      <button id="closeDebugBtn" style="
-        margin-top: 30px;
-        padding: 16px 50px;
-        background: #FF1493;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-      ">
-        CLOSE DEBUG
-      </button>
+      <!-- Header -->
+      <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.1); border-bottom:1px solid rgba(255,20,147,0.3);">
+        <h3 style="margin:0; font-size:20px; color:#FF1493; font-weight:900;">CUBE TIPS</h3>
+        <p style="margin:6px 0 0; font-size:14px; color:#00e676;">Level up • Earn more • Dominate</p>
+      </div>
+
+      <!-- Carousel Container - with fallback height -->
+      <div id="tipsCarousel" style="position:relative; flex:1; min-height:380px; overflow:hidden;">
+        <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
+          <!-- Card 1 -->
+          <div style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%; background:#111;">
+            <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              [Welcome Image Placeholder]
+            </div>
+            <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+              <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
+              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
+                You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%; background:#111;">
+            <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              [Earn STRZ Image Placeholder]
+            </div>
+            <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+              <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
+              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
+                Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
+                Use STRZ to unlock content, interact, play games & win real rewards.<br><br>
+                STRZ → real cash.<br>
+                <strong>Getting paid:</strong><br>1. Set up bank first<br>2. Supports 33+ NG, 15 ZA, 5 international banks
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%; background:#111;">
+            <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              [BUZZ Message Image Placeholder]
+            </div>
+            <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+              <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
+              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
+                <strong>🚨</strong> icon = BUZZ MESSAGE<br><br>
+                Stands out in chat + fun sound (volume on!)<br>
+                Costs STRZ.<br><br>
+                <strong>How:</strong><br>1. Type ≤15 chars<br>2. Tap 🚨
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dots -->
+        <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#FF1493;cursor:pointer;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,20,147,0.3);">
+        <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
+          GOT IT 🔥
+        </button>
+      </div>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  // Attach close listener
-  const closeBtn = document.getElementById("closeDebugBtn");
+  // Initialize carousel
+  initTipsCarousel();
+
+  // Close with confetti
+  const closeBtn = document.getElementById("closeTipsBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
-      modal.style.display = "none";
-      modal.remove();
-      console.log("Debug modal closed & removed");
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 180,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
+          zIndex: 2147483647
+        });
+      }
+
+      setTimeout(() => {
+        modal.style.display = "none";
+        modal.remove();
+      }, 800);
     });
   }
 
-  console.log("Debug modal appended & display forced");
+  console.log("Real tips modal opened");
 }
+
+function initTipsCarousel() {
+  const slides = document.getElementById("tipsSlides");
+  const dotsContainer = document.getElementById("tipsDots");
+  if (!slides || !dotsContainer) return;
+
+  const dots = dotsContainer.children;
+  let current = 0;
+  const total = dots.length;
+
+  function update() {
+    slides.style.transform = `translateX(-${current * 33.333}%)`;
+    for (let i = 0; i < total; i++) {
+      dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
+    }
+  }
+
+  // Touch swipe
+  let startX = 0;
+  const carousel = document.getElementById("tipsCarousel");
+  if (carousel) {
+    carousel.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+    carousel.addEventListener("touchend", e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 60) {
+        if (diff > 0 && current < total - 1) current++;
+        else if (diff < 0 && current > 0) current--;
+        update();
+      }
+    });
+  }
+}
+
 /*********************************
  * fruity punch!!
  *********************************/
