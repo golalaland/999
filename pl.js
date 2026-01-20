@@ -108,8 +108,8 @@ export {
 
 
 /* ---------- Global State ---------- */
-const ROOM_ID = "room1010";
-const CHAT_COLLECTION = "messages_room1010";
+const ROOM_ID = "room1111";
+const CHAT_COLLECTION = "messages_room1111";
 const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
