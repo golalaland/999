@@ -4796,107 +4796,73 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
     };
 });
 
+
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
   const storageKey = 'fakeOnlineCount';
 
   function formatCount(n) {
-    if (n >= 10000) return (n / 10000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K';
-    return n;
+    return n; // no K / M needed under 100
   }
 
-  // Start in a realistic zone for a moderately active site
-  let count = parseInt(localStorage.getItem(storageKey)) || 1240;
+  // Start somewhere believable (8–35)
+  let count = parseInt(localStorage.getItem(storageKey)) || (8 + Math.floor(Math.random() * 28));
 
   function updateDisplay() {
     onlineCountEl.textContent = formatCount(count);
     localStorage.setItem(storageKey, count);
   }
-
   updateDisplay();
 
-  let baseTrend = 0; // -1 = drifting down, 0 = neutral, 1 = drifting up
+  let baseTrend = 0;
 
   setInterval(() => {
     const dice = Math.random();
 
-    // 1. Most of the time: very small natural breathing (±1–8)
-    if (dice < 0.55) {
-      count += Math.floor(Math.random() * 17) - 8;
+    if (dice < 0.5) {
+      // tiny natural change (±1–2)
+      count += Math.floor(Math.random() * 5) - 2;
+    } 
+    else if (dice < 0.75) {
+      // small group join/leave (±3–6)
+      count += Math.floor(Math.random() * 9) - 4;
     }
-    // 2. Small group join/leave waves (±10–35)
-    else if (dice < 0.82) {
-      count += Math.floor(Math.random() * 51) - 25;
+    else if (dice < 0.9) {
+      // small surge (+4–9)
+      count += Math.floor(Math.random() * 6) + 4;
     }
-    // 3. Occasional medium bump (new share / small promo / refresh wave) +45–+140
-    else if (dice < 0.94) {
-      count += Math.floor(Math.random() * 96) + 45;
-      // slightly increase upward pressure after a bump
-      baseTrend = Math.min(1, baseTrend + 0.3);
-    }
-    // 4. Small drop-off after video ends / tab closed (±40–110 down)
-    else if (dice < 0.99) {
-      count -= Math.floor(Math.random() * 71) + 40;
-      // slight downward pressure
-      baseTrend = Math.max(-1, baseTrend - 0.3);
-    }
-    // 5. Rare bigger spike — feels like influencer just mentioned it
     else {
-      count += Math.floor(Math.random() * 220) + 120; // +120–340
-      baseTrend = 1;
+      // mini drop-off (-4–8)
+      count -= Math.floor(Math.random() * 5) + 4;
     }
 
-    // Gentle time-of-day influence (assumes your audience timezone)
+    // Time-of-day trend
     const hour = new Date().getHours();
-    if (hour >= 23 || hour < 7) {
-      baseTrend = -1; // night → slow drain
-    } else if ((hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 22)) {
-      baseTrend = 1;  // lunch + evening = active
-    } else if (hour >= 8 && hour <= 11) {
-      baseTrend = 0.3; // morning slow build
-    } else {
-      baseTrend = 0;
-    }
+    if (hour >= 22 || hour < 7) baseTrend = -1;
+    else if (hour >= 12 && hour <= 14) baseTrend = 1;
+    else if (hour >= 18 && hour <= 21) baseTrend = 1;
+    else baseTrend = 0;
 
-    // Apply very gentle trend force
-    if (baseTrend > 0) {
-      count += Math.random() > 0.6 ? 2 : 1;
-    } else if (baseTrend < 0) {
-      count -= Math.random() > 0.6 ? 2 : 1;
-    }
+    if (baseTrend === 1 && Math.random() > 0.6) count += 1;
+    if (baseTrend === -1 && Math.random() > 0.6) count -= 1;
 
-    // ------------------- Hard realistic boundaries -------------------
-    // Almost never go below ~650 or above ~1950
-    if (count < 650) {
-      count = 650 + Math.floor(Math.random() * 350); // jump back into believable range
-      baseTrend = 0.5; // give it some upward momentum after floor hit
-    }
-    if (count > 1950) {
-      count = 1950 - Math.floor(Math.random() * 450);
-      baseTrend = -0.5;
-    }
-
-    // Prevent staying stuck on xxx0 or xxx00 too long
-    if ((count % 100 === 0 || count % 1000 === 0) && Math.random() < 0.85) {
-      count += Math.floor(Math.random() * 70) - 35;
-    }
-
-    // Keep it integer
-    count = Math.round(count);
+    // HARD LIMITS
+    if (count < 8) count = 8 + Math.floor(Math.random() * 4);
+    if (count > 100) count = 95 + Math.floor(Math.random() * 3);
 
     updateDisplay();
-  }, 2800 + Math.floor(Math.random() * 3400)); // ~3–6 second updates → natural jitter
 
-  // Very gentle long-term recentering (prevents infinite upward/downward creep)
+  }, 3000 + Math.floor(Math.random() * 2000)); // 3–5 sec jitter
+
+  // Gentle drift reset (keeps it alive)
   setInterval(() => {
-    const target = 1100 + Math.floor(Math.random() * 700); // 1100–1800 zone
-    const diff = target - count;
-    count += Math.round(diff * 0.08); // move ~8% toward target
+    const drift = Math.floor(Math.random() * 10) - 5;
+    count = Math.max(8, Math.min(100, count + drift));
     updateDisplay();
-  }, 8 * 60 * 1000); // every ~8 minutes
+  }, 4 * 60 * 1000);
 
 })();
+
 
 
 
@@ -7021,4 +6987,3 @@ paystackNigeriaBanks.forEach(bank => {
 /*********************************
  * INIT
  *********************************/
-loadReels();
