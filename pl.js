@@ -6800,12 +6800,19 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
+document.getElementById("topBallersBtn")?.addEventListener("click", openTipsModal);
+
+// Ultra-minimal debug modal to confirm modal visibility works
 function openTipsModal() {
   console.log("Attempting to open ultra-minimal debug modal");
 
+  // Remove any existing modal to prevent duplicates
   let modal = document.getElementById("tipsModal");
-  if (modal) modal.remove();
+  if (modal) {
+    modal.remove();
+  }
 
+  // Create fresh modal and force it to body
   modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
@@ -6821,6 +6828,7 @@ function openTipsModal() {
     opacity: 1 !important;
   `;
 
+  // Very obvious content so we can see if anything renders at all
   modal.innerHTML = `
     <div style="
       background: #000 !important;
@@ -6834,79 +6842,45 @@ function openTipsModal() {
       font-size: 24px !important;
       font-weight: bold !important;
       box-shadow: 0 0 60px #0f0 !important;
+      line-height: 1.5 !important;
     ">
-      DEBUG: SHOULD SEE GREEN BOX ON RED SCREEN<br><br>
-      If this appears → modal system works<br>
-      Close this tab or refresh to remove
+      DEBUG TEST MODAL<br><br>
+      SHOULD SEE:<br>
+      • Bright RED background covering the whole screen<br>
+      • BLACK BOX with GREEN BORDER & GREEN TEXT in center<br><br>
+      If you see this → modal stacking & visibility work<br>
+      If you see only red → inner content issue<br>
+      If nothing → stacking context / parent transform problem<br><br>
+      <button id="closeDebugBtn" style="
+        margin-top: 30px;
+        padding: 16px 50px;
+        background: #FF1493;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+      ">
+        CLOSE DEBUG
+      </button>
     </div>
   `;
 
   document.body.appendChild(modal);
+
+  // Attach close listener
+  const closeBtn = document.getElementById("closeDebugBtn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+      modal.remove();
+      console.log("Debug modal closed & removed");
+    });
+  }
+
   console.log("Debug modal appended & display forced");
 }
-
-// Mimic poll's render + show
-    hideLoader(); // Assume hideLoader from poll
-    modal.style.display = "flex";
-    initTipsCarousel();
-
-    // Attach close listener (since dynamic)
-    document.getElementById("closeTipsBtn").addEventListener("click", () => {
-      confetti({
-        particleCount: 180,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
-        zIndex: 2147483647
-      });
-      
-      setTimeout(() => {
-        modal.style.display = "none";
-        modal.remove(); // Clean up
-      }, 800);
-    });
-
-    console.log("Tips modal opened");
-  } catch (err) {
-    hideLoader();
-    console.error("Tips open error:", err);
-  }
-}
-
-function initTipsCarousel() {
-  const slides = document.getElementById("tipsSlides");
-  const dotsContainer = document.getElementById("tipsDots");
-  if (!slides || !dotsContainer) return;
-
-  const dots = dotsContainer.children;
-  let current = 0;
-  const total = dots.length;
-
-  function update() {
-    slides.style.transform = `translateX(-${current * 33.333}%)`;
-    for (let i = 0; i < total; i++) {
-      dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
-    }
-  }
-
-  // Touch swipe
-  let startX = 0;
-  const carousel = document.getElementById("tipsCarousel");
-  if (carousel) {
-    carousel.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-    });
-    carousel.addEventListener("touchend", e => {
-      const diff = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 60) {
-        if (diff > 0 && current < total - 1) current++;
-        else if (diff < 0 && current > 0) current--;
-        update();
-      }
-    });
-  }
-}
-
 /*********************************
  * fruity punch!!
  *********************************/
