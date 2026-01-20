@@ -4431,7 +4431,6 @@ function resetButton(btn) {
   btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
 }
 
-function resetForm() {
   const fileInput       = document.getElementById('highlightUploadInput');
   const titleInput      = document.getElementById('highlightTitleInput');
   const descInput       = document.getElementById('highlightDescInput');
