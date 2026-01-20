@@ -3497,62 +3497,117 @@ const modalGiftBtn = document.getElementById("featuredGiftBtn");
 const giftAmountEl = document.getElementById("giftAmount");
 const prevBtn = document.getElementById("prevHost");
 const nextBtn = document.getElementById("nextHost");
-// Global state for pagination
-let hosts = [];                     // current loaded hosts (all pages so far)
-let currentIndex = 0;
-let lastVisibleDoc = null;          // for startAfter pagination
-let isFetchingHosts = false;        // prevent duplicate fetches
-let hasMoreHosts = true;            // whether more pages exist
-const PAGE_SIZE = 20;               // hosts per page — adjust to 30–50 if needed
 
-// Cache key (can be versioned if data structure changes)
-const CACHE_KEY = "featuredHostsCache_v2";
+// =============================================
+// SHARED PAGINATION & CACHE UTILITIES
+// =============================================
 
-// FORCE HIDE MODAL ON LOAD
-if (modal) {
-  modal.style.display = "none";
-  modal.style.opacity = "0";
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function saveToCache(key, data, lastDocId = null) {
+  localStorage.setItem(key, JSON.stringify({
+    data,
+    timestamp: Date.now(),
+    lastDocId: lastDocId ? lastDocId.id : null
+  }));
+}
+
+function loadFromCache(key) {
+  const cached = localStorage.getItem(key);
+  if (!cached) return null;
+  try {
+    const { data, timestamp, lastDocId } = JSON.parse(cached);
+    if (Date.now() - timestamp < CACHE_TTL) {
+      return { data, lastDocId };
+    }
+  } catch {}
+  return null;
+}
+
+// =============================================
+// FEATURED HOSTS – Lazy Pagination (20 per page)
+// =============================================
+
+let hosts = [];
+let currentHostIndex = 0;
+let lastVisibleHostDoc = null;
+let hasMoreHosts = true;
+let isFetchingHosts = false;
+const HOSTS_PAGE_SIZE = 20;
+const HOSTS_CACHE_KEY = "featuredHostsCache_v2";
+
+async function loadHostsPage(isFirstPage = true) {
+  if (isFetchingHosts) return [];
+  isFetchingHosts = true;
+
+  try {
+    const docRef = doc(db, "featuredHosts", "current");
+    const snap = await getDoc(docRef);
+
+    if (!snap.exists() || !snap.data().hosts?.length) {
+      hasMoreHosts = false;
+      hosts = [];
+      return [];
+    }
+
+    const allHostIds = snap.data().hosts;
+    const startIdx = isFirstPage ? 0 : hosts.length;
+    const pageIds = allHostIds.slice(startIdx, startIdx + HOSTS_PAGE_SIZE);
+
+    if (pageIds.length === 0) {
+      hasMoreHosts = false;
+      return [];
+    }
+
+    // Fetch in chunks of 10 (in query limit)
+    const chunks = [];
+    for (let i = 0; i < pageIds.length; i += 10) {
+      chunks.push(pageIds.slice(i, i + 10));
+    }
+
+    const pageHosts = [];
+    await Promise.all(chunks.map(async chunk => {
+      if (chunk.length === 0) return;
+      const q = query(
+        collection(db, "users"),
+        where(firebase.firestore.FieldPath.documentId(), "in", chunk)
+      );
+      const snap = await getDocs(q);
+      snap.forEach(doc => pageHosts.push({ id: doc.id, ...doc.data() }));
+    }));
+
+    lastVisibleHostDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
+    hasMoreHosts = startIdx + pageIds.length < allHostIds.length;
+
+    return pageHosts;
+  } catch (err) {
+    console.error("Hosts fetch failed:", err);
+    return [];
+  } finally {
+    isFetchingHosts = false;
+  }
 }
 
 // ---------- STAR HOSTS BUTTON – LAZY + PAGINATED ----------
 if (openBtn) {
   openBtn.onclick = async () => {
-    // Try cache first
-    const cached = localStorage.getItem(CACHE_KEY);
-    let cacheValid = false;
-
-    if (cached) {
-      try {
-        const data = JSON.parse(cached);
-        if (Date.now() - data.timestamp < 10 * 60 * 1000) { // 10 min TTL
-          hosts = data.hosts;
-          lastVisibleDoc = data.lastVisibleDoc ? data.lastVisibleDoc : null;
-          hasMoreHosts = data.hasMoreHosts !== false;
-          cacheValid = true;
-          console.log("Featured hosts from cache:", hosts.length);
-        }
-      } catch (e) {
-        console.warn("Invalid cache, refetching");
-      }
+    const cache = loadFromCache(HOSTS_CACHE_KEY);
+    if (cache) {
+      hosts = cache.data;
+      lastVisibleHostDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
+      hasMoreHosts = hosts.length % HOSTS_PAGE_SIZE === 0;
+      console.log("Hosts from cache:", hosts.length);
+    } else {
+      hosts = [];
+      lastVisibleHostDoc = null;
+      hasMoreHosts = true;
+      const firstPage = await loadHostsPage(true);
+      hosts = firstPage;
+      saveToCache(HOSTS_CACHE_KEY, hosts, lastVisibleHostDoc);
     }
 
-    // If no valid cache or empty → fetch first page
-    if ((!cacheValid || hosts.length === 0) && !isFetchingHosts) {
-      isFetchingHosts = true;
-      try {
-        await fetchFeaturedHostsPage(true); // true = reset / first page
-        // Cache after first successful page
-        saveToCache();
-      } catch (err) {
-        showStarPopup("Failed to load Star Hosts", { type: "error" });
-      } finally {
-        isFetchingHosts = false;
-      }
-    }
-
-    // Still nothing? Show message
     if (hosts.length === 0) {
-      showGiftAlert("No Star Hosts online right now! Check back soon.");
+      showGiftAlert("No Star Hosts online right now!");
       return;
     }
 
@@ -5676,110 +5731,101 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-// Global/module-level state for pagination & cache
-let allLoadedVideos = [];
-let lastVisibleDoc = null;
-let hasMoreVideos = true;
-let isLoadingMore = false;
-const PAGE_SIZE = 21; // exactly 21 reads max per page as requested
-const CACHE_KEY = "highlightsFeedCache_v1";
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+// =============================================
+// HIGHLIGHTS VIDEOS – Vertical Feed (21 per page)
+// =============================================
 
-/* ---------- Highlights Button – Optimized Vertical Feed ---------- */
+let allLoadedVideos = [];
+let lastVisibleVideoDoc = null;
+let hasMoreVideos = true;
+let isLoadingVideos = false;
+const VIDEOS_PAGE_SIZE = 21;
+const VIDEOS_CACHE_KEY = "highlightsFeedCache_v1";
+
+async function loadVideosPage(isFirstPage = true) {
+  if (isLoadingVideos) return [];
+  isLoadingVideos = true;
+
+  try {
+    let q = query(
+      collection(db, "highlightVideos"),
+      orderBy("createdAt", "desc"),
+      limit(VIDEOS_PAGE_SIZE)
+    );
+
+    if (!isFirstPage && lastVisibleVideoDoc) {
+      q = query(q, startAfter(lastVisibleVideoDoc));
+    }
+
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      hasMoreVideos = false;
+      return [];
+    }
+
+    lastVisibleVideoDoc = snap.docs[snap.docs.length - 1];
+
+    return snap.docs.map(docSnap => {
+      const d = docSnap.data();
+      const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
+      return {
+        id: docSnap.id,
+        highlightVideo: d.highlightVideo,
+        highlightVideoPrice: d.highlightVideoPrice || 0,
+        title: d.title || "Untitled",
+        uploaderName,
+        uploaderId: d.uploaderId || "",
+        uploaderEmail: d.uploaderEmail || "unknown",
+        description: d.description || "",
+        thumbnailUrl: d.thumbnailUrl || "",
+        createdAt: d.createdAt || null,
+        unlockedBy: d.unlockedBy || [],
+        previewClip: d.previewClip || "",
+        videoUrl: d.videoUrl || "",
+        isTrending: d.isTrending || false,
+        tags: d.tags || []
+      };
+    });
+  } catch (err) {
+    console.error("Videos fetch failed:", err);
+    return [];
+  } finally {
+    isLoadingVideos = false;
+  }
+}
+
+// Highlights button handler
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
     showGoldAlert("Please log in to view cuties");
     return;
   }
 
-  // 1. Try cache first (zero reads)
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (cached) {
-    try {
-      const { videos, timestamp, lastDocId } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_TTL) {
-        allLoadedVideos = videos;
-        lastVisibleDoc = lastDocId ? { id: lastDocId } : null;
-        hasMoreVideos = videos.length % PAGE_SIZE === 0;
-        showHighlightsModal(allLoadedVideos);
-        console.log("Highlights loaded from cache:", allLoadedVideos.length);
-        return;
-      }
-    } catch (e) {
-      console.warn("Invalid highlights cache → refetching");
-    }
-  }
-
-  // 2. Fresh load – first page only (max 21 reads)
-  try {
-    allLoadedVideos = [];
-    lastVisibleDoc = null;
-    hasMoreVideos = true;
-
-    const firstPage = await loadHighlightsPage(true); // true = reset/first page
-    allLoadedVideos = firstPage;
-
-    if (allLoadedVideos.length === 0) {
-      showGoldAlert("No clips uploaded yet");
-      return;
-    }
-
-    // Cache the loaded data
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      videos: allLoadedVideos,
-      timestamp: Date.now(),
-      lastDocId: lastVisibleDoc ? lastVisibleDoc.id : null
-    }));
-
+  const cache = loadFromCache(VIDEOS_CACHE_KEY);
+  if (cache) {
+    allLoadedVideos = cache.data;
+    lastVisibleVideoDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
+    hasMoreVideos = allLoadedVideos.length % VIDEOS_PAGE_SIZE === 0;
+    console.log("Videos from cache:", allLoadedVideos.length);
     showHighlightsModal(allLoadedVideos);
-  } catch (err) {
-    console.error("Error fetching clips:", err);
-    showGoldAlert("Error loading clips – try again");
+    return;
   }
+
+  allLoadedVideos = [];
+  lastVisibleVideoDoc = null;
+  hasMoreVideos = true;
+
+  const firstPage = await loadVideosPage(true);
+  allLoadedVideos = firstPage;
+
+  if (allLoadedVideos.length === 0) {
+    showGoldAlert("No clips uploaded yet");
+    return;
+  }
+
+  saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc);
+  showHighlightsModal(allLoadedVideos);
 };
-
-/* ---------- Load one page (21 videos max) ---------- */
-async function loadHighlightsPage(isFirstPage = true) {
-  let q = query(
-    collection(db, "highlightVideos"),
-    orderBy("createdAt", "desc"),
-    limit(PAGE_SIZE)
-  );
-
-  if (!isFirstPage && lastVisibleDoc) {
-    q = query(q, startAfter(lastVisibleDoc));
-  }
-
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) {
-    hasMoreVideos = false;
-    return [];
-  }
-
-  lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
-
-  return snapshot.docs.map(docSnap => {
-    const d = docSnap.data();
-    const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
-    return {
-      id: docSnap.id,
-      highlightVideo: d.highlightVideo,
-      highlightVideoPrice: d.highlightVideoPrice || 0,
-      title: d.title || "Untitled",
-      uploaderName,
-      uploaderId: d.uploaderId || "",
-      uploaderEmail: d.uploaderEmail || "unknown",
-      description: d.description || "",
-      thumbnailUrl: d.thumbnailUrl || "",
-      createdAt: d.createdAt || null,
-      unlockedBy: d.unlockedBy || [],
-      previewClip: d.previewClip || "",
-      videoUrl: d.videoUrl || "",
-      isTrending: d.isTrending || false,
-      tags: d.tags || []
-    };
-  });
-}
 
 /* ---------- Highlights Modal – Vertical Scroll Feed with Load More ---------- */
 function showHighlightsModal(initialVideos) {
