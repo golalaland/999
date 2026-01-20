@@ -3497,57 +3497,85 @@ const modalGiftBtn = document.getElementById("featuredGiftBtn");
 const giftAmountEl = document.getElementById("giftAmount");
 const prevBtn = document.getElementById("prevHost");
 const nextBtn = document.getElementById("nextHost");
-let hosts = [];
+// Global state for pagination
+let hosts = [];                     // current loaded hosts (all pages so far)
 let currentIndex = 0;
+let lastVisibleDoc = null;          // for startAfter pagination
+let isFetchingHosts = false;        // prevent duplicate fetches
+let hasMoreHosts = true;            // whether more pages exist
+const PAGE_SIZE = 20;               // hosts per page — adjust to 30–50 if needed
 
-// FORCE HIDE ON LOAD — CRITICAL
+// Cache key (can be versioned if data structure changes)
+const CACHE_KEY = "featuredHostsCache_v2";
+
+// FORCE HIDE MODAL ON LOAD
 if (modal) {
   modal.style.display = "none";
   modal.style.opacity = "0";
 }
 
-// SILENTLY LOAD HOSTS ON START
-fetchFeaturedHosts();
-
-/* ---------- STAR HOSTS BUTTON — PURE ELEGANCE EDITION ---------- */
+// ---------- STAR HOSTS BUTTON – LAZY + PAGINATED ----------
 if (openBtn) {
   openBtn.onclick = async () => {
-    // If no hosts yet → try to fetch silently (no visual feedback)
-    if (!hosts || hosts.length === 0) {
-      await fetchFeaturedHosts();
+    // Try cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    let cacheValid = false;
+
+    if (cached) {
+      try {
+        const data = JSON.parse(cached);
+        if (Date.now() - data.timestamp < 10 * 60 * 1000) { // 10 min TTL
+          hosts = data.hosts;
+          lastVisibleDoc = data.lastVisibleDoc ? data.lastVisibleDoc : null;
+          hasMoreHosts = data.hasMoreHosts !== false;
+          cacheValid = true;
+          console.log("Featured hosts from cache:", hosts.length);
+        }
+      } catch (e) {
+        console.warn("Invalid cache, refetching");
+      }
     }
 
-    // Still no hosts? → show alert and stop
-    if (!hosts || hosts.length === 0) {
-      showGiftAlert("No Star Hosts online right now!");
+    // If no valid cache or empty → fetch first page
+    if ((!cacheValid || hosts.length === 0) && !isFetchingHosts) {
+      isFetchingHosts = true;
+      try {
+        await fetchFeaturedHostsPage(true); // true = reset / first page
+        // Cache after first successful page
+        saveToCache();
+      } catch (err) {
+        showStarPopup("Failed to load Star Hosts", { type: "error" });
+      } finally {
+        isFetchingHosts = false;
+      }
+    }
+
+    // Still nothing? Show message
+    if (hosts.length === 0) {
+      showGiftAlert("No Star Hosts online right now! Check back soon.");
       return;
     }
 
-    // HOSTS EXIST → OPEN SMOOTHLY
+    // Open modal with first host
     loadHost(currentIndex);
-
     modal.style.display = "flex";
     modal.style.justifyContent = "center";
     modal.style.alignItems = "center";
     setTimeout(() => modal.style.opacity = "1", 50);
 
-    // Fiery slider glow
-    if (giftSlider) {
-      giftSlider.style.background = randomFieryGradient();
-    }
+    if (giftSlider) giftSlider.style.background = randomFieryGradient();
 
-    console.log("Star Hosts Modal Opened —", hosts.length, "online");
+    console.log("Star Hosts Modal Opened —", hosts.length, "loaded so far");
   };
 }
 
-/* ---------- CLOSE MODAL — SMOOTH & CLEAN ---------- */
+// ---------- CLOSE MODAL ----------
 if (closeModal) {
   closeModal.onclick = () => {
     modal.style.opacity = "0";
     setTimeout(() => modal.style.display = "none", 300);
   };
 }
-
 if (modal) {
   modal.onclick = (e) => {
     if (e.target === modal) {
@@ -3557,67 +3585,135 @@ if (modal) {
   };
 }
 
+// ---------- FETCH FIRST OR NEXT PAGE ----------
+async function fetchFeaturedHostsPage(isFirstPage = false) {
+  if (isFetchingHosts) return;
+  isFetchingHosts = true;
 
-/* ---------- UPDATE HOST COUNT ON BUTTON (OPTIONAL BUT CLEAN) ---------- */
-window.updateHostCount = () => {
-  if (!openBtn) return;
-  openBtn.textContent = hosts.length > 0 ? `Star Hosts (${hosts.length})` : "Star Hosts";
-  openBtn.disabled = false;
-};
-
-/* ---------- SECURE + WORKING: Featured Hosts (2025 Final Version) ---------- */
-async function fetchFeaturedHosts() {
   try {
+    // Get the list of featured host IDs
     const docRef = doc(db, "featuredHosts", "current");
     const snap = await getDoc(docRef);
 
     if (!snap.exists() || !snap.data().hosts?.length) {
       console.warn("No featured hosts found.");
       hosts = [];
+      hasMoreHosts = false;
       renderHostAvatars();
       return;
     }
 
-    const hostIds = snap.data().hosts;
-    const hostPromises = hostIds.map(async (id) => {
-      const userSnap = await getDoc(doc(db, "users", id));
-      return userSnap.exists() ? { id, ...userSnap.data() } : null;
-    });
+    const allHostIds = snap.data().hosts; // full array of IDs
 
-    hosts = (await Promise.all(hostPromises)).filter(Boolean);
-    console.log("Featured hosts loaded:", hosts.length);
+    // For pagination: determine which slice of IDs to fetch next
+    const startIndex = isFirstPage ? 0 : hosts.length;
+    const endIndex = startIndex + PAGE_SIZE;
+    const pageIds = allHostIds.slice(startIndex, endIndex);
+
+    if (pageIds.length === 0) {
+      hasMoreHosts = false;
+      return;
+    }
+
+    // Fetch user docs for this page
+    const pageHosts = [];
+
+    // Chunk IDs into groups of 10 (Firestore 'in' limit)
+    const chunks = [];
+    for (let i = 0; i < pageIds.length; i += 10) {
+      chunks.push(pageIds.slice(i, i + 10));
+    }
+
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        if (chunk.length === 0) return;
+        const q = query(
+          collection(db, "users"),
+          where(firebase.firestore.FieldPath.documentId(), "in", chunk)
+        );
+        const querySnap = await getDocs(q);
+        querySnap.forEach((doc) => {
+          pageHosts.push({ id: doc.id, ...doc.data() });
+        });
+      })
+    );
+
+    // Append new hosts
+    hosts = isFirstPage ? pageHosts : [...hosts, ...pageHosts];
+
+    // Update pagination state
+    lastVisibleDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
+    hasMoreHosts = endIndex < allHostIds.length;
+
+    console.log(`Loaded page ${Math.ceil(hosts.length / PAGE_SIZE)}: ${pageHosts.length} hosts`);
 
     renderHostAvatars();
-    loadHost(currentIndex >= hosts.length ? 0 : currentIndex);
-
+    updateLoadMoreButton();
   } catch (err) {
-    console.warn("Featured hosts offline or not set up");
-    hosts = [];
-    renderHostAvatars();
+    console.error("Featured hosts fetch failed:", err);
+    showStarPopup("Error loading hosts", { type: "error" });
+  } finally {
+    isFetchingHosts = false;
   }
 }
 
-// Call it once
-fetchFeaturedHosts();
+// ---------- CACHE HELPERS ----------
+function saveToCache() {
+  localStorage.setItem(CACHE_KEY, JSON.stringify({
+    hosts,
+    lastVisibleDoc: lastVisibleDoc ? { id: lastVisibleDoc.id } : null, // only store ID
+    hasMoreHosts,
+    timestamp: Date.now()
+  }));
+}
 
-/* ---------- Render Avatars ---------- */
+// ---------- RENDER AVATARS + LOAD MORE BUTTON ----------
 function renderHostAvatars() {
   hostListEl.innerHTML = "";
+
   hosts.forEach((host, idx) => {
     const img = document.createElement("img");
     img.src = host.popupPhoto || "";
     img.alt = host.chatId || "Host";
     img.classList.add("featured-avatar");
     if (idx === currentIndex) img.classList.add("active");
-
-    img.addEventListener("click", () => {
-      loadHost(idx);
-    });
-
+    img.addEventListener("click", () => loadHost(idx));
     hostListEl.appendChild(img);
   });
+
+  // Add "Load More" button if there are more
+  updateLoadMoreButton();
 }
 
+function updateLoadMoreButton() {
+  // Remove old button if exists
+  const existingBtn = document.getElementById("loadMoreHostsBtn");
+  if (existingBtn) existingBtn.remove();
+
+  if (!hasMoreHosts || isFetchingHosts) return;
+
+  const loadMoreBtn = document.createElement("button");
+  loadMoreBtn.id = "loadMoreHostsBtn";
+  loadMoreBtn.textContent = "Load More Hosts";
+  loadMoreBtn.style.cssText = `
+    margin: 20px auto;
+    padding: 10px 24px;
+    background: linear-gradient(90deg, #ff3366, #ff9933);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    display: block;
+  `;
+
+  loadMoreBtn.onclick = async () => {
+    await fetchFeaturedHostsPage(false); // false = next page
+    saveToCache();
+  };
+
+  hostListEl.appendChild(loadMoreBtn);
+}
 /* ---------- Load Host (Faster Video Loading) ---------- */
 async function loadHost(idx) {
   const host = hosts[idx];
