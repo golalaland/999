@@ -4411,8 +4411,8 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// HIGHLIGHT UPLOAD HANDLER
-// Features: resumable upload, Cloudflare CDN rewrite, 50MB limit, trending boost
+// HIGHLIGHT UPLOAD HANDLER + PROGRESS BAR
+// Features: resumable upload, Cloudflare CDN, 50MB limit, trending boost, visible progress bar
 // ================================
 
 function toCloudflareUrl(firebaseUrl) {
@@ -4429,6 +4429,17 @@ function resetButton(btn) {
     btn.classList.remove('uploading');
     btn.textContent = 'Post Highlight';
     btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+
+    const progressContainer = document.getElementById('progressContainer');
+    if (progressContainer) {
+        progressContainer.style.opacity = '0';
+        setTimeout(() => {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            if (progressBar) progressBar.style.width = '0%';
+            if (progressText) progressText.textContent = '0%';
+        }, 450); // after fade-out transition
+    }
 }
 
 function resetForm() {
@@ -4462,6 +4473,7 @@ function resetForm() {
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     const fileInput = document.getElementById('highlightUploadInput');
+    const progressContainer = document.getElementById('progressContainer');
 
     if (btn.disabled) return;
     resetButton(btn);
@@ -4508,10 +4520,13 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
         }
     }
 
-    // 5. Start upload
+    // 5. Start upload + show progress bar
     btn.disabled = true;
     btn.classList.add('uploading');
     btn.textContent = 'Uploading... 0%';
+
+    if (progressContainer) progressContainer.style.opacity = '1';
+
     showStarPopup('Dropping your highlight...', 'loading');
 
     try {
@@ -4537,6 +4552,11 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
             (snapshot) => {
                 const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                 btn.textContent = `Uploading... ${Math.round(percent)}%`;
+
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                if (progressBar) progressBar.style.width = `${percent}%`;
+                if (progressText) progressText.textContent = `${Math.round(percent)}%`;
             },
             (error) => {
                 console.error('Upload failed:', error);
@@ -4632,7 +4652,6 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
         video.currentTime = 0;
     };
 });
-
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
