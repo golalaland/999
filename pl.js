@@ -6800,14 +6800,30 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
+// ===== TIPS MODAL LOGIC =====
+
+document.addEventListener("DOMContentLoaded", () => {
+  const button = document.getElementById("topBallersBtn");
+  if (!button) {
+    console.error("Button #topBallersBtn not found");
+    return;
+  }
+
+  button.addEventListener("click", openTipsModal);
+  console.log("Tips button listener attached");
+});
+
 function openTipsModal() {
-  console.log("Opening real CUBE TIPS modal");
+  console.log("openTipsModal called");
 
-  // Remove any existing modal to prevent duplicates
+  // Clean up old modal if exists
   let modal = document.getElementById("tipsModal");
-  if (modal) modal.remove();
+  if (modal) {
+    modal.remove();
+    console.log("Old modal removed");
+  }
 
-  // Create modal and force to body root
+  // Create new modal
   modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
@@ -6823,9 +6839,9 @@ function openTipsModal() {
     opacity: 1;
   `;
 
-  // Full tips content (same as before, but with safeguards)
+  // Full content
   modal.innerHTML = `
-    <div class="modal" style="
+    <div style="
       width: 90%;
       max-width: 380px;
       background: #0f0f0f;
@@ -6835,9 +6851,9 @@ function openTipsModal() {
       box-shadow: 0 0 40px rgba(255,20,147,0.6);
       color: #eee;
       font-family: system-ui, sans-serif;
-      min-height: 500px;                /* prevent collapse */
       display: flex;
       flex-direction: column;
+      min-height: 520px;
     ">
       <!-- Header -->
       <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.1); border-bottom:1px solid rgba(255,20,147,0.3);">
@@ -6845,15 +6861,15 @@ function openTipsModal() {
         <p style="margin:6px 0 0; font-size:14px; color:#00e676;">Level up • Earn more • Dominate</p>
       </div>
 
-      <!-- Carousel Container - with fallback height -->
+      <!-- Carousel -->
       <div id="tipsCarousel" style="position:relative; flex:1; min-height:380px; overflow:hidden;">
-        <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
+        <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%); background:#111;">
           <!-- Card 1 -->
-          <div style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%; background:#111;">
+          <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
             <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [Welcome Image Placeholder]
+              [Welcome Placeholder]
             </div>
-            <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <div style="padding:20px; flex:1;">
               <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
               <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
                 You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
@@ -6862,11 +6878,11 @@ function openTipsModal() {
           </div>
 
           <!-- Card 2 -->
-          <div style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%; background:#111;">
+          <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
             <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [Earn STRZ Image Placeholder]
+              [Earn STRZ Placeholder]
             </div>
-            <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <div style="padding:20px; flex:1;">
               <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
               <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
                 Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
@@ -6878,11 +6894,11 @@ function openTipsModal() {
           </div>
 
           <!-- Card 3 -->
-          <div style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%; background:#111;">
+          <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
             <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [BUZZ Message Image Placeholder]
+              [BUZZ Placeholder]
             </div>
-            <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
+            <div style="padding:20px; flex:1;">
               <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
               <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
                 <strong>🚨</strong> icon = BUZZ MESSAGE<br><br>
@@ -6896,13 +6912,13 @@ function openTipsModal() {
 
         <!-- Dots -->
         <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#FF1493;cursor:pointer;"></div>
-          <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
-          <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
+          <div data-index="0" style="width:10px;height:10px;border-radius:50%;background:#FF1493;cursor:pointer;"></div>
+          <div data-index="1" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
+          <div data-index="2" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
         </div>
       </div>
 
-      <!-- Footer -->
+      <!-- Close button -->
       <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,20,147,0.3);">
         <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
           GOT IT 🔥
@@ -6912,14 +6928,16 @@ function openTipsModal() {
   `;
 
   document.body.appendChild(modal);
+  console.log("Modal appended to body");
 
-  // Initialize carousel
+  // Initialize swipe & dots
   initTipsCarousel();
 
-  // Close with confetti
-  const closeBtn = document.getElementById("closeTipsBtn");
+  // Close handler
+  const closeBtn = modal.querySelector("#closeTipsBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
+      console.log("Close button clicked");
       if (typeof confetti === "function") {
         confetti({
           particleCount: 180,
@@ -6929,31 +6947,34 @@ function openTipsModal() {
           zIndex: 2147483647
         });
       }
-
       setTimeout(() => {
         modal.style.display = "none";
         modal.remove();
+        console.log("Modal hidden & removed");
       }, 800);
     });
+  } else {
+    console.warn("closeTipsBtn not found in modal");
   }
-
-  console.log("Real tips modal opened");
 }
 
 function initTipsCarousel() {
   const slides = document.getElementById("tipsSlides");
   const dotsContainer = document.getElementById("tipsDots");
-  if (!slides || !dotsContainer) return;
+  if (!slides || !dotsContainer) {
+    console.warn("Carousel elements missing");
+    return;
+  }
 
-  const dots = dotsContainer.children;
+  const dots = dotsContainer.querySelectorAll("div");
   let current = 0;
   const total = dots.length;
 
   function update() {
     slides.style.transform = `translateX(-${current * 33.333}%)`;
-    for (let i = 0; i < total; i++) {
-      dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
-    }
+    dots.forEach((dot, i) => {
+      dot.style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
+    });
   }
 
   // Touch swipe
@@ -6962,7 +6983,8 @@ function initTipsCarousel() {
   if (carousel) {
     carousel.addEventListener("touchstart", e => {
       startX = e.touches[0].clientX;
-    });
+    }, { passive: true });
+
     carousel.addEventListener("touchend", e => {
       const diff = startX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 60) {
@@ -6970,8 +6992,18 @@ function initTipsCarousel() {
         else if (diff < 0 && current > 0) current--;
         update();
       }
-    });
+    }, { passive: true });
   }
+
+  // Dot clicks
+  dots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      current = index;
+      update();
+    });
+  });
+
+  console.log("Carousel initialized");
 }
 
 /*********************************
