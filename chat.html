@@ -3353,6 +3353,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 .reply-cancel-btn:active {
   transform: scale(0.95);
 }
+#progressContainer {
+  margin: 14px auto 0;
+  width: 80%;
+  max-width: 340px;          /* matches your dashed upload area */
+  height: 8px;               /* slightly thicker = more visible */
+  ...
+}
 </style>
 </head>
 <body>
@@ -4365,23 +4372,17 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <div class="tag-btn" data-tag="vibes">Vibes</div>
         </div>
       </div>
-     <!-- Upload Button + Progress Bar -->
+      
+ <!-- Upload Button + Progress Bar -->
 <div style="text-align:center; margin-top:32px;">
-  <button id="uploadHighlightBtn" style="
-    padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
-    color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
-    cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
-    transition:all 0.3s ease; position: relative; z-index: 2;
-  "
-  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
-  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
+  <button id="uploadHighlightBtn" style="...">
     Post Highlight
   </button>
 
-  <!-- New: Progress bar container -->
+  <!-- Progress bar container -->
   <div id="progressContainer" style="
     margin: 14px auto 0;
-    width: 220px;           /* slightly narrower than button for nicer look */
+    width: 220px;
     height: 6px;
     background: rgba(255,255,255,0.08);
     border-radius: 3px;
@@ -4397,23 +4398,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       transition: width 0.25s ease-out;
       position: relative;
     ">
-      <span id="progressText" style="
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 11px;
-        font-weight: 600;
-        color: white;
-        text-shadow: 0 0 3px rgba(0,0,0,0.7);
-        opacity: 0.9;
-      ">0%</span>
+      <span id="progressText" style="...">0%</span>
     </div>
   </div>
 </div>
 
 <div id="highlightUploadStatus" style="margin-top:12px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;"></div>
-</div>
 
 
 <!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
