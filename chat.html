@@ -4373,38 +4373,40 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
       
- <!-- Upload Button + Progress Bar -->
+<!-- Upload Button + Progress Bar -->
 <div style="text-align:center; margin-top:32px;">
-  <button id="uploadHighlightBtn" style="...">
+  <button id="uploadHighlightBtn" style="
+    padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
+    color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
+    cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
+    transition:all 0.3s ease; position:relative; z-index:2;
+  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
+     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
     Post Highlight
   </button>
 
-  <!-- Progress bar container -->
   <div id="progressContainer" style="
-    margin: 14px auto 0;
-    width: 220px;
-    height: 6px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 3px;
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    margin:14px auto 0; width:80%; max-width:340px; height:8px;
+    background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;
+    opacity:0; transition:opacity 0.4s ease;
   ">
     <div id="progressBar" style="
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #ff2e78, #ff8c2e);
-      border-radius: 3px;
-      transition: width 0.25s ease-out;
-      position: relative;
+      width:0%; height:100%; background:linear-gradient(90deg, #ff2e78, #ff8c2e);
+      border-radius:4px; transition:width 0.3s ease-out; position:relative;
     ">
-      <span id="progressText" style="...">0%</span>
+      <span id="progressText" style="
+        position:absolute; right:10px; top:50%; transform:translateY(-50%);
+        font-size:11px; font-weight:600; color:white; text-shadow:0 0 3px #000;
+        pointer-events:none;
+      ">0%</span>
     </div>
   </div>
 </div>
 
-<div id="highlightUploadStatus" style="margin-top:12px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;"></div>
-
+<div id="highlightUploadStatus" style="
+  margin-top:12px; text-align:center; font-size:14px; font-weight:600;
+  min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;
+"></div>
 
 <!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
 <div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
