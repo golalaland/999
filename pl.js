@@ -19,6 +19,7 @@ import {
   serverTimestamp,
   onSnapshot,
   query,
+  startAfter,
   limit,
   orderBy,
   increment,
@@ -107,8 +108,8 @@ export {
 
 
 /* ---------- Global State ---------- */
-const ROOM_ID = "room1010";
-const CHAT_COLLECTION = "messages_room1010";
+const ROOM_ID = "room888";
+const CHAT_COLLECTION = "messages_room888";
 const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
@@ -622,7 +623,7 @@ function setupUsersListener() {
       if (updated || Object.keys(refs.userColors).length === snap.size) {
         console.log("[COLORS] Colors updated — re-rendering messages");
         // Re-render all messages to apply new colors
-        esFromArray(lastMessagesArray || []);
+        renderMessagesFromArray(lastMessagesArray || []);
       }
     },
     (err) => {
@@ -1708,80 +1709,125 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
-/* ---------- 🔔 Messages Listener (Final Optimized Version) ---------- */
-function attachMessagesListener() {
-  const q = query(collection(db, CHAT_COLLECTION), orderBy("timestamp", "asc"));
+/* ---------- 🔔 Messages Listener – Optimized 2026 Version ---------- */
+// - Added limit(60) + orderBy desc to massively reduce initial reads
+// - Newest messages first (standard chat UX)
+// - Real-time only for recent messages
+// - Cache-aware logging (optional – remove later)
+// - Proper unsubscribe support
+// - Minor cleanups & safety checks
 
-  // 💾 Track shown gift alerts
-  const shownGiftAlerts = new Set(JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]"));
+let messagesUnsubscribe = null; // global or module-level to allow cleanup
+
+function attachMessagesListener() {
+  // Clean up any existing listener first (prevents duplicates on re-attach)
+  if (typeof messagesUnsubscribe === 'function') {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
+  }
+
+  const CHAT_LIMIT = 21; // adjust as needed: 40–100 is sweet spot for most chats
+
+  const q = query(
+    collection(db, CHAT_COLLECTION),
+    orderBy("timestamp", "desc"),           // ← newest first (recommended)
+    limit(CHAT_LIMIT)
+  );
+
+  // Load persisted state (gift alerts + pending messages)
+  const shownGiftAlerts = new Set(
+    JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
+  );
+
   function saveShownGift(id) {
     shownGiftAlerts.add(id);
     localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
   }
 
-  // 💾 Track local pending messages to prevent double rendering
-  let localPendingMsgs = JSON.parse(localStorage.getItem("localPendingMsgs") || "{}");
+  let localPendingMsgs = JSON.parse(
+    localStorage.getItem("localPendingMsgs") || "{}"
+  );
 
-  onSnapshot(q, snapshot => {
-    snapshot.docChanges().forEach(change => {
-      if (change.type !== "added") return;
+  messagesUnsubscribe = onSnapshot(
+    q,
+    { includeMetadataChanges: true }, // helps debug cache vs billed reads
+    (snapshot) => {
+      // Optional debug (remove or comment out in production)
+      console.log(
+        `Messages snapshot | fromCache: ${snapshot.metadata.fromCache ? '✓ cache' : 'server (billed)'} | ` +
+        `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
+      );
 
-      const msg = change.doc.data();
-      const msgId = change.doc.id;
+      // Process only newly added messages
+      snapshot.docChanges().forEach((change) => {
+        if (change.type !== "added") return;
 
-      // 🛑 Skip messages that look like local temp echoes
-      if (msg.tempId && msg.tempId.startsWith("temp_")) return;
+        const msg = change.doc.data();
+        const msgId = change.doc.id;
 
-      // 🛑 Skip already rendered messages
-      if (document.getElementById(msgId)) return;
+        // Skip temporary/echo messages
+        if (msg.tempId && msg.tempId.startsWith("temp_")) return;
 
-      // ✅ Match Firestore-confirmed message to a locally sent one
-      for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
-        const sameUser = pending.uid === msg.uid;
-        const sameText = pending.content === msg.content;
-        const createdAt = pending.createdAt || 0;
-        const msgTime = msg.timestamp?.toMillis?.() || 0;
-        const timeDiff = Math.abs(msgTime - createdAt);
+        // Skip if already rendered (defensive)
+        if (document.getElementById(msgId)) return;
 
-        if (sameUser && sameText && timeDiff < 7000) {
-          // 🔥 Remove local temp bubble
-          const tempEl = document.getElementById(tempId);
-          if (tempEl) tempEl.remove();
+        // Match & replace local optimistic message
+        let matched = false;
+        for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
+          const sameUser  = pending.uid === msg.uid;
+          const sameText  = pending.content === msg.content;
+          const timeDiff  = Math.abs(
+            (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
+          );
 
-          // 🧹 Clean up memory + storage
-          delete localPendingMsgs[tempId];
-          localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
-          break;
+          if (sameUser && sameText && timeDiff < 7000) {
+            const tempEl = document.getElementById(tempId);
+            if (tempEl) tempEl.remove();
+            delete localPendingMsgs[tempId];
+            localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
+            matched = true;
+            break;
+          }
         }
-      }
 
-      // ✅ Render message
-      renderMessagesFromArray([{ id: msgId, data: msg }]);
+        // Render the confirmed message
+        renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-      /* 💝 Gift Alert Logic */
-      if (msg.highlight && msg.content?.includes("gifted")) {
-        const myId = currentUser?.chatId?.toLowerCase();
-        if (!myId) return;
+        // Gift alert logic (only for receiver)
+        if (msg.highlight && msg.content?.includes("gifted")) {
+          const myId = currentUser?.chatId?.toLowerCase();
+          if (!myId) return;
 
-        const parts = msg.content.split(" ");
-        const sender = parts[0];
-        const receiver = parts[2];
-        const amount = parts[3];
-        if (!sender || !receiver || !amount) return;
+          const parts = msg.content.split(" ");
+          const sender   = parts[0];
+          const receiver = parts[2];
+          const amount   = parts[3];
 
-        if (receiver.toLowerCase() === myId && !shownGiftAlerts.has(msgId)) {
-          showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
-          saveShownGift(msgId);
+          if (sender && receiver && amount &&
+              receiver.toLowerCase() === myId &&
+              !shownGiftAlerts.has(msgId)) {
+            showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
+            saveShownGift(msgId);
+          }
         }
-      }
 
-      // 🌀 Keep scroll locked for your messages
-      if (refs.messagesEl && msg.uid === currentUser?.uid) {
-        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-      }
-    });
-  });
+        // Auto-scroll only for own messages
+        if (refs.messagesEl && msg.uid === currentUser?.uid) {
+          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+        }
+      });
+    },
+    (error) => {
+      console.error("Messages listener error:", error);
+      // Optional: show user-friendly message or retry logic
+    }
+  );
 }
+
+// Optional: Call this when user leaves chat / page unloads
+// window.addEventListener('beforeunload', () => {
+//   if (typeof messagesUnsubscribe === 'function') messagesUnsubscribe();
+// });
 
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
@@ -3259,6 +3305,7 @@ function extractColorsFromGradient(gradient) {
 
   // 🎞️ Video list (Shopify video)
   const videos = [
+    "https://cdn.shopify.com/videos/c/o/v/aa400d8029e14264bc1ba0a47babce47.mp4",
     "https://cdn.shopify.com/videos/c/o/v/45c20ba8df2c42d89807c79609fe85ac.mp4"
   ];
 
@@ -3451,57 +3498,140 @@ const modalGiftBtn = document.getElementById("featuredGiftBtn");
 const giftAmountEl = document.getElementById("giftAmount");
 const prevBtn = document.getElementById("prevHost");
 const nextBtn = document.getElementById("nextHost");
-let hosts = [];
-let currentIndex = 0;
 
-// FORCE HIDE ON LOAD — CRITICAL
-if (modal) {
-  modal.style.display = "none";
-  modal.style.opacity = "0";
+// =============================================
+// SHARED PAGINATION & CACHE UTILITIES
+// =============================================
+
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function saveToCache(key, data, lastDocId = null) {
+  localStorage.setItem(key, JSON.stringify({
+    data,
+    timestamp: Date.now(),
+    lastDocId: lastDocId ? lastDocId.id : null
+  }));
 }
 
-// SILENTLY LOAD HOSTS ON START
-fetchFeaturedHosts();
+function loadFromCache(key) {
+  const cached = localStorage.getItem(key);
+  if (!cached) return null;
+  try {
+    const { data, timestamp, lastDocId } = JSON.parse(cached);
+    if (Date.now() - timestamp < CACHE_TTL) {
+      return { data, lastDocId };
+    }
+  } catch {}
+  return null;
+}
 
-/* ---------- STAR HOSTS BUTTON — PURE ELEGANCE EDITION ---------- */
-if (openBtn) {
-  openBtn.onclick = async () => {
-    // If no hosts yet → try to fetch silently (no visual feedback)
-    if (!hosts || hosts.length === 0) {
-      await fetchFeaturedHosts();
+// =============================================
+// FEATURED HOSTS – Lazy Pagination (20 per page)
+// =============================================
+
+let hosts = [];
+let currentHostIndex = 0;
+let lastVisibleHostDoc = null;
+let hasMoreHosts = true;
+let isFetchingHosts = false;
+const HOSTS_PAGE_SIZE = 20;
+const HOSTS_CACHE_KEY = "featuredHostsCache_v2";
+
+async function loadHostsPage(isFirstPage = true) {
+  if (isFetchingHosts) return [];
+  isFetchingHosts = true;
+
+  try {
+    const docRef = doc(db, "featuredHosts", "current");
+    const snap = await getDoc(docRef);
+
+    if (!snap.exists() || !snap.data().hosts?.length) {
+      hasMoreHosts = false;
+      hosts = [];
+      return [];
     }
 
-    // Still no hosts? → show alert and stop
-    if (!hosts || hosts.length === 0) {
+    const allHostIds = snap.data().hosts;
+    const startIdx = isFirstPage ? 0 : hosts.length;
+    const pageIds = allHostIds.slice(startIdx, startIdx + HOSTS_PAGE_SIZE);
+
+    if (pageIds.length === 0) {
+      hasMoreHosts = false;
+      return [];
+    }
+
+    // Fetch in chunks of 10 (in query limit)
+    const chunks = [];
+    for (let i = 0; i < pageIds.length; i += 10) {
+      chunks.push(pageIds.slice(i, i + 10));
+    }
+
+    const pageHosts = [];
+    await Promise.all(chunks.map(async chunk => {
+      if (chunk.length === 0) return;
+      const q = query(
+        collection(db, "users"),
+        where(firebase.firestore.FieldPath.documentId(), "in", chunk)
+      );
+      const snap = await getDocs(q);
+      snap.forEach(doc => pageHosts.push({ id: doc.id, ...doc.data() }));
+    }));
+
+    lastVisibleHostDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
+    hasMoreHosts = startIdx + pageIds.length < allHostIds.length;
+
+    return pageHosts;
+  } catch (err) {
+    console.error("Hosts fetch failed:", err);
+    return [];
+  } finally {
+    isFetchingHosts = false;
+  }
+}
+
+// ---------- STAR HOSTS BUTTON – LAZY + PAGINATED ----------
+if (openBtn) {
+  openBtn.onclick = async () => {
+    const cache = loadFromCache(HOSTS_CACHE_KEY);
+    if (cache) {
+      hosts = cache.data;
+      lastVisibleHostDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
+      hasMoreHosts = hosts.length % HOSTS_PAGE_SIZE === 0;
+      console.log("Hosts from cache:", hosts.length);
+    } else {
+      hosts = [];
+      lastVisibleHostDoc = null;
+      hasMoreHosts = true;
+      const firstPage = await loadHostsPage(true);
+      hosts = firstPage;
+      saveToCache(HOSTS_CACHE_KEY, hosts, lastVisibleHostDoc);
+    }
+
+    if (hosts.length === 0) {
       showGiftAlert("No Star Hosts online right now!");
       return;
     }
 
-    // HOSTS EXIST → OPEN SMOOTHLY
+    // Open modal with first host
     loadHost(currentIndex);
-
     modal.style.display = "flex";
     modal.style.justifyContent = "center";
     modal.style.alignItems = "center";
     setTimeout(() => modal.style.opacity = "1", 50);
 
-    // Fiery slider glow
-    if (giftSlider) {
-      giftSlider.style.background = randomFieryGradient();
-    }
+    if (giftSlider) giftSlider.style.background = randomFieryGradient();
 
-    console.log("Star Hosts Modal Opened —", hosts.length, "online");
+    console.log("Star Hosts Modal Opened —", hosts.length, "loaded so far");
   };
 }
 
-/* ---------- CLOSE MODAL — SMOOTH & CLEAN ---------- */
+// ---------- CLOSE MODAL ----------
 if (closeModal) {
   closeModal.onclick = () => {
     modal.style.opacity = "0";
     setTimeout(() => modal.style.display = "none", 300);
   };
 }
-
 if (modal) {
   modal.onclick = (e) => {
     if (e.target === modal) {
@@ -3511,67 +3641,125 @@ if (modal) {
   };
 }
 
+// ---------- FETCH FIRST OR NEXT PAGE ----------
+async function fetchFeaturedHostsPage(isFirstPage = false) {
+  if (isFetchingHosts) return;
+  isFetchingHosts = true;
 
-/* ---------- UPDATE HOST COUNT ON BUTTON (OPTIONAL BUT CLEAN) ---------- */
-window.updateHostCount = () => {
-  if (!openBtn) return;
-  openBtn.textContent = hosts.length > 0 ? `Star Hosts (${hosts.length})` : "Star Hosts";
-  openBtn.disabled = false;
-};
-
-/* ---------- SECURE + WORKING: Featured Hosts (2025 Final Version) ---------- */
-async function fetchFeaturedHosts() {
   try {
+    // Get the list of featured host IDs
     const docRef = doc(db, "featuredHosts", "current");
     const snap = await getDoc(docRef);
 
     if (!snap.exists() || !snap.data().hosts?.length) {
       console.warn("No featured hosts found.");
       hosts = [];
+      hasMoreHosts = false;
       renderHostAvatars();
       return;
     }
 
-    const hostIds = snap.data().hosts;
-    const hostPromises = hostIds.map(async (id) => {
-      const userSnap = await getDoc(doc(db, "users", id));
-      return userSnap.exists() ? { id, ...userSnap.data() } : null;
-    });
+    const allHostIds = snap.data().hosts; // full array of IDs
 
-    hosts = (await Promise.all(hostPromises)).filter(Boolean);
-    console.log("Featured hosts loaded:", hosts.length);
+    // For pagination: determine which slice of IDs to fetch next
+    const startIndex = isFirstPage ? 0 : hosts.length;
+    const endIndex = startIndex + PAGE_SIZE;
+    const pageIds = allHostIds.slice(startIndex, endIndex);
+
+    if (pageIds.length === 0) {
+      hasMoreHosts = false;
+      return;
+    }
+
+    // Fetch user docs for this page
+    const pageHosts = [];
+
+    // Chunk IDs into groups of 10 (Firestore 'in' limit)
+    const chunks = [];
+    for (let i = 0; i < pageIds.length; i += 10) {
+      chunks.push(pageIds.slice(i, i + 10));
+    }
+
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        if (chunk.length === 0) return;
+        const q = query(
+          collection(db, "users"),
+          where(firebase.firestore.FieldPath.documentId(), "in", chunk)
+        );
+        const querySnap = await getDocs(q);
+        querySnap.forEach((doc) => {
+          pageHosts.push({ id: doc.id, ...doc.data() });
+        });
+      })
+    );
+
+    // Append new hosts
+    hosts = isFirstPage ? pageHosts : [...hosts, ...pageHosts];
+
+    // Update pagination state
+    lastVisibleDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
+    hasMoreHosts = endIndex < allHostIds.length;
+
+    console.log(`Loaded page ${Math.ceil(hosts.length / PAGE_SIZE)}: ${pageHosts.length} hosts`);
 
     renderHostAvatars();
-    loadHost(currentIndex >= hosts.length ? 0 : currentIndex);
-
+    updateLoadMoreButton();
   } catch (err) {
-    console.warn("Featured hosts offline or not set up");
-    hosts = [];
-    renderHostAvatars();
+    console.error("Featured hosts fetch failed:", err);
+    showStarPopup("Error loading hosts", { type: "error" });
+  } finally {
+    isFetchingHosts = false;
   }
 }
 
-// Call it once
-fetchFeaturedHosts();
-
-/* ---------- Render Avatars ---------- */
+// ---------- RENDER AVATARS + LOAD MORE BUTTON ----------
 function renderHostAvatars() {
   hostListEl.innerHTML = "";
+
   hosts.forEach((host, idx) => {
     const img = document.createElement("img");
     img.src = host.popupPhoto || "";
     img.alt = host.chatId || "Host";
     img.classList.add("featured-avatar");
     if (idx === currentIndex) img.classList.add("active");
-
-    img.addEventListener("click", () => {
-      loadHost(idx);
-    });
-
+    img.addEventListener("click", () => loadHost(idx));
     hostListEl.appendChild(img);
   });
+
+  // Add "Load More" button if there are more
+  updateLoadMoreButton();
 }
 
+function updateLoadMoreButton() {
+  // Remove old button if exists
+  const existingBtn = document.getElementById("loadMoreHostsBtn");
+  if (existingBtn) existingBtn.remove();
+
+  if (!hasMoreHosts || isFetchingHosts) return;
+
+  const loadMoreBtn = document.createElement("button");
+  loadMoreBtn.id = "loadMoreHostsBtn";
+  loadMoreBtn.textContent = "Load More Hosts";
+  loadMoreBtn.style.cssText = `
+    margin: 20px auto;
+    padding: 10px 24px;
+    background: linear-gradient(90deg, #ff3366, #ff9933);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    display: block;
+  `;
+
+  loadMoreBtn.onclick = async () => {
+    await fetchFeaturedHostsPage(false); // false = next page
+    saveToCache();
+  };
+
+  hostListEl.appendChild(loadMoreBtn);
+}
 /* ---------- Load Host (Faster Video Loading) ---------- */
 async function loadHost(idx) {
   const host = hosts[idx];
@@ -3766,7 +3954,7 @@ function showMeetModal(host) {
       box-shadow:0 0 20px rgba(0,0,0,0.5);
     ">
       <h3 style="margin-bottom:10px;font-weight:600;">Meet ${host.chatId || "this host"}?</h3>
-      <p style="margin-bottom:16px;">Request meet with <b> 400 STRZ ⭐</b>?</p>
+      <p style="margin-bottom:16px;">Request meet with <b>400 stars ⭐</b>?</p>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
         <button id="confirmMeet" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
@@ -3808,7 +3996,7 @@ function showMeetModal(host) {
       await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
 
       // === PLAYFUL STAGED ANIMATION (SAME FOR TELEGRAM & WHATSAPP) ===
-      const fixedStages = ["Handling your meet request…", "Collecting identity…"];
+      const fixedStages = ["Handling your meet request…", "Collecting host’s identity…"];
       const playfulMessages = [
         "Oh, she’s hella cute…💋", "Careful, she may be naughty..😏",
         "Be generous with her, she’ll like you..", "Ohh, she’s a real star.. 🤩",
@@ -4199,7 +4387,7 @@ if (!window.verifyHandlersInitialized) {
     modal.innerHTML = `
       <div style="background:#111;padding:16px 18px;border-radius:10px;text-align:center;color:#fff;max-width:280px;box-shadow:0 0 12px rgba(0,0,0,0.5);">
         <h3 style="margin-bottom:10px;font-weight:600;">Verification</h3>
-        <p>Scan phone number <b>${number}</b> for <b>${cost} stars ⭐</b>?</p>
+        <p>Scan phone number <b>${number}</b> for <b>${cost} STRZ ⭐</b>?</p>
         <div style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
           <button id="cancelVerify" style="padding:6px 12px;border:none;border-radius:6px;background:#333;color:#fff;font-weight:600;cursor:pointer;">Cancel</button>
           <button id="confirmVerify" style="padding:6px 12px;border:none;border-radius:6px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Yes</button>
@@ -4348,7 +4536,7 @@ confirmBtn.onclick = async () => {
             modalContent.innerHTML = user
               ? `<h3>Number Verified! ✅</h3>
                  <p>This number belongs to <b>${user.fullName}</b></p>
-                 <p style="margin-top:8px; font-size:13px; color:#ccc;">You’re free to chat — they’re legit 😌</p>
+                 <p style="margin-top:8px; font-size:13px; color:#ccc;">You’re free to chat, they’re legit 😌</p>
                  <button id="closeVerifyModal" style="margin-top:12px;padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Close</button>`
               : `<h3>Number Not Verified! ❌</h3>
                  <p>The number <b>${inputNumber}</b> does not exist on verified records — be careful!</p>
@@ -4365,328 +4553,350 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// UPLOAD HIGHLIGHT — Clean, Safe & Modern (File Upload + Cloudflare CDN)
-// Max 50MB | Resumable progress | users/{uid}/ path
-// Delivers via https://media.visitcube.xyz/ for caching & cost savings
-// Auto-thumbnails generated by Cloud Function on upload
+// HIGHLIGHT UPLOAD HANDLER + PROGRESS BAR
+// Features: resumable upload, Cloudflare CDN, 50MB limit, trending boost, visible progress bar
 // ================================
 
-// Helper: Transform Firebase Storage URL → Cloudflare custom domain URL
 function toCloudflareUrl(firebaseUrl) {
-  return firebaseUrl
-    .replace("https://firebasestorage.googleapis.com/v0/b/", "https://media.visitcube.xyz/")
-    .replace("/o/", "/")
-    .replace(/%2F/g, "/");
+    const clean = firebaseUrl.split('?')[0];
+    return clean
+        .replace('https://firebasestorage.googleapis.com/v0/b/', 'https://media.visitcube.xyz/')
+        .replace('/o/', '/')
+        .replace(/%2F/g, '/') + '?alt=media';
 }
 
-document.getElementById("uploadHighlightBtn")?.addEventListener("click", async () => {
-  const btn = document.getElementById("uploadHighlightBtn");
-
-  resetButton();
-
-  if (!currentUser?.uid) {
-    showStarPopup("Please sign in to upload", "error");
-    return;
-  }
-
-  const fileInput        = document.getElementById("highlightUploadInput");
-  const titleInput       = document.getElementById("highlightTitleInput");
-  const descInput        = document.getElementById("highlightDescInput");
-  const priceInput       = document.getElementById("highlightPriceInput");
-  const trendingCheckbox = document.getElementById("boostTrendingCheckbox");
-
-  const title           = titleInput.value.trim();
-  const description     = descInput.value.trim();
-  const price           = parseInt(priceInput.value) || 0;
-  const isBoostTrending = trendingCheckbox?.checked ?? false;
-  const selectedTags    = Array.from(document.querySelectorAll(".tag-btn.selected"))
-                              .map(btn => btn.dataset.tag);
-
-  // ── VALIDATION ──
-  if (!title)                          return showStarPopup("Title is required", "error");
-  if (!isBoostTrending && price < 10)  return showStarPopup("Minimum unlock price is 10 STRZ", "error");
-  if (!fileInput.files?.[0])           return showStarPopup("Please select a video file", "error");
-
-  const file = fileInput.files[0];
-  if (file.size > 50 * 1024 * 1024) {
-    showStarPopup("Maximum file size is 50MB", "error");
-    return;
-  }
-
-  // ── Trending Boost ──
-  if (isBoostTrending) {
-    try {
-      const userRef = doc(db, "users", currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      const stars = userSnap.data()?.stars ?? 0;
-
-      if (stars < 500) {
-        showStarPopup("Not enough STRZ! Need 500 for trending boost", "error");
-        return;
-      }
-
-      await updateDoc(userRef, { stars: increment(-500) });
-      showStarPopup("500 STRZ spent — Trending boost activated! 🔥", "success");
-    } catch (err) {
-      console.error("Boost payment failed:", err);
-      showStarPopup("Failed to activate boost — try again", "error");
-      return;
-    }
-  }
-
-  // ── UI: Start uploading ──
-  btn.disabled = true;
-  btn.classList.add("uploading");
-  btn.textContent = "Uploading... 0%";
-  showStarPopup("Dropping your highlight...", "loading");
-
-  try {
-    const ext       = file.name.split('.').pop()?.toLowerCase() || 'mp4';
-    const fileName  = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
-    const storagePath = `users/${currentUser.uid}/${fileName}`;
-
-    console.log("Preparing upload to:", storagePath);
-
-    const storageRef = ref(storage, storagePath);
-
-    const metadata = {
-      contentType: file.type,
-      cacheControl: "public, max-age=31536000, immutable",
-      customMetadata: {
-        uploader: currentUser.uid,
-        originalName: file.name,
-        uploadedAt: new Date().toISOString()
-      }
-    };
-
-    const uploadTask = uploadBytesResumable(storageRef, file, metadata);
-
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        btn.textContent = `Uploading... ${progress.toFixed(0)}%`;
-      },
-      (error) => {
-        console.error("Upload error:", error);
-        showStarPopup(
-          error.code === "storage/unauthorized"
-            ? "Permission denied — check Storage rules"
-            : "Upload failed — please try again",
-          "error"
-        );
-        resetButton();
-      },
-      async () => {
-        try {
-          const rawUrl  = await getDownloadURL(uploadTask.snapshot.ref);
-          const videoUrl = toCloudflareUrl(rawUrl);
-
-          console.log("Upload complete!");
-          console.log("Original Firebase URL:", rawUrl);
-          console.log("Cloudflare CDN URL:", videoUrl);
-
-          // ── Prepare Firestore document ──
-          const clipData = {
-            uploaderId: currentUser.uid,
-            uploaderName: currentUser.chatId || "Legend",
-            videoUrl,
-            storagePath,                 // ← Added: so Cloud Function can find this doc
-            highlightVideoPrice: isBoostTrending ? 0 : price,
-            title: isBoostTrending ? `@${currentUser.chatId || "Legend"}` : title,
-            description: description || "",
-            uploadedAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            unlockedBy: [],
-            views: 0,
-            isTrending: isBoostTrending,
-            tags: selectedTags.length ? selectedTags : []
-          };
-
-          if (isBoostTrending) {
-            clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
-          }
-
-          const newDocRef = await addDoc(collection(db, "highlightVideos"), clipData);
-
-          // Optional: store doc ID in Firestore for future reference
-          await updateDoc(newDocRef, { id: newDocRef.id });
-
-          showStarPopup("Highlight is LIVE! 🎉 Thumbnail generating...", "success");
-
-          btn.textContent = isBoostTrending ? "TRENDING LIVE!" : "DROPPED!";
-          btn.style.background = isBoostTrending
-            ? "linear-gradient(90deg, #00ffea, #8a2be2, #ff00f2)"
-            : "linear-gradient(90deg, #00ff9d, #00cc66)";
-
-          resetForm();
-          if (typeof loadMyClips === "function") loadMyClips();
-          setTimeout(resetButton, 3000);
-        } catch (err) {
-          console.error("Post-upload failed:", err);
-          showStarPopup("Upload succeeded but saving failed — try again", "error");
-          resetButton();
-        }
-      }
-    );
-  } catch (err) {
-    console.error("Upload setup failed:", err);
-    showStarPopup("Upload failed — please try again", "error");
-    resetButton();
-  }
-
-  // ── Helpers ──
-  function resetButton() {
+// ── Reset helpers ───────────────────────────────────────────────────
+function resetButton(btn) {
     btn.disabled = false;
-    btn.classList.remove("uploading");
-    btn.textContent = "Post Highlight";
-    btn.style.background = "linear-gradient(90deg, #ff2e78, #ff5e2e)";
-  }
+    btn.classList.remove('uploading');
+    btn.textContent = 'Post Highlight';
+    btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
 
-  function resetForm() {
-    fileInput.value = "";
-    titleInput.value = "";
-    descInput.value = "";
-    priceInput.value = "50";
-    if (trendingCheckbox) trendingCheckbox.checked = false;
-    document.querySelectorAll(".tag-btn").forEach(btn => btn.classList.remove("selected"));
-
-    const placeholder      = document.getElementById("uploadPlaceholder");
-    const previewContainer = document.getElementById("videoPreviewContainer");
-    const video            = document.getElementById("videoPreview");
-    const sizeInfo         = document.getElementById("fileSizeInfo");
-
-    if (placeholder && previewContainer && video) {
-      video.src = "";
-      previewContainer.style.display = "none";
-      placeholder.style.display = "block";
-      if (sizeInfo) sizeInfo.textContent = "";
+    const progressContainer = document.getElementById('progressContainer');
+    if (progressContainer) {
+        progressContainer.style.opacity = '0';
+        setTimeout(() => {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            if (progressBar) progressBar.style.width = '0%';
+        }, 450); // after fade-out transition
     }
-  }
-});
-
-// Tag toggle
-document.querySelectorAll(".tag-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    btn.classList.toggle("selected");
-  });
-});
-
-// Video preview on select
-document.getElementById("highlightUploadInput")?.addEventListener("change", function(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  const placeholder      = document.getElementById("uploadPlaceholder");
-  const previewContainer = document.getElementById("videoPreviewContainer");
-  const video            = document.getElementById("videoPreview");
-  const sizeInfo         = document.getElementById("fileSizeInfo");
-
-  placeholder.style.display = "none";
-  previewContainer.style.display = "block";
-
-  const objectUrl = URL.createObjectURL(file);
-  video.src = objectUrl;
-  video.load();
-
-  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-  sizeInfo.textContent = `${sizeMB} MB`;
-
-  video.onloadeddata = () => {
-    video.currentTime = 0;
-  };
-});
-
-// Make sure resetForm clears preview
-function resetForm() {
-  document.getElementById("highlightUploadInput").value = "";
-  document.getElementById("highlightTitleInput").value = "";
-  document.getElementById("highlightDescInput").value = "";
-  document.getElementById("highlightPriceInput").value = "50";
-  document.getElementById("boostTrendingCheckbox") && (document.getElementById("boostTrendingCheckbox").checked = false);
-  document.querySelectorAll(".tag-btn").forEach(btn => btn.classList.remove("selected"));
-
-  // Reset preview
-  const placeholder = document.getElementById("uploadPlaceholder");
-  const previewContainer = document.getElementById("videoPreviewContainer");
-  const video = document.getElementById("videoPreview");
-  const sizeInfo = document.getElementById("fileSizeInfo");
-
-  if (placeholder && previewContainer && video) {
-    video.src = "";
-    previewContainer.style.display = "none";
-    placeholder.style.display = "block";
-    if (sizeInfo) sizeInfo.textContent = "";
-  }
 }
+
+function resetForm() {
+    const fileInput        = document.getElementById('highlightUploadInput');
+    const titleInput       = document.getElementById('highlightTitleInput');
+    const descInput        = document.getElementById('highlightDescInput');
+    const priceInput       = document.getElementById('highlightPriceInput');
+    const trendingCheckbox = document.getElementById('boostTrendingCheckbox');
+
+    if (fileInput)        fileInput.value = '';
+    if (titleInput)       titleInput.value = '';
+    if (descInput)        descInput.value = '';
+    if (priceInput)       priceInput.value = '50';
+    if (trendingCheckbox) trendingCheckbox.checked = false;
+
+    document.querySelectorAll('.tag-btn').forEach(el => el.classList.remove('selected'));
+
+    // Reset preview
+    const placeholder  = document.getElementById('uploadPlaceholder');
+    const previewCont  = document.getElementById('videoPreviewContainer');
+    const video        = document.getElementById('videoPreview');
+    const sizeInfo     = document.getElementById('fileSizeInfo');
+
+    if (video)        video.src = '';
+    if (previewCont)  previewCont.style.display = 'none';
+    if (placeholder)  placeholder.style.display = 'block';
+    if (sizeInfo)     sizeInfo.textContent = '';
+}
+
+// ── Main upload handler ─────────────────────────────────────────────
+document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const fileInput = document.getElementById('highlightUploadInput');
+    const progressContainer = document.getElementById('progressContainer');
+
+    if (btn.disabled) return;
+    resetButton(btn);
+
+    // 1. Auth check
+    if (!currentUser?.uid) {
+        showStarPopup('Please sign in to upload', 'error');
+        return;
+    }
+
+    // 2. Gather form values
+    const title       = document.getElementById('highlightTitleInput')?.value.trim() ?? '';
+    const description = document.getElementById('highlightDescInput')?.value.trim() ?? '';
+    const price       = parseInt(document.getElementById('highlightPriceInput')?.value ?? '0', 10) || 0;
+    const isBoost     = document.getElementById('boostTrendingCheckbox')?.checked ?? false;
+    const tags        = Array.from(document.querySelectorAll('.tag-btn.selected'))
+                             .map(el => el.dataset.tag);
+    const file        = fileInput?.files?.[0];
+
+    // 3. Validation
+    if (!title)                        return showStarPopup('Title is required', 'error');
+    if (!file)                         return showStarPopup('Please select a video', 'error');
+    if (file.size > 50 * 1024 * 1024)  return showStarPopup('Maximum file size is 50MB', 'error');
+    if (!isBoost && price < 10)        return showStarPopup('Minimum unlock price is 10 STRZ', 'error');
+
+    // 4. Handle trending boost payment
+    if (isBoost) {
+        try {
+            const userRef = doc(db, 'users', currentUser.uid);
+            const userSnap = await getDoc(userRef);
+            const stars = userSnap.data()?.stars ?? 0;
+
+            if (stars < 500) {
+                showStarPopup('Not enough STRZ! Need 500 for trending boost', 'error');
+                return;
+            }
+
+            await updateDoc(userRef, { stars: increment(-500) });
+            showStarPopup('500 STRZ spent — Trending boost activated! 🔥', 'success');
+        } catch (err) {
+            console.error('Boost payment failed:', err);
+            showStarPopup('Failed to activate boost — try again', 'error');
+            return;
+        }
+    }
+
+    // 5. Start upload + show progress bar
+    btn.disabled = true;
+    btn.classList.add('uploading');
+    btn.textContent = 'Uploading...';
+
+    if (progressContainer) progressContainer.style.opacity = '1';
+
+    showStarPopup('Dropping your highlight...', 'loading');
+
+    try {
+        const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+        const safeName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
+        const path = `users/${currentUser.uid}/${safeName}`;
+
+        const storageRef = ref(storage, path);
+        const metadata = {
+            contentType: file.type,
+            cacheControl: 'public, max-age=31536000, immutable',
+            customMetadata: {
+                uploader: currentUser.uid,
+                originalName: file.name,
+                uploadedAt: new Date().toISOString(),
+            },
+        };
+
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+
+       uploadTask.on(
+  'state_changed',
+  (snapshot) => {
+    const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+
+    // Button shows static "Uploading..." text
+    btn.textContent = 'Uploading...';
+
+    // Progress bar updates
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    if (progressBar) progressBar.style.width = `${percent}%`;
+  },
+            (error) => {
+                console.error('Upload failed:', error);
+                const msg = error.code === 'storage/unauthorized'
+                    ? 'Permission denied — check Storage rules'
+                    : 'Upload failed — please try again';
+                showStarPopup(msg, 'error');
+                resetButton(btn);
+            },
+            async () => {
+                try {
+                    const rawUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                    const cdnUrl = toCloudflareUrl(rawUrl);
+
+                    console.log('[Upload success] Firebase:', rawUrl);
+                    console.log('CDN:', cdnUrl);
+
+                    const clipData = {
+                        uploaderId: currentUser.uid,
+                        uploaderName: currentUser.chatId || 'Legend',
+                        videoUrl: cdnUrl,
+                        storagePath: path,
+                        highlightVideoPrice: isBoost ? 0 : price,
+                        title: isBoost ? `@${currentUser.chatId || 'Legend'}` : title,
+                        description: description || '',
+                        uploadedAt: serverTimestamp(),
+                        createdAt: serverTimestamp(),
+                        unlockedBy: [],
+                        views: 0,
+                        isTrending: isBoost,
+                        tags: tags.length ? tags : [],
+                    };
+
+                    if (isBoost) {
+                        clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                    }
+
+                    const newDocRef = await addDoc(collection(db, 'highlightVideos'), clipData);
+                    await updateDoc(newDocRef, { id: newDocRef.id });
+
+                    showStarPopup('Your Video is LIVE! 🎉', 'success');
+                    btn.textContent = isBoost ? 'TRENDING LIVE!' : 'DROPPED!';
+                    btn.style.background = isBoost
+                        ? 'linear-gradient(90deg, #00ffea, #8a2be2, #ff00f2)'
+                        : 'linear-gradient(90deg, #00ff9d, #00cc66)';
+
+                    resetForm();
+                    if (typeof loadMyClips === 'function') loadMyClips();
+
+                    setTimeout(() => resetButton(btn), 2600);
+                } catch (err) {
+                    console.error('Firestore save failed:', err);
+                    showStarPopup('Upload succeeded but saving failed — try again', 'error');
+                    resetButton(btn);
+                }
+            }
+        );
+    } catch (err) {
+        console.error('Upload initialization failed:', err);
+        showStarPopup('Upload failed — please try again', 'error');
+        resetButton(btn);
+    }
+});
+
+// ── Tag selection ───────────────────────────────────────────────────
+document.querySelectorAll('.tag-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.classList.toggle('selected');
+    });
+});
+
+// ── Video preview on file select ────────────────────────────────────
+document.getElementById('highlightUploadInput')?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const placeholder  = document.getElementById('uploadPlaceholder');
+    const previewCont  = document.getElementById('videoPreviewContainer');
+    const video        = document.getElementById('videoPreview');
+    const sizeInfo     = document.getElementById('fileSizeInfo');
+
+    if (!video || !previewCont || !placeholder) return;
+
+    placeholder.style.display  = 'none';
+    previewCont.style.display  = 'block';
+    video.src = URL.createObjectURL(file);
+    video.load();
+
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    if (sizeInfo) sizeInfo.textContent = `${sizeMB} MB`;
+
+    video.onloadeddata = () => {
+        video.currentTime = 0;
+    };
+});
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
   const storageKey = 'fakeOnlineCount';
 
   function formatCount(n) {
-    return n; // no K / M needed under 100
+    if (n >= 10000) return (n / 10000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K';
+    return n;
   }
 
-  // Start somewhere believable (8–35)
-  let count = parseInt(localStorage.getItem(storageKey)) || (8 + Math.floor(Math.random() * 28));
+  // Start in a realistic zone for a moderately active site
+  let count = parseInt(localStorage.getItem(storageKey)) || 1240;
 
   function updateDisplay() {
     onlineCountEl.textContent = formatCount(count);
     localStorage.setItem(storageKey, count);
   }
+
   updateDisplay();
 
-  let baseTrend = 0;
+  let baseTrend = 0; // -1 = drifting down, 0 = neutral, 1 = drifting up
 
   setInterval(() => {
     const dice = Math.random();
 
-    if (dice < 0.5) {
-      // tiny natural change (±1–2)
-      count += Math.floor(Math.random() * 5) - 2;
-    } 
-    else if (dice < 0.75) {
-      // small group join/leave (±3–6)
-      count += Math.floor(Math.random() * 9) - 4;
+    // 1. Most of the time: very small natural breathing (±1–8)
+    if (dice < 0.55) {
+      count += Math.floor(Math.random() * 17) - 8;
     }
-    else if (dice < 0.9) {
-      // small surge (+4–9)
-      count += Math.floor(Math.random() * 6) + 4;
+    // 2. Small group join/leave waves (±10–35)
+    else if (dice < 0.82) {
+      count += Math.floor(Math.random() * 51) - 25;
     }
+    // 3. Occasional medium bump (new share / small promo / refresh wave) +45–+140
+    else if (dice < 0.94) {
+      count += Math.floor(Math.random() * 96) + 45;
+      // slightly increase upward pressure after a bump
+      baseTrend = Math.min(1, baseTrend + 0.3);
+    }
+    // 4. Small drop-off after video ends / tab closed (±40–110 down)
+    else if (dice < 0.99) {
+      count -= Math.floor(Math.random() * 71) + 40;
+      // slight downward pressure
+      baseTrend = Math.max(-1, baseTrend - 0.3);
+    }
+    // 5. Rare bigger spike — feels like influencer just mentioned it
     else {
-      // mini drop-off (-4–8)
-      count -= Math.floor(Math.random() * 5) + 4;
+      count += Math.floor(Math.random() * 220) + 120; // +120–340
+      baseTrend = 1;
     }
 
-    // Time-of-day trend
+    // Gentle time-of-day influence (assumes your audience timezone)
     const hour = new Date().getHours();
-    if (hour >= 22 || hour < 7) baseTrend = -1;
-    else if (hour >= 12 && hour <= 14) baseTrend = 1;
-    else if (hour >= 18 && hour <= 21) baseTrend = 1;
-    else baseTrend = 0;
+    if (hour >= 23 || hour < 7) {
+      baseTrend = -1; // night → slow drain
+    } else if ((hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 22)) {
+      baseTrend = 1;  // lunch + evening = active
+    } else if (hour >= 8 && hour <= 11) {
+      baseTrend = 0.3; // morning slow build
+    } else {
+      baseTrend = 0;
+    }
 
-    if (baseTrend === 1 && Math.random() > 0.6) count += 1;
-    if (baseTrend === -1 && Math.random() > 0.6) count -= 1;
+    // Apply very gentle trend force
+    if (baseTrend > 0) {
+      count += Math.random() > 0.6 ? 2 : 1;
+    } else if (baseTrend < 0) {
+      count -= Math.random() > 0.6 ? 2 : 1;
+    }
 
-    // HARD LIMITS
-    if (count < 8) count = 8 + Math.floor(Math.random() * 4);
-    if (count > 100) count = 95 + Math.floor(Math.random() * 3);
+    // ------------------- Hard realistic boundaries -------------------
+    // Almost never go below ~650 or above ~1950
+    if (count < 650) {
+      count = 650 + Math.floor(Math.random() * 350); // jump back into believable range
+      baseTrend = 0.5; // give it some upward momentum after floor hit
+    }
+    if (count > 1950) {
+      count = 1950 - Math.floor(Math.random() * 450);
+      baseTrend = -0.5;
+    }
+
+    // Prevent staying stuck on xxx0 or xxx00 too long
+    if ((count % 100 === 0 || count % 1000 === 0) && Math.random() < 0.85) {
+      count += Math.floor(Math.random() * 70) - 35;
+    }
+
+    // Keep it integer
+    count = Math.round(count);
 
     updateDisplay();
+  }, 2800 + Math.floor(Math.random() * 3400)); // ~3–6 second updates → natural jitter
 
-  }, 3000 + Math.floor(Math.random() * 2000)); // 3–5 sec jitter
-
-  // Gentle drift reset (keeps it alive)
+  // Very gentle long-term recentering (prevents infinite upward/downward creep)
   setInterval(() => {
-    const drift = Math.floor(Math.random() * 10) - 5;
-    count = Math.max(8, Math.min(100, count + drift));
+    const target = 1100 + Math.floor(Math.random() * 700); // 1100–1800 zone
+    const diff = target - count;
+    count += Math.round(diff * 0.08); // move ~8% toward target
     updateDisplay();
-  }, 4 * 60 * 1000);
+  }, 8 * 60 * 1000); // every ~8 minutes
 
 })();
-
-
 
 
 
@@ -5512,109 +5722,184 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* ---------- Highlights Button (Fixed: includes tags) ---------- */
-highlightsBtn.onclick = async () => {
-  try {
-    if (!currentUser?.uid) {
-      showGoldAlert("Please log in to view cuties");
-      return;
-    }
+// =============================================
+// HIGHLIGHTS VIDEOS – Vertical Feed (works with any page size)
+// =============================================
 
-    const highlightsRef = collection(db, "highlightVideos");
-    const q = query(highlightsRef, orderBy("createdAt", "desc"));
-    const snapshot = await getDocs(q);
+let allLoadedVideos = [];
+let lastVisibleVideoDoc = null;
+let hasMoreVideos = true;
+let isLoadingVideos = false;
+const VIDEOS_PAGE_SIZE = 3; // your test size — works fine now
+const VIDEOS_CACHE_KEY = "highlightsFeedCache_v1";
 
-    if (snapshot.empty) {
-      showGoldAlert("No clips uploaded yet");
-      return;
-    }
-
-   const videos = snapshot.docs.map(docSnap => {
-  const d = docSnap.data();
-  const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
-  return {
-    id: docSnap.id,
-    highlightVideo: d.highlightVideo,
-    highlightVideoPrice: d.highlightVideoPrice || 0,
-    title: d.title || "Untitled",
-    uploaderName,
-    uploaderId: d.uploaderId || "",
-    uploaderEmail: d.uploaderEmail || "unknown",
-    description: d.description || "",
-    thumbnail: d.thumbnail || "",
-    createdAt: d.createdAt || null,
-    unlockedBy: d.unlockedBy || [],
-    previewClip: d.previewClip || "",
-    videoUrl: d.videoUrl || "",
-    isTrending: d.isTrending || false,
-    tags: d.tags || [],          // ← comma here is fine
-    chatId: d.chatId || ""       // ← FIXED: added missing comma above it
-  };
-});
-
-    showHighlightsModal(videos);
-  } catch (err) {
-    console.error("Error fetching clips:", err);
-    showGoldAlert("Error fetching clips — please try again.");
+// Load one page
+async function loadVideosPage(isFirstPage = true) {
+  console.log(`[loadVideosPage] isFirst=${isFirstPage}, lastDoc=${lastVisibleVideoDoc?.id || 'none'}`);
+  if (isLoadingVideos) {
+    console.log("[loadVideosPage] already loading – skipping");
+    return [];
   }
+  isLoadingVideos = true;
+
+  try {
+    let q = query(
+      collection(db, "highlightVideos"),
+      orderBy("createdAt", "desc"),
+      limit(VIDEOS_PAGE_SIZE)
+    );
+
+    if (!isFirstPage && lastVisibleVideoDoc) {
+      q = query(q, startAfter(lastVisibleVideoDoc));
+    }
+
+    const snap = await getDocs(q);
+    console.log(`[loadVideosPage] Fetched ${snap.size} docs`);
+
+    if (snap.empty) {
+      hasMoreVideos = false;
+      console.log("[loadVideosPage] No more videos");
+      return [];
+    }
+
+    lastVisibleVideoDoc = snap.docs[snap.docs.length - 1];
+
+    return snap.docs.map(docSnap => {
+      const d = docSnap.data();
+      const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
+      return {
+        id: docSnap.id,
+        highlightVideo: d.highlightVideo,
+        highlightVideoPrice: d.highlightVideoPrice || 0,
+        title: d.title || "Untitled",
+        uploaderName,
+        uploaderId: d.uploaderId || "",
+        uploaderEmail: d.uploaderEmail || "unknown",
+        description: d.description || "",
+        thumbnailUrl: d.thumbnailUrl || "",
+        createdAt: d.createdAt || null,
+        unlockedBy: d.unlockedBy || [],
+        previewClip: d.previewClip || "",
+        videoUrl: d.videoUrl || "",
+        isTrending: d.isTrending || false,
+        tags: d.tags || []
+      };
+    });
+  } catch (err) {
+    console.error("[loadVideosPage] Error:", err);
+    return [];
+  } finally {
+    isLoadingVideos = false;
+  }
+}
+
+// Button handler (unchanged)
+highlightsBtn.onclick = async () => {
+  if (!currentUser?.uid) {
+    showGoldAlert("Please log in to view cuties");
+    return;
+  }
+
+  const cache = loadFromCache(VIDEOS_CACHE_KEY);
+  if (cache) {
+    allLoadedVideos = cache.data;
+    lastVisibleVideoDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
+    hasMoreVideos = allLoadedVideos.length % VIDEOS_PAGE_SIZE === 0;
+    console.log("[Button] Loaded from cache:", allLoadedVideos.length);
+    showHighlightsModal(allLoadedVideos);
+    return;
+  }
+
+  allLoadedVideos = [];
+  lastVisibleVideoDoc = null;
+  hasMoreVideos = true;
+
+  console.log("[Button] Fetching first page...");
+  const firstPage = await loadVideosPage(true);
+  allLoadedVideos = firstPage;
+
+  if (allLoadedVideos.length === 0) {
+    showGoldAlert("No clips uploaded yet");
+    return;
+  }
+
+  saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc);
+  showHighlightsModal(allLoadedVideos);
 };
 
-
-/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED + THUMBNAILS) ---------- */
-function showHighlightsModal(videos) {
+/* ---------- Highlights Modal – True Infinite Scroll Feed (Full Rewrite) ---------- */
+function showHighlightsModal(initialVideos) {
+  // Remove any old modal
   document.getElementById("highlightsModal")?.remove();
+
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "flex-start",
-    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    zIndex: "999999",
+    overflowY: "auto",
+    padding: "20px 12px",
+    boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
 
+  // ====================
   // HEADER
-  const intro = document.createElement("div");
-  intro.innerHTML = `
-    <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
-                line-height:1.6; font-size:14px;
-                background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
-                padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
-                box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
-      <div style="margin-bottom:8px;">
-        <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
-                     -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-                     font-weight:800; font-size:22px; letter-spacing:0.4px;">
-          Cuties💕
-        </span>
-      </div>
-      <p style="margin:0 0 4px;">Cam-worthy moments from girls on cube.</p>
-      <p style="margin:0;">Unlock a cutie’s clip with STRZ and get closer.</p>
-    </div>
+  // ====================
+  const introWrapper = document.createElement("div");
+  introWrapper.style.cssText = `
+    text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
+    line-height:1.6; font-size:13px;
+    background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
+    padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
+    box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;
   `;
-  modal.appendChild(intro);
 
-  // CLOSE BUTTON
+  const innerDiv = document.createElement("div");
+  innerDiv.style.marginBottom = "8px";
+
+  const titleSpan = document.createElement("span");
+  titleSpan.style.cssText = `
+    background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    font-weight:800; font-size:22px; letter-spacing:0.4px;
+  `;
+  titleSpan.textContent = "Cuties💕";
+  innerDiv.appendChild(titleSpan);
+
+  const p1 = document.createElement("p");
+  p1.style.margin = "0 0 4px";
+  p1.textContent = "Cam-worthy moments from girls on cube.";
+
+  const p2 = document.createElement("p");
+  p2.style.margin = "0";
+  p2.textContent = "Unlock a cutie’s clip with STRZ and get closer.";
+
+  introWrapper.appendChild(innerDiv);
+  introWrapper.appendChild(p1);
+  introWrapper.appendChild(p2);
+
   const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+  closeBtn.innerHTML = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
   Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "8px",
-    right: "10px",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    zIndex: "1002",
-    transition: "all 0.25s ease",
+    position: "absolute", top: "8px", right: "10px", width: "32px", height: "32px",
+    display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+    zIndex: "1002", transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
+
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = (e) => {
@@ -5622,9 +5907,13 @@ function showHighlightsModal(videos) {
     closeBtn.style.transform = "rotate(180deg) scale(1.35)";
     setTimeout(() => modal.remove(), 280);
   };
-  intro.firstElementChild.appendChild(closeBtn);
 
+  introWrapper.appendChild(closeBtn);
+  modal.appendChild(introWrapper);
+
+  // ====================
   // CONTROLS
+  // ====================
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -5633,6 +5922,7 @@ function showHighlightsModal(videos) {
 
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
+
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
@@ -5641,6 +5931,7 @@ function showHighlightsModal(videos) {
     border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
+
   const trendingBtn = document.createElement("button");
   trendingBtn.textContent = "Trending";
   Object.assign(trendingBtn.style, {
@@ -5649,6 +5940,7 @@ function showHighlightsModal(videos) {
     border: "1px solid rgba(255,0,242,0.7)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
   });
+
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
@@ -5661,32 +5953,43 @@ function showHighlightsModal(videos) {
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
+  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
     display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 120px;
   `;
   modal.appendChild(grid);
 
+  // Sentinel – tall enough to trigger reliably even with small page sizes
+  const sentinel = document.createElement("div");
+  sentinel.id = "sentinel";
+  sentinel.style.cssText = "grid-column: 1 / -1; height: 800px;"; // big buffer
+  grid.appendChild(sentinel);
+
+  // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
+  let isLoadingMore = false;
 
-  function renderCards(videosToRender = videos) {
-    grid.innerHTML = "";
+  function renderFeed() {
+    // Clear everything except sentinel
+    while (grid.firstChild !== sentinel) {
+      grid.removeChild(grid.firstChild);
+    }
     tagContainer.innerHTML = "";
 
+    // Generate tags
     const allTags = new Set();
-    videosToRender.forEach(v => {
+    allLoadedVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim()) {
-          allTags.add(t.trim().toLowerCase());
-        }
+        if (t && typeof t === "string" && t.trim()) allTags.add(t.trim().toLowerCase());
       });
     });
-    const sortedTags = [...allTags].sort();
 
+    const sortedTags = [...allTags].sort();
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -5705,12 +6008,13 @@ function showHighlightsModal(videos) {
       btn.onclick = () => {
         if (activeTags.has(tag)) activeTags.delete(tag);
         else activeTags.add(tag);
-        renderCards(videosToRender);
+        renderFeed();
       };
       tagContainer.appendChild(btn);
     });
 
-    let filtered = videosToRender.filter(v => {
+    // Apply filters
+    let filtered = allLoadedVideos.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
       return true;
@@ -5729,7 +6033,7 @@ function showHighlightsModal(videos) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
-      grid.appendChild(empty);
+      grid.insertBefore(empty, sentinel);
       return;
     }
 
@@ -5737,11 +6041,17 @@ function showHighlightsModal(videos) {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative",
+        aspectRatio: "9/16",
+        borderRadius: "16px",
+        overflow: "hidden",
+        background: "#0f0a1a",
+        cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
+
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -5755,15 +6065,18 @@ function showHighlightsModal(videos) {
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+      videoEl.muted = true;
+      videoEl.loop = true;
+      videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.poster = video.thumbnailUrl || "";  // ← THUMBNAIL ADDED HERE (auto-generated)
+        videoEl.poster = video.thumbnailUrl || "";
+        console.log("Video ID:", video.id, "Poster:", video.thumbnailUrl || "[MISSING]");
         videoEl.load();
-        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
+        vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
+        vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
         lock.innerHTML = `
@@ -5781,7 +6094,7 @@ function showHighlightsModal(videos) {
         if (!isUnlocked) {
           showUnlockConfirm(video, () => {
             unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            renderCards(videos);
+            renderFeed();
             showStarPopup("Video unlocked! 🎉", "success");
           });
           return;
@@ -5798,9 +6111,12 @@ function showHighlightsModal(videos) {
         background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
         padding:60px 12px 12px;
       `;
+
       const title = document.createElement("div");
       title.textContent = video.title || "Cute moment";
       title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
+      info.appendChild(title);
+
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
@@ -5809,13 +6125,13 @@ function showHighlightsModal(videos) {
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
-              if (userSnap.exists()) {
-                showSocialCard(userSnap.data());
-              }
+              if (userSnap.exists()) showSocialCard(userSnap.data());
             })
             .catch(err => console.error("Failed to load user:", err));
         }
       };
+      info.appendChild(user);
+
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
       (video.tags || []).forEach(t => {
@@ -5824,7 +6140,8 @@ function showHighlightsModal(videos) {
         span.style.cssText = "font-size:11px; padding:2px 8px; border-radius:10px; background:rgba(255,46,120,0.22); color:#ff4d8a;";
         tagsEl.appendChild(span);
       });
-      info.append(title, user, tagsEl);
+      info.appendChild(tagsEl);
+
       card.appendChild(info);
 
       const badge = document.createElement("div");
@@ -5840,17 +6157,68 @@ function showHighlightsModal(videos) {
       });
       card.appendChild(badge);
 
-      grid.appendChild(card);
+      grid.insertBefore(card, sentinel);
     });
+
+    // Force check after render (critical for small page sizes)
+    setTimeout(() => {
+      const rect = sentinel.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 800 && hasMoreVideos && !isLoadingMore) {
+        console.log("[renderFeed] Sentinel visible after render – loading next page");
+        loadNextPage();
+      }
+    }, 300);
   }
 
+  // Infinite scroll observer
+  const observer = new IntersectionObserver(
+    entries => {
+      if (entries[0].isIntersecting && hasMoreVideos && !isLoadingMore) {
+        console.log("[Observer] Sentinel intersected – loading next page");
+        loadNextPage();
+      }
+    },
+    { rootMargin: "800px 0px" } // large margin ensures trigger even with 2 videos
+  );
+
+  observer.observe(sentinel);
+
+  async function loadNextPage() {
+    if (isLoadingMore || !hasMoreVideos) return;
+    isLoadingMore = true;
+
+    // Optional loading indicator
+    const loading = document.createElement("div");
+    loading.textContent = "Loading more clips...";
+    loading.style.cssText = "grid-column: 1 / -1; text-align:center; padding:40px; color:#aaa; font-size:16px;";
+    grid.insertBefore(loading, sentinel);
+
+    try {
+      const nextPage = await loadVideosPage(false);
+      loading.remove();
+      if (nextPage.length > 0) {
+        allLoadedVideos.push(...nextPage);
+        renderFeed();
+        saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc);
+      } else {
+        hasMoreVideos = false;
+      }
+    } catch (err) {
+      console.error("Load next page failed:", err);
+      loading.textContent = "Error loading more clips";
+    } finally {
+      isLoadingMore = false;
+    }
+  }
+
+  // Button handlers
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
     unlockedBtn.style.background = filterMode === "unlocked"
       ? "linear-gradient(135deg, #ff00f2, #00ffea)"
       : "linear-gradient(135deg, #240046, #3c0b5e)";
-    renderCards();
+    renderFeed();
   };
 
   trendingBtn.onclick = () => {
@@ -5859,9 +6227,10 @@ function showHighlightsModal(videos) {
     trendingBtn.style.background = filterMode === "trending"
       ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
-    renderCards();
+    renderFeed();
   };
 
+  // Search input
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -5877,10 +6246,25 @@ function showHighlightsModal(videos) {
     });
   }
 
-  renderCards();
+  // Initial render
+  renderFeed();
+
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
+
+  // Cleanup observer
+  const cleanup = () => observer.disconnect();
+  modal.addEventListener("remove", cleanup, { once: true });
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+    setTimeout(() => {
+      modal.remove();
+      cleanup();
+    }, 280);
+  };
 }
+
 function showUnlockConfirm(video, onUnlockCallback) {
   document.querySelectorAll("video").forEach(v => v.pause());
   document.getElementById("unlockConfirmModal")?.remove();
@@ -6093,7 +6477,7 @@ async function loadMyClips() {
               ` : ''}
 
               <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                ID: ${v.id.slice(-8)}
+                ID: ${v.id}
               </div>
             </div>
 
@@ -6415,448 +6799,60 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
-// WIN $STRZ POLL — FINAL FIXED VERSION WITH LIVE VOTE COUNTING
-let pollUnsubscribe = null;
-let votesUnsubscribe = null;
+// Tips Modal + Swipe + Confetti on close
+document.getElementById("topBallersBtn")?.addEventListener("click", openTipsModal);
 
-document.getElementById("topBallersBtn")?.addEventListener("click", openPollModal);
-
-async function openPollModal() {
-  if (!currentUser) {
-    showGoldAlert("Login to vote & win $STRZ!");
-    return;
-  }
-
-  showLoader("Loading poll...");
-
-  try {
-    // Clean old listeners
-    if (pollUnsubscribe) pollUnsubscribe();
-    if (votesUnsubscribe) votesUnsubscribe();
-
-    // Listen to poll document
-    pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
-      if (!pollSnap.exists()) {
-        hideLoader();
-        document.getElementById("pollModal").style.display = "none";
-        showStarPopup("No active poll right now");
-        return;
-      }
-
-      const poll = pollSnap.data();
-      const now = Date.now();
-      const endTime = poll.endsAt.toMillis();
-
-      if (now > endTime) {
-        hideLoader();
-        document.getElementById("pollModal").style.display = "none";
-        showStarPopup("Poll has ended!");
-        return;
-      }
-
-      // Start listening to votes
-      startVotesListener(poll, endTime);
-
-    }, (err) => {
-      hideLoader();
-      console.error("Poll load error:", err);
-    });
-
-  } catch (err) {
-    hideLoader();
-    console.error(err);
-  }
+function openTipsModal() {
+  document.getElementById("tipsModal").style.display = "flex";
+  initTipsCarousel();
 }
 
-function startVotesListener(poll, endTime) {
-  votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
-    hideLoader();
+function initTipsCarousel() {
+  const slides = document.getElementById("tipsSlides");
+  const dots = document.getElementById("tipsDots").children;
+  let current = 0;
+  const total = dots.length;
 
-    // Count votes
-    const voteCounts = {};
-    poll.options.forEach(opt => voteCounts[opt] = 0);
-
-    votesSnap.forEach(doc => {
-      const vote = doc.data();
-      if (vote.choice && poll.options.includes(vote.choice)) {
-        voteCounts[vote.choice]++;
-      }
-    });
-
-    // Update poll with live counts
-    poll.liveVotes = voteCounts;
-
-    // Render
-    renderPoll(poll, endTime);
-
-    document.getElementById("pollModal").style.display = "flex";
-  });
-}
-
-function renderPoll(poll, endTime) {
-  // Set the poll question
-  document.getElementById("pollQuestion").textContent = poll.question;
-
-  // Render reward + timer – both lines bold
-  document.getElementById("pollTimer").innerHTML = `
-    <div class="poll-reward-line">
-      <strong>Reward: <span class="reward-amount">${poll.reward} $STRZ</span> ⭐️</strong>
-    </div>
-    <div class="poll-timer-line">
-      <strong>Time left: <span id="countdown"></span></strong>
-    </div>
-  `;
-
-  // Start the countdown timer
-  startPollTimer(endTime);
-
-  // Check if the current user has already voted
-  getDoc(doc(db, "pollVotes", currentUser.uid)).then((voteSnap) => {
-    if (voteSnap.exists()) {
-      const userChoice = voteSnap.data().choice;
-      showLiveResults(poll, userChoice);
-    } else {
-      showVotingOptions(poll);
+  function update() {
+    slides.style.transform = `translateX(-${current * 33.333}%)`;
+    for (let i = 0; i < total; i++) {
+      dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
     }
-  }).catch((error) => {
-    console.error("Error checking user vote:", error);
-    // Optionally fallback to showing voting options
-    showVotingOptions(poll);
-  });
-}
-
-function showVotingOptions(poll) {
-  const container = document.getElementById("pollOptions");
-  container.innerHTML = "";
-
-  poll.options.forEach(option => {
-    const btn = document.createElement("button");
-    btn.textContent = option;
-    btn.style.cssText = "width:100%;padding:18px;margin:12px 0;background:#222;color:#fff;border:2px solid #444;border-radius:16px;font-size:18px;font-weight:bold;cursor:pointer;transition:all 0.2s;";
-
-    btn.onclick = async () => {
-      try {
-        await setDoc(doc(db, "pollVotes", currentUser.uid), {
-          choice: option,
-          votedAt: serverTimestamp()
-        });
-
-        await updateDoc(doc(db, "users", currentUser.uid), {
-          stars: increment(poll.reward)
-        });
-
-confetti({
-  particleCount: 150,
-  spread: 70,
-  origin: { y: 0.6 },
-  colors: ['#ff1493', '#ff69b4', '#0f9', '#ffd700'],
-  zIndex: 100000  // This forces it on top
-});
-
-        showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
-        showLiveResults(poll, option);
-
-      } catch (err) {
-        showStarPopup("Vote failed");
-        console.error(err);
-      }
-    };
-
-    container.appendChild(btn);
-  });
-
-  document.getElementById("pollResult").style.display = "none";
-}
-
-function showLiveResults(poll, yourChoice) {
-  document.getElementById("pollResult").style.display = "block";
-  document.getElementById("yourChoice").textContent = yourChoice;
-  document.getElementById("pollOptions").innerHTML = "";
-
-  const barsContainer = document.getElementById("resultBars");
-  barsContainer.innerHTML = "";
-
-  const totalVotes = Object.values(poll.liveVotes || {}).reduce((a, b) => a + b, 0);
-
-  if (totalVotes === 0) {
-    barsContainer.innerHTML = "<p style='color:#888;font-style:italic;'>No votes yet — be the first!</p>";
-    return;
   }
 
-  poll.options.forEach(option => {
-    const votes = poll.liveVotes[option] || 0;
-    const percentage = Math.round((votes / totalVotes) * 100);
-    const isYour = option === yourChoice;
-    const isWinner = votes === Math.max(...Object.values(poll.liveVotes || {}));
-
-const bar = document.createElement("div");
-bar.innerHTML = `
-  <div class="result-bar-label">  <!-- Use class for consistent styling -->
-    <strong>${option}</strong>
-    <span>${votes} votes (${percentage}%)</span>
-  </div>
-  <div class="result-bar">
-    <div class="result-bar-fill" style="width: ${percentage}%;"></div>
-  </div>
-`;
-
-// Optional: slight margin between bars
-bar.style.margin = "16px 0";
-
-barsContainer.appendChild(bar);
+  // Touch swipe
+  let startX = 0;
+  document.getElementById("tipsCarousel").addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
   });
-}
 
-function startPollTimer(endTime) {
-  const countdownEl = document.getElementById("countdown");
-  const interval = setInterval(() => {
-    const left = endTime - Date.now();
-    if (left <= 0) {
-      countdownEl.textContent = "ENDED";
-      clearInterval(interval);
-      return;
+  document.getElementById("tipsCarousel").addEventListener("touchend", e => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0 && current < total - 1) current++;
+      else if (diff < 0 && current > 0) current--;
+      update();
     }
-    const hours = Math.floor(left / 3600000);
-    const mins = Math.floor((left % 3600000) / 60000);
-    const secs = Math.floor((left % 60000) / 1000);
-    countdownEl.textContent = `${hours}h ${mins}m ${secs}s`;
-  }, 1000);
+  });
+
+  // Optional: auto-swipe every 6s
+  // setInterval(() => { current = (current + 1) % total; update(); }, 6000);
 }
 
-document.getElementById("closePollBtn").onclick = () => {
-  document.getElementById("pollModal").style.display = "none";
-  if (pollUnsubscribe) pollUnsubscribe();
-  if (votesUnsubscribe) votesUnsubscribe();
-};
-
-   // === CREATE NEW POLL ===
-document.getElementById("create-new-poll")?.addEventListener("click", async () => {
-  if (!currentAdmin || !currentAdmin.uid) {
-    showGoldAlert("Admin login required to create poll!");
-    return;
-  }
-
-  const question = document.getElementById("poll-question").value.trim();
-  const optionInputs = document.querySelectorAll(".poll-option-input");
-  const options = Array.from(optionInputs)
-    .map(input => input.value.trim())
-    .filter(v => v.length > 0);
-  const reward = parseInt(document.getElementById("poll-reward").value) || 50;
-  const hours = parseInt(document.getElementById("poll-duration").value) || 24;
-
-  if (!question) return showGoldAlert("Please enter a poll question ♡");
-  if (options.length < 2) return showGoldAlert("Need at least 2 cute options!");
-
-  const btn = document.getElementById("create-new-poll");
-
-  // Remember original styles for perfect reset
-  const originalWidth = btn.style.width;
-  const originalHeight = btn.style.height;
-  const originalBorderRadius = btn.style.borderRadius;
-  const originalBackground = btn.style.background;
-
-  // === START LOADING: Round spinner button ===
-  btn.innerHTML = '<span class="btn-spinner visible"></span>';
-  btn.style.width = '48px';
-  btn.style.height = '48px';
-  btn.style.borderRadius = '50%';
-  btn.style.background = '#2a2a2a'; // dark neutral while spinning
-  btn.disabled = true;
-
-  try {
-    const endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
-
-    await setDoc(doc(db, "polls", "current"), {
-      question,
-      options,
-      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
-      endsAt,
-      reward,
-      createdAt: serverTimestamp(),
-      createdBy: currentAdmin.uid
-    });
-
-    // === SUCCESS: Green checkmark ===
-    btn.innerHTML = '✓';
-    btn.style.background = 'linear-gradient(90deg, #40c057, #69db7c)';
-
-    // Clear form
-    document.getElementById("poll-question").value = "";
-    optionInputs.forEach(input => input.value = "");
-    document.getElementById("poll-reward").value = "50";
-    document.getElementById("poll-duration").value = "24";
-
-    // Show detailed alert (kept as requested!)
-    showGoldAlert(`Poll live! ♡\n${options.length} options • ${reward} $STRZ reward`, "SUCCESS");
-
-    if (typeof loadCurrentPollAdmin === "function") loadCurrentPollAdmin();
-
-    // Reset after 1.5s
-    setTimeout(() => {
-      btn.innerHTML = 'Create Poll';
-      btn.style.width = originalWidth;
-      btn.style.height = originalHeight;
-      btn.style.borderRadius = originalBorderRadius;
-      btn.style.background = originalBackground;
-      btn.disabled = false;
-    }, 1500);
-
-  } catch (err) {
-    // === ERROR: Red X ===
-    btn.innerHTML = '✗';
-    btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
-
-    showGoldAlert("Failed to create poll — try again");
-
-    console.error("Poll creation error:", err);
-
-    // Reset after 2s
-    setTimeout(() => {
-      btn.innerHTML = 'Create Poll';
-      btn.style.width = originalWidth;
-      btn.style.height = originalHeight;
-      btn.style.borderRadius = originalBorderRadius;
-      btn.style.background = originalBackground;
-      btn.disabled = false;
-    }, 2000);
-  }
-});
-function loadPollCarousel() {
-  const carousel = document.getElementById("pollCarousel");
+// Close with confetti
+document.getElementById("closeTipsBtn")?.addEventListener("click", () => {
+  confetti({
+    particleCount: 180,
+    spread: 80,
+    origin: { y: 0.6 },
+    colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
+    zIndex: 100000
+  });
   
-  // Clear any previous content
-  carousel.innerHTML = "";
-
-  // Images array — easy to add/change later
-  const images = [
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741"
-  ];
-
-  // Carousel container
-  const carouselWrapper = document.createElement("div");
-  carouselWrapper.style.cssText = `
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    border-radius: 14px;
-  `;
-
-  // Slides track
-  const slidesTrack = document.createElement("div");
-  slidesTrack.id = "carouselSlides";
-  slidesTrack.style.cssText = `
-    display: flex;
-    width: ${images.length * 100}%;
-    height: 100%;
-    transition: transform 0.4s ease;
-    transform: translateX(0%);
-  `;
-
-  // Create each slide
-  images.forEach((src) => {
-    const slide = document.createElement("div");
-    slide.style.cssText = `
-      width: 100%;
-      height: 100%;
-      flex-shrink: 0;
-    `;
-
-    const img = document.createElement("img");
-    img.src = src;
-    img.alt = "Cube Livestream Offline";
-    img.style.cssText = `
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    `;
-
-    slide.appendChild(img);
-    slidesTrack.appendChild(slide);
-  });
-
-  carouselWrapper.appendChild(slidesTrack);
-
-  // Dots indicator
-  const dotsContainer = document.createElement("div");
-  dotsContainer.style.cssText = `
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 8px;
-    z-index: 10;
-  `;
-
-  images.forEach((_, index) => {
-    const dot = document.createElement("div");
-    dot.style.cssText = `
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: ${index === 0 ? '#c3f60c' : 'rgba(255,255,255,0.4)'};
-      transition: background 0.3s;
-    `;
-    dot.dataset.index = index;
-    dotsContainer.appendChild(dot);
-  });
-
-  carouselWrapper.appendChild(dotsContainer);
-  carousel.appendChild(carouselWrapper);
-
-  // ——— SWIPE & SLIDE LOGIC ———
-  let currentIndex = 0;
-  const totalSlides = images.length;
-
-  function updateCarousel() {
-    slidesTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
-
-    // Update dots
-    dotsContainer.querySelectorAll("div").forEach((dot, i) => {
-      dot.style.background = i === currentIndex ? "#c3f60c" : "rgba(255,255,255,0.4)";
-    });
-  }
-
-  // Touch swipe support
-  let touchStartX = 0;
-  carouselWrapper.addEventListener("touchstart", (e) => {
-    touchStartX = e.touches[0].clientX;
-  });
-
-  carouselWrapper.addEventListener("touchend", (e) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
-
-    if (Math.abs(diff) > 50) { // Minimum swipe distance
-      if (diff > 0 && currentIndex < totalSlides - 1) {
-        currentIndex++;
-      } else if (diff < 0 && currentIndex > 0) {
-        currentIndex--;
-      }
-      updateCarousel();
-    }
-  });
-
-  // Optional: Click dots to navigate
-  dotsContainer.addEventListener("click", (e) => {
-    const dot = e.target.closest("div");
-    if (dot && dot.dataset.index !== undefined) {
-      currentIndex = parseInt(dot.dataset.index);
-      updateCarousel();
-    }
-  });
-
-  // Auto-play (optional — uncomment if you want it)
- setInterval(() => {
-currentIndex = (currentIndex + 1) % totalSlides;
-  updateCarousel();
- }, 4000);
-}
-
+  setTimeout(() => {
+    document.getElementById("tipsModal").style.display = "none";
+  }, 800); // let confetti show a bit
+});
 
 /*********************************
  * fruity punch!!
