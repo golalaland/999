@@ -6800,176 +6800,49 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
-// Tips Modal + Swipe + Confetti on close - Full Rewrite with Dynamic Append to Body
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("topBallersBtn");
-  
-  if (!btn) {
-    console.error("Button with id='topBallersBtn' not found in DOM");
-    return;
-  }
+function openTipsModal() {
+  console.log("Attempting to open ultra-minimal debug modal");
 
-  btn.addEventListener("click", openTipsModal);
+  let modal = document.getElementById("tipsModal");
+  if (modal) modal.remove();
 
-  console.log("Tips button listener attached successfully");
-});
+  modal = document.createElement("div");
+  modal.id = "tipsModal";
+  modal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 0, 0, 0.85) !important;
+    z-index: 2147483647 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  `;
 
-async function openTipsModal() {
-  // Mimic poll's async structure for consistency
-  // "Load" static content (no real load, but structured like poll)
-  showLoader("Loading tips..."); // Assume you have showLoader like in poll
+  modal.innerHTML = `
+    <div style="
+      background: #000 !important;
+      color: #0f0 !important;
+      padding: 60px 40px !important;
+      border: 8px solid #0f0 !important;
+      border-radius: 20px !important;
+      min-width: 300px !important;
+      min-height: 200px !important;
+      text-align: center !important;
+      font-size: 24px !important;
+      font-weight: bold !important;
+      box-shadow: 0 0 60px #0f0 !important;
+    ">
+      DEBUG: SHOULD SEE GREEN BOX ON RED SCREEN<br><br>
+      If this appears → modal system works<br>
+      Close this tab or refresh to remove
+    </div>
+  `;
 
-  try {
-    // Create or get modal dynamically and append to body
-    let modal = document.getElementById("tipsModal");
-    if (modal) modal.remove(); // Clean if exists (prevent duplicates)
-
-    modal = document.createElement("div");
-    modal.id = "tipsModal";
-    modal.className = "modal-backdrop";
-    modal.style.cssText = `
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      z-index: 2147483647 !important;
-      align-items: center;
-      justify-content: center;
-      pointer-events: auto;
-      visibility: visible;
-    `;
-
-    modal.innerHTML = `
-      <div class="modal" style="width:90%; max-width:380px; background:#0f0f0f; border:2px solid #FF1493; border-radius:20px; overflow:hidden; box-shadow:0 0 40px rgba(255,20,147,0.6); color:#eee; font-family:system-ui,sans-serif;">
-        
-        <!-- Header -->
-        <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.1); border-bottom:1px solid rgba(255,20,147,0.3);">
-          <h3 style="margin:0; font-size:20px; color:#FF1493; font-weight:900;">CUBE TIPS</h3>
-          <p style="margin:6px 0 0; font-size:14px; color:#00e676;">Level up • Earn more • Dominate</p>
-        </div>
-        
-        <!-- Carousel Container -->
-        <div id="tipsCarousel" style="position:relative; height:420px; overflow:hidden;">
-          <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
-            <!-- Tip Card 1 -->
-            <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-              <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #FF1493;">
-              <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-                <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
-                <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                  You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
-                </p>
-              </div>
-            </div>
-            
-            <!-- Tip Card 2 -->
-            <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-              <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #00e676;">
-              <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-                <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
-                <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                  Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
-                  Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
-                  From STRZ in your wallet → real cash in your bank.<br><br>
-                  <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
-                </p>
-              </div>
-            </div>
-            
-            <!-- Tip Card 3 -->
-            <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-              <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #FFD700;">
-              <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-                <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
-                <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                  The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
-                  Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
-                  Costs STRZ — use wisely to get attention.<br><br>
-                  <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Dots -->
-          <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10;">
-            <div style="width:10px;height:10px;border-radius:50%;background:#FF1493;"></div>
-            <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
-            <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
-          </div>
-        </div>
-        
-        <!-- Footer / Close -->
-        <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,20,147,0.3);">
-          <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
-            GOT IT 🔥
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    // Mimic poll's render + show
-    hideLoader(); // Assume hideLoader from poll
-    modal.style.display = "flex";
-    initTipsCarousel();
-
-    // Attach close listener (since dynamic)
-    document.getElementById("closeTipsBtn").addEventListener("click", () => {
-      confetti({
-        particleCount: 180,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
-        zIndex: 2147483647
-      });
-      
-      setTimeout(() => {
-        modal.style.display = "none";
-        modal.remove(); // Clean up
-      }, 800);
-    });
-
-    console.log("Tips modal opened");
-  } catch (err) {
-    hideLoader();
-    console.error("Tips open error:", err);
-  }
-}
-
-function initTipsCarousel() {
-  const slides = document.getElementById("tipsSlides");
-  const dotsContainer = document.getElementById("tipsDots");
-  if (!slides || !dotsContainer) return;
-
-  const dots = dotsContainer.children;
-  let current = 0;
-  const total = dots.length;
-
-  function update() {
-    slides.style.transform = `translateX(-${current * 33.333}%)`;
-    for (let i = 0; i < total; i++) {
-      dots[i].style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
-    }
-  }
-
-  // Touch swipe
-  let startX = 0;
-  const carousel = document.getElementById("tipsCarousel");
-  if (carousel) {
-    carousel.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-    });
-    carousel.addEventListener("touchend", e => {
-      const diff = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 60) {
-        if (diff > 0 && current < total - 1) current++;
-        else if (diff < 0 && current > 0) current--;
-        update();
-      }
-    });
-  }
+  document.body.appendChild(modal);
+  console.log("Debug modal appended & display forced");
 }
 
 /*********************************
