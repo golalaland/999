@@ -5817,8 +5817,7 @@ highlightsBtn.onclick = async () => {
   showHighlightsModal(allLoadedVideos);
 };
 
-/* ---------- Highlights Modal – Vertical Scroll Feed with Load More ---------- */
-/* ---------- Highlights Modal – Vertical Scroll Feed with Load More ---------- */
+/* ---------- Highlights Modal – True Infinite Scroll Feed ---------- */
 function showHighlightsModal(initialVideos) {
   // Remove any existing modal
   document.getElementById("highlightsModal")?.remove();
@@ -5845,7 +5844,7 @@ function showHighlightsModal(initialVideos) {
   });
 
   // ====================
-  // HEADER – Built safely with elements (fixes null appendChild error)
+  // HEADER – Built safely (no innerHTML parsing issues)
   // ====================
   const introWrapper = document.createElement("div");
   introWrapper.style.cssText = `
@@ -5880,7 +5879,7 @@ function showHighlightsModal(initialVideos) {
   introWrapper.appendChild(p1);
   introWrapper.appendChild(p2);
 
-  // CLOSE BUTTON – appended directly to introWrapper
+  // Close button inside header
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5958,27 +5957,33 @@ function showHighlightsModal(initialVideos) {
   grid.id = "highlightsGrid";
   grid.style.cssText = `
     display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 120px;
   `;
   modal.appendChild(grid);
+
+  // Sentinel for infinite scroll (invisible element at bottom)
+  const sentinel = document.createElement("div");
+  sentinel.style.cssText = "grid-column: 1 / -1; height: 200px;"; // trigger zone
+  grid.appendChild(sentinel);
 
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
-  let isLoadingMore = false;  // ← Fixed: declared here in modal scope
+  let isLoadingMore = false;
 
   function renderFeed() {
-    grid.innerHTML = "";
+    // Clear all cards except sentinel
+    while (grid.firstChild !== sentinel) {
+      grid.removeChild(grid.firstChild);
+    }
     tagContainer.innerHTML = "";
 
-    // Generate tags from all currently loaded videos
+    // Generate tags from all loaded videos
     const allTags = new Set();
     allLoadedVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim()) {
-          allTags.add(t.trim().toLowerCase());
-        }
+        if (t && typeof t === "string" && t.trim()) allTags.add(t.trim().toLowerCase());
       });
     });
 
@@ -6020,14 +6025,13 @@ function showHighlightsModal(initialVideos) {
       });
     }
 
-    // Random sort
     filtered = filtered.sort(() => Math.random() - 0.5);
 
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
-      grid.appendChild(empty);
+      grid.insertBefore(empty, sentinel);
       return;
     }
 
@@ -6069,8 +6073,8 @@ function showHighlightsModal(initialVideos) {
         videoEl.poster = video.thumbnailUrl || "";
         console.log("Video ID:", video.id, "Poster:", video.thumbnailUrl || "[MISSING]");
         videoEl.load();
-        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
+        vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
+        vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
         lock.innerHTML = `
@@ -6119,9 +6123,7 @@ function showHighlightsModal(initialVideos) {
         if (video.uploaderId) {
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
-              if (userSnap.exists()) {
-                showSocialCard(userSnap.data());
-              }
+              if (userSnap.exists()) showSocialCard(userSnap.data());
             })
             .catch(err => console.error("Failed to load user:", err));
         }
@@ -6153,59 +6155,55 @@ function showHighlightsModal(initialVideos) {
       });
       card.appendChild(badge);
 
-      grid.appendChild(card);
+      grid.insertBefore(card, sentinel);
     });
+  }
 
-    // ====================
-    // LOAD MORE BUTTON
-    // ====================
-    if (hasMoreVideos && !isLoadingMore) {
-      const loadMoreBtn = document.createElement("button");
-      loadMoreBtn.textContent = "Load More ↓";
-      loadMoreBtn.style.cssText = `
-        grid-column: 1 / -1;
-        margin: 40px auto;
-        padding: 14px 40px;
-        background: linear-gradient(135deg, #ff3366, #ff9933);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-      `;
+  // Infinite Scroll with IntersectionObserver
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMoreVideos && !isLoadingMore) {
+        loadNextPage();
+      }
+    },
+    { rootMargin: "400px" } // Load early when user is 400px from bottom
+  );
 
-      loadMoreBtn.onclick = async () => {
-        isLoadingMore = true;
-        loadMoreBtn.textContent = "Loading...";
-        loadMoreBtn.disabled = true;
+  observer.observe(sentinel);
 
-        try {
-          const nextPage = await loadVideosPage(false);
-          if (nextPage.length > 0) {
-            allLoadedVideos.push(...nextPage);
-            renderFeed();
-            localStorage.setItem(CACHE_KEY, JSON.stringify({
-              videos: allLoadedVideos,
-              timestamp: Date.now(),
-              lastDocId: lastVisibleVideoDoc ? lastVisibleVideoDoc.id : null
-            }));
-          } else {
-            hasMoreVideos = false;
-          }
-        } catch (err) {
-          console.error("Load more failed:", err);
-        } finally {
-          isLoadingMore = false;
-          if (loadMoreBtn.parentNode) loadMoreBtn.remove();
-        }
-      };
+  async function loadNextPage() {
+    if (isLoadingMore || !hasMoreVideos) return;
+    isLoadingMore = true;
 
-      grid.appendChild(loadMoreBtn);
+    // Optional: show loading spinner at bottom
+    const loading = document.createElement("div");
+    loading.textContent = "Loading more clips...";
+    loading.style.cssText = "grid-column: 1 / -1; text-align:center; padding:40px; color:#aaa; font-size:16px;";
+    grid.insertBefore(loading, sentinel);
+
+    try {
+      const nextPage = await loadVideosPage(false);
+      loading.remove();
+      if (nextPage.length > 0) {
+        allLoadedVideos.push(...nextPage);
+        renderFeed();
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          videos: allLoadedVideos,
+          timestamp: Date.now(),
+          lastDocId: lastVisibleVideoDoc ? lastVisibleVideoDoc.id : null
+        }));
+      } else {
+        hasMoreVideos = false;
+      }
+    } catch (err) {
+      console.error("Infinite scroll load failed:", err);
+      loading.textContent = "Error loading more clips";
+    } finally {
+      isLoadingMore = false;
     }
   }
 
-  // Button handlers
+  // Button handlers (unchanged)
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -6224,7 +6222,7 @@ function showHighlightsModal(initialVideos) {
     renderFeed();
   };
 
-  // Search input (if exists)
+  // Search input
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -6245,6 +6243,18 @@ function showHighlightsModal(initialVideos) {
 
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
+
+  // Cleanup observer when modal is removed
+  const cleanup = () => observer.disconnect();
+  modal.addEventListener("remove", cleanup, { once: true });
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+    setTimeout(() => {
+      modal.remove();
+      cleanup();
+    }, 280);
+  };
 }
 
 function showUnlockConfirm(video, onUnlockCallback) {
