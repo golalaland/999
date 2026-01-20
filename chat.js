@@ -5722,18 +5722,23 @@ window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
 // =============================================
-// HIGHLIGHTS VIDEOS – Vertical Feed (21 per page)
+// HIGHLIGHTS VIDEOS – Vertical Feed (works with any page size)
 // =============================================
 
 let allLoadedVideos = [];
 let lastVisibleVideoDoc = null;
 let hasMoreVideos = true;
 let isLoadingVideos = false;
-const VIDEOS_PAGE_SIZE = 2;
+const VIDEOS_PAGE_SIZE = 2; // your test size — works fine now
 const VIDEOS_CACHE_KEY = "highlightsFeedCache_v1";
 
+// Load one page
 async function loadVideosPage(isFirstPage = true) {
-  if (isLoadingVideos) return [];
+  console.log(`[loadVideosPage] isFirst=${isFirstPage}, lastDoc=${lastVisibleVideoDoc?.id || 'none'}`);
+  if (isLoadingVideos) {
+    console.log("[loadVideosPage] already loading – skipping");
+    return [];
+  }
   isLoadingVideos = true;
 
   try {
@@ -5748,8 +5753,11 @@ async function loadVideosPage(isFirstPage = true) {
     }
 
     const snap = await getDocs(q);
+    console.log(`[loadVideosPage] Fetched ${snap.size} docs`);
+
     if (snap.empty) {
       hasMoreVideos = false;
+      console.log("[loadVideosPage] No more videos");
       return [];
     }
 
@@ -5777,14 +5785,14 @@ async function loadVideosPage(isFirstPage = true) {
       };
     });
   } catch (err) {
-    console.error("Videos fetch failed:", err);
+    console.error("[loadVideosPage] Error:", err);
     return [];
   } finally {
     isLoadingVideos = false;
   }
 }
 
-// Highlights button handler
+// Button handler (unchanged)
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
     showGoldAlert("Please log in to view cuties");
@@ -5796,7 +5804,7 @@ highlightsBtn.onclick = async () => {
     allLoadedVideos = cache.data;
     lastVisibleVideoDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
     hasMoreVideos = allLoadedVideos.length % VIDEOS_PAGE_SIZE === 0;
-    console.log("Videos from cache:", allLoadedVideos.length);
+    console.log("[Button] Loaded from cache:", allLoadedVideos.length);
     showHighlightsModal(allLoadedVideos);
     return;
   }
@@ -5805,6 +5813,7 @@ highlightsBtn.onclick = async () => {
   lastVisibleVideoDoc = null;
   hasMoreVideos = true;
 
+  console.log("[Button] Fetching first page...");
   const firstPage = await loadVideosPage(true);
   allLoadedVideos = firstPage;
 
@@ -5817,9 +5826,9 @@ highlightsBtn.onclick = async () => {
   showHighlightsModal(allLoadedVideos);
 };
 
-/* ---------- Highlights Modal – True Infinite Scroll Feed ---------- */
+/* ---------- Highlights Modal – True Infinite Scroll Feed (Full Rewrite) ---------- */
 function showHighlightsModal(initialVideos) {
-  // Remove any existing modal
+  // Remove any old modal
   document.getElementById("highlightsModal")?.remove();
 
   const modal = document.createElement("div");
@@ -5844,7 +5853,7 @@ function showHighlightsModal(initialVideos) {
   });
 
   // ====================
-  // HEADER – Built safely (no innerHTML parsing issues)
+  // HEADER
   // ====================
   const introWrapper = document.createElement("div");
   introWrapper.style.cssText = `
@@ -5879,23 +5888,14 @@ function showHighlightsModal(initialVideos) {
   introWrapper.appendChild(p1);
   introWrapper.appendChild(p2);
 
-  // Close button inside header
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
   Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "8px",
-    right: "10px",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    zIndex: "1002",
-    transition: "all 0.25s ease",
+    position: "absolute", top: "8px", right: "10px", width: "32px", height: "32px",
+    display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+    zIndex: "1002", transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
 
@@ -5961,9 +5961,10 @@ function showHighlightsModal(initialVideos) {
   `;
   modal.appendChild(grid);
 
-  // Sentinel for infinite scroll (invisible element at bottom)
+  // Sentinel – tall enough to trigger reliably even with small page sizes
   const sentinel = document.createElement("div");
-  sentinel.style.cssText = "grid-column: 1 / -1; height: 200px;"; // trigger zone
+  sentinel.id = "sentinel";
+  sentinel.style.cssText = "grid-column: 1 / -1; height: 800px;"; // big buffer
   grid.appendChild(sentinel);
 
   // State
@@ -5973,13 +5974,13 @@ function showHighlightsModal(initialVideos) {
   let isLoadingMore = false;
 
   function renderFeed() {
-    // Clear all cards except sentinel
+    // Clear everything except sentinel
     while (grid.firstChild !== sentinel) {
       grid.removeChild(grid.firstChild);
     }
     tagContainer.innerHTML = "";
 
-    // Generate tags from all loaded videos
+    // Generate tags
     const allTags = new Set();
     allLoadedVideos.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6157,16 +6158,26 @@ function showHighlightsModal(initialVideos) {
 
       grid.insertBefore(card, sentinel);
     });
+
+    // Force check after render (critical for small page sizes)
+    setTimeout(() => {
+      const rect = sentinel.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 800 && hasMoreVideos && !isLoadingMore) {
+        console.log("[renderFeed] Sentinel visible after render – loading next page");
+        loadNextPage();
+      }
+    }, 300);
   }
 
-  // Infinite Scroll with IntersectionObserver
+  // Infinite scroll observer
   const observer = new IntersectionObserver(
-    (entries) => {
+    entries => {
       if (entries[0].isIntersecting && hasMoreVideos && !isLoadingMore) {
+        console.log("[Observer] Sentinel intersected – loading next page");
         loadNextPage();
       }
     },
-    { rootMargin: "400px" } // Load early when user is 400px from bottom
+    { rootMargin: "800px 0px" } // large margin ensures trigger even with 2 videos
   );
 
   observer.observe(sentinel);
@@ -6175,7 +6186,7 @@ function showHighlightsModal(initialVideos) {
     if (isLoadingMore || !hasMoreVideos) return;
     isLoadingMore = true;
 
-    // Optional: show loading spinner at bottom
+    // Optional loading indicator
     const loading = document.createElement("div");
     loading.textContent = "Loading more clips...";
     loading.style.cssText = "grid-column: 1 / -1; text-align:center; padding:40px; color:#aaa; font-size:16px;";
@@ -6187,23 +6198,19 @@ function showHighlightsModal(initialVideos) {
       if (nextPage.length > 0) {
         allLoadedVideos.push(...nextPage);
         renderFeed();
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          videos: allLoadedVideos,
-          timestamp: Date.now(),
-          lastDocId: lastVisibleVideoDoc ? lastVisibleVideoDoc.id : null
-        }));
+        saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc);
       } else {
         hasMoreVideos = false;
       }
     } catch (err) {
-      console.error("Infinite scroll load failed:", err);
+      console.error("Load next page failed:", err);
       loading.textContent = "Error loading more clips";
     } finally {
       isLoadingMore = false;
     }
   }
 
-  // Button handlers (unchanged)
+  // Button handlers
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -6244,7 +6251,7 @@ function showHighlightsModal(initialVideos) {
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 
-  // Cleanup observer when modal is removed
+  // Cleanup observer
   const cleanup = () => observer.disconnect();
   modal.addEventListener("remove", cleanup, { once: true });
   closeBtn.onclick = (e) => {
