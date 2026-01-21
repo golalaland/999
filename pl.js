@@ -1547,6 +1547,7 @@ function renderMessagesFromArray(messages) {
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
       if (user && user._docId !== currentUser?.uid) {
         showSocialCard(user);
+           e.stopPropagation();
       }
     });
     nameSpan.addEventListener("click", (e) => {
@@ -1555,6 +1556,7 @@ function renderMessagesFromArray(messages) {
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
       if (user && user._docId !== currentUser?.uid) {
         showSocialCard(user);
+           e.stopPropagation();
       }
     });
     wrapper.appendChild(nameSpan);
@@ -2456,6 +2458,8 @@ if (user.isHost) {
     el.style.background = "#ffcc00";
     setTimeout(() => el.style.background = "", 200);
     showSocialCard(u);
+       e.stopPropagation();
+     
   });
 
   console.log("Social Card System — Unified clean style for Hosts & VIPs ♡");
