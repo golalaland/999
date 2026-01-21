@@ -6644,7 +6644,6 @@ if (currentUser && currentUser.isLive) {
 }
 
 // ===== TIPS MODAL LOGIC =====
-
 document.addEventListener("DOMContentLoaded", () => {
   const button = document.getElementById("topBallersBtn");
   if (!button) {
@@ -6659,20 +6658,20 @@ document.addEventListener("DOMContentLoaded", () => {
 function openTipsModal() {
   console.log("openTipsModal called");
 
-  // Clean up old modal if exists
+  // Clean up any existing modal
   let modal = document.getElementById("tipsModal");
   if (modal) {
     modal.remove();
     console.log("Old modal removed");
   }
 
-  // Create new modal
+  // Create fresh modal and append directly to body
   modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.92);
     z-index: 2147483647;
     display: flex;
     align-items: center;
@@ -6682,16 +6681,15 @@ function openTipsModal() {
     opacity: 1;
   `;
 
-  // Full content
   modal.innerHTML = `
     <div style="
       width: 90%;
       max-width: 380px;
-      background: #0f0f0f;
+      background: #0a0a0a;
       border: 2px solid #FF1493;
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 0 40px rgba(255,20,147,0.6);
+      box-shadow: 0 0 50px rgba(255,20,147,0.35);
       color: #eee;
       font-family: system-ui, sans-serif;
       display: flex;
@@ -6699,18 +6697,19 @@ function openTipsModal() {
       min-height: 520px;
     ">
       <!-- Header -->
-      <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.1); border-bottom:1px solid rgba(255,20,147,0.3);">
-        <h3 style="margin:0; font-size:20px; color:#FF1493; font-weight:900;">CUBE TIPS</h3>
-        <p style="margin:6px 0 0; font-size:14px; color:#00e676;">Level up • Earn more • Dominate</p>
+      <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.08); border-bottom:1px solid rgba(255,20,147,0.35);">
+        <h3 style="margin:0; font-size:21px; color:#FF1493; font-weight:900; text-shadow:0 0 10px rgba(255,20,147,0.5);">CUBE TIPS</h3>
+        <p style="margin:8px 0 0; font-size:14px; color:#00e676; font-weight:600;">Level up • Earn more • Dominate</p>
       </div>
 
       <!-- Carousel -->
-      <div id="tipsCarousel" style="position:relative; flex:1; min-height:380px; overflow:hidden;">
-        <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%); background:#111;">
+      <div id="tipsCarousel" style="position:relative; flex:1; min-height:380px; overflow:hidden; background:#111;">
+        <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
+          
           <!-- Card 1 -->
           <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-            <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [Welcome Placeholder]
+            <div style="width:100%; height:180px; background:#1a1a1a; color:#555; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              [Welcome Image]
             </div>
             <div style="padding:20px; flex:1;">
               <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
@@ -6722,47 +6721,47 @@ function openTipsModal() {
 
           <!-- Card 2 -->
           <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-            <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [Earn STRZ Placeholder]
+            <div style="width:100%; height:180px; background:#1a1a1a; color:#555; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              [Earn STRZ Image]
             </div>
             <div style="padding:20px; flex:1;">
               <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
               <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
                 Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
-                Use STRZ to unlock content, interact, play games & win real rewards.<br><br>
-                STRZ → real cash.<br>
-                <strong>Getting paid:</strong><br>1. Set up bank first<br>2. Supports 33+ NG, 15 ZA, 5 international banks
+                Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
+                From STRZ in your wallet → real cash in your bank.<br><br>
+                <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
               </p>
             </div>
           </div>
 
           <!-- Card 3 -->
           <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-            <div style="width:100%; height:180px; background:#222; color:#666; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [BUZZ Placeholder]
+            <div style="width:100%; height:180px; background:#1a1a1a; color:#555; display:flex; align-items:center; justify-content:center; font-size:16px;">
+              [BUZZ Message Image]
             </div>
             <div style="padding:20px; flex:1;">
               <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
               <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                <strong>🚨</strong> icon = BUZZ MESSAGE<br><br>
-                Stands out in chat + fun sound (volume on!)<br>
-                Costs STRZ.<br><br>
-                <strong>How:</strong><br>1. Type ≤15 chars<br>2. Tap 🚨
+                The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
+                Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
+                Costs STRZ — use wisely to get attention.<br><br>
+                <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
               </p>
             </div>
           </div>
         </div>
 
         <!-- Dots -->
-        <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10;">
+        <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:10;">
           <div data-index="0" style="width:10px;height:10px;border-radius:50%;background:#FF1493;cursor:pointer;"></div>
           <div data-index="1" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
           <div data-index="2" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
         </div>
       </div>
 
-      <!-- Close button -->
-      <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,20,147,0.3);">
+      <!-- Footer / Close -->
+      <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.5); border-top:1px solid rgba(255,20,147,0.35);">
         <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
           GOT IT 🔥
         </button>
@@ -6773,10 +6772,9 @@ function openTipsModal() {
   document.body.appendChild(modal);
   console.log("Modal appended to body");
 
-  // Initialize swipe & dots
   initTipsCarousel();
 
-  // Close handler
+  // Close with confetti
   const closeBtn = modal.querySelector("#closeTipsBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
@@ -6797,7 +6795,7 @@ function openTipsModal() {
       }, 800);
     });
   } else {
-    console.warn("closeTipsBtn not found in modal");
+    console.warn("closeTipsBtn not found");
   }
 }
 
@@ -6809,7 +6807,7 @@ function initTipsCarousel() {
     return;
   }
 
-  const dots = dotsContainer.querySelectorAll("div");
+  const dots = dotsContainer.querySelectorAll("[data-index]");
   let current = 0;
   const total = dots.length;
 
