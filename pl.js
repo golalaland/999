@@ -1500,18 +1500,15 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FIXED TAPPING + COLORS + SAFARI (2026 FINAL)
+// RENDER MESSAGES — FIXED: No more social card on message tap
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
-
   messages.forEach(function(item) {
     const id = item.id || item.tempId || item.data?.id;
     if (!id || document.getElementById(id)) return;
-
     const m = item.data ?? item;
-
-    // Skip banners/system messages
+    // BLOCK BANNERS & SYSTEM
     if (
       m.isBanner ||
       m.type === "banner" ||
@@ -1525,15 +1522,14 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // USERNAME — ONLY THIS OPENS SOCIAL CARD
+    // === USERNAME — TAP → SOCIAL CARD (SAFARI-FRIENDLY) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
     const realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown")
       .replace(/[.@/\\]/g, '_');
     nameSpan.dataset.userId = realUid;
-
-    const usernameColor = refs.userColors?.[m.uid] || m.usernameColor || "#ffffff";
+    const usernameColor = refs.userColors?.[m.uid] || "#ffffff";
     nameSpan.style.cssText = `
       cursor: pointer;
       font-weight: 600;
@@ -1545,25 +1541,25 @@ function renderMessagesFromArray(messages) {
       margin-right: 4px;
       -webkit-tap-highlight-color: transparent;
     `;
-
-    // Tap username → open social card (stops bubbling)
-    const openProfile = (e) => {
-      e.stopPropagation();   // ← Prevents bubbling to wrapper or other handlers
+    nameSpan.addEventListener("touchend", (e) => {
       e.preventDefault();
-
       const chatIdLower = (m.chatId || "").toLowerCase();
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
       if (user && user._docId !== currentUser?.uid) {
         showSocialCard(user);
       }
-    };
-
-    nameSpan.addEventListener("touchend", openProfile);  // Safari-friendly
-    nameSpan.addEventListener("click", openProfile);
-
+    });
+    nameSpan.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const chatIdLower = (m.chatId || "").toLowerCase();
+      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
+      if (user && user._docId !== currentUser?.uid) {
+        showSocialCard(user);
+      }
+    });
     wrapper.appendChild(nameSpan);
 
-    // REPLY PREVIEW (tappable for scroll-to, stops bubbling)
+    // === REPLY PREVIEW ===
     let preview = null;
     if (m.replyTo) {
       preview = document.createElement("div");
@@ -1582,7 +1578,6 @@ function renderMessagesFromArray(messages) {
       const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
       preview.innerHTML = `<strong style="color:#999;">⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
-
       preview.onclick = (e) => {
         e.stopPropagation();
         const target = document.getElementById(m.replyTo);
@@ -1595,12 +1590,11 @@ function renderMessagesFromArray(messages) {
       wrapper.appendChild(preview);
     }
 
-    // MESSAGE CONTENT (tappable for reply/report, stops bubbling)
+    // === MESSAGE CONTENT ===
     const content = document.createElement("span");
     content.className = "content";
     content.textContent = m.content || "";
 
-    // Normal messages
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
@@ -1615,12 +1609,50 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // Buzz styling (unchanged)
     if (m.type === "buzz" && m.stickerGradient) {
-      // ... your full buzz styling code ...
+      wrapper.className += " super-sticker";
+      wrapper.style.cssText = `
+        display: inline-block;
+        max-width: 85%;
+        margin: 14px 10px;
+        padding: 20px 24px;
+        border-radius: 28px;
+        background: ${m.stickerGradient};
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.25);
+        animation: stickerPop 0.7s ease-out;
+        backdrop-filter: blur(4px);
+      `;
+      const confettiContainer = document.createElement("div");
+      confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
+      createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
+      wrapper.appendChild(confettiContainer);
+      wrapper.style.transition = "transform 0.2s";
+      wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
+      wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+      setTimeout(() => {
+        wrapper.style.background = "rgba(255,255,255,0.06)";
+        wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+        wrapper.style.border = "none";
+        confettiContainer.remove();
+      }, 20000);
+      content.style.cssText = `
+        font-size: 1.45em;
+        font-weight: 900;
+        line-height: 1.4;
+        letter-spacing: 0.6px;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        display: block;
+        cursor: pointer;
+      `;
     }
 
-    // Tap content → reply/report (stops bubbling)
+    // TAP ON TEXT → REPLY/REPORT
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1633,16 +1665,20 @@ function renderMessagesFromArray(messages) {
         replyToChatId: m.replyToChatId
       });
     });
-
     wrapper.appendChild(content);
 
-    // NO pointerEvents = "none" on wrapper — let events bubble naturally
-    // Only username and content have handlers, and they stop propagation
+    // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
+    wrapper.style.pointerEvents = "none";
+
+    // Re-enable pointer events ONLY on interactive parts
+    nameSpan.style.pointerEvents = "auto";
+    if (preview) preview.style.pointerEvents = "auto";
+    content.style.pointerEvents = "auto";   // ← THIS LINE WAS MISSING BEFORE
 
     refs.messagesEl.appendChild(wrapper);
   });
 
-  // Auto-scroll logic (unchanged)
+  // Auto-scroll
   const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
   if (distanceFromBottom < 200) {
     refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
