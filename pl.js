@@ -1500,15 +1500,18 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FIXED: No more social card on message tap
+// RENDER MESSAGES — FIXED: No social card on bubble tap/scroll
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
+
   messages.forEach(function(item) {
     const id = item.id || item.tempId || item.data?.id;
     if (!id || document.getElementById(id)) return;
+
     const m = item.data ?? item;
-    // BLOCK BANNERS & SYSTEM
+
+    // Skip banners/system
     if (
       m.isBanner ||
       m.type === "banner" ||
@@ -1522,14 +1525,16 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME — TAP → SOCIAL CARD (SAFARI-FRIENDLY) ===
+    // USERNAME — ONLY THIS OPENS SOCIAL CARD
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
+
     const realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown")
       .replace(/[.@/\\]/g, '_');
     nameSpan.dataset.userId = realUid;
-    const usernameColor = refs.userColors?.[m.uid] || "#ffffff";
+
+    const usernameColor = refs.userColors?.[m.uid] || m.usernameColor || "#ffffff";
     nameSpan.style.cssText = `
       cursor: pointer;
       font-weight: 600;
@@ -1541,27 +1546,26 @@ function renderMessagesFromArray(messages) {
       margin-right: 4px;
       -webkit-tap-highlight-color: transparent;
     `;
-    nameSpan.addEventListener("touchend", (e) => {
+
+    // Unified handler (mobile + desktop) — stops all bubbling
+    const openProfile = (e) => {
       e.preventDefault();
+      e.stopPropagation(); // Prevents bubbling to wrapper or parent
+
       const chatIdLower = (m.chatId || "").toLowerCase();
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
+
       if (user && user._docId !== currentUser?.uid) {
         showSocialCard(user);
-           e.stopPropagation();
       }
-    });
-    nameSpan.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const chatIdLower = (m.chatId || "").toLowerCase();
-      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
-      if (user && user._docId !== currentUser?.uid) {
-        showSocialCard(user);
-           e.stopPropagation();
-      }
-    });
+    };
+
+    nameSpan.addEventListener("touchend", openProfile);
+    nameSpan.addEventListener("click", openProfile);
+
     wrapper.appendChild(nameSpan);
 
-    // === REPLY PREVIEW ===
+    // REPLY PREVIEW — tappable for scroll-to, stops bubbling
     let preview = null;
     if (m.replyTo) {
       preview = document.createElement("div");
@@ -1580,7 +1584,8 @@ function renderMessagesFromArray(messages) {
       const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
       preview.innerHTML = `<strong style="color:#999;">⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
-      preview.onclick = (e) => {
+
+      preview.addEventListener("click", (e) => {
         e.stopPropagation();
         const target = document.getElementById(m.replyTo);
         if (target) {
@@ -1588,11 +1593,12 @@ function renderMessagesFromArray(messages) {
           target.style.background = "rgba(180,180,180,0.15)";
           setTimeout(() => target.style.background = "", 2000);
         }
-      };
+      });
+
       wrapper.appendChild(preview);
     }
 
-    // === MESSAGE CONTENT ===
+    // MESSAGE CONTENT — tappable for reply/report, stops bubbling
     const content = document.createElement("span");
     content.className = "content";
     content.textContent = m.content || "";
@@ -1611,6 +1617,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
+    // Buzz styling
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1627,19 +1634,23 @@ function renderMessagesFromArray(messages) {
         animation: stickerPop 0.7s ease-out;
         backdrop-filter: blur(4px);
       `;
+
       const confettiContainer = document.createElement("div");
       confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
       createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
       wrapper.appendChild(confettiContainer);
+
       wrapper.style.transition = "transform 0.2s";
       wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
       wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+
       setTimeout(() => {
         wrapper.style.background = "rgba(255,255,255,0.06)";
         wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
         wrapper.style.border = "none";
         confettiContainer.remove();
       }, 20000);
+
       content.style.cssText = `
         font-size: 1.45em;
         font-weight: 900;
@@ -1654,7 +1665,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // TAP ON TEXT → REPLY/REPORT
+    // Content tap → reply/report modal (isolated)
     content.addEventListener("click", (e) => {
       e.stopPropagation();
       showTapModal(wrapper, {
@@ -1667,15 +1678,11 @@ function renderMessagesFromArray(messages) {
         replyToChatId: m.replyToChatId
       });
     });
+
     wrapper.appendChild(content);
 
-    // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
-    wrapper.style.pointerEvents = "none";
-
-    // Re-enable pointer events ONLY on interactive parts
-    nameSpan.style.pointerEvents = "auto";
-    if (preview) preview.style.pointerEvents = "auto";
-    content.style.pointerEvents = "auto";   // ← THIS LINE WAS MISSING BEFORE
+    // NO pointerEvents = "none" on wrapper — removed completely
+    // Events are now naturally isolated by stopPropagation on handlers
 
     refs.messagesEl.appendChild(wrapper);
   });
@@ -1685,6 +1692,7 @@ function renderMessagesFromArray(messages) {
   if (distanceFromBottom < 200) {
     refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
   }
+
   if (!scrollPending) {
     scrollPending = true;
     requestAnimationFrame(() => {
@@ -1694,7 +1702,7 @@ function renderMessagesFromArray(messages) {
   }
 }
 
-/* ---------- 🔔 Messages Listener – Fixed Colors + Natural Flow ---------- */
+/* ---------- 🔔 Messages Listener – Low Reads + Natural Flow ---------- */
 let messagesUnsubscribe = null;
 
 function attachMessagesListener() {
@@ -1708,54 +1716,46 @@ function attachMessagesListener() {
   const q = query(
     collection(db, CHAT_COLLECTION),
     orderBy("timestamp", "asc"),
-    limitToLast(CHAT_LIMIT)  // most recent 21, sorted old → new
+    limitToLast(CHAT_LIMIT)
   );
 
-  const shownGiftAlerts = new Set(
-    JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
-  );
+  const shownGiftAlerts = new Set(JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]"));
 
   function saveShownGift(id) {
     shownGiftAlerts.add(id);
     localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
   }
 
-  let localPendingMsgs = JSON.parse(
-    localStorage.getItem("localPendingMsgs") || "{}"
-  );
+  let localPendingMsgs = JSON.parse(localStorage.getItem("localPendingMsgs") || "{}");
 
   messagesUnsubscribe = onSnapshot(
     q,
     { includeMetadataChanges: true },
     (snapshot) => {
       console.log(
-        `Messages snapshot | cache: ${snapshot.metadata.fromCache ? 'yes ✓' : 'no (billed)'} | ` +
+        `Messages snapshot | cache: ${snapshot.metadata.fromCache ? "yes ✓" : "no (billed)"} | ` +
         `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
       );
 
-      // ======================================
-      // INITIAL LOAD: Render ALL loaded messages once
-      // ======================================
+      // Initial load: render everything once
       if (snapshot.metadata.hasPendingWrites === false && snapshot.docChanges().length === snapshot.size) {
-        // This is likely the first snapshot (all docs are "added")
-        console.log("[Initial load] Rendering all", snapshot.size, "messages");
+        console.log("[Initial] Rendering all", snapshot.size, "messages");
 
         const initialMessages = snapshot.docs.map(doc => ({
           id: doc.id,
           data: doc.data()
         }));
 
-        // Clear old messages if needed (to avoid duplicates on re-attach)
+        // Clear old messages to avoid duplicates
         if (refs.messagesEl) refs.messagesEl.innerHTML = "";
 
         renderMessagesFromArray(initialMessages);
 
-        // Scroll to bottom after initial render
         if (refs.messagesEl) {
           refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
         }
 
-        // Process gift alerts for initial messages too (if needed)
+        // Process initial gift alerts
         initialMessages.forEach(({ id, data: msg }) => {
           if (msg.highlight && msg.content?.includes("gifted")) {
             const myId = currentUser?.chatId?.toLowerCase();
@@ -1767,9 +1767,7 @@ function attachMessagesListener() {
         });
       }
 
-      // ======================================
-      // REAL-TIME: Only new messages
-      // ======================================
+      // Real-time: only new messages
       snapshot.docChanges().forEach((change) => {
         if (change.type !== "added") return;
 
@@ -1779,14 +1777,11 @@ function attachMessagesListener() {
         if (msg.tempId && msg.tempId.startsWith("temp_")) return;
         if (document.getElementById(msgId)) return;
 
-        // Replace optimistic temp message
         let matched = false;
         for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
           const sameUser = pending.uid === msg.uid;
           const sameText = pending.content === msg.content;
-          const timeDiff = Math.abs(
-            (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
-          );
+          const timeDiff = Math.abs((msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0));
 
           if (sameUser && sameText && timeDiff < 7000) {
             const tempEl = document.getElementById(tempId);
@@ -1798,10 +1793,8 @@ function attachMessagesListener() {
           }
         }
 
-        // Render new message (appends at bottom)
         renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-        // Gift alert
         if (msg.highlight && msg.content?.includes("gifted")) {
           const myId = currentUser?.chatId?.toLowerCase();
           if (!myId) return;
@@ -1809,15 +1802,12 @@ function attachMessagesListener() {
           const sender = parts[0];
           const receiver = parts[2];
           const amount = parts[3];
-          if (sender && receiver && amount &&
-              receiver.toLowerCase() === myId &&
-              !shownGiftAlerts.has(msgId)) {
+          if (sender && receiver && amount && receiver.toLowerCase() === myId && !shownGiftAlerts.has(msgId)) {
             showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
             saveShownGift(msgId);
           }
         }
 
-        // Auto-scroll for own messages or if near bottom
         if (refs.messagesEl && msg.uid === currentUser?.uid) {
           refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
         }
