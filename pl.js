@@ -6755,21 +6755,22 @@ function openTipsModal() {
         </div>
 
         <!-- Dots -->
-        <div id="tipsDots" style="
-          position: sticky;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 12px;
-          z-index: 10;
-          padding: 10px 0;
-        ">
-          <div data-index="0" style="width:12px;height:12px;border-radius:50%;background:#c3f60c;cursor:pointer;"></div>
-          <div data-index="1" style="width:12px;height:12px;border-radius:50%;background:rgba(195,246,12,0.3);cursor:pointer;"></div>
-          <div data-index="2" style="width:12px;height:12px;border-radius:50%;background:rgba(195,246,12,0.3);cursor:pointer;"></div>
-        </div>
-      </div>
+       <div id="tipsDots" style="
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: fit-content;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+">
+  <div data-index="0" style="width:12px; height:12px; border-radius:50%; background:#c3f60c; cursor:pointer;"></div>
+  <div data-index="1" style="width:12px; height:12px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
+  <div data-index="2" style="width:12px; height:12px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
+</div>
 
       <!-- Close button -->
       <div style="padding: 20px 16px; text-align: center; background: rgba(0,0,0,0.6); border-top: 1px solid rgba(195,246,12,0.25);">
