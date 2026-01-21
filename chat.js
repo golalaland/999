@@ -1710,31 +1710,24 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
-/* ---------- 🔔 Messages Listener – Optimized + Natural Chronological Order ---------- */
-// - Uses limitToLast(21) + orderBy asc → gets the most recent 21 messages in chronological order
-// - Keeps old→new flow (oldest at top, newest at bottom)
-// - Auto-scrolls to bottom on load and for own messages
-// - Real-time appends new messages at bottom
-// - Proper unsubscribe + debug logging
 
+/* ---------- 🔔 Messages Listener – Fixed Colors + Natural Flow ---------- */
 let messagesUnsubscribe = null;
 
 function attachMessagesListener() {
-  // Clean up existing listener to prevent duplicates
   if (typeof messagesUnsubscribe === "function") {
     messagesUnsubscribe();
     messagesUnsubscribe = null;
   }
 
-  const CHAT_LIMIT = 21; // recent messages only
+  const CHAT_LIMIT = 21;
 
   const q = query(
     collection(db, CHAT_COLLECTION),
-    orderBy("timestamp", "asc"),           // chronological (old → new)
-    limitToLast(CHAT_LIMIT)                // ← key change: last N in asc order = most recent N
+    orderBy("timestamp", "asc"),
+    limitToLast(CHAT_LIMIT)  // most recent 21, sorted old → new
   );
 
-  // Load persisted state
   const shownGiftAlerts = new Set(
     JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
   );
@@ -1753,24 +1746,57 @@ function attachMessagesListener() {
     { includeMetadataChanges: true },
     (snapshot) => {
       console.log(
-        `Messages snapshot | fromCache: ${snapshot.metadata.fromCache ? "✓ cache" : "server (billed)"} | ` +
+        `Messages snapshot | cache: ${snapshot.metadata.fromCache ? 'yes ✓' : 'no (billed)'} | ` +
         `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
       );
 
-      // Process only newly added messages
+      // ======================================
+      // INITIAL LOAD: Render ALL loaded messages once
+      // ======================================
+      if (snapshot.metadata.hasPendingWrites === false && snapshot.docChanges().length === snapshot.size) {
+        // This is likely the first snapshot (all docs are "added")
+        console.log("[Initial load] Rendering all", snapshot.size, "messages");
+
+        const initialMessages = snapshot.docs.map(doc => ({
+          id: doc.id,
+          data: doc.data()
+        }));
+
+        // Clear old messages if needed (to avoid duplicates on re-attach)
+        if (refs.messagesEl) refs.messagesEl.innerHTML = "";
+
+        renderMessagesFromArray(initialMessages);
+
+        // Scroll to bottom after initial render
+        if (refs.messagesEl) {
+          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+        }
+
+        // Process gift alerts for initial messages too (if needed)
+        initialMessages.forEach(({ id, data: msg }) => {
+          if (msg.highlight && msg.content?.includes("gifted")) {
+            const myId = currentUser?.chatId?.toLowerCase();
+            if (myId && msg.content.split(" ")[2]?.toLowerCase() === myId && !shownGiftAlerts.has(id)) {
+              showGiftAlert(`${msg.content.split(" ")[0]} gifted you ${msg.content.split(" ")[3]} stars ⭐️`);
+              saveShownGift(id);
+            }
+          }
+        });
+      }
+
+      // ======================================
+      // REAL-TIME: Only new messages
+      // ======================================
       snapshot.docChanges().forEach((change) => {
         if (change.type !== "added") return;
 
         const msg = change.doc.data();
         const msgId = change.doc.id;
 
-        // Skip temp/echo messages
         if (msg.tempId && msg.tempId.startsWith("temp_")) return;
-
-        // Skip if already rendered
         if (document.getElementById(msgId)) return;
 
-        // Match and replace local optimistic message
+        // Replace optimistic temp message
         let matched = false;
         for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
           const sameUser = pending.uid === msg.uid;
@@ -1789,19 +1815,17 @@ function attachMessagesListener() {
           }
         }
 
-        // Render the message (appends at bottom since order is asc)
+        // Render new message (appends at bottom)
         renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-        // Gift alert for receiver
+        // Gift alert
         if (msg.highlight && msg.content?.includes("gifted")) {
           const myId = currentUser?.chatId?.toLowerCase();
           if (!myId) return;
-
           const parts = msg.content.split(" ");
           const sender = parts[0];
           const receiver = parts[2];
           const amount = parts[3];
-
           if (sender && receiver && amount &&
               receiver.toLowerCase() === myId &&
               !shownGiftAlerts.has(msgId)) {
@@ -1810,38 +1834,17 @@ function attachMessagesListener() {
           }
         }
 
-        // Auto-scroll to bottom for own messages (or always on initial load)
-        if (refs.messagesEl) {
-          if (msg.uid === currentUser?.uid || snapshot.metadata.fromCache) {
-            refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-          }
+        // Auto-scroll for own messages or if near bottom
+        if (refs.messagesEl && msg.uid === currentUser?.uid) {
+          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
         }
       });
-
-      // After processing all changes, scroll to bottom once on initial load
-      if (snapshot.metadata.fromCache === false && refs.messagesEl) {
-        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-      }
     },
     (error) => {
       console.error("Messages listener error:", error);
     }
   );
 }
-
-// Cleanup (optional – call when leaving chat or page unload)
-function detachMessagesListener() {
-  if (typeof messagesUnsubscribe === "function") {
-    messagesUnsubscribe();
-    messagesUnsubscribe = null;
-  }
-}
-
-// Example usage: call when entering chat
-attachMessagesListener();
-
-// Optional: call on page unload / chat exit
-// window.addEventListener('beforeunload', detachMessagesListener);
 
 
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
