@@ -6632,113 +6632,158 @@ document.addEventListener("DOMContentLoaded", () => {
 function openTipsModal() {
   console.log("openTipsModal called");
 
-  // Clean up any existing modal
+  // Clean up old modal
   let modal = document.getElementById("tipsModal");
   if (modal) {
     modal.remove();
     console.log("Old modal removed");
   }
 
-  // Create fresh modal and append directly to body
+  // Create modal (page-like feel)
   modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.92);
+    background: #0a0a0a;
     z-index: 2147483647;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    overflow-y: auto;
     pointer-events: auto;
     visibility: visible;
     opacity: 1;
+    padding: 0;
+    margin: 0;
   `;
 
   modal.innerHTML = `
     <div style="
-      width: 90%;
-      max-width: 380px;
+      width: 100%;
+      max-width: 420px;
+      min-height: 100vh;
       background: #0a0a0a;
-      border: 2px solid #FF1493;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 0 50px rgba(255,20,147,0.35);
       color: #eee;
       font-family: system-ui, sans-serif;
       display: flex;
       flex-direction: column;
-      min-height: 520px;
+      box-sizing: border-box;
     ">
       <!-- Header -->
-      <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.08); border-bottom:1px solid rgba(255,20,147,0.35);">
-        <h3 style="margin:0; font-size:21px; color:#FF1493; font-weight:900; text-shadow:0 0 10px rgba(255,20,147,0.5);">CUBE TIPS</h3>
-        <p style="margin:8px 0 0; font-size:14px; color:#00e676; font-weight:600;">Level up • Earn more • Dominate</p>
+      <div style="
+        padding: 24px 16px 16px;
+        text-align: center;
+        background: linear-gradient(to bottom, rgba(195,246,12,0.12), transparent);
+        border-bottom: 1px solid rgba(195,246,12,0.25);
+      ">
+        <h3 style="
+          margin: 0;
+          font-size: 24px;
+          color: #c3f60c;
+          font-weight: 900;
+          letter-spacing: 1px;
+          text-shadow: 0 0 12px rgba(195,246,12,0.5);
+        ">CUBE TIPS</h3>
+        <p style="margin: 10px 0 0; font-size: 15px; color: #eee; opacity: 0.9;">
+          Level up • Earn more • Dominate
+        </p>
       </div>
 
-      <!-- Carousel -->
-      <div id="tipsCarousel" style="position:relative; flex:1; min-height:380px; overflow:hidden; background:#111;">
-        <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
-          
+      <!-- Carousel / Content Pages -->
+      <div id="tipsCarousel" style="position: relative; flex: 1; overflow: hidden;">
+        <div id="tipsSlides" style="
+          display: flex;
+          width: 300%;
+          height: 100%;
+          transition: transform 0.5s ease;
+          transform: translateX(0%);
+        ">
           <!-- Card 1 -->
-          <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-            <div style="width:100%; height:180px; background:#1a1a1a; color:#555; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [Welcome Image]
-            </div>
-            <div style="padding:20px; flex:1;">
-              <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
-              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
-              </p>
-            </div>
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="
+              width: 100%;
+              height: 220px;
+              object-fit: cover;
+              border-radius: 12px;
+              margin: 20px 0 16px;
+              border: 1px solid rgba(195,246,12,0.3);
+            ">
+            <h4 style="margin: 0 0 12px; color: #c3f60c; font-size: 19px; text-align: center;">Welcome to Cube</h4>
+            <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #ddd; text-align: center;">
+              You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+            </p>
           </div>
 
           <!-- Card 2 -->
-          <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-            <div style="width:100%; height:180px; background:#1a1a1a; color:#555; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [Earn STRZ Image]
-            </div>
-            <div style="padding:20px; flex:1;">
-              <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
-              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
-                Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
-                From STRZ in your wallet → real cash in your bank.<br><br>
-                <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
-              </p>
-            </div>
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
+              width: 100%;
+              height: 220px;
+              object-fit: cover;
+              border-radius: 12px;
+              margin: 20px 0 16px;
+              border: 1px solid rgba(195,246,12,0.3);
+            ">
+            <h4 style="margin: 0 0 12px; color: #c3f60c; font-size: 19px; text-align: center;">Earn & Cash Out</h4>
+            <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #ddd; text-align: center;">
+              Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
+              Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
+              From STRZ in your wallet → real cash in your bank.<br><br>
+              <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
+            </p>
           </div>
 
           <!-- Card 3 -->
-          <div style="width:33.333%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-            <div style="width:100%; height:180px; background:#1a1a1a; color:#555; display:flex; align-items:center; justify-content:center; font-size:16px;">
-              [BUZZ Message Image]
-            </div>
-            <div style="padding:20px; flex:1;">
-              <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
-              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-                The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
-                Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
-                Costs STRZ — use wisely to get attention.<br><br>
-                <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
-              </p>
-            </div>
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="
+              width: 100%;
+              height: 220px;
+              object-fit: cover;
+              border-radius: 12px;
+              margin: 20px 0 16px;
+              border: 1px solid rgba(195,246,12,0.3);
+            ">
+            <h4 style="margin: 0 0 12px; color: #c3f60c; font-size: 19px; text-align: center;">Send BUZZ Messages 🚨</h4>
+            <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #ddd; text-align: center;">
+              The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
+              Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
+              Costs STRZ — use wisely to get attention.<br><br>
+              <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
+            </p>
           </div>
         </div>
 
         <!-- Dots -->
-        <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:10;">
-          <div data-index="0" style="width:10px;height:10px;border-radius:50%;background:#FF1493;cursor:pointer;"></div>
-          <div data-index="1" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
-          <div data-index="2" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;"></div>
+        <div id="tipsDots" style="
+          position: sticky;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 12px;
+          z-index: 10;
+          padding: 10px 0;
+        ">
+          <div data-index="0" style="width:12px;height:12px;border-radius:50%;background:#c3f60c;cursor:pointer;"></div>
+          <div data-index="1" style="width:12px;height:12px;border-radius:50%;background:rgba(195,246,12,0.3);cursor:pointer;"></div>
+          <div data-index="2" style="width:12px;height:12px;border-radius:50%;background:rgba(195,246,12,0.3);cursor:pointer;"></div>
         </div>
       </div>
 
-      <!-- Footer / Close -->
-      <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.5); border-top:1px solid rgba(255,20,147,0.35);">
-        <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
-          GOT IT 🔥
-        </button>
+      <!-- Close button -->
+      <div style="padding: 20px 16px; text-align: center; background: rgba(0,0,0,0.6); border-top: 1px solid rgba(195,246,12,0.25);">
+        <button id="closeTipsBtn" style="
+          padding: 16px 60px;
+          border: none;
+          border-radius: 16px;
+          background: #c3f60c;
+          color: #000;
+          font-weight: 900;
+          font-size: 18px;
+          cursor: pointer;
+          box-shadow: 0 4px 20px rgba(195,246,12,0.5);
+        ">GOT IT 🔥</button>
       </div>
     </div>
   `;
@@ -6748,7 +6793,7 @@ function openTipsModal() {
 
   initTipsCarousel();
 
-  // Close with confetti
+  // Close handler
   const closeBtn = modal.querySelector("#closeTipsBtn");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
@@ -6768,8 +6813,6 @@ function openTipsModal() {
         console.log("Modal hidden & removed");
       }, 800);
     });
-  } else {
-    console.warn("closeTipsBtn not found");
   }
 }
 
@@ -6788,7 +6831,7 @@ function initTipsCarousel() {
   function update() {
     slides.style.transform = `translateX(-${current * 33.333}%)`;
     dots.forEach((dot, i) => {
-      dot.style.background = i === current ? "#FF1493" : "rgba(255,255,255,0.3)";
+      dot.style.background = i === current ? "#c3f60c" : "rgba(195,246,12,0.3)";
     });
   }
 
@@ -6796,10 +6839,7 @@ function initTipsCarousel() {
   let startX = 0;
   const carousel = document.getElementById("tipsCarousel");
   if (carousel) {
-    carousel.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-    }, { passive: true });
-
+    carousel.addEventListener("touchstart", e => startX = e.touches[0].clientX, { passive: true });
     carousel.addEventListener("touchend", e => {
       const diff = startX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 60) {
