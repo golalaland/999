@@ -1710,32 +1710,31 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
-/* ---------- 🔔 Messages Listener – Optimized 2026 Version ---------- */
-// - Added limit(60) + orderBy desc to massively reduce initial reads
-// - Newest messages first (standard chat UX)
-// - Real-time only for recent messages
-// - Cache-aware logging (optional – remove later)
-// - Proper unsubscribe support
-// - Minor cleanups & safety checks
+/* ---------- 🔔 Messages Listener – Optimized + Natural Chronological Order ---------- */
+// - Uses limitToLast(21) + orderBy asc → gets the most recent 21 messages in chronological order
+// - Keeps old→new flow (oldest at top, newest at bottom)
+// - Auto-scrolls to bottom on load and for own messages
+// - Real-time appends new messages at bottom
+// - Proper unsubscribe + debug logging
 
-let messagesUnsubscribe = null; // global or module-level to allow cleanup
+let messagesUnsubscribe = null;
 
 function attachMessagesListener() {
-  // Clean up any existing listener first (prevents duplicates on re-attach)
-  if (typeof messagesUnsubscribe === 'function') {
+  // Clean up existing listener to prevent duplicates
+  if (typeof messagesUnsubscribe === "function") {
     messagesUnsubscribe();
     messagesUnsubscribe = null;
   }
 
-  const CHAT_LIMIT = 21; // adjust as needed: 40–100 is sweet spot for most chats
+  const CHAT_LIMIT = 21; // recent messages only
 
   const q = query(
     collection(db, CHAT_COLLECTION),
-    orderBy("timestamp", "desc"),           // ← newest first (recommended)
-    limit(CHAT_LIMIT)
+    orderBy("timestamp", "asc"),           // chronological (old → new)
+    limitToLast(CHAT_LIMIT)                // ← key change: last N in asc order = most recent N
   );
 
-  // Load persisted state (gift alerts + pending messages)
+  // Load persisted state
   const shownGiftAlerts = new Set(
     JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
   );
@@ -1751,11 +1750,10 @@ function attachMessagesListener() {
 
   messagesUnsubscribe = onSnapshot(
     q,
-    { includeMetadataChanges: true }, // helps debug cache vs billed reads
+    { includeMetadataChanges: true },
     (snapshot) => {
-      // Optional debug (remove or comment out in production)
       console.log(
-        `Messages snapshot | fromCache: ${snapshot.metadata.fromCache ? '✓ cache' : 'server (billed)'} | ` +
+        `Messages snapshot | fromCache: ${snapshot.metadata.fromCache ? "✓ cache" : "server (billed)"} | ` +
         `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
       );
 
@@ -1766,18 +1764,18 @@ function attachMessagesListener() {
         const msg = change.doc.data();
         const msgId = change.doc.id;
 
-        // Skip temporary/echo messages
+        // Skip temp/echo messages
         if (msg.tempId && msg.tempId.startsWith("temp_")) return;
 
-        // Skip if already rendered (defensive)
+        // Skip if already rendered
         if (document.getElementById(msgId)) return;
 
-        // Match & replace local optimistic message
+        // Match and replace local optimistic message
         let matched = false;
         for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
-          const sameUser  = pending.uid === msg.uid;
-          const sameText  = pending.content === msg.content;
-          const timeDiff  = Math.abs(
+          const sameUser = pending.uid === msg.uid;
+          const sameText = pending.content === msg.content;
+          const timeDiff = Math.abs(
             (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
           );
 
@@ -1791,18 +1789,18 @@ function attachMessagesListener() {
           }
         }
 
-        // Render the confirmed message
+        // Render the message (appends at bottom since order is asc)
         renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-        // Gift alert logic (only for receiver)
+        // Gift alert for receiver
         if (msg.highlight && msg.content?.includes("gifted")) {
           const myId = currentUser?.chatId?.toLowerCase();
           if (!myId) return;
 
           const parts = msg.content.split(" ");
-          const sender   = parts[0];
+          const sender = parts[0];
           const receiver = parts[2];
-          const amount   = parts[3];
+          const amount = parts[3];
 
           if (sender && receiver && amount &&
               receiver.toLowerCase() === myId &&
@@ -1812,23 +1810,39 @@ function attachMessagesListener() {
           }
         }
 
-        // Auto-scroll only for own messages
-        if (refs.messagesEl && msg.uid === currentUser?.uid) {
-          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+        // Auto-scroll to bottom for own messages (or always on initial load)
+        if (refs.messagesEl) {
+          if (msg.uid === currentUser?.uid || snapshot.metadata.fromCache) {
+            refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+          }
         }
       });
+
+      // After processing all changes, scroll to bottom once on initial load
+      if (snapshot.metadata.fromCache === false && refs.messagesEl) {
+        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+      }
     },
     (error) => {
       console.error("Messages listener error:", error);
-      // Optional: show user-friendly message or retry logic
     }
   );
 }
 
-// Optional: Call this when user leaves chat / page unloads
-// window.addEventListener('beforeunload', () => {
-//   if (typeof messagesUnsubscribe === 'function') messagesUnsubscribe();
-// });
+// Cleanup (optional – call when leaving chat or page unload)
+function detachMessagesListener() {
+  if (typeof messagesUnsubscribe === "function") {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
+  }
+}
+
+// Example usage: call when entering chat
+attachMessagesListener();
+
+// Optional: call on page unload / chat exit
+// window.addEventListener('beforeunload', detachMessagesListener);
+
 
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
