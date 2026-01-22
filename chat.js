@@ -5791,7 +5791,7 @@ let allLoadedVideos = [];
 let lastVisibleVideoDoc = null;
 let hasMoreVideos = true;
 let isLoadingVideos = false;
-const VIDEOS_PAGE_SIZE = 3; // your test size — works fine now
+const VIDEOS_PAGE_SIZE = 21; // your test size — works fine now
 const VIDEOS_CACHE_KEY = "highlightsFeedCache_v1";
 
 // Load one page
