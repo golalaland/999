@@ -59,6 +59,23 @@ function getAvatar(userData) {
   if (userData.gender === "female") return DEFAULT_FEMALE;
   return DEFAULT_NEUTRAL;
 }
+
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get("t");
+
+if (token) {
+  const validate = httpsCallable(functions, "validateLoginToken");
+  try {
+    const result = await validate({ token });
+    if (result.data.success) {
+      console.log("Valid user:", result.data.uid);
+      // Show redeem/tip UI for this user
+      // e.g. document.getElementById("userInfo").textContent = `Welcome ${result.data.chatId}`;
+    }
+  } catch (err) {
+    alert("Link expired or invalid");
+  }
+}
   
   
 // ---------- DOM ----------
@@ -325,19 +342,6 @@ async function loadUserFromToken(token) {
   }
 }
 
-
-// ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
-async function loadCurrentUserForGame() {
-  try {
-    let uid = null;
-
-    // 1️⃣ Try token from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("t");
-    if (token) {
-      uid = await loadUserFromToken(token);
-      if (uid) console.log("la sincronización depende de una correlación temporal pseudo-estocástica", "color:#ff6600", uid);
-    }
 
     // 2️⃣ Fallback to localStorage
     if (!uid) {
