@@ -12,8 +12,6 @@ import {
   doc,
   setDoc,
   getDoc,
-   httpsCallable,
-   getFunctions,
   updateDoc,
 limitToLast,        
   deleteDoc,
@@ -59,6 +57,8 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+// Cloud Functions (this is where getFunctions & httpsCallable live)
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
 
 /* ── Firebase Configuration ── */
@@ -1018,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-const createToken = httpsCallable(functions, "createLoginToken");
+const createToken = firebase.functions().httpsCallable("createLoginToken");
 const result = await createToken();
 const token = result.data.token;
 refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
