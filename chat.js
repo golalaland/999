@@ -1027,41 +1027,38 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Waiting for valid auth token...");
+  console.log("[TIP] Checking auth token for UID:", currentUser.uid);
 
-  // Wait up to 5 seconds for auth token to be available
-  let tokenReady = false;
-  for (let i = 0; i < 10; i++) {
+  // Force token refresh and wait up to 5s
+  let idToken = null;
+  let attempts = 0;
+  while (!idToken && attempts < 10) {
     try {
-      const idToken = await auth.currentUser?.getIdToken?.(true); // force refresh
-      if (idToken) {
-        console.log("[TIP] Auth token ready (length:", idToken.length, ")");
-        tokenReady = true;
-        break;
-      }
+      idToken = await auth.currentUser.getIdToken(true); // true = forceRefresh
+      console.log("[TIP] Token refreshed (length:", idToken.length, ")");
     } catch (err) {
-      console.warn("[TIP] Token check failed (attempt", i + 1, "):", err.message);
+      console.warn("[TIP] Token refresh failed (attempt", attempts, "):", err.message);
+      await new Promise(r => setTimeout(r, 500));
     }
-    await new Promise(r => setTimeout(r, 500)); // 0.5s per attempt
+    attempts++;
   }
 
-  if (!tokenReady) {
-    console.error("[TIP] Auth token never became ready");
-    refs.tipBtn.href = "/tm"; // fallback
+  if (!idToken) {
+    console.error("[TIP] No auth token after retries");
+    refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
     const createToken = httpsCallable(functions, "createLoginToken");
-    console.log("[TIP] Calling createLoginToken for UID:", currentUser.uid);
     const result = await createToken();
     const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token generated");
+    console.log("[TIP] Success");
   } catch (err) {
-    console.error("[TIP] Token failed:", err.code, err.message);
-    refs.tipBtn.href = "/tm"; // fallback
+    console.error("[TIP] Failed:", err.code, err.message);
+    refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
