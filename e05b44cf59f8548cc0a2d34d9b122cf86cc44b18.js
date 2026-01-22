@@ -60,22 +60,39 @@ function getAvatar(userData) {
   return DEFAULT_NEUTRAL;
 }
 
-const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get("t");
+// Safe wrapper — allows return inside async function
+(async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("t");
 
-if (token) {
-  const validate = httpsCallable(functions, "validateLoginToken");
+  if (!token) {
+    alert("No token in URL");
+    return;  // Safe now — inside a function
+  }
+
   try {
+    const validate = httpsCallable(functions, "validateLoginToken");
     const result = await validate({ token });
+
     if (result.data.success) {
-      console.log("Valid user:", result.data.uid);
-      // Show redeem/tip UI for this user
-      // e.g. document.getElementById("userInfo").textContent = `Welcome ${result.data.chatId}`;
+      console.log("Valid user:", result.data.uid, result.data.chatId);
+
+      // Show user-specific redeem/tip UI
+      const userInfo = document.getElementById("userInfo");
+      if (userInfo) {
+        userInfo.textContent = `Welcome ${result.data.chatId || "User"}`;
+      }
+
+      // Optional: enable redeem/tip form, show balance, etc.
+      // document.getElementById("redeemForm").style.display = "block";
+    } else {
+      alert("Invalid or expired link");
     }
   } catch (err) {
-    alert("Link expired or invalid");
+    console.error("Validation failed:", err);
+    alert("Link expired or invalid. Please try again.");
   }
-}
+})();
   
   
 // ---------- DOM ----------
