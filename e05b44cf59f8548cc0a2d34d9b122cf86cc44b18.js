@@ -1612,37 +1612,47 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
   const withdrawalRef = doc(collection(db, "withdrawals"));
 
   try {
-    await runTransaction(db, async (t) => {
-      const snap = await t.get(userRef);
-      if (!snap.exists()) throw "User not found";
-      const data = snap.data();
+   await runTransaction(db, async (t) => {
+  const snap = await t.get(userRef);
+  if (!snap.exists()) throw "User not found";
+  const data = snap.data();
 
-      if (data.cash < amount) throw "Not enough cash";
-      if (isFastTrack && data.stars < 21) throw "Not enough STRZ";
+  if (data.cash < amount) throw "Not enough cash";
+  if (isFastTrack && data.stars < 21) throw "Not enough STRZ";
 
-      const bankNameRaw = data.bankName || "Not set";
-      const normalizedBankName = bankNameRaw.trim().replace(/\s+/g, ' ');
-      const bankSlug = generateBankSlug(normalizedBankName);
+  // ───────────────────────────────────────────────────────────────
+  // ALWAYS NORMALIZE BANK NAME + GENERATE SLUG AT WITHDRAWAL TIME
+  const bankNameRaw = data.bankName || "Not set";
+  const normalizedBankName = bankNameRaw
+    .trim()
+    .replace(/\s+/g, ' ')          // normalize spaces
+    .replace(/[^a-zA-Z0-9\s-()]/g, ''); // remove invalid chars but keep parentheses for e.g. "(GTBank)"
 
-      t.update(userRef, {
-        cash: data.cash - amount,
-        stars: isFastTrack ? data.stars - 21 : data.stars,
-        updatedAt: serverTimestamp()
-      });
+  const bankSlug = normalizedBankName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 
-      t.set(withdrawalRef, {
-        uid: currentUser.uid,
-        username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
-        amount,
-        bankName: normalizedBankName,
-        bankSlug: bankSlug,
-        bankAccountNumber: data.bankAccountNumber || "Not set",
-        status: isFastTrack ? "fast_track" : "pending",
-        isFastTrack,
-        requestedAt: serverTimestamp(),
-        note: isFastTrack ? "User paid 21 STRZ for priority" : "Standard"
-      });
-    });
+  t.update(userRef, {
+    cash: data.cash - amount,
+    stars: isFastTrack ? data.stars - 21 : data.stars,
+    updatedAt: serverTimestamp()
+  });
+
+  t.set(withdrawalRef, {
+    uid: currentUser.uid,
+    username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
+    amount,
+    bankName: normalizedBankName,   // Clean, normalized name
+    bankSlug: bankSlug,             // Reliable slug
+    bankAccountNumber: data.bankAccountNumber || "Not set",
+    status: isFastTrack ? "fast_track" : "pending",
+    isFastTrack,
+    requestedAt: serverTimestamp(),
+    note: isFastTrack ? "User paid 21 STRZ for priority" : "Standard"
+  });
+});
 
     // Update local state
     currentUser.cash -= amount;
