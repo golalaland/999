@@ -287,39 +287,46 @@ function updateInfoTab() {
 
 
 
-// ---------- LOAD USER FOR GAME — JWT VERSION (cleaned) ----------
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1️⃣ Try JWT token from URL (/tm?t=...)
+    // 1️⃣ JWT from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
 
     if (token) {
+      console.log("[TM] Token found in URL:", token.substring(0, 20) + "...");
+
       const validate = httpsCallable(functions, "validateLoginToken");
       const result = await validate({ token });
 
+      console.log("[TM] Validation result:", result.data);
+
       if (result.data.success) {
         uid = result.data.uid;
-        console.log("%cLoaded from JWT token", "color:#00ffaa");
+        console.log("[TM] UID from JWT:", uid);
       } else {
+        console.warn("[TM] Validation failed:", result.data);
         alert("Invalid or expired link");
       }
     }
 
-    // 2️⃣ Fallback to localStorage
+    // 2️⃣ LocalStorage fallback
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
       if (storedUser?.uid) {
         uid = storedUser.uid;
-        console.log("%cLoaded from localStorage", "color:#00ffaa");
+        console.log("[TM] UID from localStorage:", uid);
       }
     }
 
+    console.log("[TM] Final UID before Firestore:", uid);
+
     // 3️⃣ Guest mode
     if (!uid) {
+      console.log("[TM] No UID → Guest mode");
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
@@ -328,14 +335,13 @@ async function loadCurrentUserForGame() {
       return;
     }
 
-    // Store UID for persistence
-    localStorage.setItem("vipUser", JSON.stringify({ uid }));
-
-    // Load user data from Firestore
+    // 4️⃣ Load from Firestore
+    console.log("[TM] Loading user doc for UID:", uid);
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
+      console.warn("[TM] User doc not found for UID:", uid);
       alert("Profile not found");
       currentUser = null;
       persistentBonusLevel = undefined;
@@ -343,6 +349,7 @@ async function loadCurrentUserForGame() {
     }
 
     const data = snap.data();
+    console.log("[TM] User data loaded:", data);
 
     currentUser = {
       uid,
@@ -358,12 +365,12 @@ async function loadCurrentUserForGame() {
     if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
     // Update UI
-    profileNameEl && (profileNameEl.textContent = currentUser.chatId);
-    starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
-    cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
+    if (profileNameEl) profileNameEl.textContent = currentUser.chatId;
+    if (starCountEl) starCountEl.textContent = formatNumber(currentUser.stars);
+    if (cashCountEl) cashCountEl.textContent = '₦' + formatNumber(currentUser.cash);
     updateInfoTab?.();
   } catch (err) {
-    console.error("Load user failed:", err);
+    console.error("[TM] Load failed:", err);
     alert("Failed to load profile");
     currentUser = null;
     persistentBonusLevel = undefined;
