@@ -1026,7 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// TIP BUTTON — waits for auth token to be fully synced
+// TIP BUTTON — plain fetch + extreme token forcing + debug
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1034,58 +1034,72 @@ async function updateTipLink() {
     return;
   }
 
-  // 1. Confirm user is still logged in
+  console.log("[TIP] Starting token generation for UID:", currentUser.uid);
+
+  // Step 1: Double-check auth state
   if (!auth.currentUser) {
-    console.warn("[TIP] User no longer logged in");
+    console.error("[TIP] CRITICAL: auth.currentUser is null at call time");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
-  // 2. Force token refresh + verify it's valid
-  console.log("[TIP] Forcing token refresh...");
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true); // true = force refresh
-    console.log("[TIP] Token ready (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[TIP] Token refresh failed:", err.message);
+  // Step 2: Force refresh token multiple times
+  let idToken = null;
+  for (let attempt = 1; attempt <= 8; attempt++) {
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log(`[TIP] Token refresh attempt ${attempt} OK (length: ${idToken.length})`);
+      if (idToken.length > 800) break; // good enough
+    } catch (err) {
+      console.warn(`[TIP] Token refresh attempt ${attempt} failed:`, err.message);
+    }
+    await new Promise(r => setTimeout(r, 400)); // shorter delays
+  }
+
+  if (!idToken) {
+    console.error("[TIP] Failed to get any valid ID token after 8 attempts");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
-  // 3. Extra safety delay (SDK sometimes needs a moment)
-  await new Promise(r => setTimeout(r, 800));
-
+  // Step 3: Plain fetch with explicit headers
   try {
-    // Use plain fetch with manual token (bypasses any SDK callable race)
+    console.log("[TIP] Sending request with token (first 20 chars):", idToken.substring(0, 20) + "...");
+
     const response = await fetch(
       "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
       {
         method: "POST",
+        mode: "cors",
+        credentials: "include", // include cookies if needed
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
+          "Authorization": `Bearer ${idToken}`,
+          "Accept": "application/json"
         },
-        body: JSON.stringify({ data: {} }) // correct callable shape
+        body: JSON.stringify({ data: {} }) // correct callable wrapper
       }
     );
 
+    console.log("[TIP] Server response status:", response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server said ${response.status}: ${errorText}`);
+      throw new Error(`Server responded ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
+    console.log("[TIP] Server response body:", result);
 
     if (!result.token) {
-      throw new Error("No token in response");
+      throw new Error("No token in response body");
     }
 
     const token = result.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] SUCCESS - token generated:", token.substring(0, 20) + "...");
   } catch (err) {
     console.error("[TIP] Fetch failed:", err.message);
     refs.tipBtn.href = "/tm";
