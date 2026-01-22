@@ -317,26 +317,6 @@ function updateInfoTab() {
   }
 }
 
-    // 2️⃣ Fallback to localStorage
-    if (!uid) {
-      const vipRaw = localStorage.getItem("vipUser");
-      const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
-      if (storedUser?.uid) {
-        uid = storedUser.uid;
-        console.log("%cLoaded from localStorage", "color:#00ffaa");
-      }
-    }
-
-    // 3️⃣ Guest mode
-    if (!uid) {
-      currentUser = null;
-      profileNameEl && (profileNameEl.textContent = "GUEST 0000");
-      starCountEl && (starCountEl.textContent = "50");
-      cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined; // prevents flashing 1
-      return;
-    }
-
     // Store UID for persistence
     localStorage.setItem("vipUser", JSON.stringify({ uid }));
 
