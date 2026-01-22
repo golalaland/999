@@ -1018,11 +1018,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-const createToken = firebase.functions().httpsCallable("createLoginToken");
-const result = await createToken();
-const token = result.data.token;
-refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-
 // Replace your old createLoginToken calls
 async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) return;
