@@ -1018,26 +1018,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// Generate secure JWT token via Cloud Function (no Firestore write)
-async function updateRedeemLink() {
-  if (!refs.redeemBtn || !currentUser?.uid) {
-    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
-    return;
-  }
-
-  try {
-    const createToken = httpsCallable(functions, "createLoginToken");
-    const result = await createToken();
-    const token = result.data.token;
-    refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-  } catch (err) {
-    console.warn("[REDEEM] Token failed:", err);
-    refs.redeemBtn.href = "/tm"; // fallback
-  }
-
-  refs.redeemBtn.style.display = "inline-block";
-  console.log("[REDEEM] Button shown with JWT");
-}
 
 // Same logic for TIP button
 async function updateTipLink() {
