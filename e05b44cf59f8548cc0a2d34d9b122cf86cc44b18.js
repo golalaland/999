@@ -963,7 +963,7 @@ const RedHotMode = {
 
 punish() {
   // subtract from live taps
-  taps = Math.max(0, taps - 59);
+  taps = Math.max(0, taps - 25);
   sessionTaps = Math.max(0, sessionTaps - 59);
   progress = Math.max(0, progress - 10);
 
@@ -1651,7 +1651,7 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
     const counter = document.getElementById('goldenAmount');
     counter.textContent = '0';
     document.getElementById('successMessage').textContent = isFastTrack
-      ? "FAST TRACKED! Support notified via WhatsApp"
+      ? "FAST TRACK REQUEST SENT! Admin will process soon."
       : "Withdrawal requested!";
     document.getElementById('withdrawSuccessOverlay').style.display = 'flex';
 
@@ -1669,22 +1669,7 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       counter.textContent = current.toLocaleString();
     }, 30);
 
-    // FAST TRACK → OPEN WHATSAPP (reliable deep link)
-    if (isFastTrack) {
-      setTimeout(() => {
-        const adminPhone = "+2347047539186"; // ← REPLACE WITH YOUR REAL ADMIN WHATSAPP NUMBER (international format)
-        const msg = encodeURIComponent(
-          `FAST TRACK WITHDRAWAL REQUEST\n\n` +
-          `User: @${currentUser.chatId || currentUser.email?.split('@')[0] || 'unknown'}\n` +
-          `Amount: ₦${amount.toLocaleString()}\n` +
-          `Bank: ${currentUser.bankName || 'Not set'}\n` +
-          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
-          `Please process urgently!`
-        );
-        // WhatsApp web or app link
-        window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank');
-      }, 1500);
-    }
+    // No auto-redirect — just notify user that admin will handle fast track
 
   } catch (err) {
     console.error("Withdrawal failed:", err);
