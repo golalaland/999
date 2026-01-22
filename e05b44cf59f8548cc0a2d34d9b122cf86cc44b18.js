@@ -1606,7 +1606,7 @@ document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
 
-// MAIN PROCESS + LUXURY ANIMATION
+// MAIN PROCESS + LUXURY ANIMATION + AUTO WHATSAPP FOR FAST TRACK
 async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
   const userRef = doc(db, "users", currentUser.uid);
   const withdrawalRef = doc(collection(db, "withdrawals"));
@@ -1644,14 +1644,16 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       });
     });
 
+    // Update local state
     currentUser.cash -= amount;
     if (isFastTrack) currentUser.stars -= 21;
     updateBankDisplay();
 
+    // Show success overlay + animation
     const counter = document.getElementById('goldenAmount');
     counter.textContent = '0';
     document.getElementById('successMessage').textContent = isFastTrack
-      ? "FAST TRACK REQUEST SENT! Admin will process soon."
+      ? "FAST TRACK CONFIRMED! Opening WhatsApp to notify admin..."
       : "Withdrawal requested!";
     document.getElementById('withdrawSuccessOverlay').style.display = 'flex';
 
@@ -1669,14 +1671,28 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       counter.textContent = current.toLocaleString();
     }, 30);
 
-    // No auto-redirect — just notify user that admin will handle fast track
+    // FAST TRACK: Auto-open WhatsApp IMMEDIATELY after success overlay appears
+    if (isFastTrack) {
+      setTimeout(() => {
+        const adminPhone = "+23447539186"; // ← REPLACE WITH YOUR ACTUAL WHATSAPP NUMBER (international format, no spaces/dashes)
+        const msg = encodeURIComponent(
+          `FAST TRACK WITHDRAWAL REQUEST\n\n` +
+          `User: @${currentUser.chatId || currentUser.email?.split('@')[0] || 'unknown'}\n` +
+          `Amount: ₦${amount.toLocaleString()}\n` +
+          `Bank: ${currentUser.bankName || 'Not set'}\n` +
+          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
+          `Please process urgently!`
+        );
+        // Open WhatsApp (works on mobile + desktop)
+        window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank');
+      }, 800); // 800ms delay — enough for animation to start, but feels "immediate"
+    }
 
   } catch (err) {
     console.error("Withdrawal failed:", err);
     realAlert("Withdrawal failed!\nPlease try again.");
   }
 }
-
 /* ============================================================
    TAPMASTER CORE — CLEAN, MODERN, FULLY WORKING (2025+)
    ALL SETTINGS IN ONE PLACE — CHANGE IN 5 SECONDS
