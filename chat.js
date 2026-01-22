@@ -1026,7 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// TIP BUTTON — plain fetch + extreme token forcing + debug
+
+// TIP BUTTON — httpsCallable with strong token wait + retry
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1034,121 +1035,43 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Starting token generation for UID:", currentUser.uid);
+  console.log("[TIP] Waiting for auth token sync...");
 
-  // Step 1: Double-check auth state
-  if (!auth.currentUser) {
-    console.error("[TIP] CRITICAL: auth.currentUser is null at call time");
-    refs.tipBtn.href = "/tm";
-    refs.tipBtn.style.display = "inline-block";
-    return;
-  }
-
-  // Step 2: Force refresh token multiple times
-  let idToken = null;
-  for (let attempt = 1; attempt <= 8; attempt++) {
-    try {
-      idToken = await auth.currentUser.getIdToken(true);
-      console.log(`[TIP] Token refresh attempt ${attempt} OK (length: ${idToken.length})`);
-      if (idToken.length > 800) break; // good enough
-    } catch (err) {
-      console.warn(`[TIP] Token refresh attempt ${attempt} failed:`, err.message);
-    }
-    await new Promise(r => setTimeout(r, 400)); // shorter delays
-  }
-
-  if (!idToken) {
-    console.error("[TIP] Failed to get any valid ID token after 8 attempts");
-    refs.tipBtn.href = "/tm";
-    refs.tipBtn.style.display = "inline-block";
-    return;
-  }
-
-  // Step 3: Plain fetch with explicit headers
-  try {
-    console.log("[TIP] Sending request with token (first 20 chars):", idToken.substring(0, 20) + "...");
-
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        mode: "cors",
-        credentials: "include", // include cookies if needed
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`,
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ data: {} }) // correct callable wrapper
-      }
-    );
-
-    console.log("[TIP] Server response status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Server responded ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("[TIP] Server response body:", result);
-
-    if (!result.token) {
-      throw new Error("No token in response body");
-    }
-
-    const token = result.token;
-    refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] SUCCESS - token generated:", token.substring(0, 20) + "...");
-  } catch (err) {
-    console.error("[TIP] Fetch failed:", err.message);
-    refs.tipBtn.href = "/tm";
-  }
-
-  refs.tipBtn.style.display = "inline-block";
-}
-
-// Same for redeem (copy-paste with [REDEEM] logs)
-async function updateRedeemLink() {
-  if (!refs.redeemBtn || !currentUser?.uid) {
-    console.log("[REDEEM] Skipped: no button or no user");
-    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
-    return;
-  }
-
-  // Same wait-for-token logic as tip
+  // Force token refresh + wait loop (fixes race)
   let idToken = null;
   let attempts = 0;
   while (!idToken && attempts < 12) {
     try {
       idToken = await auth.currentUser.getIdToken(true);
-      console.log("[REDEEM] Token refreshed OK (length:", idToken.length, ")");
+      console.log("[TIP] Token ready (length:", idToken.length, ")");
+      if (idToken) break;
     } catch (err) {
-      console.warn("[REDEEM] Token refresh attempt", attempts + 1, "failed:", err.message);
+      console.warn("[TIP] Token attempt", attempts + 1, "failed:", err.message);
     }
     await new Promise(r => setTimeout(r, 500));
     attempts++;
   }
 
   if (!idToken) {
-    console.error("[REDEEM] No valid token after retries");
-    refs.redeemBtn.href = "/tm";
-    refs.redeemBtn.style.display = "inline-block";
+    console.error("[TIP] No token after retries");
+    refs.tipBtn.href = "/tm";
+    refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-  const createToken = httpsCallable(functions, "createLoginToken");
-  console.log("[TIP] Calling createLoginToken...");
-  const result = await createToken({});  // ← pass empty object
-  const token = result.data.token;
-  refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-  console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
-} catch (err) {
-  console.error("[TIP] Failed:", err.code, err.message, err.details);
-  refs.tipBtn.href = "/tm";
-}
-  refs.redeemBtn.style.display = "inline-block";
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling httpsCallable...");
+    const result = await createToken({}); // empty payload
+    const token = result.data.token;
+    refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
+  } catch (err) {
+    console.error("[TIP] Callable failed:", err.code, err.message, err.details);
+    refs.tipBtn.href = "/tm";
+  }
+
+  refs.tipBtn.style.display = "inline-block";
 }
 
 /* ----------------------------
