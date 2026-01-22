@@ -1042,24 +1042,57 @@ async function updateRedeemLink() {
 // Same logic for TIP button
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
+    console.log("[TIP] Skipped: no button or no currentUser");
     if (refs.tipBtn) refs.tipBtn.style.display = "none";
     return;
   }
 
+  // Wait for auth token to be ready (fixes "Must be logged in" race)
+  await new Promise(resolve => setTimeout(resolve, 800)); // 0.8s buffer
+
+  console.log("[TIP] Auth state:", auth.currentUser ? "logged in" : "not ready");
+
   try {
     const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling createLoginToken for UID:", currentUser.uid);
     const result = await createToken();
     const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+    console.log("[TIP] Success - token generated");
   } catch (err) {
-    console.warn("[TIP] Token failed:", err);
+    console.error("[TIP] Token failed:", err.code || err.message);
     refs.tipBtn.href = "/tm"; // fallback
   }
 
   refs.tipBtn.style.display = "inline-block";
-  console.log("[TIP] Button shown with JWT");
 }
 
+// Same for redeem (just copy-paste with "REDEEM" logs)
+async function updateRedeemLink() {
+  if (!refs.redeemBtn || !currentUser?.uid) {
+    console.log("[REDEEM] Skipped: no button or no currentUser");
+    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
+    return;
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  console.log("[REDEEM] Auth state:", auth.currentUser ? "logged in" : "not ready");
+
+  try {
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[REDEEM] Calling createLoginToken for UID:", currentUser.uid);
+    const result = await createToken();
+    const token = result.data.token;
+    refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+    console.log("[REDEEM] Success - token generated");
+  } catch (err) {
+    console.error("[REDEEM] Token failed:", err.code || err.message);
+    refs.redeemBtn.href = "/tm";
+  }
+
+  refs.redeemBtn.style.display = "inline-block";
+}
 /* ----------------------------
    GIFT ALERT (ON-SCREEN CELEBRATION)
 ----------------------------- */
