@@ -368,6 +368,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log("User logged out");
 
+   // Extra delay for token sync
+    await new Promise(r => setTimeout(r, 2000)); // 2 seconds
+
+    await updateRedeemLink();
+    await updateTipLink();
+
     // Clear clips grid
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
@@ -1019,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// TIP BUTTON — waits for auth token to be ready
+// TIP BUTTON — robust auth token wait + retry
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1027,24 +1033,27 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Checking auth token for UID:", currentUser.uid);
+  console.log("[TIP] Waiting for valid auth token...");
 
-  // Force token refresh and wait up to 5s
   let idToken = null;
   let attempts = 0;
-  while (!idToken && attempts < 10) {
+  const maxAttempts = 15; // ~7.5 seconds total
+  while (!idToken && attempts < maxAttempts) {
     try {
-      idToken = await auth.currentUser.getIdToken(true); // true = forceRefresh
-      console.log("[TIP] Token refreshed (length:", idToken.length, ")");
+      idToken = await auth.currentUser?.getIdToken(true); // force refresh
+      if (idToken) {
+        console.log("[TIP] Token ready (length:", idToken.length, ")");
+        break;
+      }
     } catch (err) {
-      console.warn("[TIP] Token refresh failed (attempt", attempts, "):", err.message);
-      await new Promise(r => setTimeout(r, 500));
+      console.warn("[TIP] Token refresh attempt", attempts + 1, "failed:", err.message);
     }
+    await new Promise(r => setTimeout(r, 500));
     attempts++;
   }
 
   if (!idToken) {
-    console.error("[TIP] No auth token after retries");
+    console.error("[TIP] Auth token not ready after", maxAttempts, "attempts");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
@@ -1052,13 +1061,30 @@ async function updateTipLink() {
 
   try {
     const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling createLoginToken...");
     const result = await createToken();
     const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
     console.log("[TIP] Success");
   } catch (err) {
     console.error("[TIP] Failed:", err.code, err.message);
-    refs.tipBtn.href = "/tm";
+    if (err.code === "functions/unauthenticated") {
+      console.warn("[TIP] 401 detected - retrying once more...");
+      // One extra retry after delay
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const createToken = httpsCallable(functions, "createLoginToken");
+        const result = await createToken();
+        const token = result.data.token;
+        refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+        console.log("[TIP] Retry success");
+      } catch (retryErr) {
+        console.error("[TIP] Retry also failed:", retryErr);
+        refs.tipBtn.href = "/tm";
+      }
+    } else {
+      refs.tipBtn.href = "/tm";
+    }
   }
 
   refs.tipBtn.style.display = "inline-block";
