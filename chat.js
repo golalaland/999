@@ -1027,8 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-// TIP BUTTON — plain fetch with manual token (clean & reliable)
+// TIP BUTTON — plain fetch with CORRECT callable payload shape
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1036,21 +1035,21 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Preparing to generate token for UID:", currentUser.uid);
+  console.log("[TIP] Preparing token for UID:", currentUser.uid);
 
-  // 1. Get fresh Firebase ID token (force refresh)
+  // 1. Get fresh Firebase ID token
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token refreshed OK (length:", idToken.length, ")");
+    console.log("[TIP] ID token ready (length:", idToken.length, ")");
   } catch (err) {
-    console.error("[TIP] Failed to refresh ID token:", err.message);
+    console.error("[TIP] ID token refresh failed:", err.message);
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
-  // 2. Plain fetch — NO BODY (function doesn't need data)
+  // 2. Plain fetch — correct callable body format
   try {
     const response = await fetch(
       "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
@@ -1059,8 +1058,10 @@ async function updateTipLink() {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`
-        }
-        // NO body line — omit completely
+        },
+        body: JSON.stringify({
+          data: {}  // ← This is the fix: wrap in { "data": {} }
+        })
       }
     );
 
@@ -1072,14 +1073,14 @@ async function updateTipLink() {
     const result = await response.json();
 
     if (!result.token) {
-      throw new Error("No token returned from server");
+      throw new Error("No token in response");
     }
 
     const token = result.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token generated:", token.substring(0, 20) + "...");
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Plain fetch failed:", err.message);
+    console.error("[TIP] Fetch failed:", err.message);
     refs.tipBtn.href = "/tm";
   }
 
