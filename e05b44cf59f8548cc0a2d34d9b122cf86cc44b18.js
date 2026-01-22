@@ -60,33 +60,40 @@ function getAvatar(userData) {
   return DEFAULT_NEUTRAL;
 }
 
-// Safe async wrapper — allows return inside a function
-(async () => {
+// Safe async IIFE for /tm token validation
+(async function() {  // ← named async IIFE (or use arrow with extra parens)
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("t");
 
   if (!token) {
     alert("No token in URL");
-    // Optionally redirect or show error UI
-    // window.location.href = "/"; // or whatever fallback
-    return;  // Safe now — inside async IIFE
+    // Optional: redirect or show full-screen error
+    // window.location.href = "/"; 
+    return;
   }
 
   try {
-    const validate = httpsCallable(functions, "validateLoginToken");
+    // Make sure getFunctions & httpsCallable are imported at the top of this file
+    const validate = httpsCallable(getFunctions(), "validateLoginToken");
     const result = await validate({ token });
 
     if (result.data.success) {
       console.log("Valid user:", result.data.uid, result.data.chatId);
-      // Show user-specific game UI, redeem/tip options, etc.
-      // Example:
-      document.getElementById("welcomeMessage")?.textContent = `Welcome, ${result.data.chatId}`;
-      // Enable game features, show balance, etc.
+
+      // Show user-specific game UI / redeem/tip options
+      const welcomeEl = document.getElementById("welcomeMessage");
+      if (welcomeEl) {
+        welcomeEl.textContent = `Welcome, ${result.data.chatId || "Player"}`;
+      }
+
+      // Example: enable game features, show balance, redeem form, etc.
+      // document.getElementById("gameArea").style.display = "block";
+      // document.getElementById("balance").textContent = "Your stars: ...";
     } else {
       alert("Invalid or expired link");
     }
   } catch (err) {
-    console.error("Validation failed:", err);
+    console.error("Validation failed:", err.code, err.message);
     alert("Link expired or invalid. Please try again.");
   }
 })();
