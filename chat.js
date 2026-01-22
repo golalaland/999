@@ -1028,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// TIP BUTTON — plain fetch with manual ID token (most reliable)
+// TIP BUTTON — plain fetch with manual token (clean & reliable)
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1042,15 +1042,15 @@ async function updateTipLink() {
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token refreshed successfully (length:", idToken.length, ")");
+    console.log("[TIP] ID token refreshed OK (length:", idToken.length, ")");
   } catch (err) {
     console.error("[TIP] Failed to refresh ID token:", err.message);
-    refs.tipBtn.href = "/tm"; // fallback
+    refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
-  // 2. Call Cloud Function with plain fetch + Authorization header
+  // 2. Plain fetch — NO BODY (function doesn't need data)
   try {
     const response = await fetch(
       "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
@@ -1058,9 +1058,9 @@ async function updateTipLink() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}` // Manually send token
-        },
-        body: JSON.stringify({}) // Empty payload (function doesn't need data)
+          "Authorization": `Bearer ${idToken}`
+        }
+        // NO body line — omit completely
       }
     );
 
@@ -1080,7 +1080,7 @@ async function updateTipLink() {
     console.log("[TIP] Success - token generated:", token.substring(0, 20) + "...");
   } catch (err) {
     console.error("[TIP] Plain fetch failed:", err.message);
-    refs.tipBtn.href = "/tm"; // fallback
+    refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
