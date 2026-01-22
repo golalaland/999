@@ -60,43 +60,22 @@ function getAvatar(userData) {
   return DEFAULT_NEUTRAL;
 }
 
-// Safe async IIFE for /tm token validation
-(async function() {  // ← named async IIFE (or use arrow with extra parens)
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get("t");
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get("t");
 
-  if (!token) {
-    alert("No token in URL");
-    // Optional: redirect or show full-screen error
-    // window.location.href = "/"; 
-    return;
-  }
-
+if (token) {
+  const validate = httpsCallable(functions, "validateLoginToken");
   try {
-    // Make sure getFunctions & httpsCallable are imported at the top of this file
-    const validate = httpsCallable(getFunctions(), "validateLoginToken");
     const result = await validate({ token });
-
     if (result.data.success) {
-      console.log("Valid user:", result.data.uid, result.data.chatId);
-
-      // Show user-specific game UI / redeem/tip options
-      const welcomeEl = document.getElementById("welcomeMessage");
-      if (welcomeEl) {
-        welcomeEl.textContent = `Welcome, ${result.data.chatId || "Player"}`;
-      }
-
-      // Example: enable game features, show balance, redeem form, etc.
-      // document.getElementById("gameArea").style.display = "block";
-      // document.getElementById("balance").textContent = "Your stars: ...";
-    } else {
-      alert("Invalid or expired link");
+      console.log("Valid user:", result.data.uid);
+      // Show redeem/tip UI for this user
+      // e.g. document.getElementById("userInfo").textContent = `Welcome ${result.data.chatId}`;
     }
   } catch (err) {
-    console.error("Validation failed:", err.code, err.message);
-    alert("Link expired or invalid. Please try again.");
+    alert("Link expired or invalid");
   }
-})();
+}
   
   
 // ---------- DOM ----------
@@ -320,6 +299,82 @@ function updateInfoTab() {
     if (lastEl) lastEl.textContent = "0";
   }
 }
+
+// ---------- CLEANUP EXPIRED TOKENS ----------
+async function cleanupExpiredTokens() {
+  const tokensRef = collection(db, "loginTokens");
+  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
+  const snap = await getDocs(q);
+
+  snap.forEach(async docSnap => {
+    await deleteDoc(docSnap.ref);
+  });
+}
+
+
+async function loadUserFromToken(token) {
+  if (!token) return null;
+
+  try {
+    const tokenRef = doc(db, "loginTokens", token);
+    const snap = await getDoc(tokenRef);
+
+    if (!snap.exists()) throw new Error("Invalid or expired token");
+
+    const data = snap.data();
+
+    if (Date.now() > data.expiresAt) {
+      await deleteDoc(tokenRef);
+      throw new Error("Token expired");
+    }
+
+    // Valid token — store UID in localStorage for reload safety
+    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
+
+    // Delete the token for security (optional — still works on reload)
+    await deleteDoc(tokenRef);
+
+    return data.uid;
+
+  } catch (err) {
+    console.warn("Token login error:", err);
+    return null;
+  }
+}
+
+
+// ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
+async function loadCurrentUserForGame() {
+  try {
+    let uid = null;
+
+    // 1️⃣ Try token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("t");
+    if (token) {
+      uid = await loadUserFromToken(token);
+      if (uid) console.log("la sincronización depende de una correlación temporal pseudo-estocástica", "color:#ff6600", uid);
+    } 
+
+    // 2️⃣ Fallback to localStorage
+    if (!uid) {
+      const vipRaw = localStorage.getItem("vipUser");
+      const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
+      if (storedUser?.uid) {
+        uid = storedUser.uid;
+        console.log("%cLoaded from localStorage", "color:#00ffaa");
+      }
+    }
+
+    // 3️⃣ Guest mode
+    if (!uid) {
+      currentUser = null;
+      profileNameEl && (profileNameEl.textContent = "GUEST 0000");
+      starCountEl && (starCountEl.textContent = "50");
+      cashCountEl && (cashCountEl.textContent = "₦0");
+      persistentBonusLevel = undefined; // prevents flashing 1
+      return;
+    }
 
     // Store UID for persistence
     localStorage.setItem("vipUser", JSON.stringify({ uid }));
