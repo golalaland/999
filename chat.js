@@ -87,7 +87,7 @@ const db     = getFirestore(app);
 const auth   = getAuth(app);
 const rtdb   = getDatabase(app);
 const storage = getStorage(app);           // ← Now initialized!
-const functions = getFunctions(app);  // ← Add this line too (initialize Functions)
+const functions = getFunctions(app, "us-central1"); // ← add region here
 
 console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
 
@@ -1035,38 +1035,34 @@ async function updateTipLink() {
     return;
   }
 
-  // Force fresh Functions instance (fixes token attachment issues)
-  const freshFunctions = getFunctions(app); // re-init from global app
-
-  let idToken = null;
-  let attempts = 0;
-  while (!idToken && attempts < 12) {
-    try {
-      idToken = await auth.currentUser.getIdToken(true);
-      console.log("[TIP] Token refreshed OK (length:", idToken.length, ")");
-    } catch (err) {
-      console.warn("[TIP] Token refresh attempt", attempts + 1, "failed:", err.message);
-    }
-    await new Promise(r => setTimeout(r, 600));
-    attempts++;
-  }
-
-  if (!idToken) {
-    console.error("[TIP] No valid token after retries");
+  // Get fresh ID token
+  let idToken;
+  try {
+    idToken = await auth.currentUser.getIdToken(true);
+    console.log("[TIP] Fresh ID token ready (length:", idToken.length, ")");
+  } catch (err) {
+    console.error("[TIP] Failed to get ID token:", err);
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    const createToken = httpsCallable(freshFunctions, "createLoginToken");
-    console.log("[TIP] Calling with fresh functions instance...");
+    // Manual callable with token header (bypasses SDK bug)
+    const createToken = httpsCallable(functions, "createLoginToken", {
+      // Force auth header
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      }
+    });
+
+    console.log("[TIP] Calling with manual token...");
     const result = await createToken();
     const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] Success");
   } catch (err) {
-    console.error("[TIP] Call failed:", err.code, err.message, err.details);
+    console.error("[TIP] Call failed:", err.code, err.message);
     refs.tipBtn.href = "/tm";
   }
 
