@@ -1019,18 +1019,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Same logic for TIP button
+// TIP BUTTON — waits for auth token to be ready
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
-    console.log("[TIP] Skipped: no button or no currentUser");
+    console.log("[TIP] Skipped: no button or no user");
     if (refs.tipBtn) refs.tipBtn.style.display = "none";
     return;
   }
 
-  // Wait for auth token to be ready (fixes "Must be logged in" race)
-  await new Promise(resolve => setTimeout(resolve, 800)); // 0.8s buffer
+  console.log("[TIP] Waiting for valid auth token...");
 
-  console.log("[TIP] Auth state:", auth.currentUser ? "logged in" : "not ready");
+  // Wait up to 5 seconds for auth token to be available
+  let tokenReady = false;
+  for (let i = 0; i < 10; i++) {
+    try {
+      const idToken = await auth.currentUser?.getIdToken?.(true); // force refresh
+      if (idToken) {
+        console.log("[TIP] Auth token ready (length:", idToken.length, ")");
+        tokenReady = true;
+        break;
+      }
+    } catch (err) {
+      console.warn("[TIP] Token check failed (attempt", i + 1, "):", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500)); // 0.5s per attempt
+  }
+
+  if (!tokenReady) {
+    console.error("[TIP] Auth token never became ready");
+    refs.tipBtn.href = "/tm"; // fallback
+    refs.tipBtn.style.display = "inline-block";
+    return;
+  }
 
   try {
     const createToken = httpsCallable(functions, "createLoginToken");
@@ -1040,24 +1060,44 @@ async function updateTipLink() {
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
     console.log("[TIP] Success - token generated");
   } catch (err) {
-    console.error("[TIP] Token failed:", err.code || err.message);
+    console.error("[TIP] Token failed:", err.code, err.message);
     refs.tipBtn.href = "/tm"; // fallback
   }
 
   refs.tipBtn.style.display = "inline-block";
 }
 
-// Same for redeem (just copy-paste with "REDEEM" logs)
+// Same for redeem (copy-paste with [REDEEM] logs)
 async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) {
-    console.log("[REDEEM] Skipped: no button or no currentUser");
+    console.log("[REDEEM] Skipped: no button or no user");
     if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
     return;
   }
 
-  await new Promise(resolve => setTimeout(resolve, 800));
+  console.log("[REDEEM] Waiting for valid auth token...");
 
-  console.log("[REDEEM] Auth state:", auth.currentUser ? "logged in" : "not ready");
+  let tokenReady = false;
+  for (let i = 0; i < 10; i++) {
+    try {
+      const idToken = await auth.currentUser?.getIdToken?.(true);
+      if (idToken) {
+        console.log("[REDEEM] Auth token ready (length:", idToken.length, ")");
+        tokenReady = true;
+        break;
+      }
+    } catch (err) {
+      console.warn("[REDEEM] Token check failed (attempt", i + 1, "):", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  if (!tokenReady) {
+    console.error("[REDEEM] Auth token never became ready");
+    refs.redeemBtn.href = "/tm";
+    refs.redeemBtn.style.display = "inline-block";
+    return;
+  }
 
   try {
     const createToken = httpsCallable(functions, "createLoginToken");
@@ -1067,12 +1107,13 @@ async function updateRedeemLink() {
     refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
     console.log("[REDEEM] Success - token generated");
   } catch (err) {
-    console.error("[REDEEM] Token failed:", err.code || err.message);
+    console.error("[REDEEM] Token failed:", err.code, err.message);
     refs.redeemBtn.href = "/tm";
   }
 
   refs.redeemBtn.style.display = "inline-block";
 }
+
 /* ----------------------------
    GIFT ALERT (ON-SCREEN CELEBRATION)
 ----------------------------- */
