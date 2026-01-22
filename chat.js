@@ -360,6 +360,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
+     console.log("[AUTH] Email:", firebaseUser.email);
+    console.log("[AUTH] Token available:", !!firebaseUser.getIdToken);
 
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
@@ -369,7 +371,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     console.log("User logged out");
 
    // Extra delay for token sync
-    await new Promise(r => setTimeout(r, 2000)); // 2 seconds
+    await new Promise(r => setTimeout(r, 2500)); // 2.5 seconds
 
     await updateRedeemLink();
     await updateTipLink();
@@ -1033,58 +1035,39 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Waiting for valid auth token...");
+  // Force fresh Functions instance (fixes token attachment issues)
+  const freshFunctions = getFunctions(app); // re-init from global app
 
   let idToken = null;
   let attempts = 0;
-  const maxAttempts = 15; // ~7.5 seconds total
-  while (!idToken && attempts < maxAttempts) {
+  while (!idToken && attempts < 12) {
     try {
-      idToken = await auth.currentUser?.getIdToken(true); // force refresh
-      if (idToken) {
-        console.log("[TIP] Token ready (length:", idToken.length, ")");
-        break;
-      }
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log("[TIP] Token refreshed OK (length:", idToken.length, ")");
     } catch (err) {
       console.warn("[TIP] Token refresh attempt", attempts + 1, "failed:", err.message);
     }
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 600));
     attempts++;
   }
 
   if (!idToken) {
-    console.error("[TIP] Auth token not ready after", maxAttempts, "attempts");
+    console.error("[TIP] No valid token after retries");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    const createToken = httpsCallable(functions, "createLoginToken");
-    console.log("[TIP] Calling createLoginToken...");
+    const createToken = httpsCallable(freshFunctions, "createLoginToken");
+    console.log("[TIP] Calling with fresh functions instance...");
     const result = await createToken();
     const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success");
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Failed:", err.code, err.message);
-    if (err.code === "functions/unauthenticated") {
-      console.warn("[TIP] 401 detected - retrying once more...");
-      // One extra retry after delay
-      await new Promise(r => setTimeout(r, 2000));
-      try {
-        const createToken = httpsCallable(functions, "createLoginToken");
-        const result = await createToken();
-        const token = result.data.token;
-        refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-        console.log("[TIP] Retry success");
-      } catch (retryErr) {
-        console.error("[TIP] Retry also failed:", retryErr);
-        refs.tipBtn.href = "/tm";
-      }
-    } else {
-      refs.tipBtn.href = "/tm";
-    }
+    console.error("[TIP] Call failed:", err.code, err.message, err.details);
+    refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
