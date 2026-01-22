@@ -2,6 +2,8 @@
   
   // AUTH — onAuthStateChanged lives here
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
   
   // FIRESTORE — everything else
   import { 
@@ -60,23 +62,6 @@ function getAvatar(userData) {
   return DEFAULT_NEUTRAL;
 }
 
-const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get("t");
-
-if (token) {
-  const validate = httpsCallable(functions, "validateLoginToken");
-  try {
-    const result = await validate({ token });
-    if (result.data.success) {
-      console.log("Valid user:", result.data.uid);
-      // Show redeem/tip UI for this user
-      // e.g. document.getElementById("userInfo").textContent = `Welcome ${result.data.chatId}`;
-    }
-  } catch (err) {
-    alert("Link expired or invalid");
-  }
-}
-  
   
 // ---------- DOM ----------
 const body = document.body;
@@ -300,61 +285,28 @@ function updateInfoTab() {
   }
 }
 
-// ---------- CLEANUP EXPIRED TOKENS ----------
-async function cleanupExpiredTokens() {
-  const tokensRef = collection(db, "loginTokens");
-  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
-  const snap = await getDocs(q);
-
-  snap.forEach(async docSnap => {
-    await deleteDoc(docSnap.ref);
-  });
-}
 
 
-async function loadUserFromToken(token) {
-  if (!token) return null;
-
-  try {
-    const tokenRef = doc(db, "loginTokens", token);
-    const snap = await getDoc(tokenRef);
-
-    if (!snap.exists()) throw new Error("Invalid or expired token");
-
-    const data = snap.data();
-
-    if (Date.now() > data.expiresAt) {
-      await deleteDoc(tokenRef);
-      throw new Error("Token expired");
-    }
-
-    // Valid token — store UID in localStorage for reload safety
-    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
-
-    // Delete the token for security (optional — still works on reload)
-    await deleteDoc(tokenRef);
-
-    return data.uid;
-
-  } catch (err) {
-    console.warn("Token login error:", err);
-    return null;
-  }
-}
-
-
-// ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
+// ---------- LOAD USER FOR GAME — JWT VERSION (cleaned) ----------
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1️⃣ Try token from URL
+    // 1️⃣ Try JWT token from URL (/tm?t=...)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
+
     if (token) {
-      uid = await loadUserFromToken(token);
-      if (uid) console.log("la sincronización depende de una correlación temporal pseudo-estocástica", "color:#ff6600", uid);
-    } 
+      const validate = httpsCallable(functions, "validateLoginToken");
+      const result = await validate({ token });
+
+      if (result.data.success) {
+        uid = result.data.uid;
+        console.log("%cLoaded from JWT token", "color:#00ffaa");
+      } else {
+        alert("Invalid or expired link");
+      }
+    }
 
     // 2️⃣ Fallback to localStorage
     if (!uid) {
@@ -372,7 +324,7 @@ async function loadCurrentUserForGame() {
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined; // prevents flashing 1
+      persistentBonusLevel = undefined;
       return;
     }
 
@@ -402,7 +354,6 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    // Set bonus level only after data loads
     persistentBonusLevel = currentUser.bonusLevel;
     if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
@@ -410,16 +361,14 @@ async function loadCurrentUserForGame() {
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
-    updateInfoTab();
-
+    updateInfoTab?.();
   } catch (err) {
-    console.warn("Load error:", err);
-    alert("Failed to load");
+    console.error("Load user failed:", err);
+    alert("Failed to load profile");
     currentUser = null;
     persistentBonusLevel = undefined;
   }
 }
-
 
 // ---------- DEDUCT ANIMATION ----------
 function animateDeduct(el, from, to, duration = 600) {
