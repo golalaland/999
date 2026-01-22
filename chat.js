@@ -1015,68 +1015,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// Create a secure token
-async function createLoginToken(uid) {
-  const token = crypto.getRandomValues(new Uint8Array(16))
-                     .reduce((s, b) => s + b.toString(16).padStart(2,'0'), '');
+const createToken = httpsCallable(functions, "createLoginToken");
+const result = await createToken();
+const token = result.data.token;
+refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
 
-  const tokenRef = doc(db, "loginTokens", token);
-  await setDoc(tokenRef, {
-    uid,
-    createdAt: serverTimestamp(),
-    expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes
-  });
-
-  return token;
-}
-
-// Cleanup expired tokens automatically
-async function cleanupExpiredTokens() {
-  const tokensRef = collection(db, "loginTokens");
-  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
-  const snap = await getDocs(q);
-
-  snap.forEach(async docSnap => {
-    await deleteDoc(docSnap.ref);
-  });
-}
-
- // REDEEM BUTTON — SAFE & ALWAYS SHOWS
+// Replace your old createLoginToken calls
 async function updateRedeemLink() {
-  if (!refs.redeemBtn || !currentUser?.uid) {
-    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
-    return;
-  }
+  if (!refs.redeemBtn || !currentUser?.uid) return;
 
   try {
-    const token = await createLoginToken(currentUser.uid);
-    refs.redeemBtn.href = `/tm?t=${token}`;
+    const createToken = httpsCallable(functions, "createLoginToken");
+    const result = await createToken();
+    const token = result.data.token;
+    refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
   } catch (err) {
-    console.warn("[REDEEM] Token failed, using fallback");
-    refs.redeemBtn.href = "/tm"; // fallback link
+    console.warn("Token creation failed:", err);
+    refs.redeemBtn.href = "/tm"; // fallback
   }
-
   refs.redeemBtn.style.display = "inline-block";
-  console.log("[REDEEM] Button shown");
-}
-
-// TIP BUTTON — SAFE & ALWAYS SHOWS
-async function updateTipLink() {
-  if (!refs.tipBtn || !currentUser?.uid) {
-    if (refs.tipBtn) refs.tipBtn.style.display = "none";
-    return;
-  }
-
-  try {
-    const token = await createLoginToken(currentUser.uid);
-    refs.tipBtn.href = `/tm?t=${token}`;
-  } catch (err) {
-    console.warn("[TIP] Token failed, using fallback");
-    refs.tipBtn.href = "/tm"; // fallback link
-  }
-
-  refs.tipBtn.style.display = "inline-block";
-  console.log("[TIP] Button shown");
 }
 
 /* ----------------------------
@@ -1711,10 +1668,21 @@ function renderMessagesFromArray(messages) {
   }
 }
 
-/* ---------- 🔔 Messages Listener – Fixed Colors + Natural Flow ---------- */
+/* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
+/*
+  ✔ Oldest messages render first (top)
+  ✔ Newest messages render last (bottom)
+  ✔ Limit applied safely
+  ✔ Optimistic message reconciliation preserved
+  ✔ Gift alerts preserved
+  ✔ Cache-aware logging
+  ✔ Proper unsubscribe handling
+*/
+
 let messagesUnsubscribe = null;
 
 function attachMessagesListener() {
+  // ---- Cleanup existing listener (prevents duplicates)
   if (typeof messagesUnsubscribe === "function") {
     messagesUnsubscribe();
     messagesUnsubscribe = null;
@@ -1722,21 +1690,27 @@ function attachMessagesListener() {
 
   const CHAT_LIMIT = 21;
 
+  // ---- Correct chronological query
   const q = query(
     collection(db, CHAT_COLLECTION),
-    orderBy("timestamp", "asc"),
-    limitToLast(CHAT_LIMIT)  // most recent 21, sorted old → new
+    orderBy("timestamp", "asc"), // ← OLDEST → NEWEST (correct chat order)
+    limit(CHAT_LIMIT)
   );
 
+  // ---- Persisted gift alerts
   const shownGiftAlerts = new Set(
     JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
   );
 
   function saveShownGift(id) {
     shownGiftAlerts.add(id);
-    localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
+    localStorage.setItem(
+      "shownGiftAlerts",
+      JSON.stringify([...shownGiftAlerts])
+    );
   }
 
+  // ---- Local optimistic messages
   let localPendingMsgs = JSON.parse(
     localStorage.getItem("localPendingMsgs") || "{}"
   );
@@ -1746,61 +1720,27 @@ function attachMessagesListener() {
     { includeMetadataChanges: true },
     (snapshot) => {
       console.log(
-        `Messages snapshot | cache: ${snapshot.metadata.fromCache ? 'yes ✓' : 'no (billed)'} | ` +
+        `Messages snapshot | ${snapshot.metadata.fromCache ? "✓ cache" : "server"} | ` +
         `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
       );
 
-      // ======================================
-      // INITIAL LOAD: Render ALL loaded messages once
-      // ======================================
-      if (snapshot.metadata.hasPendingWrites === false && snapshot.docChanges().length === snapshot.size) {
-        // This is likely the first snapshot (all docs are "added")
-        console.log("[Initial load] Rendering all", snapshot.size, "messages");
-
-        const initialMessages = snapshot.docs.map(doc => ({
-          id: doc.id,
-          data: doc.data()
-        }));
-
-        // Clear old messages if needed (to avoid duplicates on re-attach)
-        if (refs.messagesEl) refs.messagesEl.innerHTML = "";
-
-        renderMessagesFromArray(initialMessages);
-
-        // Scroll to bottom after initial render
-        if (refs.messagesEl) {
-          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-        }
-
-        // Process gift alerts for initial messages too (if needed)
-        initialMessages.forEach(({ id, data: msg }) => {
-          if (msg.highlight && msg.content?.includes("gifted")) {
-            const myId = currentUser?.chatId?.toLowerCase();
-            if (myId && msg.content.split(" ")[2]?.toLowerCase() === myId && !shownGiftAlerts.has(id)) {
-              showGiftAlert(`${msg.content.split(" ")[0]} gifted you ${msg.content.split(" ")[3]} stars ⭐️`);
-              saveShownGift(id);
-            }
-          }
-        });
-      }
-
-      // ======================================
-      // REAL-TIME: Only new messages
-      // ======================================
       snapshot.docChanges().forEach((change) => {
         if (change.type !== "added") return;
 
-        const msg = change.doc.data();
         const msgId = change.doc.id;
+        const msg   = change.doc.data();
 
-        if (msg.tempId && msg.tempId.startsWith("temp_")) return;
+        // ---- Skip temp echoes
+        if (msg.tempId?.startsWith("temp_")) return;
+
+        // ---- Defensive: already rendered
         if (document.getElementById(msgId)) return;
 
-        // Replace optimistic temp message
-        let matched = false;
+        // ---- Match optimistic message
         for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
           const sameUser = pending.uid === msg.uid;
           const sameText = pending.content === msg.content;
+
           const timeDiff = Math.abs(
             (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
           );
@@ -1808,33 +1748,37 @@ function attachMessagesListener() {
           if (sameUser && sameText && timeDiff < 7000) {
             const tempEl = document.getElementById(tempId);
             if (tempEl) tempEl.remove();
+
             delete localPendingMsgs[tempId];
-            localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
-            matched = true;
+            localStorage.setItem(
+              "localPendingMsgs",
+              JSON.stringify(localPendingMsgs)
+            );
             break;
           }
         }
 
-        // Render new message (appends at bottom)
+        // ---- Render message (append → bottom)
         renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-        // Gift alert
+        // ---- Gift alert (receiver only)
         if (msg.highlight && msg.content?.includes("gifted")) {
-          const myId = currentUser?.chatId?.toLowerCase();
-          if (!myId) return;
-          const parts = msg.content.split(" ");
-          const sender = parts[0];
-          const receiver = parts[2];
-          const amount = parts[3];
-          if (sender && receiver && amount &&
-              receiver.toLowerCase() === myId &&
-              !shownGiftAlerts.has(msgId)) {
+          const myChatId = currentUser?.chatId?.toLowerCase();
+          if (!myChatId) return;
+
+          const [sender, , receiver, amount] = msg.content.split(" ");
+
+          if (
+            receiver?.toLowerCase() === myChatId &&
+            amount &&
+            !shownGiftAlerts.has(msgId)
+          ) {
             showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
             saveShownGift(msgId);
           }
         }
 
-        // Auto-scroll for own messages or if near bottom
+        // ---- Auto-scroll only when YOU send
         if (refs.messagesEl && msg.uid === currentUser?.uid) {
           refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
         }
@@ -1845,8 +1789,6 @@ function attachMessagesListener() {
     }
   );
 }
-
-
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
 
