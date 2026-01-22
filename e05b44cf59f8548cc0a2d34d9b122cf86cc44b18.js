@@ -300,49 +300,6 @@ function updateInfoTab() {
   }
 }
 
-// ---------- CLEANUP EXPIRED TOKENS ----------
-async function cleanupExpiredTokens() {
-  const tokensRef = collection(db, "loginTokens");
-  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
-  const snap = await getDocs(q);
-
-  snap.forEach(async docSnap => {
-    await deleteDoc(docSnap.ref);
-  });
-}
-
-
-async function loadUserFromToken(token) {
-  if (!token) return null;
-
-  try {
-    const tokenRef = doc(db, "loginTokens", token);
-    const snap = await getDoc(tokenRef);
-
-    if (!snap.exists()) throw new Error("Invalid or expired token");
-
-    const data = snap.data();
-
-    if (Date.now() > data.expiresAt) {
-      await deleteDoc(tokenRef);
-      throw new Error("Token expired");
-    }
-
-    // Valid token — store UID in localStorage for reload safety
-    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
-
-    // Delete the token for security (optional — still works on reload)
-    await deleteDoc(tokenRef);
-
-    return data.uid;
-
-  } catch (err) {
-    console.warn("Token login error:", err);
-    return null;
-  }
-}
-
-
     // 2️⃣ Fallback to localStorage
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
