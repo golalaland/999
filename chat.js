@@ -12,6 +12,8 @@ import {
   doc,
   setDoc,
   getDoc,
+   httpsCallable,
+   getFunctions,
   updateDoc,
 limitToLast,        
   deleteDoc,
@@ -85,6 +87,7 @@ const db     = getFirestore(app);
 const auth   = getAuth(app);
 const rtdb   = getDatabase(app);
 const storage = getStorage(app);           // ← Now initialized!
+const functions = getFunctions(app);  // ← Add this line too (initialize Functions)
 
 console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
 
