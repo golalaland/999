@@ -60,14 +60,16 @@ function getAvatar(userData) {
   return DEFAULT_NEUTRAL;
 }
 
-// Safe wrapper — allows return inside async function
+// Safe async wrapper — allows return inside a function
 (async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("t");
 
   if (!token) {
     alert("No token in URL");
-    return;  // Safe now — inside a function
+    // Optionally redirect or show error UI
+    // window.location.href = "/"; // or whatever fallback
+    return;  // Safe now — inside async IIFE
   }
 
   try {
@@ -76,15 +78,10 @@ function getAvatar(userData) {
 
     if (result.data.success) {
       console.log("Valid user:", result.data.uid, result.data.chatId);
-
-      // Show user-specific redeem/tip UI
-      const userInfo = document.getElementById("userInfo");
-      if (userInfo) {
-        userInfo.textContent = `Welcome ${result.data.chatId || "User"}`;
-      }
-
-      // Optional: enable redeem/tip form, show balance, etc.
-      // document.getElementById("redeemForm").style.display = "block";
+      // Show user-specific game UI, redeem/tip options, etc.
+      // Example:
+      document.getElementById("welcomeMessage")?.textContent = `Welcome, ${result.data.chatId}`;
+      // Enable game features, show balance, etc.
     } else {
       alert("Invalid or expired link");
     }
