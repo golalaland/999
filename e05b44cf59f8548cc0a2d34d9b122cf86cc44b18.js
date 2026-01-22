@@ -1530,10 +1530,9 @@ document.getElementById('withdrawAmount')?.addEventListener('input', function(e)
 });
 
 // ==================== WITHDRAWAL SYSTEM — FINAL LUXURY EDITION ====================
-
 let pendingWithdrawal = { amount: 0, isFastTrack: false };
 
-// INPUT — AUTO COMMA FORMAT (type="text" required in HTML!)
+// INPUT — AUTO COMMA FORMAT
 document.getElementById('withdrawAmount')?.addEventListener('input', function(e) {
   let value = e.target.value.replace(/[^\d]/g, '');
   if (!value) {
@@ -1543,11 +1542,21 @@ document.getElementById('withdrawAmount')?.addEventListener('input', function(e)
   e.target.value = Number(value).toLocaleString('en-US');
 });
 
+// Helper: Generate slug from bank name
+function generateBankSlug(bankName) {
+  if (!bankName) return '';
+  return bankName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
 // WITHDRAW BUTTON — OPENS CUTE CONFIRM MODAL
 document.getElementById('withdrawBtn')?.addEventListener('click', () => {
   const raw = document.getElementById('withdrawAmount').value.replace(/,/g, '');
   const amount = Number(raw);
-
   if (!amount || amount < 5000) {
     realAlert("Minimum withdrawal is ₦5,000");
     return;
@@ -1556,12 +1565,8 @@ document.getElementById('withdrawBtn')?.addEventListener('click', () => {
     realAlert(`You only have ₦${currentUser.cash.toLocaleString()}`);
     return;
   }
-
   pendingWithdrawal.amount = amount;
-
-  // Show amount only (cute & clean)
   document.getElementById('confirmAmount').textContent = amount.toLocaleString();
-  
   document.getElementById('starMarketModal').style.display = 'none';
   document.getElementById('withdrawConfirmModal').style.display = 'flex';
 });
@@ -1588,12 +1593,10 @@ document.getElementById('confirmFastTrack')?.addEventListener('click', () => {
   processWithdrawalAndCelebrate(pendingWithdrawal.amount, true);
 });
 
-// CANCEL FAST TRACK
+// CANCEL FAST TRACK / MAIN CONFIRM
 document.getElementById('cancelFastTrack')?.addEventListener('click', () => {
   document.getElementById('fastTrackConfirmModal').style.display = 'none';
 });
-
-// CANCEL MAIN CONFIRM
 document.getElementById('cancelWithdrawBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawConfirmModal').style.display = 'none';
 });
@@ -1603,7 +1606,7 @@ document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
 
-// MAIN WITHDRAWAL + GOLDEN COUNT-UP + CHEER + CONFETTI
+// MAIN PROCESS + LUXURY ANIMATION
 async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
   const userRef = doc(db, "users", currentUser.uid);
   const withdrawalRef = doc(collection(db, "withdrawals"));
@@ -1617,6 +1620,10 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       if (data.cash < amount) throw "Not enough cash";
       if (isFastTrack && data.stars < 21) throw "Not enough STRZ";
 
+      const bankNameRaw = data.bankName || "Not set";
+      const normalizedBankName = bankNameRaw.trim().replace(/\s+/g, ' ');
+      const bankSlug = generateBankSlug(normalizedBankName);
+
       t.update(userRef, {
         cash: data.cash - amount,
         stars: isFastTrack ? data.stars - 21 : data.stars,
@@ -1627,7 +1634,8 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
         uid: currentUser.uid,
         username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
         amount,
-        bankName: data.bankName || "Not set",
+        bankName: normalizedBankName,
+        bankSlug: bankSlug,
         bankAccountNumber: data.bankAccountNumber || "Not set",
         status: isFastTrack ? "fast_track" : "pending",
         isFastTrack,
@@ -1636,26 +1644,20 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       });
     });
 
-    // UPDATE LOCAL
     currentUser.cash -= amount;
     if (isFastTrack) currentUser.stars -= 21;
     updateBankDisplay();
 
-    // LUXURY GOLDEN COUNTER (counts UP from 0)
     const counter = document.getElementById('goldenAmount');
     counter.textContent = '0';
-
     document.getElementById('successMessage').textContent = isFastTrack
-      ? "FAST TRACKED! Support notified"
+      ? "FAST TRACKED! Support notified via WhatsApp"
       : "Withdrawal requested!";
-
     document.getElementById('withdrawSuccessOverlay').style.display = 'flex';
 
-    // CHEERING SOUND + CONFETTI
     document.getElementById('cheerSound')?.play();
     triggerConfetti();
 
-    // COUNT UP ANIMATION
     let current = 0;
     const step = Math.ceil(amount / 60);
     const timer = setInterval(() => {
@@ -1667,18 +1669,20 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       counter.textContent = current.toLocaleString();
     }, 30);
 
-    // FAST TRACK → AUTO MESSAGE TO ADMIN
+    // FAST TRACK → OPEN WHATSAPP (reliable deep link)
     if (isFastTrack) {
       setTimeout(() => {
+        const adminPhone = "+2347047539186"; // ← REPLACE WITH YOUR REAL ADMIN WHATSAPP NUMBER (international format)
         const msg = encodeURIComponent(
-          `FAST TRACK WITHDRAWAL\n` +
-          `User: @${currentUser.chatId || 'unknown'}\n` +
+          `FAST TRACK WITHDRAWAL REQUEST\n\n` +
+          `User: @${currentUser.chatId || currentUser.email?.split('@')[0] || 'unknown'}\n` +
           `Amount: ₦${amount.toLocaleString()}\n` +
           `Bank: ${currentUser.bankName || 'Not set'}\n` +
           `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
-          `Process urgently!`
+          `Please process urgently!`
         );
-        window.open(`https://t.me/YOUR_ADMIN_USERNAME?text=${msg}`, '_blank');
+        // WhatsApp web or app link
+        window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank');
       }, 1500);
     }
 
@@ -1687,6 +1691,7 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
     realAlert("Withdrawal failed!\nPlease try again.");
   }
 }
+
 /* ============================================================
    TAPMASTER CORE — CLEAN, MODERN, FULLY WORKING (2025+)
    ALL SETTINGS IN ONE PLACE — CHANGE IN 5 SECONDS
