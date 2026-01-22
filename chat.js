@@ -1026,8 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-
-// TIP BUTTON — plain fetch with CORRECT callable payload shape
+// TIP BUTTON — waits for auth token to be fully synced
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1035,22 +1034,32 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Preparing token for UID:", currentUser.uid);
-
-  // 1. Get fresh Firebase ID token
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token ready (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[TIP] ID token refresh failed:", err.message);
+  // 1. Confirm user is still logged in
+  if (!auth.currentUser) {
+    console.warn("[TIP] User no longer logged in");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
-  // 2. Plain fetch — correct callable body format
+  // 2. Force token refresh + verify it's valid
+  console.log("[TIP] Forcing token refresh...");
+  let idToken;
   try {
+    idToken = await auth.currentUser.getIdToken(true); // true = force refresh
+    console.log("[TIP] Token ready (length:", idToken.length, ")");
+  } catch (err) {
+    console.error("[TIP] Token refresh failed:", err.message);
+    refs.tipBtn.href = "/tm";
+    refs.tipBtn.style.display = "inline-block";
+    return;
+  }
+
+  // 3. Extra safety delay (SDK sometimes needs a moment)
+  await new Promise(r => setTimeout(r, 800));
+
+  try {
+    // Use plain fetch with manual token (bypasses any SDK callable race)
     const response = await fetch(
       "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
       {
@@ -1059,15 +1068,13 @@ async function updateTipLink() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`
         },
-        body: JSON.stringify({
-          data: {}  // ← This is the fix: wrap in { "data": {} }
-        })
+        body: JSON.stringify({ data: {} }) // correct callable shape
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server responded ${response.status}: ${errorText}`);
+      throw new Error(`Server said ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
