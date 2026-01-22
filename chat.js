@@ -1027,6 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // TIP BUTTON — waits for auth token to be fully synced
+// TIP BUTTON — retries on 401 with token refresh
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1034,66 +1035,66 @@ async function updateTipLink() {
     return;
   }
 
-  // 1. Confirm user is still logged in
-  if (!auth.currentUser) {
-    console.warn("[TIP] User no longer logged in");
-    refs.tipBtn.href = "/tm";
-    refs.tipBtn.style.display = "inline-block";
-    return;
-  }
+  const maxRetries = 3;
+  let attempt = 0;
 
-  // 2. Force token refresh + verify it's valid
-  console.log("[TIP] Forcing token refresh...");
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true); // true = force refresh
-    console.log("[TIP] Token ready (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[TIP] Token refresh failed:", err.message);
-    refs.tipBtn.href = "/tm";
-    refs.tipBtn.style.display = "inline-block";
-    return;
-  }
+  while (attempt < maxRetries) {
+    attempt++;
+    console.log(`[TIP] Attempt ${attempt}/${maxRetries} for UID: ${currentUser.uid}`);
 
-  // 3. Extra safety delay (SDK sometimes needs a moment)
-  await new Promise(r => setTimeout(r, 800));
+    // Force token refresh
+    let idToken;
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log(`[TIP] Token refreshed (length: ${idToken.length})`);
+    } catch (err) {
+      console.error("[TIP] Token refresh failed:", err.message);
+      await new Promise(r => setTimeout(r, 1000));
+      continue;
+    }
 
-  try {
-    // Use plain fetch with manual token (bypasses any SDK callable race)
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ data: {} }) // correct callable shape
+    try {
+      const response = await fetch(
+        "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ data: {} }) // correct shape
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        if (response.status === 401) {
+          console.warn("[TIP] 401 on attempt", attempt, "— retrying...");
+          await new Promise(r => setTimeout(r, 1500)); // extra wait
+          continue;
+        }
+        throw new Error(`Server ${response.status}: ${errorText}`);
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Server said ${response.status}: ${errorText}`);
+      const result = await response.json();
+      if (!result.token) {
+        throw new Error("No token returned");
+      }
+
+      const token = result.token;
+      refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+      console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
+      break; // success — exit loop
+    } catch (err) {
+      console.error("[TIP] Fetch failed:", err.message);
+      if (attempt === maxRetries) {
+        refs.tipBtn.href = "/tm"; // final fallback
+      }
     }
-
-    const result = await response.json();
-
-    if (!result.token) {
-      throw new Error("No token in response");
-    }
-
-    const token = result.token;
-    refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
-  } catch (err) {
-    console.error("[TIP] Fetch failed:", err.message);
-    refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
 }
-
 // Same for redeem (copy-paste with [REDEEM] logs)
 async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) {
