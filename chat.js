@@ -1018,9 +1018,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// Replace your old createLoginToken calls
+// Generate secure JWT token via Cloud Function (no Firestore write)
 async function updateRedeemLink() {
-  if (!refs.redeemBtn || !currentUser?.uid) return;
+  if (!refs.redeemBtn || !currentUser?.uid) {
+    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
+    return;
+  }
 
   try {
     const createToken = httpsCallable(functions, "createLoginToken");
@@ -1028,10 +1031,33 @@ async function updateRedeemLink() {
     const token = result.data.token;
     refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
   } catch (err) {
-    console.warn("Token creation failed:", err);
+    console.warn("[REDEEM] Token failed:", err);
     refs.redeemBtn.href = "/tm"; // fallback
   }
+
   refs.redeemBtn.style.display = "inline-block";
+  console.log("[REDEEM] Button shown with JWT");
+}
+
+// Same logic for TIP button
+async function updateTipLink() {
+  if (!refs.tipBtn || !currentUser?.uid) {
+    if (refs.tipBtn) refs.tipBtn.style.display = "none";
+    return;
+  }
+
+  try {
+    const createToken = httpsCallable(functions, "createLoginToken");
+    const result = await createToken();
+    const token = result.data.token;
+    refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+  } catch (err) {
+    console.warn("[TIP] Token failed:", err);
+    refs.tipBtn.href = "/tm"; // fallback
+  }
+
+  refs.tipBtn.style.display = "inline-block";
+  console.log("[TIP] Button shown with JWT");
 }
 
 /* ----------------------------
