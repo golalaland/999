@@ -61,16 +61,15 @@ import {
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
 
-/* ── Firebase Configuration ── */
 const firebaseConfig = {
   apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
   authDomain: "dettyverse.firebaseapp.com",
   projectId: "dettyverse",
   storageBucket: "dettyverse.firebasestorage.app",
   messagingSenderId: "1036459652488",
-  appId: "1:1036452488:web:e8910172ed16e9cac9b63d",
+  appId: "1:1036459652488:web:e8910172ed16e9cac9b63d",
   measurementId: "G-NX2KWZW85V",
-  databaseURL: "https://dettyverse-default-rtdb.firebaseio.com/"
+  databaseURL: "https://dettyverse-default-rtdb.firebaseio.com"  // ← ADD THIS LINE
 };
 
 /* ── Initialize Services ── */
