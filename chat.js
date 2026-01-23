@@ -344,6 +344,7 @@ async function pushNotification(userId, message) {
   }
 }
 
+
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— CLEANUP PREVIOUS LISTENERS ———
@@ -382,7 +383,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 
   // ——— USER LOGGED IN ———
-  console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid);
+  console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid || "unknown");
 
   // Guard against invalid user object
   if (!firebaseUser.uid) {
@@ -509,12 +510,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         promptForChatID?.(userRef, data);
       }, 2000);
     }
-  } catch (err) {
-    console.error("Login process error:", err);
-    showStarPopup("Login failed — try again");
-    await signOut(auth);
-  }
-});
 
     // ——— SHOW HOST-ONLY FIELDS (Nature Pick & Fruit Pick) ———
     const hostFields = document.getElementById("hostOnlyFields");
@@ -525,7 +520,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     // ——— DIVINE WELCOME POPUP ———
     const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-
     showStarPopup(`
       <div style="text-align:center;font-size:13px;">
         Welcome back,
@@ -535,12 +529,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         ${currentUser.isAdmin ? "<br><span style='color:#0f9;font-size:16px;'>ADMIN MODE</span>" : ""}
       </div>
     `);
-
     console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
-
-  } catch (error) {
-    console.error("Error during login process:", error);
-    showStarPopup("Failed to load profile — please try again");
+  } catch (err) {
+    console.error("Login process error:", err);
+    showStarPopup("Login failed — try again");
     await signOut(auth);
   }
 });
