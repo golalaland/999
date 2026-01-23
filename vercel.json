@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/tm", "destination": "/tm.html" },
+       { "source": "/tm1", "destination": "/tm1.html" },
        { "source": "/tapmaster", "destination": "/tm.html" },
     { "source": "/sign-up", "destination": "/qO0MyUROl4CoH8Wo1UDa1DrCtEKmVQuZ.html" },
     { "source": "/chat", "destination": "/chat.html" },
