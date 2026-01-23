@@ -1056,7 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-
 // TIP BUTTON — plain fetch with manual ID token header (bypasses SDK race)
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
@@ -1065,39 +1064,53 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Waiting for auth token...");
+  console.log("[TIP] Generating token for UID:", currentUser.uid);
 
-  // Wait + force refresh token
-  let idToken = null;
-  let attempts = 0;
-  while (!idToken && attempts < 12) {
-    try {
-      idToken = await auth.currentUser.getIdToken(true);
-      console.log("[TIP] Token ready (length:", idToken.length, ")");
-      if (idToken) break;
-    } catch (err) {
-      console.warn("[TIP] Attempt", attempts + 1, "failed:", err.message);
-    }
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;
-  }
-
-  if (!idToken) {
-    console.error("[TIP] No token after retries");
+  // Get fresh ID token
+  let idToken;
+  try {
+    idToken = await auth.currentUser.getIdToken(true);
+    console.log("[TIP] ID token ready (length:", idToken.length, ")");
+  } catch (err) {
+    console.error("[TIP] ID token failed:", err.message);
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    const createToken = httpsCallable(functions, "createLoginToken");
-    console.log("[TIP] Calling callable...");
-    const result = await createToken({});
-    const token = result.data.token;
+    const response = await fetch(
+      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
+      {
+        method: "POST",
+        mode: "cors",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ data: {} }) // callable format
+      }
+    );
+
+    console.log("[TIP] Server status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server said ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.token) {
+      throw new Error("No token in response");
+    }
+
+    const token = result.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Callable failed:", err.code, err.message);
+    console.error("[TIP] Fetch failed:", err.message);
     refs.tipBtn.href = "/tm";
   }
 
