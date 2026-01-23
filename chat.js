@@ -1045,11 +1045,12 @@ async function updateTipLink() {
 
   console.log("[TIP] Generating token for UID:", currentUser.uid);
 
+  // Get fresh ID token
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
     console.log("[TIP] ID token ready (length:", idToken.length, ")");
-    console.log("[TIP] Token preview:", idToken.substring(0, 50) + "...");
+    console.log("[TIP] Token preview (first 50 chars):", idToken.substring(0, 50) + "...");
   } catch (err) {
     console.error("[TIP] ID token failed:", err.message);
     refs.tipBtn.href = "/tm";
@@ -1074,11 +1075,10 @@ async function updateTipLink() {
     );
 
     console.log("[TIP] Server status:", response.status);
-    console.log("[TIP] Response OK:", response.ok);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.log("[TIP] Raw server error:", errorText);
+      console.log("[TIP] Raw server error response:", errorText);
       throw new Error(`Server responded ${response.status}: ${errorText}`);
     }
 
