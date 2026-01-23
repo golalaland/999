@@ -1,6 +1,6 @@
 /* ==============================================
-   Firebase Modular SDK v10+ (January 2026)
-   Includes: App, Auth, Firestore, Realtime DB, Storage, ReCaptcha
+   Firebase Modular SDK v10+ (January 2026) — CDN / Script Tag
+   Includes: App, Auth, Firestore, Functions
    ============================================== */
 
 // ── Core & Shared ──
@@ -13,7 +13,6 @@ import {
   setDoc,
   getDoc,
   updateDoc,
-limitToLast,        
   deleteDoc,
   collection,
   addDoc,
@@ -28,15 +27,16 @@ limitToLast,
   where,
   runTransaction,
   arrayUnion,
-  writeBatch
+  writeBatch,
+  limitToLast
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ── Storage (added for file/video uploads) ──
+// ── Storage (for uploads) ──
 import {
   getStorage,
   ref,
   uploadBytes,
-  uploadBytesResumable,     // optional: for progress tracking
+  uploadBytesResumable,
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -57,10 +57,10 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Cloud Functions (this is where getFunctions & httpsCallable live)
+// ── Cloud Functions ──
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
-
+/* ── Firebase Configuration ── */
 const firebaseConfig = {
   apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
   authDomain: "dettyverse.firebaseapp.com",
@@ -69,31 +69,21 @@ const firebaseConfig = {
   messagingSenderId: "1036459652488",
   appId: "1:1036459652488:web:e8910172ed16e9cac9b63d",
   measurementId: "G-NX2KWZW85V",
-  databaseURL: "https://dettyverse-default-rtdb.firebaseio.com"  // ← ADD THIS LINE
+  databaseURL: "https://dettyverse-default-rtdb.firebaseio.com/"
 };
 
 /* ── Initialize Services ── */
 const app = initializeApp(firebaseConfig);
 console.log("🔥 Firebase Project:", firebaseConfig.projectId);
 
-// 🔐 Firebase App Check (reCAPTCHA v3)
-//const appCheck = initializeAppCheck(app, {
-//  provider: new ReCaptchaV3Provider('6LfWf0gsAAAAADq5q_4nrqJY642-udsAOpUX8Qzs'),
- // isTokenAutoRefreshEnabled: true
-//});
+const db = getFirestore(app);
+const auth = getAuth(app);
+const rtdb = getDatabase(app);
+const storage = getStorage(app);
+const functions = getFunctions(app, "us-central1"); // explicit region — important!
 
-const db     = getFirestore(app);
-const auth   = getAuth(app);
-const rtdb   = getDatabase(app);
-const storage = getStorage(app);           // ← Now initialized!
-const functions = getFunctions(app, "us-central1"); // ← add region here
-
+console.log("☁️ Functions region set to us-central1");
 console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
-
-//import { initializeAppCheck, ReCaptchaV3Provider } 
- // from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
-
-
 
 /* ── Exports for other modules/scripts ── */
 export {
@@ -101,14 +91,12 @@ export {
   db,
   auth,
   rtdb,
-  storage,                // ← Important: export storage
-  // Storage functions (optional - can import directly where needed)
+  storage,
   ref,
   uploadBytes,
   uploadBytesResumable,
   getDownloadURL
 };
-
 
 /* ---------- Global State ---------- */
 const ROOM_ID = "room888";
@@ -117,16 +105,14 @@ const BUZZ_COST = 500;
 const SEND_COST = 1;
 let lastMessagesArray = [];
 let starInterval = null;
-let refs = {};  
+let refs = {};
 
-
-
-// Make Firebase objects available globally (for debugging or reuse)
+// Make Firebase objects available globally (for debugging)
 window.app = app;
 window.db = db;
 window.auth = auth;
 
-// Optional: Add this at the top of your JS file to detect "just logged out" on login page
+// Optional: welcome popup on re-login
 if (sessionStorage.getItem("justLoggedOut") === "true") {
   sessionStorage.removeItem("justLoggedOut");
   showStarPopup("Welcome back, legend!");
@@ -136,22 +122,15 @@ if (sessionStorage.getItem("justLoggedOut") === "true") {
 function setupPresence(user) {
   try {
     if (!rtdb || !user || !user.uid) return;
-
-   const safeUid = user.uid; // already sanitized (example_yahoo_com)
-const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
-
+    const safeUid = user.uid;
+    const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
     rtdbSet(pRef, {
       online: true,
       chatId: user.chatId || "",
       email: user.email || "",
       lastSeen: Date.now()
     }).catch(() => {});
-
-    // Auto-remove presence when user closes tab
-    onDisconnect(pRef)
-      .remove()
-      .catch(() => {});
-
+    onDisconnect(pRef).remove().catch(() => {});
   } catch (err) {
     console.error("Presence error:", err);
   }
@@ -1064,60 +1043,47 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Generating token for UID:", currentUser.uid);
+  console.log("[TIP] Waiting for auth token sync...");
 
-  // Get fresh ID token
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token ready (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[TIP] ID token failed:", err.message);
+  // Wait + force refresh token (fixes race after login)
+  let idToken = null;
+  let attempts = 0;
+  const maxAttempts = 12; // ~6 seconds
+  while (!idToken && attempts < maxAttempts) {
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log("[TIP] Token ready after attempt", attempts + 1, "(length:", idToken.length, ")");
+      if (idToken) break;
+    } catch (err) {
+      console.warn("[TIP] Attempt", attempts + 1, "failed:", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;
+  }
+
+  if (!idToken) {
+    console.error("[TIP] No token after", maxAttempts, "attempts");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        mode: "cors",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ data: {} }) // callable format
-      }
-    );
-
-    console.log("[TIP] Server status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Server said ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.token) {
-      throw new Error("No token in response");
-    }
-
-    const token = result.token;
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling createLoginToken...");
+    const result = await createToken({}); // empty payload
+    const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Fetch failed:", err.message);
+    console.error("[TIP] Callable failed:", err.code, err.message, err.details);
     refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
 }
 
-// REDEEM BUTTON — plain fetch with manual token (same reliable method as tip)
+/* ── REDEEM BUTTON ── (same logic) */
 async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) {
     console.log("[REDEEM] Skipped: no button or no user");
@@ -1125,50 +1091,39 @@ async function updateRedeemLink() {
     return;
   }
 
-  console.log("[REDEEM] Preparing to generate token for UID:", currentUser.uid);
+  console.log("[REDEEM] Waiting for auth token sync...");
 
-  // 1. Get fresh Firebase ID token (force refresh)
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true);
-    console.log("[REDEEM] ID token refreshed OK (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[REDEEM] Failed to refresh ID token:", err.message);
+  let idToken = null;
+  let attempts = 0;
+  const maxAttempts = 12;
+  while (!idToken && attempts < maxAttempts) {
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log("[REDEEM] Token ready after attempt", attempts + 1, "(length:", idToken.length, ")");
+      if (idToken) break;
+    } catch (err) {
+      console.warn("[REDEEM] Attempt", attempts + 1, "failed:", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;
+  }
+
+  if (!idToken) {
+    console.error("[REDEEM] No token after", maxAttempts, "attempts");
     refs.redeemBtn.href = "/tm";
     refs.redeemBtn.style.display = "inline-block";
     return;
   }
 
-  // 2. Plain fetch — NO body (function doesn't need data)
   try {
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
-        }
-        // NO body line — omit completely
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Server responded ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.token) {
-      throw new Error("No token returned from server");
-    }
-
-    const token = result.token;
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[REDEEM] Calling createLoginToken...");
+    const result = await createToken({});
+    const token = result.data.token;
     refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[REDEEM] Success - token generated:", token.substring(0, 20) + "...");
+    console.log("[REDEEM] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[REDEEM] Plain fetch failed:", err.message);
+    console.error("[REDEEM] Callable failed:", err.code, err.message, err.details);
     refs.redeemBtn.href = "/tm";
   }
 
