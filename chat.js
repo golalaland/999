@@ -360,8 +360,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-     console.log("[AUTH] Email:", firebaseUser.email);
-    console.log("[AUTH] Token available:", !!firebaseUser.getIdToken);
 
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
@@ -370,13 +368,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log("User logged out");
 
-   // Extra delay for token sync
-    await new Promise(r => setTimeout(r, 2500)); // 2.5 seconds
-
-    await updateRedeemLink();
-    await updateTipLink();
-
-    // Clear clips grid
+    // Clear clips grid safely
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
@@ -390,15 +382,34 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 
   // ——— USER LOGGED IN ———
-  const email = firebaseUser.email.toLowerCase().trim();
+  console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid);
+
+  // Guard against invalid user object
+  if (!firebaseUser.uid) {
+    console.warn("[AUTH] Invalid user object - no UID");
+    await signOut(auth);
+    return;
+  }
+
+  const email = firebaseUser.email?.toLowerCase()?.trim() || "";
+
+  if (!email) {
+    console.warn("[AUTH] No email in firebaseUser");
+    showStarPopup("Login error — no email found");
+    await signOut(auth);
+    return;
+  }
+
   const uid = sanitizeKey(email);
   const userRef = doc(db, "users", uid);
 
   try {
+    console.log("[AUTH] Loading profile for sanitized UID:", uid);
+
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.error("Profile not found for:", uid);
+      console.error("[AUTH] Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
       await signOut(auth);
       return;
@@ -441,7 +452,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         chatId: currentUser.chatId
       };
       console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
-
       const pollSection = document.getElementById("polls");
       if (pollSection) pollSection.style.display = "block";
     }
@@ -450,8 +460,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     console.log("[USER STATUS]", currentUser);
 
     // ——— POST-LOGIN UI & FUNCTION SETUP ———
-    revealHostTabs();
-    updateInfoTab();
+    revealHostTabs?.();
+    updateInfoTab?.();
 
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
@@ -459,16 +469,32 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     localStorage.setItem("userId", uid);
     localStorage.setItem("lastVipEmail", email);
 
-    setupUsersListener();
-    showChatUI(currentUser);
-    attachMessagesListener();
-    startStarEarning(uid);
-    setupPresence(currentUser);
-    setupNotificationsListener(uid);
-    updateRedeemLink();
-    updateTipLink();
+    setupUsersListener?.();
+    showChatUI?.(currentUser);
+    attachMessagesListener?.();
+    startStarEarning?.(uid);
+    setupPresence?.(currentUser);
+    setupNotificationsListener?.(uid);
 
-    // Delayed loads to avoid blocking
+    // Wait for auth token to be fully synced before button updates
+    console.log("[AUTH] Waiting 2s for token sync...");
+    await new Promise(r => setTimeout(r, 2000));
+
+    if (typeof updateRedeemLink === "function") {
+      console.log("[AUTH] Calling updateRedeemLink");
+      await updateRedeemLink();
+    } else {
+      console.warn("[AUTH] updateRedeemLink not defined");
+    }
+
+    if (typeof updateTipLink === "function") {
+      console.log("[AUTH] Calling updateTipLink");
+      await updateTipLink();
+    } else {
+      console.warn("[AUTH] updateTipLink not defined");
+    }
+
+    // Delayed loads
     setTimeout(() => {
       syncUserUnlocks?.();
       loadNotifications?.();
@@ -483,6 +509,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         promptForChatID?.(userRef, data);
       }, 2000);
     }
+  } catch (err) {
+    console.error("Login process error:", err);
+    showStarPopup("Login failed — try again");
+    await signOut(auth);
+  }
+});
 
     // ——— SHOW HOST-ONLY FIELDS (Nature Pick & Fruit Pick) ———
     const hostFields = document.getElementById("hostOnlyFields");
@@ -1037,7 +1069,6 @@ async function updateTipLink() {
 
   console.log("[TIP] Generating token for UID:", currentUser.uid);
 
-  // Get fresh ID token
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
@@ -1058,7 +1089,7 @@ async function updateTipLink() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`
         },
-        body: JSON.stringify({}) // empty — function ignores it
+        body: JSON.stringify({ data: {} })  // ← THIS WAS THE MISSING FIX
       }
     );
 
@@ -1075,7 +1106,7 @@ async function updateTipLink() {
 
     const token = result.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
     console.error("[TIP] Fetch failed:", err.message);
     refs.tipBtn.href = "/tm";
@@ -1083,7 +1114,6 @@ async function updateTipLink() {
 
   refs.tipBtn.style.display = "inline-block";
 }
-
 
 // REDEEM BUTTON — plain fetch with manual token (same reliable method as tip)
 async function updateRedeemLink() {
