@@ -1065,56 +1065,39 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Generating token for UID:", currentUser.uid);
+  console.log("[TIP] Waiting for auth token...");
 
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token ready (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[TIP] ID token failed:", err.message);
+  // Wait + force refresh token
+  let idToken = null;
+  let attempts = 0;
+  while (!idToken && attempts < 12) {
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log("[TIP] Token ready (length:", idToken.length, ")");
+      if (idToken) break;
+    } catch (err) {
+      console.warn("[TIP] Attempt", attempts + 1, "failed:", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;
+  }
+
+  if (!idToken) {
+    console.error("[TIP] No token after retries");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    console.log("[TIP] Sending request with Bearer token (first 20 chars):", idToken.substring(0, 20) + "...");
-
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        mode: "cors",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ data: {} })
-      }
-    );
-
-    console.log("[TIP] Server status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log("[TIP] Raw error response:", errorText);
-      throw new Error(`Server said ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("[TIP] Full response:", result);
-
-    if (!result.token) {
-      throw new Error("No token in response");
-    }
-
-    const token = result.token;
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling callable...");
+    const result = await createToken({});
+    const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Fetch failed:", err.message);
+    console.error("[TIP] Callable failed:", err.code, err.message);
     refs.tipBtn.href = "/tm";
   }
 
