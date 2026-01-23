@@ -5695,17 +5695,17 @@ window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
 // =============================================
-// HIGHLIGHTS VIDEOS – Vertical Feed (works with any page size)
+// HIGHLIGHTS VIDEOS – Vertical Feed (improved version)
 // =============================================
 
 let allLoadedVideos = [];
 let lastVisibleVideoDoc = null;
 let hasMoreVideos = true;
 let isLoadingVideos = false;
-const VIDEOS_PAGE_SIZE = 3; // your test size — works fine now
-const VIDEOS_CACHE_KEY = "highlightsFeedCache_v1";
 
-// Load one page
+const VIDEOS_PAGE_SIZE = 4;           // slightly larger → better UX
+const VIDEOS_CACHE_KEY = "highlightsFeedCache_v2";
+
 async function loadVideosPage(isFirstPage = true) {
   console.log(`[loadVideosPage] isFirst=${isFirstPage}, lastDoc=${lastVisibleVideoDoc?.id || 'none'}`);
   if (isLoadingVideos) {
@@ -5713,29 +5713,23 @@ async function loadVideosPage(isFirstPage = true) {
     return [];
   }
   isLoadingVideos = true;
-
   try {
     let q = query(
       collection(db, "highlightVideos"),
       orderBy("createdAt", "desc"),
       limit(VIDEOS_PAGE_SIZE)
     );
-
     if (!isFirstPage && lastVisibleVideoDoc) {
       q = query(q, startAfter(lastVisibleVideoDoc));
     }
-
     const snap = await getDocs(q);
     console.log(`[loadVideosPage] Fetched ${snap.size} docs`);
-
     if (snap.empty) {
       hasMoreVideos = false;
       console.log("[loadVideosPage] No more videos");
       return [];
     }
-
     lastVisibleVideoDoc = snap.docs[snap.docs.length - 1];
-
     return snap.docs.map(docSnap => {
       const d = docSnap.data();
       const uploaderName = d.uploaderName || d.chatId || d.displayName || d.username || "Anonymous";
@@ -5765,7 +5759,9 @@ async function loadVideosPage(isFirstPage = true) {
   }
 }
 
-// Button handler (unchanged)
+// ─────────────────────────────────────────────
+// Button handler
+// ─────────────────────────────────────────────
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
     showGoldAlert("Please log in to view cuties");
@@ -5773,37 +5769,34 @@ highlightsBtn.onclick = async () => {
   }
 
   const cache = loadFromCache(VIDEOS_CACHE_KEY);
-  if (cache) {
+  if (cache?.data) {
     allLoadedVideos = cache.data;
     lastVisibleVideoDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
     hasMoreVideos = allLoadedVideos.length % VIDEOS_PAGE_SIZE === 0;
     console.log("[Button] Loaded from cache:", allLoadedVideos.length);
-    showHighlightsModal(allLoadedVideos);
+    showHighlightsModal();
     return;
   }
 
   allLoadedVideos = [];
   lastVisibleVideoDoc = null;
   hasMoreVideos = true;
-
   console.log("[Button] Fetching first page...");
   const firstPage = await loadVideosPage(true);
-  allLoadedVideos = firstPage;
-
-  if (allLoadedVideos.length === 0) {
+  if (firstPage.length === 0) {
     showGoldAlert("No clips uploaded yet");
     return;
   }
 
-  saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc);
-  showHighlightsModal(allLoadedVideos);
+  allLoadedVideos = firstPage;
+  saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc?.id);
+  showHighlightsModal();
 };
 
 /* ---------- Highlights Modal – True Infinite Scroll Feed (Full Rewrite) ---------- */
-function showHighlightsModal(initialVideos) {
+function showHighlightsModal() {
   // Remove any old modal
   document.getElementById("highlightsModal")?.remove();
-
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
@@ -5824,7 +5817,6 @@ function showHighlightsModal(initialVideos) {
     boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-
   // ====================
   // HEADER
   // ====================
@@ -5836,10 +5828,8 @@ function showHighlightsModal(initialVideos) {
     padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
     box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;
   `;
-
   const innerDiv = document.createElement("div");
   innerDiv.style.marginBottom = "8px";
-
   const titleSpan = document.createElement("span");
   titleSpan.style.cssText = `
     background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
@@ -5848,19 +5838,15 @@ function showHighlightsModal(initialVideos) {
   `;
   titleSpan.textContent = "Cuties💕";
   innerDiv.appendChild(titleSpan);
-
   const p1 = document.createElement("p");
   p1.style.margin = "0 0 4px";
   p1.textContent = "Cam-worthy moments from girls on cube.";
-
   const p2 = document.createElement("p");
   p2.style.margin = "0";
   p2.textContent = "Unlock a cutie’s clip with STRZ and get closer.";
-
   introWrapper.appendChild(innerDiv);
   introWrapper.appendChild(p1);
   introWrapper.appendChild(p2);
-
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="21" height="21" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -5871,7 +5857,6 @@ function showHighlightsModal(initialVideos) {
     zIndex: "1002", transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
-
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = (e) => {
@@ -5879,10 +5864,8 @@ function showHighlightsModal(initialVideos) {
     closeBtn.style.transform = "rotate(180deg) scale(1.35)";
     setTimeout(() => modal.remove(), 280);
   };
-
   introWrapper.appendChild(closeBtn);
   modal.appendChild(introWrapper);
-
   // ====================
   // CONTROLS
   // ====================
@@ -5891,10 +5874,8 @@ function showHighlightsModal(initialVideos) {
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
-
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
@@ -5903,7 +5884,6 @@ function showHighlightsModal(initialVideos) {
     border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-
   const trendingBtn = document.createElement("button");
   trendingBtn.textContent = "Trending";
   Object.assign(trendingBtn.style, {
@@ -5912,10 +5892,8 @@ function showHighlightsModal(initialVideos) {
     border: "1px solid rgba(255,0,242,0.7)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
   });
-
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
-
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -5924,7 +5902,6 @@ function showHighlightsModal(initialVideos) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
-
   // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
@@ -5933,18 +5910,29 @@ function showHighlightsModal(initialVideos) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 120px;
   `;
   modal.appendChild(grid);
-
   // Sentinel – tall enough to trigger reliably even with small page sizes
   const sentinel = document.createElement("div");
   sentinel.id = "sentinel";
-  sentinel.style.cssText = "grid-column: 1 / -1; height: 800px;"; // big buffer
+  sentinel.style.cssText = "grid-column: 1 / -1; height: 900px;"; // big buffer
   grid.appendChild(sentinel);
-
   // State
-  let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-  let filterMode = "all";
+  let unlockedVideos = new Set(JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]"));
+  let filterMode = "all";           // "all" | "unlocked" | "trending"
   let activeTags = new Set();
-  let isLoadingMore = false;
+
+  let currentRenderedIds = new Set();   // ← prevents double cards
+
+  function shouldShowVideo(video) {
+    if (filterMode === "unlocked" && !unlockedVideos.has(video.id)) return false;
+    if (filterMode === "trending" && !video.isTrending) return false;
+    if (activeTags.size > 0) {
+      const videoTags = new Set((video.tags || []).map(t => (t || "").trim().toLowerCase()));
+      for (const tag of activeTags) {
+        if (!videoTags.has(tag)) return false;
+      }
+    }
+    return true;
+  }
 
   function renderFeed() {
     // Clear everything except sentinel
@@ -5952,7 +5940,6 @@ function showHighlightsModal(initialVideos) {
       grid.removeChild(grid.firstChild);
     }
     tagContainer.innerHTML = "";
-
     // Generate tags
     const allTags = new Set();
     allLoadedVideos.forEach(v => {
@@ -5960,7 +5947,6 @@ function showHighlightsModal(initialVideos) {
         if (t && typeof t === "string" && t.trim()) allTags.add(t.trim().toLowerCase());
       });
     });
-
     const sortedTags = [...allTags].sort();
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
@@ -5984,23 +5970,8 @@ function showHighlightsModal(initialVideos) {
       };
       tagContainer.appendChild(btn);
     });
-
     // Apply filters
-    let filtered = allLoadedVideos.filter(v => {
-      if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-      if (filterMode === "trending") return v.isTrending === true;
-      return true;
-    });
-
-    if (activeTags.size > 0) {
-      filtered = filtered.filter(v => {
-        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-        return [...activeTags].every(tag => videoTags.includes(tag));
-      });
-    }
-
-    filtered = filtered.sort(() => Math.random() - 0.5);
-
+    let filtered = allLoadedVideos.filter(v => shouldShowVideo(v));
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
@@ -6008,10 +5979,15 @@ function showHighlightsModal(initialVideos) {
       grid.insertBefore(empty, sentinel);
       return;
     }
-
+    // Shuffle filtered results
+    filtered = filtered.sort(() => Math.random() - 0.5);
+    // Render cards
+    const fragment = document.createDocumentFragment();
     filtered.forEach(video => {
-      const isUnlocked = unlockedVideos.includes(video.id);
+      const isUnlocked = unlockedVideos.has(video.id);
       const card = document.createElement("div");
+      card.className = "highlight-card";
+      card.dataset.videoId = video.id;
       Object.assign(card.style, {
         position: "relative",
         aspectRatio: "9/16",
@@ -6023,7 +5999,6 @@ function showHighlightsModal(initialVideos) {
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
-
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -6032,24 +6007,55 @@ function showHighlightsModal(initialVideos) {
         card.style.transform = "scale(1)";
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
-
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-
-      const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = "metadata";
-      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-
-      if (isUnlocked) {
-        videoEl.src = video.previewClip || video.videoUrl || "";
+      // Video element created lazily on hover
+      let videoEl = null;
+      function createVideoOnHover() {
+        if (videoEl) return;
+        videoEl = document.createElement("video");
+        videoEl.muted = true;
+        videoEl.loop = true;
+        videoEl.playsInline = true;
+        videoEl.preload = "none";
+        videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
         videoEl.poster = video.thumbnailUrl || "";
         console.log("Video ID:", video.id, "Poster:", video.thumbnailUrl || "[MISSING]");
-        videoEl.load();
-        vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
-        vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
-      } else {
+        if (isUnlocked) {
+          videoEl.src = video.previewClip || video.videoUrl || "";
+        }
+        vidContainer.appendChild(videoEl);
+        // Play after data loaded if still hovering
+        videoEl.onloadeddata = () => {
+          if (vidContainer.matches(":hover")) {
+            videoEl.play().catch(() => {});
+          }
+        };
+      }
+      vidContainer.onmouseenter = () => {
+        if (!isUnlocked) return;
+        createVideoOnHover();
+        if (videoEl?.src) videoEl.play().catch(() => {});
+      };
+      vidContainer.onmouseleave = () => {
+        if (videoEl) {
+          videoEl.pause();
+          videoEl.currentTime = 0;
+        }
+      };
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        if (!isUnlocked) {
+          showUnlockConfirm(video, () => {
+            unlockedVideos = new Set(JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]"));
+            showStarPopup("Video unlocked! 🎉", "success");
+            renderFeed();
+          });
+          return;
+        }
+        openFullScreenVideo(video.videoUrl || "");
+      };
+      if (!isUnlocked) {
         const lock = document.createElement("div");
         lock.innerHTML = `
           <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
@@ -6060,35 +6066,18 @@ function showHighlightsModal(initialVideos) {
           </div>`;
         vidContainer.appendChild(lock);
       }
-
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        if (!isUnlocked) {
-          showUnlockConfirm(video, () => {
-            unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            renderFeed();
-            showStarPopup("Video unlocked! 🎉", "success");
-          });
-          return;
-        }
-        openFullScreenVideo(video.videoUrl || "");
-      };
-
-      vidContainer.appendChild(videoEl);
+      vidContainer.appendChild(videoEl); // Initially null, but container ready
       card.appendChild(vidContainer);
-
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
         background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
         padding:60px 12px 12px;
       `;
-
       const title = document.createElement("div");
       title.textContent = video.title || "Cute moment";
       title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
       info.appendChild(title);
-
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
@@ -6103,7 +6092,6 @@ function showHighlightsModal(initialVideos) {
         }
       };
       info.appendChild(user);
-
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
       (video.tags || []).forEach(t => {
@@ -6113,9 +6101,7 @@ function showHighlightsModal(initialVideos) {
         tagsEl.appendChild(span);
       });
       info.appendChild(tagsEl);
-
       card.appendChild(info);
-
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
@@ -6128,50 +6114,44 @@ function showHighlightsModal(initialVideos) {
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
-
-      grid.insertBefore(card, sentinel);
+      fragment.appendChild(card);
     });
-
+    grid.insertBefore(fragment, sentinel);
     // Force check after render (critical for small page sizes)
     setTimeout(() => {
       const rect = sentinel.getBoundingClientRect();
-      if (rect.top < window.innerHeight + 800 && hasMoreVideos && !isLoadingMore) {
+      if (rect.top < window.innerHeight + 800 && hasMoreVideos && !isLoadingVideos) {
         console.log("[renderFeed] Sentinel visible after render – loading next page");
         loadNextPage();
       }
     }, 300);
   }
-
   // Infinite scroll observer
   const observer = new IntersectionObserver(
     entries => {
-      if (entries[0].isIntersecting && hasMoreVideos && !isLoadingMore) {
+      if (entries[0].isIntersecting && hasMoreVideos && !isLoadingVideos) {
         console.log("[Observer] Sentinel intersected – loading next page");
         loadNextPage();
       }
     },
     { rootMargin: "800px 0px" } // large margin ensures trigger even with 2 videos
   );
-
   observer.observe(sentinel);
-
   async function loadNextPage() {
-    if (isLoadingMore || !hasMoreVideos) return;
-    isLoadingMore = true;
-
+    if (isLoadingVideos || !hasMoreVideos) return;
+    isLoadingVideos = true;
     // Optional loading indicator
     const loading = document.createElement("div");
     loading.textContent = "Loading more clips...";
     loading.style.cssText = "grid-column: 1 / -1; text-align:center; padding:40px; color:#aaa; font-size:16px;";
     grid.insertBefore(loading, sentinel);
-
     try {
       const nextPage = await loadVideosPage(false);
       loading.remove();
       if (nextPage.length > 0) {
         allLoadedVideos.push(...nextPage);
         renderFeed();
-        saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc);
+        saveToCache(VIDEOS_CACHE_KEY, allLoadedVideos, lastVisibleVideoDoc?.id);
       } else {
         hasMoreVideos = false;
       }
@@ -6179,10 +6159,9 @@ function showHighlightsModal(initialVideos) {
       console.error("Load next page failed:", err);
       loading.textContent = "Error loading more clips";
     } finally {
-      isLoadingMore = false;
+      isLoadingVideos = false;
     }
   }
-
   // Button handlers
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
@@ -6192,7 +6171,6 @@ function showHighlightsModal(initialVideos) {
       : "linear-gradient(135deg, #240046, #3c0b5e)";
     renderFeed();
   };
-
   trendingBtn.onclick = () => {
     filterMode = filterMode === "trending" ? "all" : "trending";
     trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
@@ -6201,14 +6179,13 @@ function showHighlightsModal(initialVideos) {
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderFeed();
   };
-
   // Search input
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       const term = e.target.value.trim().toLowerCase();
       const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
-      grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
+      grid.querySelectorAll(".highlight-card").forEach(card => {
         const userEl = card.querySelector("div[style*='color:#00ffea']");
         let username = userEl?.textContent || "";
         username = username.replace("@", "").trim().toLowerCase();
@@ -6217,22 +6194,17 @@ function showHighlightsModal(initialVideos) {
       });
     });
   }
-
   // Initial render
   renderFeed();
-
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
-
   // Cleanup observer
-  const cleanup = () => observer.disconnect();
-  modal.addEventListener("remove", cleanup, { once: true });
+  modal.addEventListener("remove", () => observer.disconnect(), { once: true });
   closeBtn.onclick = (e) => {
     e.stopPropagation();
     closeBtn.style.transform = "rotate(180deg) scale(1.35)";
     setTimeout(() => {
       modal.remove();
-      cleanup();
     }, 280);
   };
 }
