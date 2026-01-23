@@ -1035,43 +1035,112 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Waiting for auth token sync...");
+  console.log("[TIP] Generating token for UID:", currentUser.uid);
 
-  // Force token refresh + wait loop (fixes race)
-  let idToken = null;
-  let attempts = 0;
-  while (!idToken && attempts < 12) {
-    try {
-      idToken = await auth.currentUser.getIdToken(true);
-      console.log("[TIP] Token ready (length:", idToken.length, ")");
-      if (idToken) break;
-    } catch (err) {
-      console.warn("[TIP] Token attempt", attempts + 1, "failed:", err.message);
-    }
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;
-  }
-
-  if (!idToken) {
-    console.error("[TIP] No token after retries");
+  // Get fresh ID token
+  let idToken;
+  try {
+    idToken = await auth.currentUser.getIdToken(true);
+    console.log("[TIP] ID token ready (length:", idToken.length, ")");
+  } catch (err) {
+    console.error("[TIP] ID token failed:", err.message);
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    const createToken = httpsCallable(functions, "createLoginToken");
-    console.log("[TIP] Calling httpsCallable...");
-    const result = await createToken({}); // empty payload
-    const token = result.data.token;
+    const response = await fetch(
+      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({}) // empty — function ignores it
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server said ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.token) {
+      throw new Error("No token in response");
+    }
+
+    const token = result.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Callable failed:", err.code, err.message, err.details);
+    console.error("[TIP] Fetch failed:", err.message);
     refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
+}
+
+
+// REDEEM BUTTON — plain fetch with manual token (same reliable method as tip)
+async function updateRedeemLink() {
+  if (!refs.redeemBtn || !currentUser?.uid) {
+    console.log("[REDEEM] Skipped: no button or no user");
+    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
+    return;
+  }
+
+  console.log("[REDEEM] Preparing to generate token for UID:", currentUser.uid);
+
+  // 1. Get fresh Firebase ID token (force refresh)
+  let idToken;
+  try {
+    idToken = await auth.currentUser.getIdToken(true);
+    console.log("[REDEEM] ID token refreshed OK (length:", idToken.length, ")");
+  } catch (err) {
+    console.error("[REDEEM] Failed to refresh ID token:", err.message);
+    refs.redeemBtn.href = "/tm";
+    refs.redeemBtn.style.display = "inline-block";
+    return;
+  }
+
+  // 2. Plain fetch — NO body (function doesn't need data)
+  try {
+    const response = await fetch(
+      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        }
+        // NO body line — omit completely
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server responded ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.token) {
+      throw new Error("No token returned from server");
+    }
+
+    const token = result.token;
+    refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
+    console.log("[REDEEM] Success - token generated:", token.substring(0, 20) + "...");
+  } catch (err) {
+    console.error("[REDEEM] Plain fetch failed:", err.message);
+    refs.redeemBtn.href = "/tm";
+  }
+
+  refs.redeemBtn.style.display = "inline-block";
 }
 
 /* ----------------------------
