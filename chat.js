@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// TIP BUTTON — plain fetch with manual token header (bypasses SDK auth race)
+// TIP BUTTON — plain fetch with manual ID token header (bypasses SDK race)
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1067,7 +1067,7 @@ async function updateTipLink() {
 
   console.log("[TIP] Generating token for UID:", currentUser.uid);
 
-  // Get fresh ID token
+  // Force refresh ID token
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
@@ -1085,11 +1085,12 @@ async function updateTipLink() {
       {
         method: "POST",
         mode: "cors",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`
         },
-        body: JSON.stringify({ data: {} }) // callable format
+        body: JSON.stringify({ data: {} }) // required for callable format
       }
     );
 
@@ -1097,7 +1098,7 @@ async function updateTipLink() {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server said ${response.status}: ${errorText}`);
+      throw new Error(`Server responded ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
