@@ -1045,12 +1045,10 @@ async function updateTipLink() {
 
   console.log("[TIP] Generating token for UID:", currentUser.uid);
 
-  // Get fresh ID token
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
     console.log("[TIP] ID token ready (length:", idToken.length, ")");
-    console.log("[TIP] Token preview (first 50 chars):", idToken.substring(0, 50) + "...");
   } catch (err) {
     console.error("[TIP] ID token failed:", err.message);
     refs.tipBtn.href = "/tm";
@@ -1059,7 +1057,6 @@ async function updateTipLink() {
   }
 
   try {
-    console.log("[TIP] Sending fetch with manual Bearer token...");
     const response = await fetch(
       "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
       {
@@ -1078,12 +1075,10 @@ async function updateTipLink() {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.log("[TIP] Raw server error response:", errorText);
       throw new Error(`Server responded ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
-    console.log("[TIP] Full response body:", result);
 
     if (!result.token) {
       throw new Error("No token in response");
