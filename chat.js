@@ -418,6 +418,13 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
+// Wait for SDK token sync (critical!)
+    console.log("[AUTH] Waiting 3s for token sync before buttons...");
+    await new Promise(r => setTimeout(r, 3000));
+
+    if (typeof updateRedeemLink === "function") await updateRedeemLink();
+    if (typeof updateTipLink === "function") await updateTipLink();
+     
     // BUILD CURRENT USER OBJECT
     currentUser = {
       uid,
@@ -1052,6 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // TIP BUTTON — httpsCallable with strong token wait + retry
+// TIP BUTTON — wait for token to be fully synced before calling
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
     console.log("[TIP] Skipped: no button or no user");
@@ -1059,48 +1067,42 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Generating token for UID:", currentUser.uid);
+  console.log("[TIP] Waiting for auth token to be ready...");
 
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token ready (length:", idToken.length, ")");
-  } catch (err) {
-    console.error("[TIP] ID token failed:", err.message);
+  // Wait up to 8 seconds for token to sync
+  let idToken = null;
+  let attempts = 0;
+  const maxAttempts = 16; // 8 seconds total
+  while (!idToken && attempts < maxAttempts) {
+    try {
+      idToken = await auth.currentUser?.getIdToken(true); // force refresh
+      if (idToken && idToken.length > 800) {
+        console.log("[TIP] Token ready after attempt", attempts + 1, "(length:", idToken.length, ")");
+        break;
+      }
+    } catch (err) {
+      console.warn("[TIP] Token refresh attempt", attempts + 1, "failed:", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500)); // 0.5s per attempt
+    attempts++;
+  }
+
+  if (!idToken) {
+    console.error("[TIP] No valid token after", maxAttempts, "attempts");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ data: {} })  // ← THIS WAS THE MISSING FIX
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Server said ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.token) {
-      throw new Error("No token in response");
-    }
-
-    const token = result.token;
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling function...");
+    const result = await createToken({}); // empty payload
+    const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
     console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Fetch failed:", err.message);
+    console.error("[TIP] Callable failed:", err.code, err.message, err.details);
     refs.tipBtn.href = "/tm";
   }
 
