@@ -6611,6 +6611,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Button #topBallersBtn not found");
     return;
   }
+
   button.addEventListener("click", openTipsModal);
   console.log("Tips button listener attached");
 });
@@ -6625,7 +6626,7 @@ function openTipsModal() {
     console.log("Old modal removed");
   }
 
-  // Create modal (page-like feel, compact)
+  // Create modal (page-like feel)
   modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
@@ -6643,146 +6644,144 @@ function openTipsModal() {
     padding: 0;
     margin: 0;
   `;
-
-  modal.innerHTML = `
+modal.innerHTML = `
+  <div style="
+    width: 100%;
+    max-width: 420px;
+    background: #0a0a0a;
+    color: #eee;
+    font-family: system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    max-height: 100vh;
+    overflow-y: auto;
+  ">
+    <!-- Header -->
     <div style="
-      width: 100%;
-      max-width: 380px;
-      background: #0a0a0a;
-      color: #eee;
-      font-family: system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
-      max-height: 100vh;
-      overflow-y: auto;
+      padding: 20px 16px 12px;
+      text-align: center;
+      background: linear-gradient(to bottom, rgba(195,246,12,0.10), transparent);
+      border-bottom: 1px solid rgba(195,246,12,0.20);
     ">
-      <!-- Header - compact -->
-      <div style="
-        padding: 16px 12px 10px;
-        text-align: center;
-        background: linear-gradient(to bottom, rgba(195,246,12,0.08), transparent);
-        border-bottom: 1px solid rgba(195,246,12,0.18);
+      <h3 style="
+        margin: 0;
+        font-size: 20px;
+        color: #c3f60c;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        text-shadow: 0 0 8px rgba(195,246,12,0.4);
+      ">CUBE TIPS</h3>
+      <p style="margin: 8px 0 0; font-size: 14px; color: #eee; opacity: 0.9;">
+        Level up • Earn more • Dominate
+      </p>
+    </div>
+
+    <!-- Carousel / Content Pages -->
+    <div id="tipsCarousel" style="position: relative; flex: 1; overflow: hidden; min-height: 300px;">
+      <div id="tipsSlides" style="
+        display: flex;
+        width: 300%;
+        height: 100%;
+        transition: transform 0.5s ease;
+        transform: translateX(0%);
       ">
-        <h3 style="
-          margin: 0;
-          font-size: 18px;
-          color: #c3f60c;
-          font-weight: 900;
-          letter-spacing: 0.6px;
-          text-shadow: 0 0 6px rgba(195,246,12,0.4);
-        ">CUBE TIPS</h3>
-        <p style="margin: 6px 0 0; font-size: 13px; color: #eee; opacity: 0.9;">
-          Level up • Earn more • Dominate
-        </p>
-      </div>
-
-      <!-- Carousel / Content Pages -->
-      <div id="tipsCarousel" style="position: relative; flex: 1; overflow: hidden; min-height: 280px;">
-        <div id="tipsSlides" style="
-          display: flex;
-          width: 300%;
-          height: 100%;
-          transition: transform 0.5s ease;
-          transform: translateX(0%);
-        ">
-          <!-- Card 1 -->
-          <div style="width: 33.333%; flex-shrink: 0; padding: 0 12px; box-sizing: border-box; display: flex; flex-direction: column;">
-            <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="
-              width: 100%;
-              height: 140px;
-              object-fit: cover;
-              border-radius: 8px;
-              margin: 12px 0 10px;
-              border: 1px solid rgba(195,246,12,0.2);
-            ">
-            <h4 style="margin: 0 0 8px; color: #c3f60c; font-size: 16px; text-align: center;">Welcome to Cube</h4>
-            <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #ddd; text-align: center;">
-              You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
-            </p>
-          </div>
-
-          <!-- Card 2 -->
-          <div style="width: 33.333%; flex-shrink: 0; padding: 0 12px; box-sizing: border-box; display: flex; flex-direction: column;">
-            <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
-              width: 100%;
-              height: 140px;
-              object-fit: cover;
-              border-radius: 8px;
-              margin: 12px 0 10px;
-              border: 1px solid rgba(195,246,12,0.2);
-            ">
-            <h4 style="margin: 0 0 8px; color: #c3f60c; font-size: 16px; text-align: center;">Earn & Cash Out</h4>
-            <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #ddd; text-align: center;">
-              Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
-              Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
-              From STRZ in your wallet → real cash in your bank.<br><br>
-              <strong>Getting paid is easy:</strong><br>1. Set up bank first<br>2. Supports 33+ NG, 15 ZA, 5 international
-            </p>
-          </div>
-
-          <!-- Card 3 -->
-          <div style="width: 33.333%; flex-shrink: 0; padding: 0 12px; box-sizing: border-box; display: flex; flex-direction: column;">
-            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="
-              width: 100%;
-              height: 140px;
-              object-fit: cover;
-              border-radius: 8px;
-              margin: 12px 0 10px;
-              border: 1px solid rgba(195,246,12,0.2);
-            ">
-            <h4 style="margin: 0 0 8px; color: #c3f60c; font-size: 16px; text-align: center;">Send BUZZ Messages 🚨</h4>
-            <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #ddd; text-align: center;">
-              The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
-              Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
-              Costs STRZ — use wisely to get attention.<br><br>
-              <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
-            </p>
-          </div>
+        <!-- Card 1 -->
+        <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 16px 0 12px;
+            border: 1px solid rgba(195,246,12,0.25);
+          ">
+          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Welcome to Cube</h4>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+            You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+          </p>
         </div>
 
-        <!-- Dots - perfectly centered -->
-        <div id="tipsDots" style="
-          position: absolute;
-          bottom: 12px;
-          left: 0;
-          right: 0;
-          margin: 0 auto;
-          width: fit-content;
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          z-index: 10;
-        ">
-          <div data-index="0" style="width:10px; height:10px; border-radius:50%; background:#c3f60c; cursor:pointer;"></div>
-          <div data-index="1" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
-          <div data-index="2" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
+        <!-- Card 2 -->
+        <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 16px 0 12px;
+            border: 1px solid rgba(195,246,12,0.25);
+          ">
+          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Earn & Cash Out</h4>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+            Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
+            Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
+            From STRZ in your wallet → real cash in your bank.<br><br>
+            <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 16px 0 12px;
+            border: 1px solid rgba(195,246,12,0.25);
+          ">
+          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Send BUZZ Messages 🚨</h4>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+            The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
+            Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
+            Costs STRZ — use wisely to get attention.<br><br>
+            <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
+          </p>
         </div>
       </div>
 
-      <!-- Close button - always visible -->
-      <div style="
-        padding: 12px 16px;
-        text-align: center;
-        background: rgba(0,0,0,0.75);
-        border-top: 1px solid rgba(195,246,12,0.15);
-        flex-shrink: 0;
+      <!-- Dots - centered perfectly -->
+      <div id="tipsDots" style="
+        position: absolute;
+        bottom: 16px;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: fit-content;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        z-index: 10;
       ">
-        <button id="closeTipsBtn" style="
-          padding: 12px 40px;
-          border: none;
-          border-radius: 12px;
-          background: #c3f60c;
-          color: #000;
-          font-weight: 900;
-          font-size: 15px;
-          cursor: pointer;
-          box-shadow: 0 3px 12px rgba(195,246,12,0.4);
-        ">GOT IT 🔥</button>
+        <div data-index="0" style="width:10px; height:10px; border-radius:50%; background:#c3f60c; cursor:pointer;"></div>
+        <div data-index="1" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
+        <div data-index="2" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
       </div>
     </div>
-  `;
 
+    <!-- Close button - always visible at bottom -->
+    <div style="
+      padding: 16px;
+      text-align: center;
+      background: rgba(0,0,0,0.7);
+      border-top: 1px solid rgba(195,246,12,0.2);
+      flex-shrink: 0;
+    ">
+      <button id="closeTipsBtn" style="
+        padding: 14px 48px;
+        border: none;
+        border-radius: 14px;
+        background: #c3f60c;
+        color: #000;
+        font-weight: 900;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(195,246,12,0.4);
+      ">GOT IT 🔥</button>
+    </div>
+  </div>
+`;
   document.body.appendChild(modal);
   console.log("Modal appended to body");
 
