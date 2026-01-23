@@ -1065,15 +1065,15 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Generating token for UID:", currentUser.uid);
+  console.log("[TIP] Generating secure token for UID:", currentUser.uid);
 
-  // Force token refresh
+  // Force refresh ID token
   let idToken;
   try {
     idToken = await auth.currentUser.getIdToken(true);
     console.log("[TIP] ID token ready (length:", idToken.length, ")");
   } catch (err) {
-    console.error("[TIP] ID token failed:", err.message);
+    console.error("[TIP] Failed to get ID token:", err.message);
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
@@ -1085,7 +1085,7 @@ async function updateTipLink() {
       {
         method: "POST",
         mode: "cors",
-        credentials: "same-origin", // helps with cookies if needed
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`
@@ -1098,7 +1098,7 @@ async function updateTipLink() {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server said ${response.status}: ${errorText}`);
+      throw new Error(`Server responded ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
@@ -1109,7 +1109,7 @@ async function updateTipLink() {
 
     const token = result.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] SUCCESS - token generated:", token.substring(0, 20) + "...");
   } catch (err) {
     console.error("[TIP] Fetch failed:", err.message);
     refs.tipBtn.href = "/tm";
@@ -1117,7 +1117,6 @@ async function updateTipLink() {
 
   refs.tipBtn.style.display = "inline-block";
 }
-
 
 // REDEEM BUTTON — plain fetch with manual token (same reliable method as tip)
 async function updateRedeemLink() {
