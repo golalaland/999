@@ -1063,7 +1063,7 @@ async function updateTipLink() {
       {
         method: "POST",
         mode: "cors",
-        credentials: "same-origin",
+        credentials: "include", // include cookies if needed
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`
@@ -1073,6 +1073,7 @@ async function updateTipLink() {
     );
 
     console.log("[TIP] Server status:", response.status);
+    console.log("[TIP] Response OK:", response.ok);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -1097,7 +1098,6 @@ async function updateTipLink() {
 
   refs.tipBtn.style.display = "inline-block";
 }
-
 /* ── REDEEM BUTTON ── (same logic) */
 async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) {
