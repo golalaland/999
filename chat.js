@@ -4619,7 +4619,8 @@ confirmBtn.onclick = async () => {
         
 // ================================
 // HIGHLIGHT UPLOAD HANDLER + PROGRESS BAR + THUMBNAIL
-// Stores per-user in highlightVideos collection — one doc per user, array of all their highlights
+// One document per user in highlightVideos collection
+// All user's videos stored in 'highlights' array inside that one doc
 // ================================
 
 function toCloudflareUrl(firebaseUrl) {
@@ -4694,13 +4695,13 @@ async function generateThumbnail(file) {
             const ctx = canvas.getContext('2d');
             if (!ctx) {
                 URL.revokeObjectURL(video.src);
-                return reject(new Error('Canvas context failed'));
+                return reject(new Error('Canvas failed'));
             }
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             canvas.toBlob(blob => {
                 URL.revokeObjectURL(video.src);
-                if (!blob) return reject(new Error('Blob creation failed'));
+                if (!blob) return reject(new Error('Blob failed'));
                 resolve(new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }));
             }, 'image/jpeg', 0.85);
         };
@@ -4756,7 +4757,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     btn.disabled = true;
     btn.classList.add('uploading');
     btn.textContent = 'Processing...';
-
     const progressContainer = document.getElementById('progressContainer');
     if (progressContainer) progressContainer.style.opacity = '1';
     showStarPopup('Dropping your highlight...', 'loading');
@@ -4775,7 +4775,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
         const videoName = `${ts}_${rand}.${ext}`;
         const thumbName = thumbnailFile ? `thumb_${ts}_${rand}.jpg` : null;
-
         const basePath = `users/${currentUser.uid}`;
         const videoPath = `${basePath}/${videoName}`;
         const thumbPath = thumbName ? `${basePath}/${thumbName}` : null;
@@ -4811,41 +4810,35 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
                     let thumbnailUrl = '';
                     if (thumbnailFile && thumbPath) {
                         const thumbRef = ref(storage, thumbPath);
-                        await uploadBytes(thumbRef, thumbnailFile, {
-                            contentType: 'image/jpeg',
-                            cacheControl: 'public, max-age=31536000, immutable'
-                        });
+                        await uploadBytes(thumbRef, thumbnailFile, { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' });
                         const rawThumb = await getDownloadURL(thumbRef);
                         thumbnailUrl = toCloudflareUrl(rawThumb);
                     }
 
-                    const item = {
+                    // This object is SAFE for arrayUnion (no serverTimestamp inside)
+                    const newHighlight = {
                         id: `${ts}_${rand}`,
                         title: isBoost ? `@${currentUser.chatId || 'Legend'}` : title,
                         description: description || '',
-                        videoUrl,
-                        thumbnailUrl,
+                        videoUrl: videoUrl,
+                        thumbnailUrl: thumbnailUrl,
                         storagePath: videoPath,
                         highlightVideoPrice: isBoost ? 0 : price,
                         tags: tags.length ? tags : [],
                         views: 0,
                         isTrending: isBoost,
-                        uploadedAt: serverTimestamp(),
-                        createdAt: serverTimestamp()
+                        trendingUntil: isBoost ? Date.now() + 86400000 : null   // plain number, not Timestamp
                     };
-                    if (isBoost) {
-                        item.trendingUntil = Timestamp.fromMillis(Date.now() + 86400000);
-                    }
 
-                    const docRef = doc(db, 'highlightVideos', currentUser.uid);
+                    const userHighlightsDoc = doc(db, 'highlightVideos', currentUser.uid);
 
-                    await updateDoc(docRef, {
-                        highlights: arrayUnion(item),
-                        uploaderId: currentUser.uid,          // ensure set once
+                    await updateDoc(userHighlightsDoc, {
+                        highlights: arrayUnion(newHighlight),
+                        uploaderId: currentUser.uid,
                         uploaderName: currentUser.chatId || 'Legend',
-                        lastUploadAt: serverTimestamp(),
+                        lastUploadAt: serverTimestamp(),   // allowed here
                         totalVideos: increment(1)
-                    }, { merge: true });  // create doc if not exists
+                    }, { merge: true });   // creates the doc automatically if it's the first upload
 
                     showStarPopup('Your Video is LIVE! 🎉', 'success');
                     btn.textContent = isBoost ? 'TRENDING LIVE!' : 'DROPPED!';
