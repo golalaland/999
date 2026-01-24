@@ -4815,7 +4815,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
                         thumbnailUrl = toCloudflareUrl(rawThumb);
                     }
 
-                    // This object is SAFE for arrayUnion (no serverTimestamp inside)
                     const newHighlight = {
                         id: `${ts}_${rand}`,
                         title: isBoost ? `@${currentUser.chatId || 'Legend'}` : title,
@@ -4827,18 +4826,35 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
                         tags: tags.length ? tags : [],
                         views: 0,
                         isTrending: isBoost,
-                        trendingUntil: isBoost ? Date.now() + 86400000 : null   // plain number, not Timestamp
+                        trendingUntil: isBoost ? Date.now() + 86400000 : null,  // client-side millis
+                        uploadedAt: new Date().toISOString(),   // client-side ISO string (or use server later if needed)
+                        createdAt: new Date().toISOString()
                     };
 
-                    const userHighlightsDoc = doc(db, 'highlightVideos', currentUser.uid);
+                    const docRef = doc(db, 'highlightVideos', currentUser.uid);
 
-                    await updateDoc(userHighlightsDoc, {
-                        highlights: arrayUnion(newHighlight),
-                        uploaderId: currentUser.uid,
-                        uploaderName: currentUser.chatId || 'Legend',
-                        lastUploadAt: serverTimestamp(),   // allowed here
-                        totalVideos: increment(1)
-                    }, { merge: true });   // creates the doc automatically if it's the first upload
+                    try {
+                        // Try update first (for existing docs)
+                        await updateDoc(docRef, {
+                            highlights: arrayUnion(newHighlight),
+                            lastUploadAt: serverTimestamp(),
+                            totalVideos: increment(1)
+                        });
+                    } catch (updateErr) {
+                        if (updateErr.code === 'not-found' || updateErr.message.includes('No document to update')) {
+                            // Create new doc for first-time user
+                            await setDoc(docRef, {
+                                uploaderId: currentUser.uid,
+                                uploaderName: currentUser.chatId || 'Legend',
+                                createdAt: serverTimestamp(),
+                                lastUploadAt: serverTimestamp(),
+                                totalVideos: 1,
+                                highlights: [newHighlight]
+                            });
+                        } else {
+                            throw updateErr;
+                        }
+                    }
 
                     showStarPopup('Your Video is LIVE! 🎉', 'success');
                     btn.textContent = isBoost ? 'TRENDING LIVE!' : 'DROPPED!';
@@ -4852,7 +4868,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
                 } catch (err) {
                     console.error('Save failed:', err);
-                    showStarPopup('Upload ok but save failed — try again', 'error');
+                    showStarPopup('Upload succeeded but saving failed — try again', 'error');
                     resetButton(btn);
                 }
             }
