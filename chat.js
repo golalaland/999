@@ -1037,10 +1037,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Create a secure token (your original, unchanged)
+// Create a secure token (your original, with safety)
 async function createLoginToken(uid) {
   if (!uid) {
-    console.warn("[TOKEN] No UID provided — cannot create token");
+    console.warn("[TOKEN] No UID — cannot create token");
     return null;
   }
 
@@ -1054,15 +1054,15 @@ async function createLoginToken(uid) {
       createdAt: serverTimestamp(),
       expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes
     });
-    console.log("[TOKEN] Created token for UID:", uid);
+    console.log("[TOKEN] Created for UID:", uid);
     return token;
   } catch (err) {
-    console.error("[TOKEN] Failed to create token:", err);
+    console.error("[TOKEN] Failed:", err);
     return null;
   }
 }
 
-// Cleanup expired tokens (run this periodically, e.g. on login or via cron)
+// Cleanup expired tokens (run on login or periodically)
 async function cleanupExpiredTokens() {
   const tokensRef = collection(db, "loginTokens");
   const q = query(tokensRef, where("expiresAt", "<", Date.now()));
@@ -1077,7 +1077,7 @@ async function cleanupExpiredTokens() {
     await batch.commit();
     console.log("[CLEANUP] Deleted", snap.size, "expired tokens");
   } catch (err) {
-    console.error("[CLEANUP] Failed to delete expired tokens:", err);
+    console.error("[CLEANUP] Failed:", err);
   }
 }
 
@@ -1089,7 +1089,7 @@ async function updateRedeemLink() {
   }
 
   if (!currentUser?.uid) {
-    console.warn("[REDEEM] No currentUser or UID — using fallback");
+    console.warn("[REDEEM] No currentUser — fallback");
     refs.redeemBtn.href = "/tm";
     refs.redeemBtn.style.display = "inline-block";
     return;
@@ -1097,13 +1097,8 @@ async function updateRedeemLink() {
 
   try {
     const token = await createLoginToken(currentUser.uid);
-    if (token) {
-      refs.redeemBtn.href = `/tm?t=${token}`;
-      console.log("[REDEEM] Success - token set");
-    } else {
-      refs.redeemBtn.href = "/tm";
-      console.warn("[REDEEM] Token creation failed — fallback");
-    }
+    refs.redeemBtn.href = token ? `/tm?t=${token}` : "/tm";
+    console.log("[REDEEM] Success");
   } catch (err) {
     console.warn("[REDEEM] Error:", err);
     refs.redeemBtn.href = "/tm";
@@ -1121,7 +1116,7 @@ async function updateTipLink() {
   }
 
   if (!currentUser?.uid) {
-    console.warn("[TIP] No currentUser or UID — using fallback");
+    console.warn("[TIP] No currentUser — fallback");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
@@ -1129,13 +1124,8 @@ async function updateTipLink() {
 
   try {
     const token = await createLoginToken(currentUser.uid);
-    if (token) {
-      refs.tipBtn.href = `/tm?t=${token}`;
-      console.log("[TIP] Success - token set");
-    } else {
-      refs.tipBtn.href = "/tm";
-      console.warn("[TIP] Token creation failed — fallback");
-    }
+    refs.tipBtn.href = token ? `/tm?t=${token}` : "/tm";
+    console.log("[TIP] Success");
   } catch (err) {
     console.warn("[TIP] Error:", err);
     refs.tipBtn.href = "/tm";
