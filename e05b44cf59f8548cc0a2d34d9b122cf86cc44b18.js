@@ -146,7 +146,7 @@ endGameModal.innerHTML = `
                cursor:pointer;position:relative;z-index:999999;
                box-shadow:0 5px 15px rgba(255,0,170,0.4);"
         onclick="location.reload(true)">
-        PLAY AGAIN
+        GOT IT
       </button>
     </div>
   </div>
@@ -213,7 +213,7 @@ setTimeout(() => {
                    currentUser?.email?.replace(/,/g, '_').split('@')[0] || 
                    "A Warrior";
 
-  const text = `${realName} just smashed ${taps.toLocaleString()} taps and earned ₦${earnings.toLocaleString()}! Can you beat that?`;
+  const text = `${realName} just smashed ${taps.toLocaleString()} taps and earned a place in the leaderboard to WIN todays gift,  Can you beat that?`;
 
   if (navigator.share) {
     navigator.share({ 
