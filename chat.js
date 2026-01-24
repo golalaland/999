@@ -395,12 +395,14 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-// Wait for SDK token sync (critical!)
-    console.log("[AUTH] Waiting 3s for token sync before buttons...");
-    await new Promise(r => setTimeout(r, 2000));
+// Wait a moment for auth to stabilize
+    await new Promise(r => setTimeout(r, 1500));
 
-    if (typeof updateRedeemLink === "function") await updateRedeemLink();
-    if (typeof updateTipLink === "function") await updateTipLink();
+    // Run cleanup once per login (optional)
+    await cleanupExpiredTokens();
+
+    await updateRedeemLink();
+    await updateTipLink();
      
     // BUILD CURRENT USER OBJECT
     currentUser = {
@@ -1035,101 +1037,112 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Helper: Create and store a new token in user's array document
-async function createAndStoreToken(uid) {
-  if (!uid) return null;
+// Create a secure token (your original, unchanged)
+async function createLoginToken(uid) {
+  if (!uid) {
+    console.warn("[TOKEN] No UID provided — cannot create token");
+    return null;
+  }
 
-  const token = crypto.randomUUID(); // or use your old random generator
-  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
-
-  const tokenDocRef = doc(db, "userTokens", uid);
+  const token = crypto.getRandomValues(new Uint8Array(16))
+                     .reduce((s, b) => s + b.toString(16).padStart(2,'0'), '');
+  const tokenRef = doc(db, "loginTokens", token);
 
   try {
-    await runTransaction(db, async (transaction) => {
-      const tokenDoc = await transaction.get(tokenDocRef);
-
-      let tokens = [];
-      if (tokenDoc.exists()) {
-        tokens = tokenDoc.data().tokens || [];
-      }
-
-      // Clean expired tokens (optional but recommended)
-      tokens = tokens.filter(t => t.expiresAt > Date.now());
-
-      // Add new token
-      tokens.push({
-        token,
-        createdAt: Date.now(),
-        expiresAt,
-        used: false
-      });
-
-      transaction.set(tokenDocRef, {
-        tokens,
-        lastUpdated: serverTimestamp()
-      }, { merge: true });
+    await setDoc(tokenRef, {
+      uid,
+      createdAt: serverTimestamp(),
+      expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes
     });
-
-    console.log("[TOKEN] New token created and stored:", token.substring(0, 8) + "...");
+    console.log("[TOKEN] Created token for UID:", uid);
     return token;
   } catch (err) {
-    console.error("[TOKEN] Failed to store token:", err);
+    console.error("[TOKEN] Failed to create token:", err);
     return null;
   }
 }
-// Usage in updateTipLink / updateRedeemLink
-const token = await createAndStoreToken(currentUser.uid);
-if (token) {
-  refs.tipBtn.href = `/tm?t=${token}`;
-} else {
-  refs.tipBtn.href = "/tm"; // fallback
+
+// Cleanup expired tokens (run this periodically, e.g. on login or via cron)
+async function cleanupExpiredTokens() {
+  const tokensRef = collection(db, "loginTokens");
+  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return;
+
+  const batch = writeBatch(db);
+  snap.forEach(docSnap => batch.delete(docSnap.ref));
+
+  try {
+    await batch.commit();
+    console.log("[CLEANUP] Deleted", snap.size, "expired tokens");
+  } catch (err) {
+    console.error("[CLEANUP] Failed to delete expired tokens:", err);
+  }
 }
 
-
-// TIP BUTTON — plain fetch with manual ID token header (bypasses SDK race)
-async function updateTipLink() {
-  if (!refs.tipBtn || !currentUser?.uid) {
-    console.log("[TIP] Skipped: no button or no user");
-    if (refs.tipBtn) refs.tipBtn.style.display = "none";
-    return;
-  }
-
-  console.log("[TIP] Generating secure token for UID:", currentUser.uid);
-
-  const token = await createAndStoreToken(currentUser.uid);
-
-  if (token) {
-    refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token set:", token.substring(0, 20) + "...");
-  } else {
-    console.warn("[TIP] Token generation failed, using fallback");
-    refs.tipBtn.href = "/tm";
-  }
-
-  refs.tipBtn.style.display = "inline-block";
-}
-
-/* ── REDEEM BUTTON ── (same logic) */
+// REDEEM BUTTON — SAFE & ALWAYS SHOWS
 async function updateRedeemLink() {
-  if (!refs.redeemBtn || !currentUser?.uid) {
-    console.log("[REDEEM] Skipped: no button or no user");
-    if (refs.redeemBtn) refs.redeemBtn.style.display = "none";
+  if (!refs.redeemBtn) {
+    console.log("[REDEEM] No redeem button found");
     return;
   }
 
-  console.log("[REDEEM] Generating secure token for UID:", currentUser.uid);
+  if (!currentUser?.uid) {
+    console.warn("[REDEEM] No currentUser or UID — using fallback");
+    refs.redeemBtn.href = "/tm";
+    refs.redeemBtn.style.display = "inline-block";
+    return;
+  }
 
-  const token = await createAndStoreToken(currentUser.uid);
-
-  if (token) {
-    refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[REDEEM] Success - token set:", token.substring(0, 20) + "...");
-  } else {
-    console.warn("[REDEEM] Token generation failed, using fallback");
+  try {
+    const token = await createLoginToken(currentUser.uid);
+    if (token) {
+      refs.redeemBtn.href = `/tm?t=${token}`;
+      console.log("[REDEEM] Success - token set");
+    } else {
+      refs.redeemBtn.href = "/tm";
+      console.warn("[REDEEM] Token creation failed — fallback");
+    }
+  } catch (err) {
+    console.warn("[REDEEM] Error:", err);
     refs.redeemBtn.href = "/tm";
   }
 
   refs.redeemBtn.style.display = "inline-block";
+  console.log("[REDEEM] Button shown");
+}
+
+// TIP BUTTON — SAFE & ALWAYS SHOWS
+async function updateTipLink() {
+  if (!refs.tipBtn) {
+    console.log("[TIP] No tip button found");
+    return;
+  }
+
+  if (!currentUser?.uid) {
+    console.warn("[TIP] No currentUser or UID — using fallback");
+    refs.tipBtn.href = "/tm";
+    refs.tipBtn.style.display = "inline-block";
+    return;
+  }
+
+  try {
+    const token = await createLoginToken(currentUser.uid);
+    if (token) {
+      refs.tipBtn.href = `/tm?t=${token}`;
+      console.log("[TIP] Success - token set");
+    } else {
+      refs.tipBtn.href = "/tm";
+      console.warn("[TIP] Token creation failed — fallback");
+    }
+  } catch (err) {
+    console.warn("[TIP] Error:", err);
+    refs.tipBtn.href = "/tm";
+  }
+
+  refs.tipBtn.style.display = "inline-block";
+  console.log("[TIP] Button shown");
 }
 
 /* ----------------------------
