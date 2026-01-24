@@ -6227,133 +6227,165 @@ function showHighlightsModal(videos) {
 }
 
 function showUnlockConfirm(video, onUnlockCallback) {
-  document.querySelectorAll("video").forEach(v => v.pause());
-  document.getElementById("unlockConfirmModal")?.remove();
+    document.querySelectorAll("video").forEach(v => v.pause());
+    document.getElementById("unlockConfirmModal")?.remove();
 
-   const modal = document.createElement("div");
-  modal.id = "unlockConfirmModal";
-  Object.assign(modal.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    background: "rgba(0,0,0,0.93)",
-    backdropFilter: "blur(8px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: "1000001",
-    opacity: "1",
-  });
-  modal.innerHTML = `
-    <div style="background:#111;padding:20px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
-      <h3 style="margin-bottom:10px;font-weight:600;">Unlock "${video.title}"?</h3>
-      <p style="margin-bottom:16px;">This will cost <b>${video.highlightVideoPrice} STRZ</b></p>
-      <div style="display:flex;gap:12px;justify-content:center;">
-        <button id="cancelUnlock" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
-        <button id="confirmUnlock" style="padding:8px 16px;background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
+    const modal = document.createElement("div");
+    modal.id = "unlockConfirmModal";
+    Object.assign(modal.style, {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(0,0,0,0.93)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: "1000001",
+        opacity: "1",
+    });
 
-  modal.querySelector("#cancelUnlock").onclick = () => modal.remove();
-  modal.querySelector("#confirmUnlock").onclick = async () => {
-    modal.remove();
-    await unlockVideo(video);
-  };
+    modal.innerHTML = `
+        <div style="background:#111;padding:20px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <h3 style="margin-bottom:10px;font-weight:600;">Unlock "${video.title}"?</h3>
+            <p style="margin-bottom:16px;">This will cost <b>${video.highlightVideoPrice} STRZ</b></p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button id="cancelUnlock" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
+                <button id="confirmUnlock" style="padding:8px 16px;background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector("#cancelUnlock").onclick = () => modal.remove();
+
+    modal.querySelector("#confirmUnlock").onclick = async () => {
+        modal.remove();
+        await unlockVideo(video);
+    };
 }
 
 async function unlockVideo(video) {
-  if (!currentUser?.uid) {
-    return showGoldAlert("Login required");
-  }
-
-  if (currentUser.uid === video.uploaderId) {
-    return showGoldAlert("You already own this clip");
-  }
-
-  const cost = Number(video.highlightVideoPrice) || 0;
-  if (cost <= 0) {
-    return showGoldAlert("Invalid price");
-  }
-
-  try {
-    // ——— ATOMIC TRANSACTION: Transfer STRZ + Unlock ———
-    await runTransaction(db, async (tx) => {
-      const buyerDoc = await tx.get(doc(db, "users", currentUser.uid));
-      const buyerData = buyerDoc.data();
-
-      if ((buyerData?.stars || 0) < cost) {
-        throw new Error("Not enough STRZ to unlock this clip");
-      }
-
-      // Deduct from buyer, add to uploader
-      tx.update(doc(db, "users", currentUser.uid), {
-        stars: increment(-cost)
-      });
-      tx.update(doc(db, "users", video.uploaderId), {
-        stars: increment(cost)
-      });
-
-      // Mark video as unlocked
-      tx.update(doc(db, "highlightVideos", video.id), {
-        unlockedBy: arrayUnion(currentUser.uid)
-      });
-
-      // Add to buyer's unlocked list
-      tx.update(doc(db, "users", currentUser.uid), {
-        unlockedVideos: arrayUnion(video.id)
-      });
-    });
-
-    // ——— LOCAL CACHE UPDATE ———
-    const unlocked = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-    if (!unlocked.includes(video.id)) {
-      unlocked.push(video.id);
-      localStorage.setItem("userUnlockedVideos", JSON.stringify(unlocked));
+    if (!currentUser?.uid) {
+        return showGoldAlert("Login required");
     }
 
-    // ——— SEND NOTIFICATION TO UPLOADER —
+    if (currentUser.uid === video.uploaderId) {
+        return showGoldAlert("You already own this clip");
+    }
+
+    const cost = Number(video.highlightVideoPrice) || 0;
+    if (cost <= 0) {
+        return showGoldAlert("Invalid price");
+    }
+
     try {
-      await addDoc(collection(db, "notifications"), {
-        type: "clip_purchased",
-        title: "Your clip was unlocked!",
-        message: `${currentUser.chatId || "Someone"} paid ${cost} STRZ for "${video.title}"`,
-        videoId: video.id,
-        videoTitle: video.title,
-        buyerId: currentUser.uid,
-        buyerName: currentUser.chatId || "Anonymous",
-        recipientId: video.uploaderId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-    } catch (notifErr) {
-      console.warn("Notification failed (non-critical):", notifErr);
-      // Don't break unlock if notification fails
+        // ─── ATOMIC TRANSACTION ─────────────────────────────────────────────
+        await runTransaction(db, async (tx) => {
+            // 1. Buyer doc
+            const buyerRef = doc(db, "users", currentUser.uid);
+            const buyerSnap = await tx.get(buyerRef);
+            if (!buyerSnap.exists()) throw new Error("Buyer account not found");
+
+            const buyerData = buyerSnap.data();
+            const buyerStars = buyerData?.stars || 0;
+
+            if (buyerStars < cost) {
+                throw new Error("NOT_ENOUGH_STRZ"); // ← custom code to detect later
+            }
+
+            // 2. Uploader doc
+            const uploaderRef = doc(db, "users", video.uploaderId);
+            const uploaderSnap = await tx.get(uploaderRef);
+            if (!uploaderSnap.exists()) throw new Error("Uploader not found");
+
+            // 3. Highlights container doc
+            const highlightsRef = doc(db, "highlightVideos", video.uploaderId);
+            const highlightsSnap = await tx.get(highlightsRef);
+            if (!highlightsSnap.exists()) throw new Error("Highlights document not found");
+
+            const highlightsData = highlightsSnap.data();
+            const currentHighlights = highlightsData.highlights || [];
+
+            // Find the exact clip object to update
+            const clipIndex = currentHighlights.findIndex(c => c.id === video.id);
+            if (clipIndex === -1) throw new Error("Clip not found in array");
+
+            const updatedClip = { ...currentHighlights[clipIndex] };
+            updatedClip.unlockedBy = [...(updatedClip.unlockedBy || []), currentUser.uid];
+
+            // Build updated array
+            const updatedArray = [...currentHighlights];
+            updatedArray[clipIndex] = updatedClip;
+
+            // ─── Apply all updates in transaction ───
+            tx.update(buyerRef, { stars: increment(-cost) });
+            tx.update(uploaderRef, { stars: increment(cost) });
+            tx.update(highlightsRef, {
+                highlights: updatedArray,
+                lastUploadAt: serverTimestamp() // optional
+            });
+
+            // Add to buyer's unlocked list (optional, for quick check later)
+            tx.update(buyerRef, {
+                unlockedVideos: arrayUnion(video.id)
+            });
+        });
+
+        // ─── Success ────────────────────────────────────────────────────────
+        // Update local cache
+        let unlocked = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+        if (!unlocked.includes(video.id)) {
+            unlocked.push(video.id);
+            localStorage.setItem("userUnlockedVideos", JSON.stringify(unlocked));
+        }
+
+        // Send notification to uploader (non-blocking)
+        try {
+            await addDoc(collection(db, "notifications"), {
+                type: "clip_purchased",
+                title: "Your clip was unlocked!",
+                message: `${currentUser.chatId || "Someone"} paid ${cost} STRZ for "${video.title}"`,
+                videoId: video.id,
+                videoTitle: video.title,
+                buyerId: currentUser.uid,
+                buyerName: currentUser.chatId || "Anonymous",
+                recipientId: video.uploaderId,
+                read: false,
+                createdAt: serverTimestamp()
+            });
+        } catch (notifErr) {
+            console.warn("Notification failed (non-critical):", notifErr);
+        }
+
+        showGoldAlert(`You unlocked "${video.title}"! 🎉`);
+
+        // Refresh UI
+        document.getElementById("highlightsModal")?.remove();
+        setTimeout(() => {
+            if (typeof highlightsBtn?.click === 'function') highlightsBtn.click();
+            if (typeof loadMyClips === 'function') loadMyClips();
+        }, 400);
+
+        if (typeof loadNotifications === "function") loadNotifications();
+
+    } catch (error) {
+        console.error("Unlock failed:", error);
+
+        let userMessage = "Unlock failed — try again";
+
+        if (error.message === "NOT_ENOUGH_STRZ") {
+            userMessage = "Not enough STRZ to unlock this clip";
+        } else if (error.message.includes("No document to update") || error.code === "not-found") {
+            userMessage = "Clip not found or already processed";
+        }
+
+        showGoldAlert(userMessage);
     }
-
-    // — SUCCESS —
-    showGoldAlert(`You Unlocked "${video.title}"!`);
-    
-    // Close modal & refresh highlights
-    document.getElementById("highlightsModal")?.remove();
-    setTimeout(() => highlightsBtn?.click(), 400);
-
-    // Optional: refresh notifications badge instantly
-    if (typeof loadNotifications === "function") {
-      loadNotifications();
-    }
-
-  } catch (error) {
-    console.error("Unlock failed:", error);
-    const msg = error.message || error;
-    showGoldAlert(msg === "Not enough STRZ" ? "Not enough STRZ" : "Unlock failed — try again");
-  }
 }
-
 async function loadMyClips() {
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
