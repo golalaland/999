@@ -1042,62 +1042,45 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Generating token for UID:", currentUser.uid);
+  console.log("[TIP] Waiting for auth token sync...");
 
-  let idToken;
-  try {
-    idToken = await auth.currentUser.getIdToken(true);
-    console.log("[TIP] ID token ready (length:", idToken.length, ")");
-    console.log("[TIP] Token preview (first 50 chars):", idToken.substring(0, 50) + "...");
-  } catch (err) {
-    console.error("[TIP] ID token failed:", err.message);
+  let idToken = null;
+  let attempts = 0;
+  const maxAttempts = 12; // ~6 seconds
+  while (!idToken && attempts < maxAttempts) {
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+      console.log("[TIP] Token ready after attempt", attempts + 1, "(length:", idToken.length, ")");
+      if (idToken) break;
+    } catch (err) {
+      console.warn("[TIP] Attempt", attempts + 1, "failed:", err.message);
+    }
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;
+  }
+
+  if (!idToken) {
+    console.error("[TIP] No token after", maxAttempts, "attempts");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
   try {
-    console.log("[TIP] Sending fetch with manual Bearer token...");
-    const response = await fetch(
-      "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
-      {
-        method: "POST",
-        mode: "cors",
-        credentials: "include", // include cookies if needed
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ data: {} })
-      }
-    );
-
-    console.log("[TIP] Server status:", response.status);
-    console.log("[TIP] Response OK:", response.ok);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log("[TIP] Raw server error:", errorText);
-      throw new Error(`Server responded ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("[TIP] Full response body:", result);
-
-    if (!result.token) {
-      throw new Error("No token in response");
-    }
-
-    const token = result.token;
+    const createToken = httpsCallable(functions, "createLoginToken");
+    console.log("[TIP] Calling createLoginToken...");
+    const result = await createToken({});
+    const token = result.data.token;
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] SUCCESS - token:", token.substring(0, 20) + "...");
+    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
   } catch (err) {
-    console.error("[TIP] Fetch failed:", err.message);
+    console.error("[TIP] Callable failed:", err.code, err.message, err.details);
     refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
 }
+
 /* ── REDEEM BUTTON ── (same logic) */
 async function updateRedeemLink() {
   if (!refs.redeemBtn || !currentUser?.uid) {
