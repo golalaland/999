@@ -286,46 +286,34 @@ function updateInfoTab() {
 }
 
 
-
+// Game page: loadCurrentUserForGame (your old working version, slightly cleaned)
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1️⃣ Try token from URL (new array-based method)
+    // 1. Try token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
-
     if (token) {
-      console.log("[TM] Token found in URL:", token.substring(0, 20) + "...");
-
-      // We need the UID to look up the token doc — try localStorage first
-      let possibleUid = localStorage.getItem("vipUser") ? JSON.parse(localStorage.getItem("vipUser"))?.uid : null;
-
-      if (possibleUid) {
-        uid = await validateAndUseToken(token, possibleUid);
-        if (uid) {
-          console.log("[TM] Valid token used, UID:", uid);
-        } else {
-          console.warn("[TM] Token invalid or expired");
-        }
-      } else {
-        console.warn("[TM] No possible UID in localStorage — cannot validate token");
-      }
+      console.log("[TM] Token found:", token.substring(0, 20) + "...");
+      uid = await loadUserFromToken(token);
+      if (uid) console.log("[TM] Valid token → UID:", uid);
+      else console.warn("[TM] Token invalid/expired");
     }
 
-    // 2️⃣ Fallback to localStorage
+    // 2. Fallback to localStorage
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
       if (storedUser?.uid) {
         uid = storedUser.uid;
-        console.log("[TM] UID from localStorage:", uid);
+        console.log("[TM] From localStorage:", uid);
       }
     }
 
-    console.log("[TM] Final UID before Firestore:", uid);
+    console.log("[TM] Final UID:", uid);
 
-    // 3️⃣ Guest mode
+    // 3. Guest mode
     if (!uid) {
       console.log("[TM] No UID → Guest mode");
       currentUser = null;
@@ -336,13 +324,11 @@ async function loadCurrentUserForGame() {
       return;
     }
 
-    // 4️⃣ Load from Firestore
-    console.log("[TM] Loading user doc for UID:", uid);
+    // 4. Load from Firestore
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
-
     if (!snap.exists()) {
-      console.warn("[TM] User doc not found for UID:", uid);
+      console.warn("[TM] User not found:", uid);
       alert("Profile not found");
       currentUser = null;
       persistentBonusLevel = undefined;
@@ -350,8 +336,6 @@ async function loadCurrentUserForGame() {
     }
 
     const data = snap.data();
-    console.log("[TM] User data loaded:", data);
-
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
@@ -362,14 +346,13 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    persistentBonusLevel = currentUser.bonusLevel;
-    if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
+    persistentBonusLevel = currentUser.bonusLevel || 1;
+    if (persistentBonusLevel < 1) persistentBonusLevel = 1;
 
     // Update UI
-    if (profileNameEl) profileNameEl.textContent = currentUser.chatId;
-    if (starCountEl) starCountEl.textContent = formatNumber(currentUser.stars);
-    if (cashCountEl) cashCountEl.textContent = '₦' + formatNumber(currentUser.cash);
-
+    profileNameEl && (profileNameEl.textContent = currentUser.chatId);
+    starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
+    cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
     updateInfoTab?.();
   } catch (err) {
     console.error("[TM] Load failed:", err);
@@ -379,35 +362,7 @@ async function loadCurrentUserForGame() {
   }
 }
 
-// Helper: Validate token from user's token array and mark as used
-async function validateAndUseToken(token, uid) {
-  if (!uid || !token) return null;
 
-  const tokenDocRef = doc(db, "userTokens", uid);
-
-  try {
-    let foundUid = null;
-
-    await runTransaction(db, async (transaction) => {
-      const tokenDoc = await transaction.get(tokenDocRef);
-      if (!tokenDoc.exists()) return;
-
-      let tokens = tokenDoc.data().tokens || [];
-      const tokenIndex = tokens.findIndex(t => t.token === token && !t.used && t.expiresAt > Date.now());
-
-      if (tokenIndex !== -1) {
-        tokens[tokenIndex].used = true;
-        transaction.update(tokenDocRef, { tokens, lastUpdated: serverTimestamp() });
-        foundUid = uid;
-      }
-    });
-
-    return foundUid;
-  } catch (err) {
-    console.error("[TM] Token validation failed:", err);
-    return null;
-  }
-}
 
 // ---------- DEDUCT ANIMATION ----------
 function animateDeduct(el, from, to, duration = 600) {
