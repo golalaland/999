@@ -6285,7 +6285,6 @@ async function unlockVideo(video) {
     try {
         // ─── ATOMIC TRANSACTION ─────────────────────────────────────────────
         await runTransaction(db, async (tx) => {
-            // 1. Buyer doc
             const buyerRef = doc(db, "users", currentUser.uid);
             const buyerSnap = await tx.get(buyerRef);
             if (!buyerSnap.exists()) throw new Error("Buyer account not found");
@@ -6294,15 +6293,13 @@ async function unlockVideo(video) {
             const buyerStars = buyerData?.stars || 0;
 
             if (buyerStars < cost) {
-                throw new Error("NOT_ENOUGH_STRZ"); // ← custom code to detect later
+                throw new Error("NOT_ENOUGH_STRZ");
             }
 
-            // 2. Uploader doc
             const uploaderRef = doc(db, "users", video.uploaderId);
             const uploaderSnap = await tx.get(uploaderRef);
             if (!uploaderSnap.exists()) throw new Error("Uploader not found");
 
-            // 3. Highlights container doc
             const highlightsRef = doc(db, "highlightVideos", video.uploaderId);
             const highlightsSnap = await tx.get(highlightsRef);
             if (!highlightsSnap.exists()) throw new Error("Highlights document not found");
@@ -6310,40 +6307,35 @@ async function unlockVideo(video) {
             const highlightsData = highlightsSnap.data();
             const currentHighlights = highlightsData.highlights || [];
 
-            // Find the exact clip object to update
             const clipIndex = currentHighlights.findIndex(c => c.id === video.id);
             if (clipIndex === -1) throw new Error("Clip not found in array");
 
             const updatedClip = { ...currentHighlights[clipIndex] };
             updatedClip.unlockedBy = [...(updatedClip.unlockedBy || []), currentUser.uid];
 
-            // Build updated array
             const updatedArray = [...currentHighlights];
             updatedArray[clipIndex] = updatedClip;
 
-            // ─── Apply all updates in transaction ───
             tx.update(buyerRef, { stars: increment(-cost) });
             tx.update(uploaderRef, { stars: increment(cost) });
             tx.update(highlightsRef, {
                 highlights: updatedArray,
-                lastUploadAt: serverTimestamp() // optional
+                lastUploadAt: serverTimestamp()
             });
 
-            // Add to buyer's unlocked list (optional, for quick check later)
             tx.update(buyerRef, {
                 unlockedVideos: arrayUnion(video.id)
             });
         });
 
-        // ─── Success ────────────────────────────────────────────────────────
-        // Update local cache
+        // ─── Success: Confetti explosion ────────────────────────────────────
         let unlocked = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
         if (!unlocked.includes(video.id)) {
             unlocked.push(video.id);
             localStorage.setItem("userUnlockedVideos", JSON.stringify(unlocked));
         }
 
-        // Send notification to uploader (non-blocking)
+        // Notification (non-blocking)
         try {
             await addDoc(collection(db, "notifications"), {
                 type: "clip_purchased",
@@ -6361,14 +6353,45 @@ async function unlockVideo(video) {
             console.warn("Notification failed (non-critical):", notifErr);
         }
 
-        showGoldAlert(`You unlocked "${video.title}"! 🎉`);
+        // Slutty morphine confetti
+        if (typeof confetti === "function") {
+            confetti({
+                particleCount: 220,
+                spread: 100,
+                startVelocity: 45,
+                ticks: 200,
+                origin: { y: 0.6 },
+                colors: ['#FF1493', '#00FFEA', '#FF00F2', '#8A2BE2', '#FFD700', '#FF69B4', '#0FF'],
+                zIndex: 2147483647
+            });
+
+            // Second burst for extra drip
+            setTimeout(() => {
+                confetti({
+                    particleCount: 120,
+                    angle: 60,
+                    spread: 80,
+                    origin: { x: 0.2, y: 0.7 },
+                    colors: ['#FF1493', '#00FFEA', '#FF00F2', '#8A2BE2'],
+                });
+                confetti({
+                    particleCount: 120,
+                    angle: 120,
+                    spread: 80,
+                    origin: { x: 0.8, y: 0.7 },
+                    colors: ['#FFD700', '#FF69B4', '#0FF'],
+                });
+            }, 150);
+        }
+
+        showGoldAlert(`You unlocked "${video.title}"!`);
 
         // Refresh UI
         document.getElementById("highlightsModal")?.remove();
         setTimeout(() => {
             if (typeof highlightsBtn?.click === 'function') highlightsBtn.click();
             if (typeof loadMyClips === 'function') loadMyClips();
-        }, 400);
+        }, 600);
 
         if (typeof loadNotifications === "function") loadNotifications();
 
