@@ -1048,6 +1048,7 @@ async function updateTipLink() {
   try {
     idToken = await auth.currentUser.getIdToken(true);
     console.log("[TIP] ID token ready (length:", idToken.length, ")");
+    console.log("[TIP] Token preview (first 50 chars):", idToken.substring(0, 50) + "...");
   } catch (err) {
     console.error("[TIP] ID token failed:", err.message);
     refs.tipBtn.href = "/tm";
@@ -1056,6 +1057,7 @@ async function updateTipLink() {
   }
 
   try {
+    console.log("[TIP] Sending fetch with manual Bearer token...");
     const response = await fetch(
       "https://us-central1-dettyverse.cloudfunctions.net/createLoginToken",
       {
@@ -1074,10 +1076,12 @@ async function updateTipLink() {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.log("[TIP] Raw server error:", errorText);
       throw new Error(`Server responded ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
+    console.log("[TIP] Full response body:", result);
 
     if (!result.token) {
       throw new Error("No token in response");
@@ -5959,27 +5963,6 @@ function showHighlightsModal(videos) {
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-  // Search bar (kept as-is, even though you're removing it later)
-  const searchWrap = document.createElement("div");
-  searchWrap.style.cssText = `
-    display:flex; align-items:center; gap:10px;
-    background:linear-gradient(135deg,rgba(255,0,242,0.12),rgba(138,43,226,0.09));
-    border:1px solid rgba(138,43,226,0.55); border-radius:30px; padding:10px 16px;
-    width:100%; max-width:320px; backdrop-filter:blur(10px);
-    box-shadow:0 0 20px rgba(255,0,242,0.25);
-  `;
-  searchWrap.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M15 15L21 21M10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10C17 13.866 13.866 17 10 17Z"
-            stroke="url(#gradSearch)" stroke-width="2.5"/>
-      <defs><linearGradient id="gradSearch" x1="0" y1="0" x2="24" y2="24">
-        <stop stop-color="#00ffea"/><stop offset="1" stop-color="#ff00f2"/>
-      </linearGradient></defs>
-    </svg>
-    <input id="highlightSearchInput" type="text" placeholder="Search @chatId..."
-           style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:14px;"/>
-  `;
-  controls.appendChild(searchWrap);
   // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
