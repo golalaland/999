@@ -67,8 +67,8 @@ const firebaseConfig = {
   projectId: "dettyverse",
   storageBucket: "dettyverse.firebasestorage.app",
   messagingSenderId: "1036459652488",
-  appId: "1:1036459652488:web:42e9f158859fb561c9b63d",
-  measurementId: "G-TVXYHD3D0H"
+  appId: "1:1036459652488:web:6ee7bb69f3a64224c9b63d",
+  measurementId: "G-4M3EXK39VV"
 };
 
 /* ── Initialize Services ── */
