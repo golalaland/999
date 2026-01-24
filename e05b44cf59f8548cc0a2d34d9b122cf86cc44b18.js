@@ -291,28 +291,29 @@ async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1️⃣ JWT from URL
+    // 1️⃣ Try token from URL (new array-based method)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
 
     if (token) {
       console.log("[TM] Token found in URL:", token.substring(0, 20) + "...");
 
-      const validate = httpsCallable(functions, "validateLoginToken");
-      const result = await validate({ token });
+      // We need the UID to look up the token doc — try localStorage first
+      let possibleUid = localStorage.getItem("vipUser") ? JSON.parse(localStorage.getItem("vipUser"))?.uid : null;
 
-      console.log("[TM] Validation result:", result.data);
-
-      if (result.data.success) {
-        uid = result.data.uid;
-        console.log("[TM] UID from JWT:", uid);
+      if (possibleUid) {
+        uid = await validateAndUseToken(token, possibleUid);
+        if (uid) {
+          console.log("[TM] Valid token used, UID:", uid);
+        } else {
+          console.warn("[TM] Token invalid or expired");
+        }
       } else {
-        console.warn("[TM] Validation failed:", result.data);
-        alert("Invalid or expired link");
+        console.warn("[TM] No possible UID in localStorage — cannot validate token");
       }
     }
 
-    // 2️⃣ LocalStorage fallback
+    // 2️⃣ Fallback to localStorage
     if (!uid) {
       const vipRaw = localStorage.getItem("vipUser");
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
@@ -368,12 +369,43 @@ async function loadCurrentUserForGame() {
     if (profileNameEl) profileNameEl.textContent = currentUser.chatId;
     if (starCountEl) starCountEl.textContent = formatNumber(currentUser.stars);
     if (cashCountEl) cashCountEl.textContent = '₦' + formatNumber(currentUser.cash);
+
     updateInfoTab?.();
   } catch (err) {
     console.error("[TM] Load failed:", err);
     alert("Failed to load profile");
     currentUser = null;
     persistentBonusLevel = undefined;
+  }
+}
+
+// Helper: Validate token from user's token array and mark as used
+async function validateAndUseToken(token, uid) {
+  if (!uid || !token) return null;
+
+  const tokenDocRef = doc(db, "userTokens", uid);
+
+  try {
+    let foundUid = null;
+
+    await runTransaction(db, async (transaction) => {
+      const tokenDoc = await transaction.get(tokenDocRef);
+      if (!tokenDoc.exists()) return;
+
+      let tokens = tokenDoc.data().tokens || [];
+      const tokenIndex = tokens.findIndex(t => t.token === token && !t.used && t.expiresAt > Date.now());
+
+      if (tokenIndex !== -1) {
+        tokens[tokenIndex].used = true;
+        transaction.update(tokenDocRef, { tokens, lastUpdated: serverTimestamp() });
+        foundUid = uid;
+      }
+    });
+
+    return foundUid;
+  } catch (err) {
+    console.error("[TM] Token validation failed:", err);
+    return null;
   }
 }
 
