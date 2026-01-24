@@ -4618,8 +4618,8 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// HIGHLIGHT UPLOAD HANDLER + PROGRESS BAR
-// Features: resumable upload, Cloudflare CDN, 50MB limit, trending boost, visible progress bar
+// HIGHLIGHT UPLOAD HANDLER + PROGRESS BAR + THUMBNAIL
+// Features: resumable video upload, client-side thumbnail, Cloudflare CDN, 50MB limit, trending boost
 // ================================
 
 function toCloudflareUrl(firebaseUrl) {
@@ -4630,58 +4630,83 @@ function toCloudflareUrl(firebaseUrl) {
         .replace(/%2F/g, '/') + '?alt=media';
 }
 
-// ── Reset helpers ───────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────
 function resetButton(btn) {
     btn.disabled = false;
     btn.classList.remove('uploading');
     btn.textContent = 'Post Highlight';
     btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-
     const progressContainer = document.getElementById('progressContainer');
     if (progressContainer) {
         progressContainer.style.opacity = '0';
         setTimeout(() => {
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            if (progressBar) progressBar.style.width = '0%';
-        }, 450); // after fade-out transition
+            document.getElementById('progressBar')?.style.width = '0%';
+            document.getElementById('progressText')?.textContent = '';
+        }, 450);
     }
 }
 
 function resetForm() {
-    const fileInput        = document.getElementById('highlightUploadInput');
-    const titleInput       = document.getElementById('highlightTitleInput');
-    const descInput        = document.getElementById('highlightDescInput');
-    const priceInput       = document.getElementById('highlightPriceInput');
-    const trendingCheckbox = document.getElementById('boostTrendingCheckbox');
-
-    if (fileInput)        fileInput.value = '';
-    if (titleInput)       titleInput.value = '';
-    if (descInput)        descInput.value = '';
-    if (priceInput)       priceInput.value = '50';
-    if (trendingCheckbox) trendingCheckbox.checked = false;
-
+    ['highlightUploadInput', 'highlightTitleInput', 'highlightDescInput', 'highlightPriceInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'highlightPriceInput' ? '50' : '';
+    });
+    document.getElementById('boostTrendingCheckbox')?.checked = false;
     document.querySelectorAll('.tag-btn').forEach(el => el.classList.remove('selected'));
 
     // Reset preview
-    const placeholder  = document.getElementById('uploadPlaceholder');
-    const previewCont  = document.getElementById('videoPreviewContainer');
-    const video        = document.getElementById('videoPreview');
-    const sizeInfo     = document.getElementById('fileSizeInfo');
-
-    if (video)        video.src = '';
-    if (previewCont)  previewCont.style.display = 'none';
-    if (placeholder)  placeholder.style.display = 'block';
-    if (sizeInfo)     sizeInfo.textContent = '';
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const previewCont = document.getElementById('videoPreviewContainer');
+    const video = document.getElementById('videoPreview');
+    const sizeInfo = document.getElementById('fileSizeInfo');
+    if (video) video.src = '';
+    if (previewCont) previewCont.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+    if (sizeInfo) sizeInfo.textContent = '';
 }
 
-// ── Main upload handler ─────────────────────────────────────────────
+// ── Generate thumbnail from video file (client-side) ─────────────────────
+async function generateThumbnail(file) {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+        video.src = URL.createObjectURL(file);
+
+        video.onloadedmetadata = () => {
+            const seekTo = Math.min(3, video.duration || 1); // ~3s or end if shorter
+            video.currentTime = seekTo;
+        };
+
+        video.onseeked = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 320;  // target width
+            canvas.height = 180; // target height (adjust ratio if needed)
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(blob => {
+                if (!blob) return reject(new Error('Failed to create thumbnail blob'));
+                const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+                resolve(thumbnailFile);
+            }, 'image/jpeg', 0.85); // quality 85%
+
+            URL.revokeObjectURL(video.src);
+        };
+
+        video.onerror = (err) => {
+            URL.revokeObjectURL(video.src);
+            reject(err);
+        };
+    });
+}
+
+// ── Main upload handler ─────────────────────────────────────────────────
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
     const btn = e.currentTarget;
-    const fileInput = document.getElementById('highlightUploadInput');
-    const progressContainer = document.getElementById('progressContainer');
-
     if (btn.disabled) return;
+
     resetButton(btn);
 
     // 1. Auth check
@@ -4691,32 +4716,30 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     }
 
     // 2. Gather form values
-    const title       = document.getElementById('highlightTitleInput')?.value.trim() ?? '';
+    const title = document.getElementById('highlightTitleInput')?.value.trim() ?? '';
     const description = document.getElementById('highlightDescInput')?.value.trim() ?? '';
-    const price       = parseInt(document.getElementById('highlightPriceInput')?.value ?? '0', 10) || 0;
-    const isBoost     = document.getElementById('boostTrendingCheckbox')?.checked ?? false;
-    const tags        = Array.from(document.querySelectorAll('.tag-btn.selected'))
-                             .map(el => el.dataset.tag);
-    const file        = fileInput?.files?.[0];
+    const price = parseInt(document.getElementById('highlightPriceInput')?.value ?? '0', 10) || 0;
+    const isBoost = document.getElementById('boostTrendingCheckbox')?.checked ?? false;
+    const tags = Array.from(document.querySelectorAll('.tag-btn.selected'))
+                      .map(el => el.dataset.tag);
+    const file = document.getElementById('highlightUploadInput')?.files?.[0];
 
     // 3. Validation
-    if (!title)                        return showStarPopup('Title is required', 'error');
-    if (!file)                         return showStarPopup('Please select a video', 'error');
-    if (file.size > 50 * 1024 * 1024)  return showStarPopup('Maximum file size is 50MB', 'error');
-    if (!isBoost && price < 10)        return showStarPopup('Minimum unlock price is 10 STRZ', 'error');
+    if (!title) return showStarPopup('Title is required', 'error');
+    if (!file) return showStarPopup('Please select a video', 'error');
+    if (file.size > 50 * 1024 * 1024) return showStarPopup('Maximum file size is 50MB', 'error');
+    if (!isBoost && price < 10) return showStarPopup('Minimum unlock price is 10 STRZ', 'error');
 
-    // 4. Handle trending boost payment
+    // 4. Trending boost payment
     if (isBoost) {
         try {
             const userRef = doc(db, 'users', currentUser.uid);
             const userSnap = await getDoc(userRef);
             const stars = userSnap.data()?.stars ?? 0;
-
             if (stars < 500) {
                 showStarPopup('Not enough STRZ! Need 500 for trending boost', 'error');
                 return;
             }
-
             await updateDoc(userRef, { stars: increment(-500) });
             showStarPopup('500 STRZ spent — Trending boost activated! 🔥', 'success');
         } catch (err) {
@@ -4726,84 +4749,115 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
         }
     }
 
-    // 5. Start upload + show progress bar
+    // 5. Start upload process
     btn.disabled = true;
     btn.classList.add('uploading');
-    btn.textContent = 'Uploading...';
-
+    btn.textContent = 'Processing...';
+    const progressContainer = document.getElementById('progressContainer');
     if (progressContainer) progressContainer.style.opacity = '1';
-
-    showStarPopup('Dropping your highlight...', 'loading');
+    showStarPopup('Preparing your highlight...', 'loading');
 
     try {
-        const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
-        const safeName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
-        const path = `users/${currentUser.uid}/${safeName}`;
+        // Generate thumbnail first (blocks until ready)
+        let thumbnailFile;
+        try {
+            thumbnailFile = await generateThumbnail(file);
+        } catch (thumbErr) {
+            console.warn('Thumbnail generation failed, continuing without:', thumbErr);
+            thumbnailFile = null; // proceed anyway
+        }
 
-        const storageRef = ref(storage, path);
-        const metadata = {
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).slice(2, 10);
+        const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+        const videoSafeName = `${timestamp}_${randomStr}.${ext}`;
+        const thumbSafeName = `thumbnail_${timestamp}_${randomStr}.jpg`;
+
+        const basePath = `users/${currentUser.uid}`;
+        const videoPath = `${basePath}/${videoSafeName}`;
+        const thumbPath = thumbnailFile ? `${basePath}/${thumbSafeName}` : null;
+
+        // ── Upload video ────────────────────────────────────────────────
+        const videoRef = ref(storage, videoPath);
+        const videoMetadata = {
             contentType: file.type,
             cacheControl: 'public, max-age=31536000, immutable',
-            customMetadata: {
-                uploader: currentUser.uid,
-                originalName: file.name,
-                uploadedAt: new Date().toISOString(),
-            },
+            customMetadata: { uploader: currentUser.uid, originalName: file.name }
         };
 
-        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+        const uploadTask = uploadBytesResumable(videoRef, file, videoMetadata);
 
-       uploadTask.on(
-  'state_changed',
-  (snapshot) => {
-    const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-
-    // Button shows static "Uploading..." text
-    btn.textContent = 'Uploading...';
-
-    // Progress bar updates
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    if (progressBar) progressBar.style.width = `${percent}%`;
-  },
+        uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+                const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                document.getElementById('progressBar')?.style.width = `${percent}%`;
+                document.getElementById('progressText')?.textContent = `Uploading video... ${percent}%`;
+            },
             (error) => {
-                console.error('Upload failed:', error);
-                const msg = error.code === 'storage/unauthorized'
-                    ? 'Permission denied — check Storage rules'
-                    : 'Upload failed — please try again';
-                showStarPopup(msg, 'error');
+                console.error('Video upload failed:', error);
+                showStarPopup('Video upload failed — try again', 'error');
                 resetButton(btn);
             },
             async () => {
                 try {
-                    const rawUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                    const cdnUrl = toCloudflareUrl(rawUrl);
+                    const videoRawUrl = await getDownloadURL(videoRef);
+                    const videoCdnUrl = toCloudflareUrl(videoRawUrl);
 
-                    console.log('[Upload success] Firebase:', rawUrl);
-                    console.log('CDN:', cdnUrl);
+                    let thumbCdnUrl = null;
+                    if (thumbnailFile && thumbPath) {
+                        // ── Upload thumbnail ──────────────────────────────────────
+                        const thumbRef = ref(storage, thumbPath);
+                        await uploadBytes(thumbRef, thumbnailFile, {
+                            contentType: 'image/jpeg',
+                            cacheControl: 'public, max-age=31536000, immutable'
+                        });
+                        const thumbRawUrl = await getDownloadURL(thumbRef);
+                        thumbCdnUrl = toCloudflareUrl(thumbRawUrl);
+                    }
 
+                    // ── Save to Firestore ───────────────────────────────────────
                     const clipData = {
                         uploaderId: currentUser.uid,
                         uploaderName: currentUser.chatId || 'Legend',
-                        videoUrl: cdnUrl,
-                        storagePath: path,
-                        highlightVideoPrice: isBoost ? 0 : price,
                         title: isBoost ? `@${currentUser.chatId || 'Legend'}` : title,
                         description: description || '',
-                        uploadedAt: serverTimestamp(),
-                        createdAt: serverTimestamp(),
-                        unlockedBy: [],
+                        videoUrl: videoCdnUrl,
+                        thumbnailUrl: thumbCdnUrl || '', // empty if failed
+                        storagePath: videoPath,
+                        highlightVideoPrice: isBoost ? 0 : price,
+                        tags: tags.length ? tags : [],
                         views: 0,
                         isTrending: isBoost,
-                        tags: tags.length ? tags : [],
+                        uploadedAt: serverTimestamp(),
+                        createdAt: serverTimestamp(),
                     };
 
                     if (isBoost) {
-                        clipData.trendingUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                        clipData.trendingUntil = Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
                     }
 
                     const newDocRef = await addDoc(collection(db, 'highlightVideos'), clipData);
                     await updateDoc(newDocRef, { id: newDocRef.id });
+
+                    // Optional: lightweight user preview array (uncomment if you want fast "my clips")
+                    /*
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    const previewEntry = {
+                        id: newDocRef.id,
+                        title: clipData.title,
+                        thumbnailUrl: clipData.thumbnailUrl,
+                        videoUrl: clipData.videoUrl,
+                        uploadedAt: clipData.uploadedAt,
+                        price: clipData.highlightVideoPrice,
+                        isTrending: clipData.isTrending
+                    };
+                    await updateDoc(userRef, {
+                        highlights: arrayUnion(previewEntry),
+                        lastHighlightAt: serverTimestamp(),
+                        highlightCount: increment(1)
+                    });
+                    */
 
                     showStarPopup('Your Video is LIVE! 🎉', 'success');
                     btn.textContent = isBoost ? 'TRENDING LIVE!' : 'DROPPED!';
@@ -4813,53 +4867,51 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
                     resetForm();
                     if (typeof loadMyClips === 'function') loadMyClips();
-
                     setTimeout(() => resetButton(btn), 2600);
+
                 } catch (err) {
-                    console.error('Firestore save failed:', err);
+                    console.error('Post-upload failed:', err);
                     showStarPopup('Upload succeeded but saving failed — try again', 'error');
                     resetButton(btn);
                 }
             }
         );
+
     } catch (err) {
-        console.error('Upload initialization failed:', err);
-        showStarPopup('Upload failed — please try again', 'error');
+        console.error('Upload setup failed:', err);
+        showStarPopup('Failed to start upload — try again', 'error');
         resetButton(btn);
     }
 });
 
-// ── Tag selection ───────────────────────────────────────────────────
+// Tag selection (unchanged)
 document.querySelectorAll('.tag-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        btn.classList.toggle('selected');
-    });
+    btn.addEventListener('click', () => btn.classList.toggle('selected'));
 });
 
-// ── Video preview on file select ────────────────────────────────────
+// Video preview on select (unchanged)
 document.getElementById('highlightUploadInput')?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const placeholder  = document.getElementById('uploadPlaceholder');
-    const previewCont  = document.getElementById('videoPreviewContainer');
-    const video        = document.getElementById('videoPreview');
-    const sizeInfo     = document.getElementById('fileSizeInfo');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const previewCont = document.getElementById('videoPreviewContainer');
+    const videoEl = document.getElementById('videoPreview');
+    const sizeInfo = document.getElementById('fileSizeInfo');
 
-    if (!video || !previewCont || !placeholder) return;
+    if (!videoEl || !previewCont || !placeholder) return;
 
-    placeholder.style.display  = 'none';
-    previewCont.style.display  = 'block';
-    video.src = URL.createObjectURL(file);
-    video.load();
+    placeholder.style.display = 'none';
+    previewCont.style.display = 'block';
+    videoEl.src = URL.createObjectURL(file);
+    videoEl.load();
 
     const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
     if (sizeInfo) sizeInfo.textContent = `${sizeMB} MB`;
 
-    video.onloadeddata = () => {
-        video.currentTime = 0;
-    };
+    videoEl.onloadeddata = () => videoEl.currentTime = 0;
 });
+
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
