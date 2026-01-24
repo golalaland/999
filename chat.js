@@ -4646,19 +4646,36 @@ function resetButton(btn) {
     }
 }
 
+// ── Reset form ──────────────────────────────────────────────────────────
 function resetForm() {
-    ['highlightUploadInput', 'highlightTitleInput', 'highlightDescInput', 'highlightPriceInput'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = id === 'highlightPriceInput' ? '50' : '';
-    });
-    document.getElementById('boostTrendingCheckbox')?.checked = false;
-    document.querySelectorAll('.tag-btn').forEach(el => el.classList.remove('selected'));
+    // Reset input fields
+    const inputs = {
+        highlightUploadInput: '',
+        highlightTitleInput: '',
+        highlightDescInput: '',
+        highlightPriceInput: '50'
+    };
 
-    // Reset preview
+    Object.entries(inputs).forEach(([id, defaultValue]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = defaultValue;
+    });
+
+    // Reset checkbox
+    const checkbox = document.getElementById('boostTrendingCheckbox');
+    if (checkbox) checkbox.checked = false;
+
+    // Deselect tags
+    document.querySelectorAll('.tag-btn').forEach(el => {
+        el.classList.remove('selected');
+    });
+
+    // Reset preview area
     const placeholder = document.getElementById('uploadPlaceholder');
     const previewCont = document.getElementById('videoPreviewContainer');
     const video = document.getElementById('videoPreview');
     const sizeInfo = document.getElementById('fileSizeInfo');
+
     if (video) video.src = '';
     if (previewCont) previewCont.style.display = 'none';
     if (placeholder) placeholder.style.display = 'block';
@@ -4674,23 +4691,30 @@ async function generateThumbnail(file) {
         video.src = URL.createObjectURL(file);
 
         video.onloadedmetadata = () => {
-            const seekTo = Math.min(3, video.duration || 1); // ~3s or end if shorter
+            // Seek to 3 seconds or end of video if shorter
+            const seekTo = Math.min(3, video.duration || 1);
             video.currentTime = seekTo;
         };
 
         video.onseeked = () => {
             const canvas = document.createElement('canvas');
-            canvas.width = 320;  // target width
-            canvas.height = 180; // target height (adjust ratio if needed)
+            canvas.width = 320;
+            canvas.height = 180;
 
             const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Failed to get canvas context'));
+
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(blob => {
-                if (!blob) return reject(new Error('Failed to create thumbnail blob'));
-                const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
-                resolve(thumbnailFile);
-            }, 'image/jpeg', 0.85); // quality 85%
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) return reject(new Error('Failed to create thumbnail blob'));
+                    const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+                    resolve(thumbnailFile);
+                },
+                'image/jpeg',
+                0.85
+            );
 
             URL.revokeObjectURL(video.src);
         };
@@ -4716,13 +4740,20 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     }
 
     // 2. Gather form values
-    const title = document.getElementById('highlightTitleInput')?.value.trim() ?? '';
-    const description = document.getElementById('highlightDescInput')?.value.trim() ?? '';
-    const price = parseInt(document.getElementById('highlightPriceInput')?.value ?? '0', 10) || 0;
-    const isBoost = document.getElementById('boostTrendingCheckbox')?.checked ?? false;
+    const titleEl = document.getElementById('highlightTitleInput');
+    const descEl = document.getElementById('highlightDescInput');
+    const priceEl = document.getElementById('highlightPriceInput');
+    const boostCheckbox = document.getElementById('boostTrendingCheckbox');
+    const fileInput = document.getElementById('highlightUploadInput');
+
+    const title = titleEl?.value.trim() ?? '';
+    const description = descEl?.value.trim() ?? '';
+    const price = parseInt(priceEl?.value ?? '0', 10) || 0;
+    const isBoost = boostCheckbox?.checked ?? false;
+    const file = fileInput?.files?.[0];
+
     const tags = Array.from(document.querySelectorAll('.tag-btn.selected'))
-                      .map(el => el.dataset.tag);
-    const file = document.getElementById('highlightUploadInput')?.files?.[0];
+                     .map(el => el.dataset.tag);
 
     // 3. Validation
     if (!title) return showStarPopup('Title is required', 'error');
@@ -4736,10 +4767,12 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
             const userRef = doc(db, 'users', currentUser.uid);
             const userSnap = await getDoc(userRef);
             const stars = userSnap.data()?.stars ?? 0;
+
             if (stars < 500) {
                 showStarPopup('Not enough STRZ! Need 500 for trending boost', 'error');
                 return;
             }
+
             await updateDoc(userRef, { stars: increment(-500) });
             showStarPopup('500 STRZ spent — Trending boost activated! 🔥', 'success');
         } catch (err) {
@@ -4753,23 +4786,25 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     btn.disabled = true;
     btn.classList.add('uploading');
     btn.textContent = 'Processing...';
+
     const progressContainer = document.getElementById('progressContainer');
     if (progressContainer) progressContainer.style.opacity = '1';
+
     showStarPopup('Preparing your highlight...', 'loading');
 
     try {
-        // Generate thumbnail first (blocks until ready)
-        let thumbnailFile;
+        // Generate thumbnail
+        let thumbnailFile = null;
         try {
             thumbnailFile = await generateThumbnail(file);
         } catch (thumbErr) {
             console.warn('Thumbnail generation failed, continuing without:', thumbErr);
-            thumbnailFile = null; // proceed anyway
         }
 
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).slice(2, 10);
         const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+
         const videoSafeName = `${timestamp}_${randomStr}.${ext}`;
         const thumbSafeName = `thumbnail_${timestamp}_${randomStr}.jpg`;
 
@@ -4782,7 +4817,10 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
         const videoMetadata = {
             contentType: file.type,
             cacheControl: 'public, max-age=31536000, immutable',
-            customMetadata: { uploader: currentUser.uid, originalName: file.name }
+            customMetadata: {
+                uploader: currentUser.uid,
+                originalName: file.name
+            }
         };
 
         const uploadTask = uploadBytesResumable(videoRef, file, videoMetadata);
@@ -4791,8 +4829,13 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
             'state_changed',
             (snapshot) => {
                 const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                document.getElementById('progressBar')?.style.width = `${percent}%`;
-                document.getElementById('progressText')?.textContent = `Uploading video... ${percent}%`;
+
+                // FIXED: no optional chaining on left side of assignment
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+
+                if (progressBar) progressBar.style.width = `${percent}%`;
+                if (progressText) progressText.textContent = `Uploading video... ${percent}%`;
             },
             (error) => {
                 console.error('Video upload failed:', error);
@@ -4806,7 +4849,6 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
                     let thumbCdnUrl = null;
                     if (thumbnailFile && thumbPath) {
-                        // ── Upload thumbnail ──────────────────────────────────────
                         const thumbRef = ref(storage, thumbPath);
                         await uploadBytes(thumbRef, thumbnailFile, {
                             contentType: 'image/jpeg',
@@ -4823,7 +4865,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
                         title: isBoost ? `@${currentUser.chatId || 'Legend'}` : title,
                         description: description || '',
                         videoUrl: videoCdnUrl,
-                        thumbnailUrl: thumbCdnUrl || '', // empty if failed
+                        thumbnailUrl: thumbCdnUrl || '',
                         storagePath: videoPath,
                         highlightVideoPrice: isBoost ? 0 : price,
                         tags: tags.length ? tags : [],
