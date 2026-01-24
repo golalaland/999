@@ -6507,201 +6507,219 @@ async function unlockVideo(video) {
 }
 
 async function loadMyClips() {
-  const grid = document.getElementById("myClipsGrid");
-  const noMsg = document.getElementById("noClipsMessage");
-  if (!grid || !currentUser?.uid) return;
+    const grid = document.getElementById("myClipsGrid");
+    const noMsg = document.getElementById("noClipsMessage");
 
-  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading clips...</div>`;
+    if (!grid || !currentUser?.uid) return;
 
-  try {
-    const q = query(
-      collection(db, "highlightVideos"),
-      where("uploaderId", "==", currentUser.uid),
-      orderBy("uploadedAt", "desc")
-    );
-    const snap = await getDocs(q);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading clips...</div>`;
 
-    if (snap.empty) {
-      grid.innerHTML = "";
-      if (noMsg) noMsg.style.display = "block";
-      return;
-    }
-
-    if (noMsg) noMsg.style.display = "none";
-    grid.innerHTML = "";
-
-    snap.forEach(doc => {
-      const v = { id: doc.id, ...doc.data() };
-      const videoSrc = v.videoUrl || v.highlightVideo || "";
-      const price = Number(v.highlightVideoPrice) || 0;
-      const unlocks = v.unlockedBy?.length || 0;
-      const earnings = price * unlocks;
-
-      const card = document.createElement("div");
-      card.style.cssText = `
-        background:#111;
-        border-radius:16px;
-        overflow:hidden;
-        box-shadow:0 10px 30px rgba(0,0,0,0.6);
-        border:1px solid #333;
-        display:flex;
-        flex-direction:column;
-        height:220px;           /* fixed height for consistent grid */
-        transition:transform 0.2s;
-      `;
-
-      card.innerHTML = `
-        <div style="display:flex;height:100%;background:#0d0d0d;">
-          <!-- Left: Video thumbnail (zoomed out & sexy) -->
-          <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-            <video src="${videoSrc}" muted loop playsinline
-                   style="position:absolute;top:50%;left:50%;
-                          width:220%;height:220%;
-                          object-fit:cover;
-                          transform:translate(-50%,-50%) scale(0.52);
-                          filter:brightness(0.96);">
-            </video>
-            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
-            <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
-              ▶ CLIP
-            </div>
-          </div>
-
-          <!-- Right: Content + Delete at bottom -->
-          <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
-            <!-- Title & Description -->
-            <div style="flex-grow:1;">
-              <div style="
-                color:#fff;font-weight:800;font-size:14px;line-height:1.3;
-                margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-                overflow:hidden;text-overflow:ellipsis;
-              ">
-                ${v.title || "Untitled Drop"}
-              </div>
-
-              ${v.description ? `
-                <div style="
-                  color:#aaa;font-size:11px;line-height:1.35;
-                  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-                  overflow:hidden;text-overflow:ellipsis;opacity:0.9;
-                ">
-                  ${v.description}
-                </div>
-              ` : ''}
-
-              <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                ID: ${v.id}
-              </div>
-            </div>
-
-            <!-- Stats row -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
-                <div style="color:#00ff9d;font-weight:900;font-size:12px;">${price} STRZ</div>
-              </div>
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Unlocks</div>
-                <div style="color:#00ffea;font-weight:900;font-size:13px;">${unlocks}x</div>
-              </div>
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Revenue</div>
-                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${earnings} ⭐</div>
-              </div>
-            </div>
-
-            <!-- Delete button – bottom right, always safe -->
-            <button class="delete-clip-btn" 
-                    data-id="${v.id}" 
-                    data-title="${(v.title||'Clip').replace(/"/g,'&quot;')}"
-                    style="
-                      position:absolute;bottom:12px;right:12px;
-                      background:linear-gradient(90deg,#ff0099,#ff6600);
-                      border:none;color:#fff;
-                      padding:8px 14px;border-radius:10px;
-                      font-size:10px;font-weight:800;letter-spacing:0.6px;
-                      cursor:pointer;opacity:0.92;
-                      box-shadow:0 2px 12px rgba(255,0,100,0.4);
-                      transition:all .25s ease;
-                    "
-                    onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
-                    onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
-              DELETE
-            </button>
-          </div>
-        </div>
-      `;
-
-      // Hover video play
-      const videos = card.querySelectorAll("video");
-      card.addEventListener("mouseenter", () => videos.forEach(vid => vid.play().catch(() => {})));
-      card.addEventListener("mouseleave", () => videos.forEach(vid => { vid.pause(); vid.currentTime = 0; }));
-
-      grid.appendChild(card);
-    });
-
-    // Attach delete handlers
-    document.querySelectorAll(".delete-clip-btn").forEach(btn => {
-      btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
-    });
-
-  } catch (err) {
-    console.error("loadMyClips error:", err);
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
-  }
-}
-function showDeleteConfirm(id, title) {
-  const modal = document.createElement("div");
-  modal.style.cssText = `
-    position:fixed;inset:0;background:rgba(0,0,0,0.9);
-    display:flex;align-items:center;justify-content:center;
-    z-index:99999;font-family:system-ui,sans-serif;
-  `;
-
-  modal.innerHTML = `
-    <div style="background:#111;padding:25px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
-      <h3 style="color:#fff;margin:0 0 16px;font-size:20px;font-weight:600;">
-        Delete Clip?
-      </h3>
-      <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
-        "<strong style="color:#ff3366;">${title}</strong>" will be removed.<br>
-        <small style="color:#999;">Buyers keep access forever.</small>
-      </p>
-      <div style="display:flex;gap:16px;justify-content:center;">
-        <button id="cancel" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
-         <button id="delete" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  modal.querySelector("#cancel").onclick = () => modal.remove();
-  modal.querySelector("#delete").onclick = async () => {
     try {
-      await deleteDoc(doc(db, "highlightVideos", id));
-      showGoldAlert("Clip deleted");
-      modal.remove();
-      loadMyClips?.();
-    } catch (e) {
-      showGoldAlert("Delete failed");
-      modal.remove();
+        // Get the SINGLE document for this user
+        const docRef = doc(db, "highlightVideos", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
+            grid.innerHTML = "";
+            if (noMsg) noMsg.style.display = "block";
+            return;
+        }
+
+        if (noMsg) noMsg.style.display = "none";
+        grid.innerHTML = "";
+
+        // Get the array and sort newest first
+        const highlights = docSnap.data().highlights || [];
+        highlights.sort((a, b) => {
+            const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+            const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+            return timeB - timeA; // newest on top
+        });
+
+        highlights.forEach(v => {
+            const videoSrc = v.videoUrl || "";
+            const thumbnailSrc = v.thumbnailUrl || videoSrc; // fallback to video if no thumb
+            const price = Number(v.highlightVideoPrice) || 0;
+            const unlocks = v.unlockedBy?.length || 0; // still works if you re-add it later
+            const earnings = price * unlocks;
+
+            const card = document.createElement("div");
+            card.style.cssText = `
+                background:#111;
+                border-radius:16px;
+                overflow:hidden;
+                box-shadow:0 10px 30px rgba(0,0,0,0.6);
+                border:1px solid #333;
+                display:flex;
+                flex-direction:column;
+                height:220px;
+                transition:transform 0.2s;
+            `;
+
+            card.innerHTML = `
+                <div style="display:flex;height:100%;background:#0d0d0d;">
+                    <!-- Left: Thumbnail / Video preview -->
+                    <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+                        ${
+                            thumbnailSrc
+                                ? `<img src="${thumbnailSrc}" alt="thumbnail" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.96);">`
+                                : `<video src="${videoSrc}" muted loop playsinline autoplay
+                                     style="position:absolute;top:50%;left:50%;width:220%;height:220%;object-fit:cover;transform:translate(-50%,-50%) scale(0.52);filter:brightness(0.96);"></video>`
+                        }
+                        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
+                        <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+                            ▶ CLIP
+                        </div>
+                    </div>
+
+                    <!-- Right: Info + Delete -->
+                    <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+                        <div style="flex-grow:1;">
+                            <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
+                                ${v.title || "Untitled Drop"}
+                            </div>
+                            ${v.description ? `
+                                <div style="color:#aaa;font-size:11px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;opacity:0.9;">
+                                    ${v.description}
+                                </div>
+                            ` : ''}
+                            <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                                ID: ${v.id}
+                            </div>
+                        </div>
+
+                        <!-- Stats -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+                            <div>
+                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
+                                <div style="color:#00ff9d;font-weight:900;font-size:12px;">${price} STRZ</div>
+                            </div>
+                            <div>
+                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Unlocks</div>
+                                <div style="color:#00ffea;font-weight:900;font-size:13px;">${unlocks}x</div>
+                            </div>
+                            <div>
+                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Revenue</div>
+                                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${earnings} ⭐</div>
+                            </div>
+                        </div>
+
+                        <!-- Delete button -->
+                        <button class="delete-clip-btn"
+                                data-id="${v.id}"
+                                data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
+                                style="
+                                  position:absolute;bottom:12px;right:12px;
+                                  background:linear-gradient(90deg,#ff0099,#ff6600);
+                                  border:none;color:#fff;
+                                  padding:8px 14px;border-radius:10px;
+                                  font-size:10px;font-weight:800;letter-spacing:0.6px;
+                                  cursor:pointer;opacity:0.92;
+                                  box-shadow:0 2px 12px rgba(255,0,100,0.4);
+                                  transition:all .25s ease;
+                                "
+                                onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
+                                onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
+                            DELETE
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Hover play for video fallback
+            const media = card.querySelectorAll("video, img");
+            card.addEventListener("mouseenter", () => {
+                card.querySelectorAll("video").forEach(vid => vid.play().catch(() => {}));
+            });
+            card.addEventListener("mouseleave", () => {
+                card.querySelectorAll("video").forEach(vid => {
+                    vid.pause();
+                    vid.currentTime = 0;
+                });
+            });
+
+            grid.appendChild(card);
+        });
+
+        // Attach delete listeners
+        document.querySelectorAll(".delete-clip-btn").forEach(btn => {
+            btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+        });
+
+    } catch (err) {
+        console.error("loadMyClips error:", err);
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
     }
-  };
-
-  // Close when clicking outside
-  modal.onclick = (e) => e.target === modal && modal.remove();
 }
-window.revealChatAfterLogin = function() {
-  chatContainer.style.display = 'flex';   // show chat container
-  sendArea.style.display = 'flex';        // show input area
-  messagesEl.classList.add('active');     // gray placeholder
-  updateMessagesPlaceholder();            // placeholder logic
 
-  // Hide footer
-  const footer = document.getElementById('startupFooter');
-  if (footer) footer.classList.add('hidden');
-};
+function showDeleteConfirm(clipId, clipTitle) {
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.9);
+        display:flex;align-items:center;justify-content:center;
+        z-index:99999;font-family:system-ui,sans-serif;
+    `;
+
+    modal.innerHTML = `
+        <div style="background:#111;padding:25px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <h3 style="color:#fff;margin:0 0 16px;font-size:20px;font-weight:600;">
+                Delete Clip?
+            </h3>
+            <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
+                "<strong style="color:#ff3366;">${clipTitle}</strong>" will be removed.<br>
+                <small style="color:#999;">Buyers keep access forever.</small>
+            </p>
+            <div style="display:flex;gap:16px;justify-content:center;">
+                <button id="cancelDelete" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;cursor:pointer;">Cancel</button>
+                <button id="confirmDelete" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;">Yes, Delete</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Cancel → just close
+    modal.querySelector("#cancelDelete").onclick = () => modal.remove();
+
+    // Confirm delete
+    modal.querySelector("#confirmDelete").onclick = async () => {
+        try {
+            const userDocRef = doc(db, "highlightVideos", currentUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (!userDocSnap.exists()) {
+                throw new Error("User highlights document not found");
+            }
+
+            const data = userDocSnap.data();
+            const currentHighlights = data.highlights || [];
+
+            // Remove the clip with matching id
+            const updatedHighlights = currentHighlights.filter(clip => clip.id !== clipId);
+
+            // Update document (array + counter)
+            await updateDoc(userDocRef, {
+                highlights: updatedHighlights,
+                totalVideos: increment(-1),
+                lastUploadAt: serverTimestamp()  // optional: update timestamp
+            });
+
+            showGoldAlert("Clip deleted successfully");
+            modal.remove();
+            if (typeof loadMyClips === 'function') loadMyClips(); // refresh grid
+
+        } catch (err) {
+            console.error("Delete error:", err);
+            showGoldAlert("Failed to delete clip. Try again.");
+            modal.remove();
+        }
+    };
+
+    // Click outside to close
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
 
   // INVITE FOLKS!!!!!
 document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () => {
