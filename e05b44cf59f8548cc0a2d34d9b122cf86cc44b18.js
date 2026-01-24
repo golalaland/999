@@ -286,7 +286,40 @@ function updateInfoTab() {
 }
 
 
-// Game page: loadCurrentUserForGame (your old working version, slightly cleaned)
+// Helper: Validate and use token from single token doc
+async function loadUserFromToken(token) {
+  if (!token) return null;
+
+  try {
+    const tokenRef = doc(db, "loginTokens", token);
+    const snap = await getDoc(tokenRef);
+    if (!snap.exists()) {
+      console.warn("[TM] Token doc not found");
+      return null;
+    }
+
+    const data = snap.data();
+    if (Date.now() > data.expiresAt) {
+      await deleteDoc(tokenRef);
+      console.warn("[TM] Token expired and deleted");
+      return null;
+    }
+
+    // Valid — store for reload safety
+    localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
+
+    // Optional: delete for single-use
+    await deleteDoc(tokenRef);
+
+    console.log("[TM] Token valid → UID:", data.uid);
+    return data.uid;
+  } catch (err) {
+    console.error("[TM] Token load error:", err);
+    return null;
+  }
+}
+
+// Main load function (your current one, but using the helper)
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
@@ -294,11 +327,15 @@ async function loadCurrentUserForGame() {
     // 1. Try token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
+
     if (token) {
-      console.log("[TM] Token found:", token.substring(0, 20) + "...");
+      console.log("[TM] Token found in URL:", token.substring(0, 20) + "...");
       uid = await loadUserFromToken(token);
-      if (uid) console.log("[TM] Valid token → UID:", uid);
-      else console.warn("[TM] Token invalid/expired");
+      if (uid) {
+        console.log("[TM] Valid token used, UID:", uid);
+      } else {
+        console.warn("[TM] Token invalid or expired");
+      }
     }
 
     // 2. Fallback to localStorage
@@ -307,11 +344,11 @@ async function loadCurrentUserForGame() {
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
       if (storedUser?.uid) {
         uid = storedUser.uid;
-        console.log("[TM] From localStorage:", uid);
+        console.log("[TM] UID from localStorage:", uid);
       }
     }
 
-    console.log("[TM] Final UID:", uid);
+    console.log("[TM] Final UID before Firestore:", uid);
 
     // 3. Guest mode
     if (!uid) {
@@ -325,10 +362,12 @@ async function loadCurrentUserForGame() {
     }
 
     // 4. Load from Firestore
+    console.log("[TM] Loading user doc for UID:", uid);
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
+
     if (!snap.exists()) {
-      console.warn("[TM] User not found:", uid);
+      console.warn("[TM] User doc not found for UID:", uid);
       alert("Profile not found");
       currentUser = null;
       persistentBonusLevel = undefined;
@@ -336,6 +375,8 @@ async function loadCurrentUserForGame() {
     }
 
     const data = snap.data();
+    console.log("[TM] User data loaded:", data);
+
     currentUser = {
       uid,
       chatId: data.chatId || uid.split('_')[0],
@@ -346,13 +387,13 @@ async function loadCurrentUserForGame() {
       bonusLevel: Number(data.bonusLevel || 1)
     };
 
-    persistentBonusLevel = currentUser.bonusLevel || 1;
-    if (persistentBonusLevel < 1) persistentBonusLevel = 1;
+    persistentBonusLevel = currentUser.bonusLevel;
+    if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
 
     // Update UI
-    profileNameEl && (profileNameEl.textContent = currentUser.chatId);
-    starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
-    cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
+    if (profileNameEl) profileNameEl.textContent = currentUser.chatId;
+    if (starCountEl) starCountEl.textContent = formatNumber(currentUser.stars);
+    if (cashCountEl) cashCountEl.textContent = '₦' + formatNumber(currentUser.cash);
     updateInfoTab?.();
   } catch (err) {
     console.error("[TM] Load failed:", err);
@@ -361,8 +402,6 @@ async function loadCurrentUserForGame() {
     persistentBonusLevel = undefined;
   }
 }
-
-
 
 // ---------- DEDUCT ANIMATION ----------
 function animateDeduct(el, from, to, duration = 600) {
