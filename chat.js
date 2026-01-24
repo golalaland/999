@@ -397,7 +397,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
 // Wait for SDK token sync (critical!)
     console.log("[AUTH] Waiting 3s for token sync before buttons...");
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 2000));
 
     if (typeof updateRedeemLink === "function") await updateRedeemLink();
     if (typeof updateTipLink === "function") await updateTipLink();
@@ -1034,6 +1034,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+
+// Helper: Create and store a new token in user's array document
+async function createAndStoreToken(uid) {
+  if (!uid) return null;
+
+  const token = crypto.randomUUID(); // or use your old random generator
+  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+  const tokenDocRef = doc(db, "userTokens", uid);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const tokenDoc = await transaction.get(tokenDocRef);
+
+      let tokens = [];
+      if (tokenDoc.exists()) {
+        tokens = tokenDoc.data().tokens || [];
+      }
+
+      // Clean expired tokens (optional but recommended)
+      tokens = tokens.filter(t => t.expiresAt > Date.now());
+
+      // Add new token
+      tokens.push({
+        token,
+        createdAt: Date.now(),
+        expiresAt,
+        used: false
+      });
+
+      transaction.set(tokenDocRef, {
+        tokens,
+        lastUpdated: serverTimestamp()
+      }, { merge: true });
+    });
+
+    console.log("[TOKEN] New token created and stored:", token.substring(0, 8) + "...");
+    return token;
+  } catch (err) {
+    console.error("[TOKEN] Failed to store token:", err);
+    return null;
+  }
+}
+// Usage in updateTipLink / updateRedeemLink
+const token = await createAndStoreToken(currentUser.uid);
+if (token) {
+  refs.tipBtn.href = `/tm?t=${token}`;
+} else {
+  refs.tipBtn.href = "/tm"; // fallback
+}
+
+
 // TIP BUTTON — plain fetch with manual ID token header (bypasses SDK race)
 async function updateTipLink() {
   if (!refs.tipBtn || !currentUser?.uid) {
@@ -1042,39 +1094,15 @@ async function updateTipLink() {
     return;
   }
 
-  console.log("[TIP] Waiting for auth token sync...");
+  console.log("[TIP] Generating secure token for UID:", currentUser.uid);
 
-  let idToken = null;
-  let attempts = 0;
-  const maxAttempts = 12; // ~6 seconds
-  while (!idToken && attempts < maxAttempts) {
-    try {
-      idToken = await auth.currentUser.getIdToken(true);
-      console.log("[TIP] Token ready after attempt", attempts + 1, "(length:", idToken.length, ")");
-      if (idToken) break;
-    } catch (err) {
-      console.warn("[TIP] Attempt", attempts + 1, "failed:", err.message);
-    }
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;
-  }
+  const token = await createAndStoreToken(currentUser.uid);
 
-  if (!idToken) {
-    console.error("[TIP] No token after", maxAttempts, "attempts");
-    refs.tipBtn.href = "/tm";
-    refs.tipBtn.style.display = "inline-block";
-    return;
-  }
-
-  try {
-    const createToken = httpsCallable(functions, "createLoginToken");
-    console.log("[TIP] Calling createLoginToken...");
-    const result = await createToken({});
-    const token = result.data.token;
+  if (token) {
     refs.tipBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[TIP] Success - token:", token.substring(0, 20) + "...");
-  } catch (err) {
-    console.error("[TIP] Callable failed:", err.code, err.message, err.details);
+    console.log("[TIP] Success - token set:", token.substring(0, 20) + "...");
+  } else {
+    console.warn("[TIP] Token generation failed, using fallback");
     refs.tipBtn.href = "/tm";
   }
 
@@ -1089,39 +1117,15 @@ async function updateRedeemLink() {
     return;
   }
 
-  console.log("[REDEEM] Waiting for auth token sync...");
+  console.log("[REDEEM] Generating secure token for UID:", currentUser.uid);
 
-  let idToken = null;
-  let attempts = 0;
-  const maxAttempts = 12;
-  while (!idToken && attempts < maxAttempts) {
-    try {
-      idToken = await auth.currentUser.getIdToken(true);
-      console.log("[REDEEM] Token ready after attempt", attempts + 1, "(length:", idToken.length, ")");
-      if (idToken) break;
-    } catch (err) {
-      console.warn("[REDEEM] Attempt", attempts + 1, "failed:", err.message);
-    }
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;
-  }
+  const token = await createAndStoreToken(currentUser.uid);
 
-  if (!idToken) {
-    console.error("[REDEEM] No token after", maxAttempts, "attempts");
-    refs.redeemBtn.href = "/tm";
-    refs.redeemBtn.style.display = "inline-block";
-    return;
-  }
-
-  try {
-    const createToken = httpsCallable(functions, "createLoginToken");
-    console.log("[REDEEM] Calling createLoginToken...");
-    const result = await createToken({});
-    const token = result.data.token;
+  if (token) {
     refs.redeemBtn.href = `/tm?t=${encodeURIComponent(token)}`;
-    console.log("[REDEEM] Success - token:", token.substring(0, 20) + "...");
-  } catch (err) {
-    console.error("[REDEEM] Callable failed:", err.code, err.message, err.details);
+    console.log("[REDEEM] Success - token set:", token.substring(0, 20) + "...");
+  } else {
+    console.warn("[REDEEM] Token generation failed, using fallback");
     refs.redeemBtn.href = "/tm";
   }
 
