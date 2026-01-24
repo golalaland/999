@@ -5835,6 +5835,68 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
+
+/* ---------- Highlights Button – Now fetches from per-user documents ---------- */
+highlightsBtn.onclick = async () => {
+    try {
+        if (!currentUser?.uid) {
+            showGoldAlert("Please log in to view cuties");
+            return;
+        }
+
+        // Get ALL user highlight documents (one per uploader)
+        const highlightsCollection = collection(db, "highlightVideos");
+        const q = query(highlightsCollection); // can add limit(50) or orderBy if needed later
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            showGoldAlert("No clips uploaded yet");
+            return;
+        }
+
+        // Flatten: collect ALL clips from ALL users' highlights arrays
+        const allVideos = [];
+
+        snapshot.forEach(userDoc => {
+            const userData = userDoc.data();
+            const userHighlights = userData.highlights || [];
+
+            // Enrich each clip with uploader info
+            userHighlights.forEach(clip => {
+                allVideos.push({
+                    id: clip.id,                          // unique per clip
+                    highlightVideo: clip.videoUrl || "",  // fallback names
+                    highlightVideoPrice: clip.highlightVideoPrice || 0,
+                    title: clip.title || "Untitled",
+                    uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+                    uploaderId: userData.uploaderId || userDoc.id,
+                    uploaderEmail: userData.uploaderEmail || "unknown",
+                    description: clip.description || "",
+                    thumbnail: clip.thumbnailUrl || "",
+                    createdAt: clip.uploadedAt || null,
+                    unlockedBy: clip.unlockedBy || [],    // if you add it back later
+                    previewClip: clip.previewClip || "",
+                    videoUrl: clip.videoUrl || "",
+                    isTrending: clip.isTrending || false,
+                    tags: clip.tags || []                 // tags are per clip → preserved
+                });
+            });
+        });
+
+        if (allVideos.length === 0) {
+            showGoldAlert("No clips available yet");
+            return;
+        }
+
+        // Pass the flattened list to your modal (unchanged)
+        showHighlightsModal(allVideos);
+
+    } catch (err) {
+        console.error("Error fetching clips:", err);
+        showGoldAlert("Error fetching clips — please try again.");
+    }
+};
+
 /* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 async function showHighlightsModal(targetUserId) {
     document.getElementById("highlightsModal")?.remove();
