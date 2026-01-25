@@ -151,6 +151,108 @@ style.textContent = `
 document.head.appendChild(style);
 
 
+// =============================================
+// loadNotifications – one-time fetch + render
+// (fallback if you don't want real-time onSnapshot)
+// =============================================
+async function loadNotifications() {
+  const list = document.getElementById("notificationsList");
+  const badge = document.getElementById("notif-badge");
+  const clearBtn = document.getElementById("markAllRead");
+
+  if (!list || !currentUser?.uid) return;
+
+  list.innerHTML = `<div style="padding:60px; text-align:center; color:#666;">Loading...</div>`;
+
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", currentUser.uid),   // or "userId" if that's your field
+      orderBy("timestamp", "desc")                   // or "createdAt"
+    );
+
+    const snapshot = await getDocs(q);
+
+    const unreadCount = snapshot.docs.filter(doc => !doc.data().read).length;
+
+    // Update badge
+    if (badge) {
+      badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+      badge.style.display = unreadCount > 0 ? "flex" : "none";
+    }
+
+    // Update clear button style
+    if (clearBtn) {
+      if (unreadCount > 0) {
+        clearBtn.textContent = "Clear all";
+        clearBtn.style.background = "linear-gradient(135deg, #ff006e, #ff5500)";
+        clearBtn.style.color = "#fff";
+        clearBtn.style.boxShadow = "0 4px 12px rgba(255,0,110,0.4)";
+      } else {
+        clearBtn.textContent = "All clear";
+        clearBtn.style.background = "#333";
+        clearBtn.style.color = "#666";
+        clearBtn.style.boxShadow = "none";
+      }
+    }
+
+    if (snapshot.empty) {
+      list.innerHTML = `<div style="padding:100px; text-align:center; color:#888; font-size:14px;">No notifications yet.</div>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    const frag = document.createDocumentFragment();
+
+    snapshot.forEach(doc => {
+      const n = doc.data();
+      const age = Date.now() - (n.timestamp?.toMillis?.() || 0);
+      const isFresh = age < 30000;
+
+      const item = document.createElement("div");
+      item.style.cssText = `
+        padding:10px 12px; margin:2px 6px; border-radius:9px;
+        background:rgba(255,0,110,${isFresh ? "0.12" : "0.06"});
+        border-left:${isFresh ? "3px solid #ff006e" : "none"};
+        cursor:pointer; transition:all 0.2s;
+      `;
+
+      item.innerHTML = `
+        <div style="font-weight:800; font-size:13.5px; color:#fff;">${n.title || "Notification"}</div>
+        <div style="font-size:12.5px; color:#ddd; margin-top:3px;">${n.message || "—"}</div>
+        <div style="font-size:10.5px; color:#888; margin-top:5px; display:flex; justify-content:space-between;">
+          <span>${timeAgo(n.timestamp?.toDate?.())}</span>
+          ${isFresh ? `<span style="color:#ff006e; font-weight:900; font-size:9px; animation:blink 1.5s infinite;">NEW</span>` : ""}
+        </div>
+      `;
+
+      item.onclick = async () => {
+        await deleteDoc(doc.ref);
+        loadNotifications(); // refresh after delete
+      };
+
+      frag.appendChild(item);
+    });
+
+    list.appendChild(frag);
+
+  } catch (err) {
+    console.error("loadNotifications failed:", err);
+    list.innerHTML = `<div style="color:#f66; text-align:center; padding:80px;">Error loading notifications</div>`;
+  }
+}
+
+// timeAgo helper (make sure this exists too)
+function timeAgo(date) {
+  if (!date) return "—";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+  if (seconds < 86400) return Math.floor(seconds / 3600) + "h ago";
+  return Math.floor(seconds / 86400) + "d ago";
+}
+
+
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
   if (!currentUser?.email) {
