@@ -6844,25 +6844,18 @@ function attachReelInteractions() {
   });
 }
 
-// Private Message Reader - Host Only (fixed + unsubscribed)
+// Private Message Reader - Host Only (your original design + listener cleanup)
 const privateMsgReader = document.getElementById('privateMsgReader');
 const privateMessagesList = document.getElementById('privateMessagesList');
 const privateMsgCount = document.getElementById('privateMsgCount');
-
+let unreadCount = 0;
 let privateMsgUnsubscribe = null;
 
-function startPrivateMsgListener() {
-  if (!currentUser || !currentUser.isHost || !currentUser.isLive) {
-    privateMsgReader.style.display = 'none';
-    if (privateMsgUnsubscribe) privateMsgUnsubscribe();
-    return;
-  }
-
+// Only show if current user is the host and isLive = true
+if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'block';
 
-  // Clean old listener
-  if (privateMsgUnsubscribe) privateMsgUnsubscribe();
-
+  // Listen to private messages in real-time
   const q = query(
     collection(db, "privateLiveMessages"),
     orderBy("timestamp", "asc")
@@ -6870,7 +6863,7 @@ function startPrivateMsgListener() {
 
   privateMsgUnsubscribe = onSnapshot(q, (snapshot) => {
     privateMessagesList.innerHTML = '';
-    let unreadCount = 0;
+    unreadCount = 0;
 
     if (snapshot.empty) {
       privateMessagesList.innerHTML = '<p class="no-messages">No private messages yet... waiting for secrets ✨</p>';
@@ -6880,8 +6873,7 @@ function startPrivateMsgListener() {
 
     snapshot.docs.forEach(doc => {
       const data = doc.data();
-      unreadCount++; // You can add real unread logic later (e.g. based on read timestamp)
-
+      unreadCount++;
       const msgEl = document.createElement('div');
       msgEl.className = 'private-message-item';
       msgEl.innerHTML = `
@@ -6893,22 +6885,23 @@ function startPrivateMsgListener() {
 
     privateMsgCount.textContent = unreadCount;
     privateMessagesList.scrollTop = privateMessagesList.scrollHeight;
-  }, (err) => {
-    console.error("Private messages listener error:", err);
   });
+} else {
+  privateMsgReader.style.display = 'none';
 }
 
-// Call when host status changes or page loads
-if (currentUser && currentUser.isHost && currentUser.isLive) {
-  startPrivateMsgListener();
+// Cleanup listener when modal closes or page unloads
+function stopPrivateMsgListener() {
+  if (privateMsgUnsubscribe) {
+    privateMsgUnsubscribe();
+    privateMsgUnsubscribe = null;
+  }
 }
 
-// Cleanup on logout/page close
-window.addEventListener("beforeunload", () => {
-  if (privateMsgUnsubscribe) privateMsgUnsubscribe();
-});
+document.getElementById("closePrivateMsgBtn")?.addEventListener("click", stopPrivateMsgListener);
+window.addEventListener("beforeunload", stopPrivateMsgListener);
 
-// WIN $STRZ POLL — FINAL FIXED VERSION
+// WIN $STRZ POLL — FINAL FIXED VERSION (your original design restored)
 let pollUnsubscribe = null;
 let votesUnsubscribe = null;
 
@@ -6927,7 +6920,7 @@ async function openPollModal() {
     if (pollUnsubscribe) pollUnsubscribe();
     if (votesUnsubscribe) votesUnsubscribe();
 
-    // Listen to current poll
+    // Listen to poll document
     pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
       if (!pollSnap.exists()) {
         hideLoader();
@@ -6947,7 +6940,7 @@ async function openPollModal() {
         return;
       }
 
-      // Start votes listener
+      // Start listening to votes
       startVotesListener(poll, endTime);
     }, (err) => {
       hideLoader();
@@ -6974,21 +6967,16 @@ function startVotesListener(poll, endTime) {
       }
     });
 
-    // Update poll with live counts (client-side only)
     poll.liveVotes = voteCounts;
 
-    // Render
     renderPoll(poll, endTime);
     document.getElementById("pollModal").style.display = "flex";
-  }, (err) => {
-    console.error("Votes listener error:", err);
   });
 }
 
 function renderPoll(poll, endTime) {
   document.getElementById("pollQuestion").textContent = poll.question;
 
-  // Reward + timer (bold)
   document.getElementById("pollTimer").innerHTML = `
     <div class="poll-reward-line">
       <strong>Reward: <span class="reward-amount">${poll.reward} $STRZ</span> ⭐️</strong>
@@ -7000,7 +6988,6 @@ function renderPoll(poll, endTime) {
 
   startPollTimer(endTime);
 
-  // Check if user already voted
   getDoc(doc(db, "pollVotes", currentUser.uid)).then((voteSnap) => {
     if (voteSnap.exists()) {
       const userChoice = voteSnap.data().choice;
@@ -7008,9 +6995,9 @@ function renderPoll(poll, endTime) {
     } else {
       showVotingOptions(poll);
     }
-  }).catch((err) => {
-    console.error("Vote check error:", err);
-    showVotingOptions(poll); // fallback
+  }).catch((error) => {
+    console.error("Error checking user vote:", error);
+    showVotingOptions(poll);
   });
 }
 
@@ -7024,14 +7011,6 @@ function showVotingOptions(poll) {
     btn.style.cssText = "width:100%;padding:18px;margin:12px 0;background:#222;color:#fff;border:2px solid #444;border-radius:16px;font-size:18px;font-weight:bold;cursor:pointer;transition:all 0.2s;";
     btn.onclick = async () => {
       try {
-        // Prevent voting after poll ends
-        const pollSnap = await getDoc(doc(db, "polls", "current"));
-        if (!pollSnap.exists() || Date.now() > pollSnap.data().endsAt.toMillis()) {
-          showStarPopup("Poll has ended!");
-          return;
-        }
-
-        // Vote + reward
         await setDoc(doc(db, "pollVotes", currentUser.uid), {
           choice: option,
           votedAt: serverTimestamp()
@@ -7064,7 +7043,7 @@ function showVotingOptions(poll) {
 
 function showLiveResults(poll, yourChoice) {
   document.getElementById("pollResult").style.display = "block";
-  document.getElementById("yourChoice").textContent = yourChoice || "Not voted yet";
+  document.getElementById("yourChoice").textContent = yourChoice;
 
   document.getElementById("pollOptions").innerHTML = "";
 
@@ -7081,17 +7060,15 @@ function showLiveResults(poll, yourChoice) {
   poll.options.forEach(option => {
     const votes = poll.liveVotes[option] || 0;
     const percentage = Math.round((votes / totalVotes) * 100);
-    const isYour = option === yourChoice;
-    const isWinner = votes === Math.max(...Object.values(poll.liveVotes || {}));
 
     const bar = document.createElement("div");
     bar.innerHTML = `
       <div class="result-bar-label">
-        <strong>${option}${isYour ? " (Yours)" : ""}${isWinner ? " 👑" : ""}</strong>
+        <strong>${option}</strong>
         <span>${votes} votes (${percentage}%)</span>
       </div>
       <div class="result-bar">
-        <div class="result-bar-fill" style="width: ${percentage}%; background: ${isWinner ? 'gold' : '#444'}"></div>
+        <div class="result-bar-fill" style="width: ${percentage}%;"></div>
       </div>
     `;
     bar.style.margin = "16px 0";
@@ -7115,7 +7092,6 @@ function startPollTimer(endTime) {
   }, 1000);
 }
 
-// Close modal + clean listeners
 document.getElementById("closePollBtn").onclick = () => {
   document.getElementById("pollModal").style.display = "none";
   if (pollUnsubscribe) pollUnsubscribe();
@@ -7124,7 +7100,7 @@ document.getElementById("closePollBtn").onclick = () => {
   votesUnsubscribe = null;
 };
 
-// === CREATE NEW POLL (fixed loading + reset) ===
+// === CREATE NEW POLL ===
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
   if (!currentAdmin || !currentAdmin.uid) {
     showGoldAlert("Admin login required to create poll!");
@@ -7146,7 +7122,6 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   const originalText = btn.innerHTML;
   const originalStyle = btn.style.cssText;
 
-  // Loading state
   btn.innerHTML = '<span class="btn-spinner visible"></span>';
   btn.disabled = true;
 
@@ -7163,23 +7138,20 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
       createdBy: currentAdmin.uid
     });
 
-    // Success
     btn.innerHTML = '✓ Created!';
     btn.style.background = 'linear-gradient(90deg, #40c057, #69db7c)';
     showGoldAlert(`Poll live! ♡\n${options.length} options • ${reward} $STRZ reward`, "SUCCESS");
 
-    // Reset form
     document.getElementById("poll-question").value = "";
     optionInputs.forEach(input => input.value = "");
     document.getElementById("poll-reward").value = "50";
     document.getElementById("poll-duration").value = "24";
 
-    // Reset button after 2s
     setTimeout(() => {
       btn.innerHTML = originalText;
       btn.style.cssText = originalStyle;
       btn.disabled = false;
-    }, 2000);
+    }, 1500);
   } catch (err) {
     btn.innerHTML = '✗ Failed';
     btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
