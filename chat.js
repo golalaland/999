@@ -153,7 +153,7 @@ document.head.appendChild(style);
 
 // =============================================
 // loadNotifications – one-time fetch + render
-// (fallback if you don't want real-time onSnapshot)
+// NOW USING ARRAY INSIDE SINGLE USER DOCUMENT
 // =============================================
 async function loadNotifications() {
   const list = document.getElementById("notificationsList");
@@ -165,48 +165,34 @@ async function loadNotifications() {
   list.innerHTML = `<div style="padding:60px; text-align:center; color:#666;">Loading...</div>`;
 
   try {
-    const q = query(
-      collection(db, "notifications"),
-      where("recipientId", "==", currentUser.uid),   // or "userId" if that's your field
-      orderBy("timestamp", "desc")                   // or "createdAt"
-    );
+    const docRef = doc(db, "notifications", currentUser.uid);
+    const snap = await getDoc(docRef);
 
-    const snapshot = await getDocs(q);
-
-    const unreadCount = snapshot.docs.filter(doc => !doc.data().read).length;
-
-    // Update badge
-    if (badge) {
-      badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
-      badge.style.display = unreadCount > 0 ? "flex" : "none";
-    }
-
-    // Update clear button style
-    if (clearBtn) {
-      if (unreadCount > 0) {
-        clearBtn.textContent = "Clear all";
-        clearBtn.style.background = "linear-gradient(135deg, #ff006e, #ff5500)";
-        clearBtn.style.color = "#fff";
-        clearBtn.style.boxShadow = "0 4px 12px rgba(255,0,110,0.4)";
-      } else {
-        clearBtn.textContent = "All clear";
-        clearBtn.style.background = "#333";
-        clearBtn.style.color = "#666";
-        clearBtn.style.boxShadow = "none";
-      }
-    }
-
-    if (snapshot.empty) {
+    if (!snap.exists() || !snap.data().notifications?.length) {
       list.innerHTML = `<div style="padding:100px; text-align:center; color:#888; font-size:14px;">No notifications yet.</div>`;
+      updateBadgeAndButton(0);
       return;
     }
+
+    let notifs = snap.data().notifications || [];
+    const unreadCount = snap.data().unreadCount ?? notifs.filter(n => !n.read).length;
+
+    // Update badge & button
+    updateBadgeAndButton(unreadCount);
+
+    // Sort newest first
+    notifs = notifs.sort((a, b) => {
+      const ta = a.timestamp?.toMillis?.() ?? 0;
+      const tb = b.timestamp?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
 
     list.innerHTML = "";
     const frag = document.createDocumentFragment();
 
-    snapshot.forEach(doc => {
-      const n = doc.data();
-      const age = Date.now() - (n.timestamp?.toMillis?.() || 0);
+    notifs.forEach((n, idx) => {
+      const timeDate = n.timestamp?.toDate?.() ?? new Date();
+      const age = Date.now() - timeDate.getTime();
       const isFresh = age < 30000;
 
       const item = document.createElement("div");
@@ -221,14 +207,23 @@ async function loadNotifications() {
         <div style="font-weight:800; font-size:13.5px; color:#fff;">${n.title || "Notification"}</div>
         <div style="font-size:12.5px; color:#ddd; margin-top:3px;">${n.message || "—"}</div>
         <div style="font-size:10.5px; color:#888; margin-top:5px; display:flex; justify-content:space-between;">
-          <span>${timeAgo(n.timestamp?.toDate?.())}</span>
+          <span>${timeAgo(timeDate)}</span>
           ${isFresh ? `<span style="color:#ff006e; font-weight:900; font-size:9px; animation:blink 1.5s infinite;">NEW</span>` : ""}
         </div>
       `;
 
+      // Click to mark as read (update specific array index)
       item.onclick = async () => {
-        await deleteDoc(doc.ref);
-        loadNotifications(); // refresh after delete
+        if (n.read) return;
+        try {
+          await updateDoc(docRef, {
+            [`notifications.${notifs.length - 1 - idx}.read`]: true,
+            unreadCount: increment(-1)
+          });
+          loadNotifications(); // refresh
+        } catch (err) {
+          console.error("Mark read failed:", err);
+        }
       };
 
       frag.appendChild(item);
@@ -242,7 +237,7 @@ async function loadNotifications() {
   }
 }
 
-// timeAgo helper (make sure this exists too)
+// Reuse your existing timeAgo (or keep this inline version)
 function timeAgo(date) {
   if (!date) return "—";
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -252,6 +247,30 @@ function timeAgo(date) {
   return Math.floor(seconds / 86400) + "d ago";
 }
 
+// Badge + button style helper (add this if not already present)
+function updateBadgeAndButton(count = 0) {
+  const badge = document.getElementById("notif-badge");
+  const btn = document.getElementById("markAllRead");
+
+  if (badge) {
+    badge.textContent = count > 99 ? "99+" : count;
+    badge.style.display = count > 0 ? "flex" : "none";
+  }
+
+  if (btn) {
+    if (count > 0) {
+      btn.textContent = "Clear all";
+      btn.style.background = "linear-gradient(135deg, #ff006e, #ff5500)";
+      btn.style.color = "#fff";
+      btn.style.boxShadow = "0 4px 12px rgba(255,0,110,0.4)";
+    } else {
+      btn.textContent = "All clear";
+      btn.style.background = "#333";
+      btn.style.color = "#666";
+      btn.style.boxShadow = "none";
+    }
+  }
+}
 
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
@@ -1975,74 +1994,76 @@ function attachMessagesListener() {
     }
   );
 }
-/* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION (Array inside user doc) ===== */
+/* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION (Array in single user doc) ===== */
 
-// Global unsubscribe (only used if you later add real-time listener)
 let notificationsUnsubscribe = null;
 
 // ─────────────────────────────────────────────
-// HELPER: Get reference to user's notification document
+// HELPERS
 // ─────────────────────────────────────────────
-function getUserNotifDocRef(uid) {
-  if (!uid) return null;
-  return doc(db, "notifications", uid);
+function getNotifDocRef(uid) {
+  return uid ? doc(db, "notifications", uid) : null;
+}
+
+function timeAgo(date) {
+  if (!date) return "—";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+  if (seconds < 86400) return Math.floor(seconds / 3600) + "h ago";
+  return Math.floor(seconds / 86400) + "d ago";
 }
 
 // ─────────────────────────────────────────────
-// PUSH NOTIFICATION (append to array)
+// PUSH NOTIFICATION – append to array
 // ─────────────────────────────────────────────
-async function pushNotification(userId, payload) {
-  if (!userId || !payload?.message) {
-    console.warn("Cannot push notification: missing userId or message");
+async function pushNotification(recipientUid, payload) {
+  if (!recipientUid || !payload?.message) {
+    console.warn("pushNotification skipped: missing uid or message");
     return;
   }
 
-  const notifRef = getUserNotifDocRef(userId);
+  const docRef = getNotifDocRef(recipientUid);
+
+  const newNotif = {
+    title: payload.title || "Notification",
+    message: payload.message,
+    type: payload.type || "info",
+    videoId: payload.videoId || null,
+    videoTitle: payload.videoTitle || null,
+    buyerId: payload.buyerId || null,
+    buyerName: payload.buyerName || null,
+    timestamp: serverTimestamp(),
+    read: false
+  };
 
   try {
-    // If document doesn't exist → create it with empty array first
-    // Then append to the array atomically
-    await runTransaction(db, async (transaction) => {
-      const docSnap = await transaction.get(notifRef);
-
-      const newNotif = {
-        message: payload.message,
-        title: payload.title || "Notification",
-        type: payload.type || "info",
-        timestamp: serverTimestamp(),
-        read: false,
-        // optional extra data
-        ...(payload.data || {})
-      };
-
-      if (!docSnap.exists()) {
-        // Create document with first notification
-        transaction.set(notifRef, {
+    await runTransaction(db, async (t) => {
+      const snap = await t.get(docRef);
+      if (!snap.exists()) {
+        t.set(docRef, {
           notifications: [newNotif],
           unreadCount: 1,
           lastUpdated: serverTimestamp()
         });
       } else {
-        // Append to existing array + increment unread count
-        transaction.update(notifRef, {
+        t.update(docRef, {
           notifications: arrayUnion(newNotif),
           unreadCount: increment(1),
           lastUpdated: serverTimestamp()
         });
       }
     });
-
-    console.log(`Notification added for user: ${userId}`);
+    console.log(`Notification pushed to ${recipientUid}`);
   } catch (err) {
-    console.error("Failed to push notification:", err);
+    console.error("pushNotification failed:", err);
   }
 }
 
 // ─────────────────────────────────────────────
-// SETUP REAL-TIME LISTENER (optional — for live updates)
-// Call this when opening notifications tab
+// REAL-TIME LISTENER – single document + array
 // ─────────────────────────────────────────────
-async function setupNotifications() {
+function setupNotifications() {
   if (notificationsUnsubscribe) {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -2050,63 +2071,75 @@ async function setupNotifications() {
 
   const listEl = document.getElementById("notificationsList");
   const markAllBtn = document.getElementById("markAllRead");
-  if (!listEl) return;
 
+  if (!listEl) return;
   if (!currentUser?.uid) {
-    listEl.innerHTML = `<p style="opacity:0.7; text-align:center;">Log in to see notifications.</p>`;
+    listEl.innerHTML = `<p style="opacity:0.7; text-align:center; padding:40px;">Log in to see notifications.</p>`;
     return;
   }
 
-  listEl.innerHTML = `<p style="opacity:0.6; text-align:center;">Loading notifications...</p>`;
+  listEl.innerHTML = `<p style="opacity:0.6; text-align:center; padding:60px;">Loading notifications...</p>`;
 
-  const notifRef = getUserNotifDocRef(currentUser.uid);
+  const docRef = getNotifDocRef(currentUser.uid);
 
-  notificationsUnsubscribe = onSnapshot(notifRef, (snap) => {
-    if (!snap.exists()) {
-      listEl.innerHTML = `<p style="opacity:0.7; text-align:center;">No notifications yet.</p>`;
-      updateBadgeAndButton(0);
+  notificationsUnsubscribe = onSnapshot(docRef, (snap) => {
+    if (!snap.exists() || !snap.data().notifications?.length) {
+      listEl.innerHTML = `<p style="opacity:0.7; text-align:center; padding:100px;">No notifications yet.</p>`;
+      updateBadgeAndButtonUI(0);
+      if (markAllBtn) markAllBtn.style.display = "none";
       return;
     }
 
     const data = snap.data();
-    const notifs = data.notifications || [];
-    const unreadCount = data.unreadCount || notifs.filter(n => !n.read).length;
+    let notifs = data.notifications || [];
+    const unreadCount = data.unreadCount ?? notifs.filter(n => !n.read).length;
 
-    updateBadgeAndButton(unreadCount);
+    updateBadgeAndButtonUI(unreadCount);
+    if (markAllBtn) markAllBtn.style.display = "block";
 
-    if (notifs.length === 0) {
-      listEl.innerHTML = `<p style="opacity:0.7; text-align:center;">No notifications yet.</p>`;
-      return;
-    }
+    // Newest first
+    notifs = [...notifs].sort((a, b) => {
+      const ta = a.timestamp?.toMillis?.() ?? 0;
+      const tb = b.timestamp?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
 
     const frag = document.createDocumentFragment();
-    // Show newest first
-    [...notifs].reverse().forEach((n, index) => {
-      const time = n.timestamp?.toDate?.() 
-        ? n.timestamp.toDate() 
-        : new Date(n.timestamp?.seconds * 1000 || Date.now());
+
+    notifs.forEach((n, idx) => {
+      const timeDate = n.timestamp?.toDate?.() ?? new Date();
+      const timeStr = timeDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const isFresh = (Date.now() - timeDate.getTime()) < 30000;
 
       const item = document.createElement("div");
       item.className = `notification-item ${n.read ? "read" : "unread"}`;
-      item.dataset.index = index; // for potential future use
-      item.innerHTML = `
-        <div class="notif-title">${n.title || "Notification"}</div>
-        <div class="notif-message">${n.message || "—"}</div>
-        <div class="notif-time">${timeAgo(time)}</div>
-        ${n.read ? '<div class="read-indicator">✓ Read</div>' : '<div class="new-indicator">NEW</div>'}
+      item.style.cssText = `
+        padding:10px 12px; margin:4px 8px; border-radius:10px;
+        background:rgba(255,0,110,${isFresh ? "0.15" : "0.07"});
+        border-left:${isFresh ? "4px solid #ff006e" : "none"};
+        cursor:pointer; transition:all 0.18s;
       `;
 
-      // Click to mark as read
-      item.style.cursor = "pointer";
+      item.innerHTML = `
+        ${n.title ? `<div style="font-weight:800; font-size:14px; color:#fff;">${n.title}</div>` : ""}
+        <div style="font-size:13px; color:#ddd; margin:4px 0;">${n.message || "—"}</div>
+        <div style="font-size:11px; color:#aaa; display:flex; justify-content:space-between; align-items:center;">
+          <span>${timeAgo(timeDate)}</span>
+          <span style="color:#ff006e; font-weight:900; ${isFresh ? "animation:blink 1.4s infinite;" : ""}">
+            ${n.read ? "✓ Read" : "NEW"}
+          </span>
+        </div>
+      `;
+
       item.onclick = async () => {
         if (n.read) return;
         try {
-          await updateDoc(notifRef, {
-            [`notifications.${notifs.length - 1 - index}.read`]: true,
+          await updateDoc(docRef, {
+            [`notifications.${notifs.length - 1 - idx}.read`]: true,
             unreadCount: increment(-1)
           });
         } catch (err) {
-          console.error("Failed to mark as read:", err);
+          console.error("Mark as read failed:", err);
         }
       };
 
@@ -2117,7 +2150,7 @@ async function setupNotifications() {
     listEl.appendChild(frag);
   }, (err) => {
     console.error("Notifications listener error:", err);
-    listEl.innerHTML = `<p style="color:#ff6666; text-align:center;">Failed to load notifications.</p>`;
+    listEl.innerHTML = `<p style="color:#ff6666; text-align:center; padding:80px;">Failed to load notifications.</p>`;
   });
 }
 
@@ -2125,7 +2158,8 @@ async function setupNotifications() {
 // MARK ALL AS READ
 // ─────────────────────────────────────────────
 async function markAllAsRead() {
-  if (!currentUser?.uid) return;
+  const uid = currentUser?.uid;
+  if (!uid) return;
 
   const btn = document.getElementById("markAllRead");
   if (!btn || btn.disabled) return;
@@ -2133,20 +2167,18 @@ async function markAllAsRead() {
   btn.disabled = true;
   btn.textContent = "Marking...";
 
-  const notifRef = getUserNotifDocRef(currentUser.uid);
+  const docRef = getNotifDocRef(uid);
 
   try {
-    await runTransaction(db, async (transaction) => {
-      const snap = await transaction.get(notifRef);
+    await runTransaction(db, async (t) => {
+      const snap = await t.get(docRef);
       if (!snap.exists()) return;
 
       const data = snap.data();
-      const notifs = data.notifications || [];
+      const updated = (data.notifications || []).map(n => ({ ...n, read: true }));
 
-      const updatedNotifs = notifs.map(n => ({ ...n, read: true }));
-
-      transaction.update(notifRef, {
-        notifications: updatedNotifs,
+      t.update(docRef, {
+        notifications: updated,
         unreadCount: 0,
         lastUpdated: serverTimestamp()
       });
@@ -2155,7 +2187,7 @@ async function markAllAsRead() {
     showStarPopup("All notifications marked as read");
   } catch (err) {
     console.error("Mark all failed:", err);
-    showStarPopup("Failed to mark notifications as read");
+    showStarPopup("Failed to mark as read");
   } finally {
     btn.disabled = false;
     btn.textContent = "Mark All Read";
@@ -2163,44 +2195,19 @@ async function markAllAsRead() {
 }
 
 // ─────────────────────────────────────────────
-// CLEAR ALL NOTIFICATIONS (delete array)
+// UI HELPERS: badge + button style
 // ─────────────────────────────────────────────
-async function clearAllNotifications() {
-  if (!currentUser?.uid) return;
-
-  const btn = document.getElementById("markAllRead");
-  if (!btn) return;
-
-  if (confirm("Clear all notifications? This cannot be undone.")) {
-    const notifRef = getUserNotifDocRef(currentUser.uid);
-    try {
-      await updateDoc(notifRef, {
-        notifications: [],
-        unreadCount: 0,
-        lastUpdated: serverTimestamp()
-      });
-      showStarPopup("Notifications cleared");
-    } catch (err) {
-      console.error("Clear failed:", err);
-      showStarPopup("Failed to clear notifications");
-    }
-  }
-}
-
-// ─────────────────────────────────────────────
-// Update badge & button appearance
-// ─────────────────────────────────────────────
-function updateBadgeAndButton(unreadCount = 0) {
+function updateBadgeAndButtonUI(count = 0) {
   const badge = document.getElementById("notif-badge");
   const btn = document.getElementById("markAllRead");
 
   if (badge) {
-    badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
-    badge.style.display = unreadCount > 0 ? "flex" : "none";
+    badge.textContent = count > 99 ? "99+" : count;
+    badge.style.display = count > 0 ? "flex" : "none";
   }
 
   if (btn) {
-    if (unreadCount > 0) {
+    if (count > 0) {
       btn.textContent = "Mark All Read";
       btn.style.background = "linear-gradient(135deg, #ff006e, #ff5500)";
       btn.style.color = "#fff";
@@ -2215,7 +2222,7 @@ function updateBadgeAndButton(unreadCount = 0) {
 }
 
 // ─────────────────────────────────────────────
-// TAB SWITCHING + LAZY LOAD
+// TAB SWITCHING + LAZY INIT
 // ─────────────────────────────────────────────
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -2226,7 +2233,6 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     const tab = document.getElementById(btn.dataset.tab);
     if (tab) tab.style.display = "block";
 
-    // Lazy init only once
     if (btn.dataset.tab === "notificationsTab" && !notificationsUnsubscribe) {
       setupNotifications();
     }
@@ -2234,7 +2240,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 });
 
 // ─────────────────────────────────────────────
-// CLEANUP ON PAGE LEAVE / LOGOUT
+// CLEANUP
 // ─────────────────────────────────────────────
 window.addEventListener("beforeunload", () => {
   if (notificationsUnsubscribe) {
@@ -2244,17 +2250,9 @@ window.addEventListener("beforeunload", () => {
 });
 
 // ─────────────────────────────────────────────
-// Attach button listeners (use once)
+// BUTTON ATTACH (mark all)
 // ─────────────────────────────────────────────
-document.getElementById("markAllRead")?.addEventListener("click", () => {
-  markAllAsRead(); // or clearAllNotifications() if you prefer delete
-});
-
-// For host-specific badge (if still needed)
-async function checkHostNotifications() {
-  // If you want to keep host-specific unread count, you can add logic here
-  // But with array structure it's easier to just use total unreadCount
-}
+document.getElementById("markAllRead")?.addEventListener("click", markAllAsRead);
 
 
 /* ----------------------------
