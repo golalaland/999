@@ -963,10 +963,10 @@ const RedHotMode = {
 punish() {
   // subtract from live taps
   taps = Math.max(0, taps - 25);
-  sessionTaps = Math.max(0, sessionTaps - 59);
+  sessionTaps = Math.max(0, sessionTaps - 25);
   progress = Math.max(0, progress - 10);
 
-  showFloatingPlus(tapButton, "-59");
+  showFloatingPlus(tapButton, "-25");
   tapButton?.classList.add("red-punish");
   setTimeout(() => tapButton?.classList.remove("red-punish"), 400);
 
