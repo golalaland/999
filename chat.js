@@ -2820,7 +2820,7 @@ let animationTimeout = null;
 const STAR_EARNING_CONFIG = {
   dailyCap: 100,               // Maximum stars a user can earn in one day
   earnAmount: 50,              // How many stars are added each time we "earn"
-  minTimeBetweenEarns: 180000, // Minimum wait time between two earns (3 minutes = 180,000 ms)
+  minTimeBetweenEarns: 60000, // Minimum wait time between two earns (3 minutes = 180,000 ms)
   earnCheckInterval: 30000     // How often we check if we can earn (every 30 seconds = 30,000 ms)
 };
 
