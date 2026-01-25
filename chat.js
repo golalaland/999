@@ -2809,7 +2809,7 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
    - Only earns when tab is visible
    - Configurable daily cap
    - Listener active only when tab visible
-   - No wasteful background intervals
+   - Original smooth star count animation restored
 ================================= */
 
 let starEarningUnsubscribe = null;
@@ -2818,10 +2818,10 @@ let animationTimeout = null;
 
 // Configurable settings
 const STAR_EARNING_CONFIG = {
-  dailyCap: 100,               // Maximum stars a user can earn in one day
-  earnAmount: 50,              // How many stars are added each time we "earn"
-  minTimeBetweenEarns: 60000, // Minimum wait time between two earns (3 minutes = 180,000 ms)
-  earnCheckInterval: 30000     // How often we check if we can earn (every 30 seconds = 30,000 ms)
+  dailyCap: 250,               // max stars per day
+  earnAmount: 10,              // stars per earn cycle
+  minTimeBetweenEarns: 300000, // 5 minutes in ms
+  earnCheckInterval: 60000     // check every 1 min if tab is visible
 };
 
 function startStarEarning(uid) {
@@ -2830,8 +2830,8 @@ function startStarEarning(uid) {
   const userRef = doc(db, "users", uid);
   let displayedStars = currentUser.stars || 0;
 
-  // Smooth UI animation
-  const animateStarCount = (target) => {
+  // Smooth UI update animation (your original)
+  const animateStarCount = target => {
     if (!refs.starCountEl) return;
     const diff = target - displayedStars;
     if (Math.abs(diff) < 1) {
@@ -2854,7 +2854,6 @@ function startStarEarning(uid) {
       currentUser.stars = target;
       if (animationTimeout) clearTimeout(animationTimeout);
       animateStarCount(target);
-
       // Milestone popup
       if (target > 0 && target % 1000 === 0) {
         showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
@@ -2888,7 +2887,6 @@ function startStarEarning(uid) {
     try {
       const snap = await getDoc(userRef);
       if (!snap.exists()) return;
-
       const data = snap.data();
       const today = todayDate();
 
@@ -2956,6 +2954,7 @@ function startStarEarning(uid) {
     }
   });
 }
+
 /* ===============================
    🧩 Helper Functions
 ================================= */
