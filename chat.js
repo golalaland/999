@@ -324,27 +324,34 @@ async function pushNotification(userId, message) {
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ——— CLEANUP PREVIOUS LISTENERS ———
+  // ─────────────────────────────────────────────
+  // 1. CLEANUP PREVIOUS LISTENERS & STATE
+  // ─────────────────────────────────────────────
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
   }
 
-  // Reset globals
+  // Reset global user references
   currentUser = null;
   currentAdmin = null;
 
-  // ——— USER LOGGED OUT ———
+  // ─────────────────────────────────────────────
+  // 2. USER LOGGED OUT
+  // ─────────────────────────────────────────────
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
 
+    // Show/hide UI sections
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
 
-    if (typeof showLoginUI === "function") showLoginUI();
+    if (typeof showLoginUI === "function") {
+      showLoginUI();
+    }
 
-    console.log("User logged out");
+    console.log("[AUTH] User logged out");
 
     // Clear clips grid safely
     const grid = document.getElementById("myClipsGrid");
@@ -359,54 +366,58 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     return;
   }
 
-  // ——— USER LOGGED IN ———
-  console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid || "unknown");
+  // ─────────────────────────────────────────────
+  // 3. USER LOGGED IN — VALIDATION FIRST
+  // ─────────────────────────────────────────────
+  console.log("[AUTH] User logged in → Firebase UID:", firebaseUser.uid);
 
-  // Guard against invalid user object
   if (!firebaseUser.uid) {
-    console.warn("[AUTH] Invalid user object - no UID");
+    console.warn("[AUTH] Invalid Firebase user — no UID");
     await signOut(auth);
+    showStarPopup("Login error — invalid user data");
     return;
   }
 
-  const email = firebaseUser.email?.toLowerCase()?.trim() || "";
-
+  const email = (firebaseUser.email || "").trim().toLowerCase();
   if (!email) {
-    console.warn("[AUTH] No email in firebaseUser");
-    showStarPopup("Login error — no email found");
+    console.warn("[AUTH] No email found in Firebase user");
     await signOut(auth);
+    showStarPopup("Login error — no email associated with account");
     return;
   }
 
-  const uid = sanitizeKey(email);
-  const userRef = doc(db, "users", uid);
+  const sanitizedUid = sanitizeKey(email);
+  console.log("[AUTH] Loading user profile → key:", sanitizedUid);
 
+  // ─────────────────────────────────────────────
+  // 4. LOAD USER PROFILE FROM FIRESTORE
+  // ─────────────────────────────────────────────
   try {
-    console.log("[AUTH] Loading profile for sanitized UID:", uid);
-
+    const userRef = doc(db, "users", sanitizedUid);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.error("[AUTH] Profile not found for:", uid);
-      showStarPopup("Profile missing — contact support");
+      console.error("[AUTH] No user document found for:", sanitizedUid);
+      showStarPopup("Your profile was not found — please contact support");
       await signOut(auth);
       return;
     }
 
     const data = userSnap.data();
 
-// Wait a moment for auth to stabilize
-    await new Promise(r => setTimeout(r, 1500));
+    // Give Firebase + Firestore a moment to stabilize (helps with race conditions in some setups)
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
-    // Run cleanup once per login (optional)
-    await cleanupExpiredTokens();
+    // Run one-time post-login tasks
+    await cleanupExpiredTokens?.();     // optional chaining in case function not defined
+    await updateRedeemLink?.();
+    await updateTipLink?.();
 
-    await updateRedeemLink();
-    await updateTipLink();
-     
-    // BUILD CURRENT USER OBJECT
+    // ─────────────────────────────────────────────
+    // 5. BUILD CURRENT USER OBJECT
+    // ─────────────────────────────────────────────
     currentUser = {
-      uid,
+      uid: sanitizedUid,
       email,
       firebaseUid: firebaseUser.uid,
       chatId: data.chatId || email.split("@")[0],
@@ -417,15 +428,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       isHost: !!data.isHost,
       isAdmin: !!data.isAdmin,
       hasPaid: !!data.hasPaid,
-      stars: data.stars || 0,
-      cash: data.cash || 0,
-      starsGifted: data.starsGifted || 0,
-      starsToday: data.starsToday || 0,
+      stars: Number(data.stars) || 0,
+      cash: Number(data.cash) || 0,
+      starsGifted: Number(data.starsGifted) || 0,
+      starsToday: Number(data.starsToday) || 0,
       usernameColor: data.usernameColor || "#ff69b4",
       subscriptionActive: !!data.subscriptionActive,
-      subscriptionCount: data.subscriptionCount || 0,
+      subscriptionCount: Number(data.subscriptionCount) || 0,
       lastStarDate: data.lastStarDate || todayDate(),
-      unlockedVideos: data.unlockedVideos || [],
+      unlockedVideos: Array.isArray(data.unlockedVideos) ? data.unlockedVideos : [],
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
       hostLink: data.hostLink || null
@@ -2633,66 +2644,97 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
-  const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
-  const password = document.getElementById("passwordInput")?.value;
+  const emailInput = document.getElementById("emailInput");
+  const passwordInput = document.getElementById("passwordInput");
 
-  if (!email || !password) {
-    showStarPopup("Enter email and password");
+  if (!emailInput || !passwordInput) {
+    showStarPopup("Form elements not found — contact support");
     return;
   }
 
-  // Start smart accurate loader
-  const loader = showLoadingBar();
+  const email = emailInput.value.trim().toLowerCase();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    showStarPopup("Please enter both email and password");
+    return;
+  }
+
+  const loader = showLoadingBar?.() || { update: () => {} }; // fallback if showLoadingBar undefined
 
   try {
-    loader.update(18); // Starting login...
+    loader.update(15); // Starting...
 
-    // STEP 1: Firebase Auth login
+    // ── Firebase Auth step ───────────────────────────────────────
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Firebase Auth Success:", userCredential.user.uid);
 
-    loader.update(55); // Authenticated, checking profile...
+    console.log("Firebase Auth success → UID:", userCredential.user.uid);
+    loader.update(50); // Authenticated
 
-    // STEP 2: Check if allowed
-    const uidKey = sanitizeKey(email);
+    // ── Check user document ──────────────────────────────────────
+    const uidKey = sanitizeKey(email); // ← make sure this function exists & works
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
 
-    loader.update(82); // Profile loaded...
+    loader.update(80); // Profile checked
 
     if (!userSnap.exists()) {
-      showStarPopup("Profile not found — contact support");
-      await signOut(auth);
-      loader.update(100); // finish cleanly
-      return;
-    }
-
-    const data = userSnap.data();
-
-    if (data.isHost || (data.isVIP && data.hasPaid === true)) {
-      console.log("Access granted");
-      loader.update(100); // Success → full bar + hide
-      // Chat opens normally via onAuthStateChanged
-    } else {
-      showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
+      showStarPopup("No profile found for this email.\nContact support if this is unexpected.");
       await signOut(auth);
       loader.update(100);
       return;
     }
 
-  } catch (err) {
-    console.error("Login failed:", err);
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      showStarPopup("Wrong password or email");
-    } else if (err.code === "auth/too-many-requests") {
-      showStarPopup("Too many attempts. Wait a minute.");
+    const userData = userSnap.data();
+
+    // Access rule: host OR (VIP + has actually paid)
+    if (userData.isHost || (userData.isVIP === true && userData.hasPaid === true)) {
+      console.log("Access granted — proceeding");
+      loader.update(100); // Success
+      // The rest should be handled by onAuthStateChanged listener
+      // (modal close, redirect, chat load, etc.)
     } else {
-      showStarPopup("Login failed — try again");
+      showStarPopup("Access restricted.\nOnly Hosts and paid VIP members can log in.");
+      await signOut(auth);
+      loader.update(100);
     }
-    loader.update(100); // Always finish bar on error
+
+  } catch (error) {
+    console.error("Login attempt failed:", error.code, error.message);
+
+    let message = "Login failed — please try again";
+
+    switch (error.code) {
+      case "auth/invalid-email":
+        message = "Invalid email format";
+        break;
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+        message = "Incorrect email or password";
+        break;
+      case "auth/too-many-requests":
+        message = "Too many failed attempts.\nPlease wait a minute and try again.";
+        break;
+      case "auth/user-disabled":
+        message = "This account has been disabled.\nContact support.";
+        break;
+      case "auth/network-request-failed":
+        message = "Network error — check your connection";
+        break;
+      default:
+        // Keep generic but log full error
+        console.warn("Unhandled auth error code:", error.code);
+    }
+
+    showStarPopup(message);
+    loader.update(100); // Always complete the bar
+
+  } finally {
+    // Optional: reset inputs on failure if desired
+    passwordInput.value = ""; // uncomment if you want to clear password after fail
   }
 });
-
+     
 // HELPER — SET CURRENT USER
 function setCurrentUserFromData(data, uidKey, email) {
   currentUser = {
@@ -6464,154 +6506,153 @@ async function unlockVideo(video) {
     }
 }
 async function loadMyClips() {
-    const grid = document.getElementById("myClipsGrid");
-    const noMsg = document.getElementById("noClipsMessage");
+  const grid = document.getElementById("myClipsGrid");
+  const noMsg = document.getElementById("noClipsMessage");
 
-    if (!grid || !currentUser?.uid) return;
+  if (!grid || !currentUser?.uid) return;
 
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading clips...</div>`;
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading clips...</div>`;
 
-    try {
-        const docRef = doc(db, "highlightVideos", currentUser.uid);
-        const docSnap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, "highlightVideos", currentUser.uid);
+    const docSnap = await getDoc(docRef);
 
-        if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
-            grid.innerHTML = "";
-            if (noMsg) noMsg.style.display = "block";
-            return;
-        }
-
-        if (noMsg) noMsg.style.display = "none";
-        grid.innerHTML = "";
-
-        const highlights = docSnap.data().highlights || [];
-        highlights.sort((a, b) => {
-            const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-            const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
-            return timeB - timeA;
-        });
-
-        highlights.forEach(v => {
-            const videoSrc = v.videoUrl || "";
-            const thumbnailSrc = v.thumbnailUrl || ""; // used as poster
-            const price = Number(v.highlightVideoPrice) || 0;
-            const unlocks = v.unlockedBy?.length || 0;
-            const earnings = price * unlocks;
-
-            const card = document.createElement("div");
-            card.style.cssText = `
-                background:#111;
-                border-radius:16px;
-                overflow:hidden;
-                box-shadow:0 10px 30px rgba(0,0,0,0.6);
-                border:1px solid #333;
-                display:flex;
-                flex-direction:column;
-                height:220px;
-                transition:transform 0.2s;
-            `;
-
-            card.innerHTML = `
-                <div style="display:flex;height:100%;background:#0d0d0d;">
-                    <!-- Left: Video preview – exact original zoom style -->
-                    <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-                        <video 
-                            src="${videoSrc}"
-                            muted loop playsinline
-                            poster="${thumbnailSrc}"
-                            style="
-                                position: absolute;
-                                top: 50%;
-                                left: 50%;
-                                width: 220%;
-                                height: 220%;
-                                object-fit: cover;
-                                object-position: center;
-                                transform: translate(-50%, -50%) scale(0.52);
-                                filter: brightness(0.96);
-                            ">
-                        </video>
-                        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
-                        <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
-                            ▶ CLIP
-                        </div>
-                    </div>
-
-                    <!-- Right side (unchanged) -->
-                    <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
-                        <div style="flex-grow:1;">
-                            <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
-                                ${v.title || "Untitled Drop"}
-                            </div>
-                            ${v.description ? `
-                                <div style="color:#aaa;font-size:11px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;opacity:0.9;">
-                                    ${v.description}
-                                </div>
-                            ` : ''}
-                            <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                                ID: ${v.id.slice(-8)}
-                            </div>
-                        </div>
-
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
-                            <div>
-                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
-                                <div style="color:#00ff9d;font-weight:900;font-size:12px;">${price} STRZ</div>
-                            </div>
-                            <div>
-                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Unlocks</div>
-                                <div style="color:#00ffea;font-weight:900;font-size:13px;">${unlocks}x</div>
-                            </div>
-                            <div>
-                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Revenue</div>
-                                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${earnings} ⭐</div>
-                            </div>
-                        </div>
-
-                        <button class="delete-clip-btn"
-                                data-id="${v.id}"
-                                data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
-                                style="
-                                  position:absolute;bottom:12px;right:12px;
-                                  background:linear-gradient(90deg,#ff0099,#ff6600);
-                                  border:none;color:#fff;
-                                  padding:8px 14px;border-radius:10px;
-                                  font-size:10px;font-weight:800;letter-spacing:0.6px;
-                                  cursor:pointer;opacity:0.92;
-                                  box-shadow:0 2px 12px rgba(255,0,100,0.4);
-                                  transition:all .25s ease;
-                                "
-                                onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
-                                onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
-                            DELETE
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            // Hover play – same as original
-            const videos = card.querySelectorAll("video");
-            card.addEventListener("mouseenter", () => {
-                videos.forEach(vid => vid.play().catch(() => {}));
-            });
-            card.addEventListener("mouseleave", () => {
-                videos.forEach(vid => {
-                    vid.pause();
-                    vid.currentTime = 0;
-                });
-            });
-
-            grid.appendChild(card);
-        });
-
-        document.querySelectorAll(".delete-clip-btn").forEach(btn => {
-            btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
-        });
-
-    } catch (err) {
-        console.error("loadMyClips error:", err);
-        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
+    if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
+      grid.innerHTML = "";
+      if (noMsg) noMsg.style.display = "block";
+      return;
     }
+
+    if (noMsg) noMsg.style.display = "none";
+    grid.innerHTML = "";
+
+    const highlights = docSnap.data().highlights || [];
+    highlights.sort((a, b) => {
+      const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+      const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    highlights.forEach(v => {
+      const videoSrc = v.videoUrl || "";
+      const thumbnailSrc = v.thumbnailUrl || ""; // used as poster
+
+      const price = Number(v.highlightVideoPrice) || 0;
+      const unlocks = v.unlockedBy?.length || 0;
+      const earnings = price * unlocks;
+
+      const card = document.createElement("div");
+      card.className = "clip-card"; // added for future CSS if needed
+      card.style.cssText = `
+        background:#111;
+        border-radius:16px;
+        overflow:hidden;
+        box-shadow:0 10px 30px rgba(0,0,0,0.6);
+        border:1px solid #333;
+        display:flex;
+        flex-direction:column;
+        height:220px;
+        transition:transform 0.2s;
+      `;
+
+      card.innerHTML = `
+        <div style="display:flex;height:100%;background:#0d0d0d;">
+          <!-- Left: Video preview – FIXED: no forced zoom/crop on load -->
+          <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+            <video
+              src="${videoSrc}"
+              muted loop playsinline
+              poster="${thumbnailSrc}"
+              class="clip-preview-video"
+              style="
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+                display: block;
+              ">
+            </video>
+            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
+            <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+              ▶ CLIP
+            </div>
+          </div>
+
+          <!-- Right side (exactly as original) -->
+          <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+            <div style="flex-grow:1;">
+              <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
+                ${v.title || "Untitled Drop"}
+              </div>
+              ${v.description ? `
+                <div style="color:#aaa;font-size:11px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;opacity:0.9;">
+                  ${v.description}
+                </div>
+              ` : ''}
+              <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                ID: ${v.id.slice(-8)}
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
+                <div style="color:#00ff9d;font-weight:900;font-size:12px;">${price} STRZ</div>
+              </div>
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Unlocks</div>
+                <div style="color:#00ffea;font-weight:900;font-size:13px;">${unlocks}x</div>
+              </div>
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Revenue</div>
+                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${earnings} ⭐</div>
+              </div>
+            </div>
+
+            <button class="delete-clip-btn"
+                    data-id="${v.id}"
+                    data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
+                    style="
+                      position:absolute;bottom:12px;right:12px;
+                      background:linear-gradient(90deg,#ff0099,#ff6600);
+                      border:none;color:#fff;
+                      padding:8px 14px;border-radius:10px;
+                      font-size:10px;font-weight:800;letter-spacing:0.6px;
+                      cursor:pointer;opacity:0.92;
+                      box-shadow:0 2px 12px rgba(255,0,100,0.4);
+                      transition:all .25s ease;
+                    "
+                    onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
+                    onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
+              DELETE
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Hover play – same as original
+      const videos = card.querySelectorAll("video");
+      card.addEventListener("mouseenter", () => {
+        videos.forEach(vid => vid.play().catch(() => {}));
+      });
+      card.addEventListener("mouseleave", () => {
+        videos.forEach(vid => {
+          vid.pause();
+          vid.currentTime = 0;
+        });
+      });
+
+      grid.appendChild(card);
+    });
+
+    // Delete buttons
+    document.querySelectorAll(".delete-clip-btn").forEach(btn => {
+      btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+    });
+  } catch (err) {
+    console.error("loadMyClips error:", err);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
+  }
 }
 
 function showDeleteConfirm(clipId, clipTitle) {
@@ -6629,7 +6670,7 @@ function showDeleteConfirm(clipId, clipTitle) {
             </h3>
             <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
                 "<strong style="color:#ff3366;">${clipTitle}</strong>" will be removed.<br>
-                <small style="color:#999;">Buyers keep access forever.</small>
+                <small style="color:#999;">This action can't be reversed.</small>
             </p>
             <div style="display:flex;gap:16px;justify-content:center;">
                 <button id="cancelDelete" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;cursor:pointer;">Cancel</button>
@@ -6692,13 +6733,13 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
 
   const chatId = currentUser.chatId || 'friend';
   const prettyHandle = chatId.startsWith('@') ? chatId : `@${chatId}`;
-  const message = `Hey! join my Cube and let’s win some together! Sign up using my rare invite link: `;
+  const message = `Hey! join my Cube and let’s level up together. Sign up using my invite link: `;
   const link = `https://cube.xixi.live/sign-up?ref=${encodeURIComponent(prettyHandle)}`;
   const fullText = message + link;
 
   navigator.clipboard.writeText(fullText)
     .then(() => {
-      showStarPopup('Copied!', 'Your invite link is ready to share!', 2500);
+      showStarPopup('Invite link copied!', 'Your invite link is ready to share!', 2500);
     })
     .catch(() => {
       showStarPopup('Error', 'Could not copy link — try again', 3000);
