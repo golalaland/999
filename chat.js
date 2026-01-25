@@ -2805,77 +2805,157 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 
 /* ===============================
-   💫 Auto Star Earning System
+   💫 Auto Star Earning System — Optimized Version (Option 1)
+   - Only earns when tab is visible
+   - Configurable daily cap
+   - Listener active only when tab visible
+   - No wasteful background intervals
 ================================= */
+
+let starEarningUnsubscribe = null;
+let lastEarnTime = 0;
+let animationTimeout = null;
+
+// Configurable settings
+const STAR_EARNING_CONFIG = {
+  dailyCap: 250,              // max stars per day
+  earnAmount: 10,             // stars per earn cycle
+  minTimeBetweenEarns: 300000, // 5 minutes in ms
+  earnCheckInterval: 60000     // check every 1 min if tab is visible
+};
+
 function startStarEarning(uid) {
-  if (!uid) return;
-  if (starInterval) clearInterval(starInterval);
+  if (!uid || !auth.currentUser) return;
 
   const userRef = doc(db, "users", uid);
   let displayedStars = currentUser.stars || 0;
-  let animationTimeout = null;
 
-  // ✨ Smooth UI update
-  const animateStarCount = target => {
+  // Smooth UI animation
+  const animateStarCount = (target) => {
     if (!refs.starCountEl) return;
     const diff = target - displayedStars;
-
     if (Math.abs(diff) < 1) {
       displayedStars = target;
       refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
       return;
     }
-
-    displayedStars += diff * 0.25; // smoother easing
+    displayedStars += diff * 0.25;
     refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
     animationTimeout = setTimeout(() => animateStarCount(target), 40);
   };
 
-  // 🔄 Real-time listener
-  onSnapshot(userRef, snap => {
-    if (!snap.exists()) return;
-    const data = snap.data();
-    const targetStars = data.stars || 0;
-    currentUser.stars = targetStars;
+  // Real-time listener (only when tab visible)
+  const startListener = () => {
+    if (starEarningUnsubscribe) starEarningUnsubscribe();
+    starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const target = data.stars || 0;
+      currentUser.stars = target;
+      if (animationTimeout) clearTimeout(animationTimeout);
+      animateStarCount(target);
 
+      // Milestone popup
+      if (target > 0 && target % 1000 === 0) {
+        showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
+      }
+    });
+  };
+
+  // Stop listener when tab hidden
+  const stopListener = () => {
+    if (starEarningUnsubscribe) {
+      starEarningUnsubscribe();
+      starEarningUnsubscribe = null;
+    }
+  };
+
+  // Visibility change handler
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      startListener();
+      tryEarnStars(); // try immediately when tab becomes visible
+    } else {
+      stopListener();
+    }
+  };
+
+  // Earn stars when tab is visible (with cooldown)
+  const tryEarnStars = async () => {
+    if (document.visibilityState !== "visible") return;
+    if (Date.now() - lastEarnTime < STAR_EARNING_CONFIG.minTimeBetweenEarns) return;
+
+    try {
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+      const today = todayDate();
+
+      // Reset daily counter if new day
+      if (data.lastStarDate !== today) {
+        await updateDoc(userRef, {
+          starsToday: 0,
+          lastStarDate: today
+        });
+      }
+
+      // Check cap
+      const currentToday = data.starsToday || 0;
+      if (currentToday >= STAR_EARNING_CONFIG.dailyCap) return;
+
+      // Earn
+      const amountToAdd = Math.min(
+        STAR_EARNING_CONFIG.earnAmount,
+        STAR_EARNING_CONFIG.dailyCap - currentToday
+      );
+
+      await updateDoc(userRef, {
+        stars: increment(amountToAdd),
+        starsToday: increment(amountToAdd)
+      });
+
+      lastEarnTime = Date.now();
+      console.log(`[STARS] Earned ${amountToAdd} stars (today: ${currentToday + amountToAdd}/${STAR_EARNING_CONFIG.dailyCap})`);
+    } catch (err) {
+      console.error("[STARS] Earn error:", err);
+    }
+  };
+
+  // Periodic check while tab visible
+  const earnCheckInterval = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      tryEarnStars();
+    }
+  }, STAR_EARNING_CONFIG.earnCheckInterval);
+
+  // Start listener if tab already visible
+  if (document.visibilityState === "visible") {
+    startListener();
+    tryEarnStars(); // initial earn
+  }
+
+  // Listen for visibility changes
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  // Cleanup on page close / logout
+  const cleanup = () => {
+    if (starEarningUnsubscribe) starEarningUnsubscribe();
+    clearInterval(earnCheckInterval);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
     if (animationTimeout) clearTimeout(animationTimeout);
-    animateStarCount(targetStars);
+  };
 
-    // 🎉 Milestone popup
-    if (targetStars > 0 && targetStars % 1000 === 0) {
-      showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(targetStars)} stars!`);
+  window.addEventListener("beforeunload", cleanup);
+
+  // Also clean up if user logs out
+  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    if (!user || user.uid !== uid) {
+      cleanup();
+      unsubscribeAuth();
     }
   });
-
-  // ⏱️ Increment loop
-  starInterval = setInterval(async () => {
-    if (!navigator.onLine) return;
-
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) return;
-
-    const data = snap.data();
-    const today = todayDate();
-
-    // Reset daily count
-    if (data.lastStarDate !== today) {
-      await updateDoc(userRef, { starsToday: 0, lastStarDate: today });
-      return;
-    }
-
-    // Limit: 250/day
-    if ((data.starsToday || 0) < 250) {
-      await updateDoc(userRef, {
-        stars: increment(10),
-        starsToday: increment(10)
-      });
-    }
-  }, 60000);
-
-  // 🧹 Cleanup
-  window.addEventListener("beforeunload", () => clearInterval(starInterval));
 }
-
 /* ===============================
    🧩 Helper Functions
 ================================= */
@@ -6391,7 +6471,6 @@ async function loadMyClips() {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading clips...</div>`;
 
     try {
-        // Fetch the single user document
         const docRef = doc(db, "highlightVideos", currentUser.uid);
         const docSnap = await getDoc(docRef);
 
@@ -6404,7 +6483,6 @@ async function loadMyClips() {
         if (noMsg) noMsg.style.display = "none";
         grid.innerHTML = "";
 
-        // Sort newest first
         const highlights = docSnap.data().highlights || [];
         highlights.sort((a, b) => {
             const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
@@ -6414,6 +6492,7 @@ async function loadMyClips() {
 
         highlights.forEach(v => {
             const videoSrc = v.videoUrl || "";
+            const thumbnailSrc = v.thumbnailUrl || ""; // used as poster
             const price = Number(v.highlightVideoPrice) || 0;
             const unlocks = v.unlockedBy?.length || 0;
             const earnings = price * unlocks;
@@ -6433,21 +6512,22 @@ async function loadMyClips() {
 
             card.innerHTML = `
                 <div style="display:flex;height:100%;background:#0d0d0d;">
-                    <!-- Left: Zoomed video preview (exact original style) -->
+                    <!-- Left: Video preview – exact original zoom style -->
                     <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
                         <video 
-                            src="${videoSrc}" 
+                            src="${videoSrc}"
                             muted loop playsinline
-                            poster="${v.thumbnailUrl || ''}"
+                            poster="${thumbnailSrc}"
                             style="
-                                position:absolute;
-                                top:50%;
-                                left:50%;
-                                width:220%;
-                                height:220%;
-                                object-fit:cover;
-                                transform:translate(-50%,-50%) scale(0.52);
-                                filter:brightness(0.96);
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                width: 220%;
+                                height: 220%;
+                                object-fit: cover;
+                                object-position: center;
+                                transform: translate(-50%, -50%) scale(0.52);
+                                filter: brightness(0.96);
                             ">
                         </video>
                         <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
@@ -6456,22 +6536,14 @@ async function loadMyClips() {
                         </div>
                     </div>
 
-                    <!-- Right: Info + Delete (unchanged from your original) -->
+                    <!-- Right side (unchanged) -->
                     <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
                         <div style="flex-grow:1;">
-                            <div style="
-                                color:#fff;font-weight:800;font-size:14px;line-height:1.3;
-                                margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-                                overflow:hidden;text-overflow:ellipsis;
-                            ">
+                            <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
                                 ${v.title || "Untitled Drop"}
                             </div>
                             ${v.description ? `
-                                <div style="
-                                    color:#aaa;font-size:11px;line-height:1.35;
-                                    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-                                    overflow:hidden;text-overflow:ellipsis;opacity:0.9;
-                                ">
+                                <div style="color:#aaa;font-size:11px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;opacity:0.9;">
                                     ${v.description}
                                 </div>
                             ` : ''}
@@ -6480,7 +6552,6 @@ async function loadMyClips() {
                             </div>
                         </div>
 
-                        <!-- Stats row -->
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
                             <div>
                                 <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
@@ -6496,7 +6567,6 @@ async function loadMyClips() {
                             </div>
                         </div>
 
-                        <!-- Delete button -->
                         <button class="delete-clip-btn"
                                 data-id="${v.id}"
                                 data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
@@ -6518,7 +6588,7 @@ async function loadMyClips() {
                 </div>
             `;
 
-            // Hover play (exact original)
+            // Hover play – same as original
             const videos = card.querySelectorAll("video");
             card.addEventListener("mouseenter", () => {
                 videos.forEach(vid => vid.play().catch(() => {}));
@@ -6533,7 +6603,6 @@ async function loadMyClips() {
             grid.appendChild(card);
         });
 
-        // Attach delete handlers
         document.querySelectorAll(".delete-clip-btn").forEach(btn => {
             btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
         });
