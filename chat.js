@@ -2805,23 +2805,24 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 
 /* ===============================
-   💫 Auto Star Earning System — Optimized Version (Option 1)
+   💫 Auto Star Earning System — Fixed & Optimized (Your Original Animation Restored)
    - Only earns when tab is visible
    - Configurable daily cap
    - Listener active only when tab visible
-   - Original smooth star count animation restored
+   - Smooth counting animation (your original code)
+   - No wasteful background intervals
 ================================= */
 
 let starEarningUnsubscribe = null;
 let lastEarnTime = 0;
 let animationTimeout = null;
 
-// Configurable settings
+// Configurable settings (change these as you like)
 const STAR_EARNING_CONFIG = {
-  dailyCap: 250,               // max stars per day
-  earnAmount: 10,              // stars per earn cycle
-  minTimeBetweenEarns: 300000, // 5 minutes in ms
-  earnCheckInterval: 60000     // check every 1 min if tab is visible
+  dailyCap: 100,               // max stars per day
+  earnAmount: 25,              // stars per earn cycle
+  minTimeBetweenEarns: 60000, // 5 minutes in ms
+  earnCheckInterval: 60000     // check every 1 min if tab visible
 };
 
 function startStarEarning(uid) {
@@ -2830,8 +2831,8 @@ function startStarEarning(uid) {
   const userRef = doc(db, "users", uid);
   let displayedStars = currentUser.stars || 0;
 
-  // Smooth UI update animation (your original)
-  const animateStarCount = target => {
+  // ✨ Smooth UI animation (your original beautiful counting effect)
+  const animateStarCount = (target) => {
     if (!refs.starCountEl) return;
     const diff = target - displayedStars;
     if (Math.abs(diff) < 1) {
@@ -2839,7 +2840,7 @@ function startStarEarning(uid) {
       refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
       return;
     }
-    displayedStars += diff * 0.25;
+    displayedStars += diff * 0.25; // your original easing
     refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
     animationTimeout = setTimeout(() => animateStarCount(target), 40);
   };
@@ -2853,8 +2854,8 @@ function startStarEarning(uid) {
       const target = data.stars || 0;
       currentUser.stars = target;
       if (animationTimeout) clearTimeout(animationTimeout);
-      animateStarCount(target);
-      // Milestone popup
+      animateStarCount(target); // your smooth animation
+      // Milestone popup (your original)
       if (target > 0 && target % 1000 === 0) {
         showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
       }
@@ -2867,6 +2868,7 @@ function startStarEarning(uid) {
       starEarningUnsubscribe();
       starEarningUnsubscribe = null;
     }
+    if (animationTimeout) clearTimeout(animationTimeout);
   };
 
   // Visibility change handler
