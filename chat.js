@@ -306,21 +306,6 @@ const sanitizeId = (input) => {
 // RESTORED: getUserId — USED BY OLD CODE (syncUserUnlocks, etc.)
 const getUserId = sanitizeId;  // ← This fixes "getUserId is not defined"
 
-// NOTIFICATION HELPER — CLEAN & ETERNAL
-async function pushNotification(userId, message) {
-  if (!userId || !message) return;
-  try {
-    await addDoc(collection(db, "notifications"), {
-      userId,
-      message,
-      timestamp: serverTimestamp(),
-      read: false
-    });
-  } catch (err) {
-    console.warn("Failed to send notification:", err);
-  }
-}
-
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
