@@ -2803,26 +2803,25 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 
 
-
 /* ===============================
-   💫 Auto Star Earning System — Fixed & Optimized (Your Original Animation Restored)
-   - Only earns when tab is visible
-   - Configurable daily cap
-   - Listener active only when tab visible
-   - Smooth counting animation (your original code)
-   - No wasteful background intervals
+   💫 Auto Star Earning System — LIVE & SMOOTH (No Reload Needed)
+   - Optimistic UI updates
+   - Smooth animation queue
+   - Listener always active (but throttled)
+   - Earn only when visible + cooldown
+   - Daily cap enforced
 ================================= */
-
 let starEarningUnsubscribe = null;
 let lastEarnTime = 0;
-let animationTimeout = null;
+let animationQueue = [];
+let isAnimating = false;
 
-// Configurable settings (change these as you like)
+// Config
 const STAR_EARNING_CONFIG = {
-  dailyCap: 100,               // max stars per day
-  earnAmount: 25,              // stars per earn cycle
-  minTimeBetweenEarns: 60000, // 5 minutes in ms
-  earnCheckInterval: 60000     // check every 1 min if tab visible
+  dailyCap: 100,
+  earnAmount: 25,
+  minTimeBetweenEarns: 60000,     // 1 minute
+  earnCheckInterval: 60000        // check every minute
 };
 
 function startStarEarning(uid) {
@@ -2831,57 +2830,63 @@ function startStarEarning(uid) {
   const userRef = doc(db, "users", uid);
   let displayedStars = currentUser.stars || 0;
 
-  // ✨ Smooth UI animation (your original beautiful counting effect)
-  const animateStarCount = (target) => {
-    if (!refs.starCountEl) return;
-    const diff = target - displayedStars;
-    if (Math.abs(diff) < 1) {
-      displayedStars = target;
-      refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
+  // ── SMOOTH ANIMATION (queued & reliable) ────────────────────────
+  function animateTo(target) {
+    if (animationQueue.length > 0) {
+      animationQueue.push(target);
       return;
     }
-    displayedStars += diff * 0.25; // your original easing
-    refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
-    animationTimeout = setTimeout(() => animateStarCount(target), 40);
-  };
+    animationQueue.push(target);
+    processAnimationQueue();
+  }
 
-  // Real-time listener (only when tab visible)
-  const startListener = () => {
-    if (starEarningUnsubscribe) starEarningUnsubscribe();
-    starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const target = data.stars || 0;
-      currentUser.stars = target;
-      if (animationTimeout) clearTimeout(animationTimeout);
-      animateStarCount(target); // your smooth animation
-      // Milestone popup (your original)
-      if (target > 0 && target % 1000 === 0) {
-        showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
-      }
-    });
-  };
+  function processAnimationQueue() {
+    if (isAnimating || animationQueue.length === 0) return;
+    isAnimating = true;
 
-  // Stop listener when tab hidden
-  const stopListener = () => {
-    if (starEarningUnsubscribe) {
-      starEarningUnsubscribe();
-      starEarningUnsubscribe = null;
+    const target = animationQueue.shift();
+    const diff = target - displayedStars;
+
+    if (Math.abs(diff) < 1) {
+      displayedStars = target;
+      if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
+      isAnimating = false;
+      processAnimationQueue();
+      return;
     }
-    if (animationTimeout) clearTimeout(animationTimeout);
-  };
 
-  // Visibility change handler
-  const handleVisibilityChange = () => {
+    displayedStars += diff * 0.25; // your original easing speed
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
+
+    setTimeout(() => {
+      isAnimating = false;
+      processAnimationQueue();
+    }, 40);
+  }
+
+  // ── REAL-TIME LISTENER (always on, but only update if visible) ──
+  starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const realStars = data.stars || 0;
+
+    // Only animate if tab is visible (prevents lag buildup)
     if (document.visibilityState === "visible") {
-      startListener();
-      tryEarnStars(); // try immediately when tab becomes visible
-    } else {
-      stopListener();
-    }
-  };
+      animateTo(realStars);
+      currentUser.stars = realStars;
 
-  // Earn stars when tab is visible (with cooldown)
+      // Milestone popup
+      if (realStars > 0 && realStars % 1000 === 0 && realStars !== displayedStars) {
+        showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(realStars)} stars!`);
+      }
+    } else {
+      // Update internal state silently when hidden
+      displayedStars = realStars;
+      currentUser.stars = realStars;
+    }
+  });
+
+  // ── TRY EARN STARS (only when visible + cooldown) ───────────────
   const tryEarnStars = async () => {
     if (document.visibilityState !== "visible") return;
     if (Date.now() - lastEarnTime < STAR_EARNING_CONFIG.minTimeBetweenEarns) return;
@@ -2889,10 +2894,11 @@ function startStarEarning(uid) {
     try {
       const snap = await getDoc(userRef);
       if (!snap.exists()) return;
+
       const data = snap.data();
       const today = todayDate();
 
-      // Reset daily counter if new day
+      // Reset daily if new day
       if (data.lastStarDate !== today) {
         await updateDoc(userRef, {
           starsToday: 0,
@@ -2900,59 +2906,62 @@ function startStarEarning(uid) {
         });
       }
 
-      // Check cap
       const currentToday = data.starsToday || 0;
       if (currentToday >= STAR_EARNING_CONFIG.dailyCap) return;
 
-      // Earn
-      const amountToAdd = Math.min(
-        STAR_EARNING_CONFIG.earnAmount,
-        STAR_EARNING_CONFIG.dailyCap - currentToday
-      );
+      const amount = Math.min(STAR_EARNING_CONFIG.earnAmount, STAR_EARNING_CONFIG.dailyCap - currentToday);
 
+      // Optimistic update (instant UI feel)
+      const optimisticNew = (currentUser.stars || 0) + amount;
+      animateTo(optimisticNew);
+
+      // Server update
       await updateDoc(userRef, {
-        stars: increment(amountToAdd),
-        starsToday: increment(amountToAdd)
+        stars: increment(amount),
+        starsToday: increment(amount)
       });
 
       lastEarnTime = Date.now();
-      console.log(`[STARS] Earned ${amountToAdd} stars (today: ${currentToday + amountToAdd}/${STAR_EARNING_CONFIG.dailyCap})`);
+      console.log(`[STARS] Earned ${amount} (today: ${currentToday + amount}/${STAR_EARNING_CONFIG.dailyCap})`);
     } catch (err) {
-      console.error("[STARS] Earn error:", err);
+      console.error("[STARS] Earn failed:", err);
     }
   };
 
-  // Periodic check while tab visible
-  const earnCheckInterval = setInterval(() => {
+  // ── INTERVAL CHECK (while visible) ──────────────────────────────
+  const earnInterval = setInterval(() => {
     if (document.visibilityState === "visible") {
       tryEarnStars();
     }
   }, STAR_EARNING_CONFIG.earnCheckInterval);
 
-  // Start listener if tab already visible
+  // Initial check
   if (document.visibilityState === "visible") {
-    startListener();
-    tryEarnStars(); // initial earn
+    tryEarnStars();
   }
 
-  // Listen for visibility changes
-  document.addEventListener("visibilitychange", handleVisibilityChange);
+  // ── VISIBILITY HANDLING ─────────────────────────────────────────
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      tryEarnStars(); // catch up immediately
+    }
+  };
 
-  // Cleanup on page close / logout
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  // ── CLEANUP ─────────────────────────────────────────────────────
   const cleanup = () => {
     if (starEarningUnsubscribe) starEarningUnsubscribe();
-    clearInterval(earnCheckInterval);
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
-    if (animationTimeout) clearTimeout(animationTimeout);
+    clearInterval(earnInterval);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
   };
 
   window.addEventListener("beforeunload", cleanup);
 
-  // Also clean up if user logs out
-  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+  // Cleanup on logout / different user
+  onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== uid) {
       cleanup();
-      unsubscribeAuth();
     }
   });
 }
@@ -3445,7 +3454,6 @@ function extractColorsFromGradient(gradient) {
 
   // 🎞️ Video list (Shopify video)
   const videos = [
-    "https://cdn.shopify.com/videos/c/o/v/aa400d8029e14264bc1ba0a47babce47.mp4",
     "https://cdn.shopify.com/videos/c/o/v/45c20ba8df2c42d89807c79609fe85ac.mp4"
   ];
 
