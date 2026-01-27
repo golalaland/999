@@ -5585,6 +5585,10 @@ window.startStream = startStream;
           if (natureEl) natureEl.value = data.naturePick || "";
           const fruitEl = document.getElementById("fruitPick");
           if (fruitEl) fruitEl.value = data.fruitPick || "";
+          
+// --- NEW: body type pick
+const bodyTypeEl = document.getElementById("bodyTypePick");
+if (bodyTypeEl) bodyTypeEl.value = data.bodyTypePick || "";
 
           // preview photo
           if (data.popupPhoto) {
