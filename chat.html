@@ -3739,9 +3739,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   
   <label>Short Bio</label>
   <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
-
-  <!-- Inside your Media Tab — Host-Only Fields (Nature & Fruit Pick) -->
+<!-- Inside your Media Tab — Host-Only Fields (Nature & Body Type) -->
 <div id="hostOnlyFields" style="display:none;">
+
+  <!-- Nature Pick -->
   <label>Nature Pick</label>
   <select id="naturePick">
     <option value="" disabled selected>What describes you?</option>
@@ -3749,11 +3750,25 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <option value="Sexy">Sexy</option>
     <option value="Beautiful">Beautiful</option>
     <option value="Charming">Charming</option>
-    <option value="Curvy">Curvy</option>
+    <option value="Sweet">Sweet</option>
     <option value="Cool">Cool</option>
   </select>
 
-  <label>Fruit Pick</label>
+  <!-- Body Type Pick -->
+  <label>Body Type</label>
+  <select id="bodyTypePick">
+    <option value="" disabled selected>Choose your body type</option>
+    <option value="Slim">Slim</option>
+    <option value="Slim Thick">Slim Thick</option>
+    <option value="Curvy">Curvy</option>
+    <option value="Chubby">Chubby</option>
+    <option value="Thick">Thick</option>
+    <option value="Athletic">Athletic</option>
+    <option value="Petite">Petite</option>
+    <option value="Plus Size">Plus Size</option>
+  </select>
+
+  <label>Vibe Pick</label>
   <select id="fruitPick">
     <option value="" disabled selected>Choose your vibe</option>
     <option value="🍇">🍇 Casual Hangout & Friendships</option>
