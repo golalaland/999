@@ -3360,6 +3360,92 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   height: 8px;               /* slightly thicker = more visible */
   ...
 }
+.tool-card {
+  background: linear-gradient(135deg, rgba(138,43,226,0.18), rgba(255,0,242,0.12));
+  border: 1px solid rgba(255,0,242,0.4);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 0 28px rgba(255,0,242,0.25);
+  max-width: 520px;
+}
+
+.tool-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.tool-title {
+  font-size: 16px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tool-sub {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+.tool-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.status {
+  font-weight: 700;
+  color: #ff4fd8;
+}
+
+/* Toggle */
+.switch {
+  position: relative;
+  width: 54px;
+  height: 30px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 30px;
+  background: #333;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 24px;
+  width: 24px;
+  left: 3px;
+  top: 3px;
+  background: #aaa;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background: linear-gradient(135deg, #ff00f2, #8a2be2);
+  box-shadow: 0 0 16px rgba(255,0,242,0.8);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(24px);
+  background: #00ffea;
+}
 </style>
 </head>
 <body>
@@ -4259,10 +4345,29 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
+  <!-- 🔥 FREE TONIGHT TOGGLE -->
+<div id="freeTonightCard" class="tool-card">
+  <div class="tool-head">
+    <div>
+      <div class="tool-title">
+        Free Tonight 🔥
+      </div>
+      <div class="tool-sub">
+        Randomly feature one of your highlights for 24 hours
+      </div>
+    </div>
 
+    <label class="switch">
+      <input type="checkbox" id="freeTonightToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
 
-
-
+  <div class="tool-foot">
+    <span class="cost">750 ⭐️ per activation</span>
+    <span id="freeTonightStatus" class="status">Inactive</span>
+  </div>
+</div>
 
 <!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
 <div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
