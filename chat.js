@@ -826,7 +826,7 @@ document.getElementById("withdrawCashBtn")?.addEventListener("click", async () =
   // Confirm action
   const ok = await showConfirm(
     "Withdraw Cash",
-    `Request withdrawal of ₦${amount.toLocaleString()}?\n\nYour balance will be deducted immediately.`
+    `Request withdrawal of ₦${amount.toLocaleString()}?\n\nSuccessful.`
   );
   if (!ok) return;
 
