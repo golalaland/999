@@ -5944,6 +5944,8 @@ highlightsBtn.onclick = async () => {
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
 
+    console.log("Snapshot:", snap); // debug
+
     if (snap.empty) {
       showGoldAlert("No clips uploaded yet");
       return;
@@ -5953,7 +5955,7 @@ highlightsBtn.onclick = async () => {
 
     snap.forEach(userDoc => {
       const userData = userDoc.data() || {};
-      const clips = userData.highlights || []; // safety: default empty array
+      const clips = userData.highlights || []; // safe default
 
       clips.forEach(clip => {
         allClips.push({
@@ -5965,7 +5967,7 @@ highlightsBtn.onclick = async () => {
           uploaderId: userData.uploaderId || userDoc.id,
           uploaderEmail: userData.uploaderEmail || "unknown",
           description: clip.description || "",
-          thumbnail: clip.thumbnailUrl || clip.thumbnail || "", // support both field names
+          thumbnail: clip.thumbnailUrl || clip.thumbnail || "",
           createdAt: clip.uploadedAt || null,
           unlockedBy: clip.unlockedBy || [],
           previewClip: clip.previewClip || "",
@@ -5976,13 +5978,12 @@ highlightsBtn.onclick = async () => {
       });
     });
 
+    console.log("All clips ready:", allClips.length); // debug
+
     if (allClips.length === 0) {
       showGoldAlert("No clips available yet");
       return;
     }
-
-    // Debug: confirm data shape
-    console.log("Fetched clips:", allClips.length, "clips ready for modal");
 
     showHighlightsModal(allClips);
   } catch (err) {
@@ -5991,8 +5992,8 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED + THUMBNAILS SAFE) ---------- */
-function showHighlightsModal(videos = []) {  // Default to empty array to prevent crashes
+/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED + SAFE) ---------- */
+function showHighlightsModal(videos = []) {
   document.getElementById("highlightsModal")?.remove();
 
   const modal = document.createElement("div");
@@ -6224,20 +6225,12 @@ function showHighlightsModal(videos = []) {  // Default to empty array to preven
 
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.poster = video.thumbnailUrl || ""; // THUMBNAIL POSTER
-        // Debug log to confirm poster value
-        console.log(`Setting poster for video ${video.id}: ${video.thumbnailUrl || "[no thumbnailUrl]"}`);
+        videoEl.poster = video.thumbnailUrl || "";
+        console.log(`Poster set for ${video.id}: ${video.thumbnailUrl || "[no thumbnail]"}`); // debug
         videoEl.load();
 
-        vidContainer.onmouseenter = (e) => {
-          e.stopPropagation();
-          videoEl.play().catch(() => {});
-        };
-        vidContainer.onmouseleave = (e) => {
-          e.stopPropagation();
-          videoEl.pause();
-          videoEl.currentTime = 0;
-        };
+        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
         lock.innerHTML = `
@@ -6342,7 +6335,7 @@ function showHighlightsModal(videos = []) {  // Default to empty array to preven
     renderCards();
   };
 
-  // SEARCH – live, case-insensitive, only username/chatId
+  // SEARCH
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -6358,7 +6351,7 @@ function showHighlightsModal(videos = []) {  // Default to empty array to preven
     });
   }
 
-  // Initial render with safety
+  // Initial render
   renderCards(videos);
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
