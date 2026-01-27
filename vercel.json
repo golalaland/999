@@ -5,6 +5,7 @@
        { "source": "/tapmaster", "destination": "/tm.html" },
     { "source": "/sign-up", "destination": "/qO0MyUROl4CoH8Wo1UDa1DrCtEKmVQuZ.html" },
     { "source": "/chat", "destination": "/chat.html" },
+      { "source": "/34d505af-271a-48ec-a8a9-2f6f22d5e710", "destination": "/chat.html" },
         { "source": "/private-lounge", "destination": "/private-lounge.html" },
         { "source": "/shop", "destination": "/shop.html" },
         { "source": "/game", "destination": "/game.html" },
