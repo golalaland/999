@@ -7482,7 +7482,84 @@ paystackNigeriaBanks.forEach(bank => {
 /*********************************
  * FREE TONIGHT 
  *********************************/
+// Free Tonight Toggle
+const freeTonightToggle = document.getElementById("freeTonightToggle");
+const freeTonightStatus = document.getElementById("freeTonightStatus");
 
+if (freeTonightToggle) {
+  // Load initial state
+  const loadFreeTonightState = async () => {
+    if (!currentUser?.uid) return;
+    const userRef = doc(db, "highlightVideos", currentUser.uid);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const active = data.trendingVideoId && data.trendingUntil && data.trendingUntil.toDate() > new Date();
+      freeTonightToggle.checked = active;
+      freeTonightStatus.textContent = active ? "Active until " + data.trendingUntil.toDate().toLocaleString() : "Inactive";
+    }
+  };
+
+  loadFreeTonightState();
+
+  freeTonightToggle.addEventListener("change", async (e) => {
+    const enabled = e.target.checked;
+    if (!enabled) return; // only handle activation (expiry is auto)
+
+    if (!currentUser?.uid) {
+      showStarPopup("Sign in to use Free Tonight", "error");
+      e.target.checked = false;
+      return;
+    }
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    const stars = userSnap.data()?.stars ?? 0;
+
+    if (stars < 750) {
+      showStarPopup("Not enough STRZ! Need 750 for Free Tonight", "error");
+      e.target.checked = false;
+      return;
+    }
+
+    // Deduct stars
+    await updateDoc(userRef, { stars: increment(-750) });
+
+    // Get user's location tag
+    const location = userSnap.data()?.location || "lagos"; // fallback
+    const locationTag = `#${location.toLowerCase().replace(/\s+/g, '')}`;
+
+    // Get all user's videos
+    const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
+    const highlightsSnap = await getDoc(highlightsRef);
+    const videos = highlightsSnap.data()?.highlights || [];
+
+    if (videos.length === 0) {
+      showStarPopup("No highlights to feature", "error");
+      e.target.checked = false;
+      return;
+    }
+
+    // Pick random one
+    const randomIndex = Math.floor(Math.random() * videos.length);
+    const selectedVideo = videos[randomIndex];
+    const videoId = selectedVideo.id;
+
+    // Update trending status
+    await updateDoc(highlightsRef, {
+      trendingVideoId: videoId,
+      trendingUntil: serverTimestamp(new Date(Date.now() + 24 * 60 * 60 * 1000)),
+      [`highlights.${randomIndex}.isTrending`]: true,
+      [`highlights.${randomIndex}.tags`]: arrayUnion(locationTag)
+    });
+
+    showStarPopup(`Free Tonight activated! ${selectedVideo.title} is trending 🔥`, "success");
+    freeTonightStatus.textContent = "Active until tomorrow";
+
+    // Refresh modal if open
+    if (typeof loadMyClips === "function") loadMyClips();
+  });
+}
 /*********************************
  * INIT
  *********************************/
