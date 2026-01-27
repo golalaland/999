@@ -2417,19 +2417,26 @@ function sanitizeKey(email) {
     card.appendChild(header);
 
     // Legendary details
-    const gender = (user.gender || "person").toLowerCase();
-    const pronoun = gender === "male" ? "his" : "her";
-    const ageGroup = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-    const flair = gender === "male" ? "😎" : "💋";
-    const fruit = user.fruitPick || "🍇";
-    const nature = user.naturePick || "cool";
-    const city = user.location || user.city || "Lagos";
-    const country = user.country || "Nigeria";
+const gender = (user.gender || "person").toLowerCase();
+const pronoun = gender === "male" ? "his" : "her";
+const ageGroup = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
+const flair = gender === "male" ? "😎" : "💋";
 
-    let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
-    if (user.isHost || user.isVIP) {
-      detailsText = `A ${fruit} ${nature} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
-    }
+const fruit = user.fruitPick || "🍇";
+const nature = user.naturePick || "cool";
+const bodyType = user.bodyTypePick || ""; // NEW
+
+const city = user.location || user.city || "Lagos";
+const country = user.country || "Nigeria";
+
+// Build descriptor line cleanly
+const descriptorParts = [fruit, nature, bodyType].filter(Boolean).join(" ");
+
+let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
+
+if (user.isHost || user.isVIP) {
+  detailsText = `A ${descriptorParts} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
+}
 
     const detailsEl = document.createElement("p");
     detailsEl.textContent = detailsText;
@@ -4005,11 +4012,13 @@ const gender = (host.gender || "person").toLowerCase();
 const pronoun = gender === "male" ? "his" : "her";
 const ageGroup = !host.age ? "20s" : host.age >= 30 ? "30s" : "20s";
 const flair = gender === "male" ? "😎" : "💋";
+
 const fruit = host.fruitPick || "🍇";
 const nature = host.naturePick || "cool";
+const bodyType = host.bodyTypePick || ""; // ← THIS is all you add
+
 const city = host.location || "Lagos";
 const country = host.country || "Nigeria";
-
 detailsEl.innerHTML = `A ${fruit} ${nature} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
 
 // Typewriter bio
@@ -5636,20 +5645,21 @@ if (maybeSaveInfo) {
     const getVal = id => document.getElementById(id)?.value ?? "";
 
     // Collect all form values
-    let dataToUpdate = {
-      fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
-      city: getVal("city"),
-      location: getVal("location"),
-      bioPick: getVal("bio"),
-      bankAccountNumber: getVal("bankAccountNumber"),
-      bankName: getVal("bankName"),                    // ← comes from your <select id="bankName">
-      telegram: getVal("telegram"),
-      tiktok: getVal("tiktok"),
-      whatsapp: getVal("whatsapp"),
-      instagram: getVal("instagram"),
-      naturePick: getVal("naturePick"),
-      fruitPick: getVal("fruitPick"),
-    };
+let dataToUpdate = {
+  fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
+  city: getVal("city"),
+  location: getVal("location"),
+  bioPick: getVal("bio"),
+  bankAccountNumber: getVal("bankAccountNumber"),
+  bankName: getVal("bankName"),
+  telegram: getVal("telegram"),
+  tiktok: getVal("tiktok"),
+  whatsapp: getVal("whatsapp"),
+  instagram: getVal("instagram"),
+  naturePick: getVal("naturePick"),
+  fruitPick: getVal("fruitPick"),
+  bodyTypePick: getVal("bodyTypePick"), // ← ADD THIS
+};
 
     // ───────────────────────────────────────────────────────────────
     // ADD BANK NORMALIZATION + SLUG GENERATION HERE
