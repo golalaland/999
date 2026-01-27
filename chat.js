@@ -7478,6 +7478,68 @@ paystackNigeriaBanks.forEach(bank => {
   option.textContent = bank;
   bankSelect.appendChild(option);
 });
+
+/*********************************
+ * FREE TONIGHT 
+ *********************************/
+const freeTonightToggle = document.getElementById("freeTonightToggle");
+const freeTonightStatus = document.getElementById("freeTonightStatus");
+
+const functions = getFunctions();
+const toggleFreeTonight = httpsCallable(functions, "toggleFreeTonight");
+
+let isProcessingFreeTonight = false;
+
+freeTonightToggle?.addEventListener("change", async (e) => {
+  if (isProcessingFreeTonight) return;
+
+  // Prevent turning OFF from client
+  if (!e.target.checked) {
+    e.target.checked = true;
+    return;
+  }
+
+  if (!currentUser?.uid) {
+    showStarPopup("Sign in to use this tool", "error");
+    freeTonightToggle.checked = false;
+    return;
+  }
+
+  isProcessingFreeTonight = true;
+  freeTonightToggle.disabled = true;
+  freeTonightStatus.textContent = "Activating...";
+  showStarPopup("Finding a hot clip for tonight 🔥", "loading");
+
+  try {
+    const res = await toggleFreeTonight();
+
+    freeTonightStatus.textContent = "Live for 24h 🔥";
+    showStarPopup("Free Tonight is LIVE 🔥", "success");
+
+    // Auto-lock toggle ON visually
+    freeTonightToggle.checked = true;
+
+    // Optional: reset UI after 24h locally (cosmetic)
+    setTimeout(() => {
+      freeTonightStatus.textContent = "Inactive";
+      freeTonightToggle.checked = false;
+    }, 86400000);
+
+  } catch (err) {
+    console.error("Free Tonight failed:", err);
+    freeTonightToggle.checked = false;
+    freeTonightStatus.textContent = "Inactive";
+
+    showStarPopup(
+      err?.message || "Could not activate Free Tonight",
+      "error"
+    );
+  } finally {
+    freeTonightToggle.disabled = false;
+    isProcessingFreeTonight = false;
+  }
+});
+
 /*********************************
  * INIT
  *********************************/
