@@ -5955,9 +5955,8 @@ highlightsBtn.onclick = async () => {
 
     snap.forEach(userDoc => {
       const userData = userDoc.data() || {};
-      // Safety: ensure highlights is always an array
       const clips = Array.isArray(userData.highlights) ? userData.highlights : [];
-      
+
       clips.forEach(clip => {
         allClips.push({
           id: clip.id,
@@ -5979,7 +5978,7 @@ highlightsBtn.onclick = async () => {
       });
     });
 
-    console.log("Mapped allClips:", allClips.length);
+    console.log("All clips ready:", allClips.length);
 
     if (allClips.length === 0) {
       showGoldAlert("No clips available yet");
@@ -6018,25 +6017,104 @@ function showHighlightsModal(videos = []) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER (unchanged)
+  // HEADER – fixed parsing (no unbalanced quotes)
   const intro = document.createElement("div");
-  intro.innerHTML = `...`; // your original header HTML
+  intro.innerHTML = `
+    <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px; line-height:1.6; font-size:14px; background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12)); padding:16px 28px; border:1px solid rgba(138,43,226,0.5); box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
+      <div style="margin-bottom:8px;">
+        <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:800; font-size:22px; letter-spacing:0.4px;">
+          Cuties💕
+        </span>
+      </div>
+      <p style="margin:0 0 4px;">Cam-worthy moments from girls on cube.</p>
+      <p style="margin:0;">Unlock a cutie’s clip with STRZ and get closer.</p>
+    </div>
+  `;
   modal.appendChild(intro);
 
-  // CLOSE BUTTON (unchanged)
+  // CLOSE BUTTON
   const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `...`; // your SVG
-  // ... style and event handlers unchanged ...
+  closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "8px",
+    right: "10px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: "1002",
+    transition: "all 0.25s ease",
+    filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+  });
+  closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+  closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+    setTimeout(() => modal.remove(), 280);
+  };
   intro.firstElementChild.appendChild(closeBtn);
 
   // CONTROLS (unchanged)
   const controls = document.createElement("div");
-  // ... your controls code ...
+  controls.style.cssText = `
+    width:100%; max-width:640px; margin:0 auto 28px;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+  `;
+
+  const mainButtons = document.createElement("div");
+  mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
+  const unlockedBtn = document.createElement("button");
+  unlockedBtn.textContent = "Show Unlocked";
+  Object.assign(unlockedBtn.style, {
+    padding: "8px 16px",
+    borderRadius: "30px",
+    fontSize: "13px",
+    fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)",
+    color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)",
+    cursor: "pointer",
+    transition: "all 0.3s",
+    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
+  });
+  const trendingBtn = document.createElement("button");
+  trendingBtn.textContent = "Trending";
+  Object.assign(trendingBtn.style, {
+    padding: "8px 16px",
+    borderRadius: "30px",
+    fontSize: "13px",
+    fontWeight: "700",
+    background: "linear-gradient(135deg, #8a2be2, #ff00f2)",
+    color: "#fff",
+    border: "1px solid rgba(255,0,242,0.7)",
+    cursor: "pointer",
+    transition: "all 0.3s",
+    boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
+  });
+  mainButtons.append(unlockedBtn, trendingBtn);
+  controls.appendChild(mainButtons);
+
+  const tagContainer = document.createElement("div");
+  tagContainer.id = "tagButtons";
+  tagContainer.style.cssText = `
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
+    margin-top:12px; padding:8px 0;
+  `;
+  controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
-  grid.style.cssText = `...`; // your grid style
+  grid.style.cssText = `
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
+  `;
   modal.appendChild(grid);
 
   // State
@@ -6048,7 +6126,6 @@ function showHighlightsModal(videos = []) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // Collect tags safely
     const allTags = new Set();
     (videosToRender || []).forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6064,11 +6141,25 @@ function showHighlightsModal(videos = []) {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
-      // ... button style and onclick unchanged ...
+      Object.assign(btn.style, {
+        padding: "6px 14px",
+        borderRadius: "24px",
+        fontSize: "12px",
+        fontWeight: "600",
+        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+        border: "1px solid rgba(255,46,120,0.6)",
+        cursor: "pointer",
+        transition: "all 0.25s"
+      });
+      btn.onclick = () => {
+        if (activeTags.has(tag)) activeTags.delete(tag);
+        else activeTags.add(tag);
+        renderCards(videosToRender);
+      };
       tagContainer.appendChild(btn);
     });
 
-    // Filter safely
     let filtered = (videosToRender || []).filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -6095,7 +6186,25 @@ function showHighlightsModal(videos = []) {
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
-      // ... card style unchanged ...
+      Object.assign(card.style, {
+        position: "relative",
+        aspectRatio: "9/16",
+        borderRadius: "16px",
+        overflow: "hidden",
+        background: "#0f0a1a",
+        cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        border: "1px solid rgba(138,43,226,0.4)"
+      });
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.03)";
+        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
+      };
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1)";
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+      };
 
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
@@ -6108,12 +6217,22 @@ function showHighlightsModal(videos = []) {
 
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.poster = video.thumbnail || ""; // use 'thumbnail' field (from your map)
-        console.log(`Poster for ${video.id}: ${video.thumbnail || "[no thumbnail]"}`);
+        videoEl.poster = video.thumbnail || "";
+        console.log(`Poster set for ${video.id}: ${video.thumbnail || "[no thumbnail]"}`);
         videoEl.load();
-        // ... hover play/pause unchanged ...
+
+        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
-        // lock overlay unchanged
+        const lock = document.createElement("div");
+        lock.innerHTML = `
+          <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
+                      display:flex; align-items:center; justify-content:center;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
+            </svg>
+          </div>`;
+        vidContainer.appendChild(lock);
       }
 
       vidContainer.onclick = (e) => {
@@ -6132,14 +6251,64 @@ function showHighlightsModal(videos = []) {
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // Info overlay, title, user, tags, badge unchanged
-      // ... rest of card creation ...
+      const info = document.createElement("div");
+      info.style.cssText = `
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
+      `;
+      const title = document.createElement("div");
+      title.textContent = video.title || "Cute moment";
+      title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) {
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(userSnap => {
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              }
+            })
+            .catch(err => console.error("Failed to load user:", err));
+        }
+      };
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+      (video.tags || []).forEach(t => {
+        const span = document.createElement("span");
+        span.textContent = `#${t}`;
+        span.style.cssText = "font-size:11px; padding:2px 8px; border-radius:10px; background:rgba(255,46,120,0.22); color:#ff4d8a;";
+        tagsEl.appendChild(span);
+      });
+      info.append(title, user, tagsEl);
+      card.appendChild(info);
+
+      const badge = document.createElement("div");
+      badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
+      Object.assign(badge.style, {
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        padding: "6px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#fff",
+        background: isUnlocked ? "rgba(0,255,234,0.5)" : "linear-gradient(135deg, #ff00f2, #8a2be2)",
+        boxShadow: isUnlocked ? "0 0 18px rgba(0,255,234,0.9)" : "0 0 14px rgba(255,0,242,0.7)",
+        border: "1px solid rgba(255,255,255,0.3)",
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+      });
+      card.appendChild(badge);
 
       grid.appendChild(card);
     });
   }
 
-  // Filter buttons (unchanged)
+  // Filter buttons
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -6158,7 +6327,7 @@ function showHighlightsModal(videos = []) {
     renderCards();
   };
 
-  // SEARCH (unchanged)
+  // SEARCH
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
