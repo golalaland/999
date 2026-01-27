@@ -5933,7 +5933,7 @@ window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
 
-/* ---------- Highlights Button – shows ALL clips from ALL users ---------- */
+/* Highlights Button – shows ALL clips from ALL users */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
@@ -5967,7 +5967,7 @@ highlightsBtn.onclick = async () => {
           uploaderId: userData.uploaderId || userDoc.id,
           uploaderEmail: userData.uploaderEmail || "unknown",
           description: clip.description || "",
-          thumbnail: clip.thumbnailUrl || clip.thumbnail || "",
+          thumbnail: clip.thumbnailUrl || "",
           createdAt: clip.uploadedAt || null,
           unlockedBy: clip.unlockedBy || [],
           previewClip: clip.previewClip || "",
@@ -5992,37 +5992,34 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (SAFE + THUMBNAILS) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (ORIGINAL LAYOUT + SAFE) ---------- */
 function showHighlightsModal(videos = []) {
   document.getElementById("highlightsModal")?.remove();
 
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
+    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    zIndex: "999999",
-    overflowY: "auto",
-    padding: "20px 12px",
-    boxSizing: "border-box",
+    display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "flex-start",
+    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER – fixed parsing (no unbalanced quotes)
+  // HEADER (your original HTML - fixed quotes)
   const intro = document.createElement("div");
   intro.innerHTML = `
-    <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px; line-height:1.6; font-size:14px; background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12)); padding:16px 28px; border:1px solid rgba(138,43,226,0.5); box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
+    <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
+                line-height:1.6; font-size:14px;
+                background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
+                padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
+                box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
       <div style="margin-bottom:8px;">
-        <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:800; font-size:22px; letter-spacing:0.4px;">
+        <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
+                     -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                     font-weight:800; font-size:22px; letter-spacing:0.4px;">
           Cuties💕
         </span>
       </div>
@@ -6060,7 +6057,7 @@ function showHighlightsModal(videos = []) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS (unchanged)
+  // CONTROLS (your original)
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6072,30 +6069,18 @@ function showHighlightsModal(videos = []) {
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
-    padding: "8px 16px",
-    borderRadius: "30px",
-    fontSize: "13px",
-    fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)",
-    color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)",
-    cursor: "pointer",
-    transition: "all 0.3s",
-    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
   const trendingBtn = document.createElement("button");
   trendingBtn.textContent = "Trending";
   Object.assign(trendingBtn.style, {
-    padding: "8px 16px",
-    borderRadius: "30px",
-    fontSize: "13px",
-    fontWeight: "700",
-    background: "linear-gradient(135deg, #8a2be2, #ff00f2)",
-    color: "#fff",
-    border: "1px solid rgba(255,0,242,0.7)",
-    cursor: "pointer",
-    transition: "all 0.3s",
-    boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
+    background: "linear-gradient(135deg, #8a2be2, #ff00f2)", color: "#fff",
+    border: "1px solid rgba(255,0,242,0.7)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
   });
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
@@ -6187,13 +6172,8 @@ function showHighlightsModal(videos = []) {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative",
-        aspectRatio: "9/16",
-        borderRadius: "16px",
-        overflow: "hidden",
-        background: "#0f0a1a",
-        cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
@@ -6210,17 +6190,14 @@ function showHighlightsModal(videos = []) {
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = "metadata";
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
         videoEl.poster = video.thumbnail || "";
-        console.log(`Poster set for ${video.id}: ${video.thumbnail || "[no thumbnail]"}`);
+        console.log(`Poster for ${video.id}: ${video.thumbnail || "[no thumbnail]"}`);
         videoEl.load();
-
         vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
         vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
@@ -6289,14 +6266,9 @@ function showHighlightsModal(videos = []) {
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
-        position: "absolute",
-        top: "12px",
-        right: "12px",
-        padding: "6px 12px",
-        borderRadius: "12px",
-        fontSize: "12px",
-        fontWeight: "700",
-        color: "#fff",
+        position: "absolute", top: "12px", right: "12px",
+        padding: "6px 12px", borderRadius: "12px",
+        fontSize: "12px", fontWeight: "700", color: "#fff",
         background: isUnlocked ? "rgba(0,255,234,0.5)" : "linear-gradient(135deg, #ff00f2, #8a2be2)",
         boxShadow: isUnlocked ? "0 0 18px rgba(0,255,234,0.9)" : "0 0 14px rgba(255,0,242,0.7)",
         border: "1px solid rgba(255,255,255,0.3)",
