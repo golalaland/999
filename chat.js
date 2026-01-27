@@ -7493,7 +7493,7 @@ let isProcessingFreeTonight = false;
 freeTonightToggle?.addEventListener("change", async (e) => {
   if (isProcessingFreeTonight) return;
 
-  // Prevent turning OFF from client
+  // Prevent turning OFF manually
   if (!e.target.checked) {
     e.target.checked = true;
     return;
@@ -7516,17 +7516,23 @@ freeTonightToggle?.addEventListener("change", async (e) => {
     freeTonightStatus.textContent = "Live for 24h 🔥";
     showStarPopup("Free Tonight is LIVE 🔥", "success");
 
-    // Auto-lock toggle ON visually
+    // Auto-lock toggle visually
     freeTonightToggle.checked = true;
 
-    // Optional: reset UI after 24h locally (cosmetic)
+    // Optional: reset UI locally after 24h
     setTimeout(() => {
       freeTonightStatus.textContent = "Inactive";
       freeTonightToggle.checked = false;
     }, 86400000);
 
+    // Optional: highlight video preview
+    if (res?.videoId && typeof highlightVideoById === "function") {
+      highlightVideoById(res.videoId); // you can implement to scroll/show video
+    }
+
   } catch (err) {
     console.error("Free Tonight failed:", err);
+
     freeTonightToggle.checked = false;
     freeTonightStatus.textContent = "Inactive";
 
@@ -7539,7 +7545,6 @@ freeTonightToggle?.addEventListener("change", async (e) => {
     isProcessingFreeTonight = false;
   }
 });
-
 /*********************************
  * INIT
  *********************************/
