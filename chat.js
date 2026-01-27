@@ -2416,7 +2416,7 @@ function sanitizeKey(email) {
     header.style.cssText = `margin:0 0 8px;font-size:18px;font-weight:700;background:linear-gradient(90deg,${headerColor},#ff33cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;`;
     card.appendChild(header);
 
-    // Legendary details
+// Legendary details
 const gender = (user.gender || "person").toLowerCase();
 const pronoun = gender === "male" ? "his" : "her";
 const ageGroup = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
@@ -2435,7 +2435,7 @@ const descriptorParts = [nature, bodyType].filter(Boolean).join(" ");
 let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
 
 if (user.isHost || user.isVIP) {
-  detailsText = `A ${descriptorParts} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${fruitPick}`;
+  detailsText = `${descriptorParts} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${fruit}`;
 }
 
     const detailsEl = document.createElement("p");
