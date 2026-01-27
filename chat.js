@@ -6125,7 +6125,7 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
   let filterMode = "all";
   let activeTags = new Set();
 
-  function renderCards(videosToRender = []) {  // Default to empty array for safety
+  function renderCards(videosToRender = []) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
@@ -6141,7 +6141,6 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
 
     const sortedTags = [...allTags].sort();
 
-    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -6165,7 +6164,7 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
       tagContainer.appendChild(btn);
     });
 
-    // Filter videos
+    // Filter videos safely
     let filtered = (videosToRender || []).filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
@@ -6179,10 +6178,8 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
       });
     }
 
-    // Random shuffle every time
     filtered = filtered.sort(() => Math.random() - 0.5);
 
-    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
@@ -6191,7 +6188,6 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
       return;
     }
 
-    // Render cards
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
@@ -6226,20 +6222,10 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
 
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.poster = video.thumbnailUrl || "";  // THUMBNAIL POSTER
-        // Debug: log poster setting
-        console.log(`Setting poster for video ${video.id}: ${video.thumbnailUrl || "[no thumbnailUrl]"}`);
+        videoEl.poster = video.thumbnailUrl || "";
         videoEl.load();
-
-        vidContainer.onmouseenter = (e) => {
-          e.stopPropagation();
-          videoEl.play().catch(() => {});
-        };
-        vidContainer.onmouseleave = (e) => {
-          e.stopPropagation();
-          videoEl.pause();
-          videoEl.currentTime = 0;
-        };
+        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
         lock.innerHTML = `
@@ -6344,7 +6330,7 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
     renderCards();
   };
 
-  // SEARCH – live, case-insensitive, only username/chatId
+  // SEARCH
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -6360,11 +6346,12 @@ function showHighlightsModal(videos = []) {  // Default to empty array for safet
     });
   }
 
-  // Initial render with safety
+  // Initial render
   renderCards(videos);
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 }
+
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
     document.getElementById("unlockConfirmModal")?.remove();
