@@ -871,7 +871,7 @@ document.getElementById("withdrawCashBtn")?.addEventListener("click", async () =
 
     hideLoader();
     showGoldAlert(
-      `Withdrawal requested!\n₦${amount.toLocaleString()} deducted.\nAdmin will transfer soon.`
+      `Withdrawal requested!\n₦${amount.toLocaleString()} deducted.`
     );
   } catch (e) {
     console.error("Withdraw failed:", e);
