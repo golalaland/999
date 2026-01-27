@@ -7482,69 +7482,7 @@ paystackNigeriaBanks.forEach(bank => {
 /*********************************
  * FREE TONIGHT 
  *********************************/
-const freeTonightToggle = document.getElementById("freeTonightToggle");
-const freeTonightStatus = document.getElementById("freeTonightStatus");
 
-const functions = getFunctions();
-const toggleFreeTonight = httpsCallable(functions, "toggleFreeTonight");
-
-let isProcessingFreeTonight = false;
-
-freeTonightToggle?.addEventListener("change", async (e) => {
-  if (isProcessingFreeTonight) return;
-
-  // Prevent turning OFF manually
-  if (!e.target.checked) {
-    e.target.checked = true;
-    return;
-  }
-
-  if (!currentUser?.uid) {
-    showStarPopup("Sign in to use this tool", "error");
-    freeTonightToggle.checked = false;
-    return;
-  }
-
-  isProcessingFreeTonight = true;
-  freeTonightToggle.disabled = true;
-  freeTonightStatus.textContent = "Activating...";
-  showStarPopup("Finding a hot clip for tonight 🔥", "loading");
-
-  try {
-    const res = await toggleFreeTonight();
-
-    freeTonightStatus.textContent = "Live for 24h 🔥";
-    showStarPopup("Free Tonight is LIVE 🔥", "success");
-
-    // Auto-lock toggle visually
-    freeTonightToggle.checked = true;
-
-    // Optional: reset UI locally after 24h
-    setTimeout(() => {
-      freeTonightStatus.textContent = "Inactive";
-      freeTonightToggle.checked = false;
-    }, 86400000);
-
-    // Optional: highlight video preview
-    if (res?.videoId && typeof highlightVideoById === "function") {
-      highlightVideoById(res.videoId); // you can implement to scroll/show video
-    }
-
-  } catch (err) {
-    console.error("Free Tonight failed:", err);
-
-    freeTonightToggle.checked = false;
-    freeTonightStatus.textContent = "Inactive";
-
-    showStarPopup(
-      err?.message || "Could not activate Free Tonight",
-      "error"
-    );
-  } finally {
-    freeTonightToggle.disabled = false;
-    isProcessingFreeTonight = false;
-  }
-});
 /*********************************
  * INIT
  *********************************/
