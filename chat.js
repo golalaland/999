@@ -2430,12 +2430,12 @@ const city = user.location || user.city || "Lagos";
 const country = user.country || "Nigeria";
 
 // Build descriptor line cleanly
-const descriptorParts = [fruit, nature, bodyType].filter(Boolean).join(" ");
+const descriptorParts = [nature, bodyType].filter(Boolean).join(" ");
 
 let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
 
 if (user.isHost || user.isVIP) {
-  detailsText = `A ${descriptorParts} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
+  detailsText = `A ${descriptorParts} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${fruitPick}`;
 }
 
     const detailsEl = document.createElement("p");
