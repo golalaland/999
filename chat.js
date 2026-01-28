@@ -7479,48 +7479,109 @@ paystackNigeriaBanks.forEach(bank => {
   bankSelect.appendChild(option);
 });
 
-// ── Free Tonight button handler ────────────────────────────────────────
+// ───────────────────────────────────────────────
+// Client-side Free Tonight (temporary - no server security yet)
+// ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
-  if (!btn) return;
+  if (!btn || !currentUser?.uid) {
+    showStarPopup('Please sign in first', 'error');
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Activating...';
 
   try {
-    // Get the callable function reference
-    const activateFreeTonight = httpsCallable(functions, 'activateFreeTonight');
+    const uid = currentUser.uid;
+    const cost = 100;
 
-    // Call the Cloud Function (no parameters needed)
-    const result = await activateFreeTonight({});
-
-    // Success: show the message returned from backend
-    showStarPopup(result.data.message || 'Free Tonight activated! 🔥', 'success');
-
-    // Optional: refresh your clips list or tools UI
-    if (typeof loadMyClips === 'function') {
-      loadMyClips();
+    // 1. Get current user doc
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      throw new Error("Your profile not found");
     }
+    const userData = userSnap.data();
+
+    // 2. Check stars
+    const stars = userData.stars || 0;
+    if (stars < cost) {
+      throw new Error(`Need ${cost} stars (you have ${stars})`);
+    }
+
+    // 3. Get sanitized ID (match your creation logic)
+    const email = userData.email?.toLowerCase()?.trim() || "";
+    if (!email) {
+      throw new Error("No email in profile");
+    }
+    const sanitizedId = email
+      .replace(/[.@]/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
+
+    // 4. Get highlightVideos doc
+    const highlightsRef = doc(db, "highlightVideos", sanitizedId);
+    const highlightsSnap = await getDoc(highlightsRef);
+    if (!highlightsSnap.exists()) {
+      throw new Error("No profile found for boosting");
+    }
+
+    const highlightsData = highlightsSnap.data();
+    const highlights = Array.isArray(highlightsData.highlights) ? [...highlightsData.highlights] : [];
+
+    if (highlights.length === 0) {
+      throw new Error("No videos available to boost");
+    }
+
+    // 5. Pick random video
+    const randomIndex = Math.floor(Math.random() * highlights.length);
+    const selected = highlights[randomIndex];
+
+    // 6. Add location tag (prefer country from user doc)
+    let addedTag = null;
+    const location = userData.location || {};
+    let locTag = null;
+
+    if (typeof location === "string" && location.trim()) {
+      locTag = location.trim().toLowerCase();
+    } else if (location.city && location.city.trim()) {
+      locTag = location.city.trim().toLowerCase();
+    } else if (userData.country && userData.country.trim()) {
+      locTag = userData.country.trim().toLowerCase();
+    }
+
+    if (locTag && !selected.tags?.includes(locTag)) {
+      selected.tags = [...(selected.tags || []), locTag];
+      addedTag = locTag;
+    }
+
+    // 7. Activate trending
+    selected.isTrending = true;
+    selected.trendingUntil = Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
+
+    // 8. Update Firestore (deduct stars + update highlights array)
+    await updateDoc(userRef, {
+      stars: increment(-cost)
+    });
+
+    await updateDoc(highlightsRef, {
+      highlights: highlights  // full array replacement (safe for small arrays)
+    });
+
+    showStarPopup(
+      `Free Tonight activated! 🔥 One clip trending 24h${addedTag ? ` + #${addedTag}` : ''}`,
+      'success'
+    );
+
+    // Optional refresh
+    if (typeof loadMyClips === 'function') loadMyClips();
 
   } catch (err) {
-    // Handle specific Firebase callable errors
-    let msg = 'Failed to activate Free Tonight — try again';
-
-    if (err.code === 'failed-precondition') {
-      msg = err.message; // e.g. "Need 100 stars (you have 42)"
-    } else if (err.code === 'unauthenticated') {
-      msg = 'Please sign in first';
-    } else if (err.code === 'not-found') {
-      msg = 'User not found — please contact support';
-    } else if (err.code) {
-      msg = `Error: ${err.message || err.code}`;
-    }
-
+    const msg = err.message || 'Failed to activate — try again';
     showStarPopup(msg, 'error');
-    console.error('Free Tonight activation failed:', err);
+    console.error('Client-side Free Tonight failed:', err);
 
   } finally {
-    // Always re-enable button & reset text
     btn.disabled = false;
     btn.textContent = 'Activate Free Tonight';
   }
