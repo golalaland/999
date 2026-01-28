@@ -7479,9 +7479,9 @@ paystackNigeriaBanks.forEach(bank => {
   bankSelect.appendChild(option);
 });
 
-// Make sure these are imported at the top of your file
-// import { doc, getDoc, updateDoc, increment, Timestamp } from "firebase/firestore";
-
+// ───────────────────────────────────────────────
+// Client-side Free Tonight (fixed for sanitized doc IDs)
+// ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
   if (!btn || !auth.currentUser?.uid) {
@@ -7493,16 +7493,29 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   btn.textContent = 'Activating...';
 
   try {
-    const uid = auth.currentUser.uid;
+    const rawUid = auth.currentUser.uid;
     const cost = 100;
 
-    // 1. Get user doc (raw UID as doc ID)
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      throw new Error("Your profile not found");
+    console.log("Searching for user doc with uid field:", rawUid);
+
+    // 1. Find user document where uid field == current UID
+    const usersQuery = query(
+      collection(db, "users"),
+      where("uid", "==", rawUid),
+      limit(1)
+    );
+    const userSnap = await getDocs(usersQuery);
+
+    if (userSnap.empty) {
+      console.log("No user doc found with uid =", rawUid);
+      throw new Error("Your profile not found in database");
     }
-    const userData = userSnap.data();
+
+    const userDoc = userSnap.docs[0];
+    const userData = userDoc.data();
+    const sanitizedId = userDoc.id;  // this is the correct doc ID (e.g. hivodaddy_hotmail_com)
+
+    console.log("Found user profile:", sanitizedId, "with email:", userData.email);
 
     // 2. Check stars
     const stars = Number(userData.stars || 0);
@@ -7510,22 +7523,11 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       throw new Error(`Need ${cost} stars (you have ${stars})`);
     }
 
-    // 3. Calculate sanitized ID from email
-    const email = userData.email?.toLowerCase()?.trim();
-    if (!email) {
-      throw new Error("No email in your profile");
-    }
-    const sanitizedId = email
-      .replace(/[.@]/g, '_')
-      .replace(/[^a-z0-9_]/g, '');
-
-    console.log("Sanitized ID:", sanitizedId);
-
-    // 4. Get highlights doc
+    // 3. Get highlights doc using the sanitized ID we just found
     const highlightsRef = doc(db, "highlightVideos", sanitizedId);
     const highlightsSnap = await getDoc(highlightsRef);
     if (!highlightsSnap.exists()) {
-      throw new Error("No profile found for boosting");
+      throw new Error("No highlights profile found");
     }
 
     const highlightsData = highlightsSnap.data() || {};
@@ -7534,14 +7536,14 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       : [];
 
     if (highlights.length === 0) {
-      throw new Error("You have no videos to boost yet");
+      throw new Error("No videos available to boost");
     }
 
-    // 5. Pick random video
+    // 4. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 6. Add location tag (country fallback)
+    // 5. Add location tag
     let addedTag = null;
     const location = userData.location || {};
     let locTag = null;
@@ -7559,12 +7561,12 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       addedTag = locTag;
     }
 
-    // 7. Activate trending
+    // 6. Activate trending
     selected.isTrending = true;
     selected.trendingUntil = Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
 
-    // 8. Update Firestore
-    await updateDoc(userRef, {
+    // 7. Update both docs
+    await updateDoc(userDoc.ref, {
       stars: increment(-cost)
     });
 
