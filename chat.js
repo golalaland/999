@@ -7479,28 +7479,52 @@ paystackNigeriaBanks.forEach(bank => {
   bankSelect.appendChild(option);
 });
 
-// Free Tonight button handler
+// ── Free Tonight button handler ────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
+  if (!btn) return;
+
   btn.disabled = true;
   btn.textContent = 'Activating...';
 
   try {
-    const result = await activateFreeTonight({});
-    showStarPopup(result.data.message, 'success');
+    // Get the callable function reference
+    const activateFreeTonight = httpsCallable(functions, 'activateFreeTonight');
 
-    // Optional: refresh clips or tools UI
-    if (typeof loadMyClips === 'function') loadMyClips();
+    // Call the Cloud Function (no parameters needed)
+    const result = await activateFreeTonight({});
+
+    // Success: show the message returned from backend
+    showStarPopup(result.data.message || 'Free Tonight activated! 🔥', 'success');
+
+    // Optional: refresh your clips list or tools UI
+    if (typeof loadMyClips === 'function') {
+      loadMyClips();
+    }
+
   } catch (err) {
-    const msg = err.code === 'failed-precondition' ? err.message : 'Failed to activate — try again';
+    // Handle specific Firebase callable errors
+    let msg = 'Failed to activate Free Tonight — try again';
+
+    if (err.code === 'failed-precondition') {
+      msg = err.message; // e.g. "Need 100 stars (you have 42)"
+    } else if (err.code === 'unauthenticated') {
+      msg = 'Please sign in first';
+    } else if (err.code === 'not-found') {
+      msg = 'User not found — please contact support';
+    } else if (err.code) {
+      msg = `Error: ${err.message || err.code}`;
+    }
+
     showStarPopup(msg, 'error');
-    console.error('Free Tonight failed:', err);
+    console.error('Free Tonight activation failed:', err);
+
   } finally {
+    // Always re-enable button & reset text
     btn.disabled = false;
     btn.textContent = 'Activate Free Tonight';
   }
 });
-
 /*********************************
  * INIT
  *********************************/
