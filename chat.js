@@ -27,6 +27,7 @@ import {
   where,
   runTransaction,
   arrayUnion,
+serverTimestamp,  // optional
   writeBatch,
   limitToLast
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -7479,12 +7480,12 @@ paystackNigeriaBanks.forEach(bank => {
   bankSelect.appendChild(option);
 });
 
-// ───────────────────────────────────────────────
-// Client-side Free Tonight (temporary - no server security yet)
-// ───────────────────────────────────────────────
+// Make sure these are imported at the top of your file
+// import { doc, getDoc, updateDoc, increment, Timestamp } from "firebase/firestore";
+
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
-  if (!btn || !currentUser?.uid) {
+  if (!btn || !auth.currentUser?.uid) {
     showStarPopup('Please sign in first', 'error');
     return;
   }
@@ -7493,10 +7494,10 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   btn.textContent = 'Activating...';
 
   try {
-    const uid = currentUser.uid;
+    const uid = auth.currentUser.uid;
     const cost = 100;
 
-    // 1. Get current user doc
+    // 1. Get user doc (raw UID as doc ID)
     const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -7505,39 +7506,43 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const userData = userSnap.data();
 
     // 2. Check stars
-    const stars = userData.stars || 0;
+    const stars = Number(userData.stars || 0);
     if (stars < cost) {
       throw new Error(`Need ${cost} stars (you have ${stars})`);
     }
 
-    // 3. Get sanitized ID (match your creation logic)
-    const email = userData.email?.toLowerCase()?.trim() || "";
+    // 3. Calculate sanitized ID from email
+    const email = userData.email?.toLowerCase()?.trim();
     if (!email) {
-      throw new Error("No email in profile");
+      throw new Error("No email in your profile");
     }
     const sanitizedId = email
       .replace(/[.@]/g, '_')
       .replace(/[^a-z0-9_]/g, '');
 
-    // 4. Get highlightVideos doc
+    console.log("Sanitized ID:", sanitizedId);
+
+    // 4. Get highlights doc
     const highlightsRef = doc(db, "highlightVideos", sanitizedId);
     const highlightsSnap = await getDoc(highlightsRef);
     if (!highlightsSnap.exists()) {
       throw new Error("No profile found for boosting");
     }
 
-    const highlightsData = highlightsSnap.data();
-    const highlights = Array.isArray(highlightsData.highlights) ? [...highlightsData.highlights] : [];
+    const highlightsData = highlightsSnap.data() || {};
+    const highlights = Array.isArray(highlightsData.highlights) 
+      ? [...highlightsData.highlights] 
+      : [];
 
     if (highlights.length === 0) {
-      throw new Error("No videos available to boost");
+      throw new Error("You have no videos to boost yet");
     }
 
     // 5. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 6. Add location tag (prefer country from user doc)
+    // 6. Add location tag (country fallback)
     let addedTag = null;
     const location = userData.location || {};
     let locTag = null;
@@ -7559,13 +7564,13 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     selected.isTrending = true;
     selected.trendingUntil = Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
 
-    // 8. Update Firestore (deduct stars + update highlights array)
+    // 8. Update Firestore
     await updateDoc(userRef, {
       stars: increment(-cost)
     });
 
     await updateDoc(highlightsRef, {
-      highlights: highlights  // full array replacement (safe for small arrays)
+      highlights: highlights
     });
 
     showStarPopup(
@@ -7573,7 +7578,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       'success'
     );
 
-    // Optional refresh
     if (typeof loadMyClips === 'function') loadMyClips();
 
   } catch (err) {
