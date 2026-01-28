@@ -7482,10 +7482,6 @@ paystackNigeriaBanks.forEach(bank => {
 /*********************************
  * FREE TONIGHT 
  *********************************/
-// Import if not already (for callable)
-const functions = getFunctions();
-const activateFreeTonight = httpsCallable(functions, 'activateFreeTonight');
-
 // Free Tonight button handler
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
