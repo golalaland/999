@@ -7478,31 +7478,6 @@ paystackNigeriaBanks.forEach(bank => {
   option.textContent = bank;
   bankSelect.appendChild(option);
 });
-
-/*********************************
- * FREE TONIGHT 
- *********************************/
-// Free Tonight button handler
-document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
-  const btn = document.getElementById('freeTonightBtn');
-  btn.disabled = true;
-  btn.textContent = 'Activating...';
-
-  try {
-    const result = await activateFreeTonight({});
-    showStarPopup(result.data.message, 'success');
-
-    // Optional: refresh clips or tools UI
-    if (typeof loadMyClips === 'function') loadMyClips();
-  } catch (err) {
-    const msg = err.code === 'failed-precondition' ? err.message : 'Failed to activate — try again';
-    showStarPopup(msg, 'error');
-    console.error('Free Tonight failed:', err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Activate Free Tonight';
-  }
-});
 /*********************************
  * INIT
  *********************************/
