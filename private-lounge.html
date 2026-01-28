@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -390,7 +391,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 /* SEND BUTTON – more compact */
 .send-btn {
   padding: 8px 18px;
-  background: var(--accent, #c3f60c);
+  background: var(--accent, #FF1493);
   color: #000;
   border: none;
   border-radius: 999px;
@@ -407,7 +408,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 }
 
 .send-btn:hover {
-  background: #c3f60c;
+  background: #ff33a1;
   transform: scale(1.04);
 }
 
@@ -3401,7 +3402,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </div>
 <!-- Buttons (keep aligned) -->
 <div id="sessionBar">
-  <button class="session-btn" id="topBallersBtn">Learn $TIPS</button>
+  <button class="session-btn" id="topBallersBtn">$TIPS</button>
   <button id="highlightsBtn" class="session-btn star-hosts-btn">❤︎ Cuties ❤︎</button>
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
@@ -3506,6 +3507,16 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
     </div>
+
+    <!-- Reels Tab -->
+    <div id="reels" class="live-tab-content">
+      <div id="reelsGallery">
+        <p style="text-align:center; padding-top:40%; color:#666;">Reels Loading...</p>
+      </div>
+    </div>
+
+  </div> <!-- End of .live-modal-content -->
+</div> <!-- End of #liveModal -->
 
   
     <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
@@ -4182,7 +4193,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   ">
-    HOST & GET PAID
+    HOST & GET REWARDED
     <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; vertical-align: -4px; margin-left: 6px; fill: #c3f60c;">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
@@ -4224,6 +4235,284 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </button>
   </div>
 </div>
+
+
+
+
+
+
+
+<!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
+<div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
+  <div style="text-align:center; margin-bottom:28px;">
+    <h2 style="
+      margin:0; font-size:28px; font-weight:900; letter-spacing:-1px;
+      background:linear-gradient(90deg,#ff2e78,#ff8c2e,#ff2e78);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-size:200% auto; animation:gradient 4s linear infinite;
+    ">
+      HIGHLIGHTS
+    </h2>
+    <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
+      Upload premium clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
+    </p>
+  </div>
+  <!-- Main Card -->
+  <div style="
+    background:rgba(12,12,14,0.75); backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:24px;
+    padding:32px 28px; box-shadow:0 20px 40px rgba(0,0,0,0.5),
+                               inset 0 1px 0 rgba(255,255,255,0.05);
+    position:relative; overflow:hidden;
+  ">
+    <div style="position:absolute; inset:0; pointer-events:none;
+                 background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
+                 opacity:0.6;"></div>
+   
+    <div style="position:relative; z-index:2;">
+     <!-- Video Upload – Bigger & more prominent now -->
+<div style="margin-bottom:32px; text-align:center;">
+  <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
+    Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
+  </div>
+
+  <!-- Upload area with clean preview (video only + size) -->
+  <label for="highlightUploadInput" style="
+    display:block; padding:32px 24px;
+    background:#111111; border:2px dashed #444;
+    border-radius:16px; cursor:pointer; transition:all 0.3s ease;
+    color:#888; font-size:15px; font-weight:500;
+    margin:0 auto; max-width:340px;
+  "
+  onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
+  onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
+
+    <!-- Placeholder (before selection) -->
+    <div id="uploadPlaceholder">
+      <div style="margin-bottom:8px; font-size:36px;">↑</div>
+      Click or drag video here
+      <div style="margin-top:8px; font-size:13px; color:#666;">
+        MP4 • max 50MB
+      </div>
+    </div>
+
+    <!-- Preview container (hidden until file selected) -->
+    <div id="videoPreviewContainer" style="display:none; text-align:center;">
+      <video id="videoPreview" controls muted style="
+        width:100%;
+        max-height:220px;
+        border-radius:12px;
+        background:#000;
+        object-fit:contain;
+      "></video>
+      <div id="fileSizeInfo" style="
+        margin-top:12px;
+        font-size:13px;
+        color:#888;
+      "></div>
+    </div>
+
+    <!-- Hidden input -->
+    <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
+  </label>
+</div>
+      <!-- Title -->
+      <div style="margin-bottom:20px;">
+        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+          Title <span style="color:#ff4444;">*</span>
+        </label>
+        <input type="text" id="highlightTitleInput" placeholder="e.g. Crazy 1v5 clutch in ranked"
+               style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#fff; font-size:15px;"
+               onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+               onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
+      </div>
+     <!-- Description -->
+<div style="margin-bottom:24px;">
+  <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+    Description <span style="color:#666; font-size:13px;">(optional)</span>
+  </label>
+  <textarea id="highlightDescInput" placeholder="What's the story behind this moment?"
+            style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px; resize:vertical;"
+            onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+            onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
+</div>
+      <!-- Price -->
+      <div style="margin-bottom:28px; text-align:center;">
+        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">Unlock Price</div>
+        <div style="display:inline-flex; align-items:center; gap:10px; background:#0a0a0a; padding:12px 20px; border-radius:16px; border:1px solid #333;">
+          <input type="tel" id="highlightPriceInput" value="50" min="10" maxlength="5"
+                 style="width:80px; background:transparent; border:none; outline:none; color:#00ff9d; font-size:28px; font-weight:800; text-align:center;"
+                 onfocus="this.parentNode.style.borderColor='#00ff9d'; this.parentNode.style.boxShadow='0 0 0 3px rgba(0,255,157,0.2)'"
+                 onblur="this.parentNode.style.borderColor='#333'; this.parentNode.style.boxShadow='none'">
+          <span style="font-size:26px; font-weight:800; color:#888;">STRZ</span>
+        </div>
+      </div>
+      <!-- Tags -->
+      <div style="margin:28px 0; text-align:center;">
+        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
+          Tags <span style="color:#666; font-weight:500;">(optional)</span>
+        </div>
+        <div id="tagSelector" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:360px; margin:0 auto;">
+          <div class="tag-btn" data-tag="hot">Hot</div>
+          <div class="tag-btn" data-tag="cute">Cute</div>
+          <div class="tag-btn" data-tag="dance">Dance</div>
+          <div class="tag-btn" data-tag="body">Body</div>
+          <div class="tag-btn" data-tag="sexy">Sexy</div>
+          <div class="tag-btn" data-tag="twerk">Twerk</div>
+          <div class="tag-btn" data-tag="tease">Tease</div>
+          <div class="tag-btn" data-tag="selfie">Selfie</div>
+          <div class="tag-btn" data-tag="beauty">Beauty</div>
+          <div class="tag-btn" data-tag="vibes">Vibes</div>
+        </div>
+      </div>
+      <!-- Upload Button -->
+      <div style="text-align:center; margin-top:32px;">
+        <button id="uploadHighlightBtn" style="
+          padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
+          color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
+          cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
+          transition:all 0.3s ease;
+        "
+        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
+          Post Highlight
+        </button>
+      </div>
+      <div id="highlightUploadStatus" style="margin-top:20px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;"></div>
+    </div>
+  </div>
+  <style>
+    @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    .tag-btn {
+      padding:8px 16px; background:#111; border:1px solid #333; border-radius:30px;
+      color:#ccc; font-size:13px; cursor:pointer; transition:all 0.2s;
+    }
+    .tag-btn.selected {
+      background:#ff2e78; color:white; border-color:#ff2e78;
+    }
+  </style>
+</div>
+
+
+<!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
+<div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
+  <h2 style="
+    text-align:center;
+    font-size:28px;
+    font-weight:900;
+    background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin:0 0 20px;
+    letter-spacing:1px;
+  ">
+    MY CLIPS LIST
+  </h2>
+  <p style="text-align:center; color:#aaa; font-size:14px; margin:-10px 0 30px;">
+    Your uploaded highlights · Delete anytime · Earn from your clips
+  </p>
+
+  <div id="myClipsGrid" style="
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:18px;
+    padding:10px;
+  ">
+    <!-- CLIPS WILL BE INJECTED HERE BY JS -->
+  </div>
+
+  <div id="noClipsMessage" style="
+    text-align:center;
+    padding:60px 20px;
+    color:#666;
+    font-size:16px;
+    display:none;
+  ">
+    <div style="font-size:60px; margin-bottom:20px;">.____.</div>
+    You haven't uploaded any clips yet.<br>
+    <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
+  </div>
+
+<!-- Tips / Learn Modal -->
+<div id="tipsModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000000; display: flex; align-items: center; justify-content: center; pointer-events: auto; visibility: visible;">
+  <div class="modal" style="width: 90%; max-width: 380px; background: #0f0f0f; border: 2px solid #FF1493; border-radius: 20px; overflow: hidden; box-shadow: 0 0 40px rgba(255,20,147,0.6); color: #eee; font-family: system-ui, sans-serif; position: relative; z-index: 1000001;">
+    
+    <!-- Header -->
+    <div style="padding: 18px; text-align: center; background: rgba(255,20,147,0.1); border-bottom: 1px solid rgba(255,20,147,0.3);">
+      <h3 style="margin: 0; font-size: 20px; color: #FF1493; font-weight: 900;">CUBE TIPS</h3>
+      <p style="margin: 6px 0 0; font-size: 14px; color: #00e676;">Level up • Earn more • Dominate</p>
+    </div>
+    
+    <!-- Carousel Container -->
+    <div id="tipsCarousel" style="position: relative; height: 420px; overflow: hidden; cursor: grab; user-select: none;">
+      <div id="tipsSlides" style="display: flex; width: 300%; height: 100%; transition: transform 0.45s ease; transform: translateX(0%);">
+        <!-- Tip Card 1 -->
+        <div class="tip-card" style="width: calc(100% / 3); flex-shrink: 0; display: flex; flex-direction: column; height: 100%;">
+          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="width: 100%; height: 180px; object-fit: cover; border-bottom: 2px solid #FF1493;">
+          <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <h4 style="margin: 0 0 12px; color: #FF1493; font-size: 17px; text-align: center;">Welcome to Cube</h4>
+            <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #ddd;">
+              You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+            </p>
+          </div>
+        </div>
+        
+        <!-- Tip Card 2 -->
+        <div class="tip-card" style="width: calc(100% / 3); flex-shrink: 0; display: flex; flex-direction: column; height: 100%;">
+          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="width: 100%; height: 180px; object-fit: cover; border-bottom: 2px solid #00e676;">
+          <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <h4 style="margin: 0 0 12px; color: #00e676; font-size: 17px; text-align: center;">Earn & Cash Out</h4>
+            <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #ddd;">
+              Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
+              Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
+              From STRZ in your wallet → real cash in your bank.<br><br>
+              <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
+            </p>
+          </div>
+        </div>
+        
+        <!-- Tip Card 3 -->
+        <div class="tip-card" style="width: calc(100% / 3); flex-shrink: 0; display: flex; flex-direction: column; height: 100%;">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="width: 100%; height: 180px; object-fit: cover; border-bottom: 2px solid #FFD700;">
+          <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <h4 style="margin: 0 0 12px; color: #FFD700; font-size: 17px; text-align: center;">Send BUZZ Messages 🚨</h4>
+            <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #ddd;">
+              The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
+              Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
+              Costs STRZ — use wisely to get attention.<br><br>
+              <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Dots -->
+      <div id="tipsDots" style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10;">
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: #FF1493; cursor: pointer;"></div>
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer;"></div>
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer;"></div>
+      </div>
+    </div>
+    
+    <!-- Footer / Close -->
+    <div style="padding: 18px; text-align: center; background: rgba(0,0,0,0.4); border-top: 1px solid rgba(255,20,147,0.3);">
+      <button id="closeTipsBtn" style="padding: 14px 50px; border: none; border-radius: 14px; background: linear-gradient(90deg, #FF1493, #FF69B4); color: white; font-weight: 800; font-size: 17px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,20,147,0.5);">
+        GOT IT
+      </button>
+    </div>
+  </div>
+</div>
+  
+      <!-- Messages / Additional Info -->
+      <div id="hostMessagesContainer" style="padding:6px 0;">
+        <!-- Messages or host-specific info will be dynamically loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
 
 <div class="star-popup" id="starPopup">
