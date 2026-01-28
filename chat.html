@@ -4345,28 +4345,24 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
-  <!-- 🔥 FREE TONIGHT TOGGLE -->
-<div id="freeTonightCard" class="tool-card">
-  <div class="tool-head">
-    <div>
-      <div class="tool-title">
-        Free Tonight 🔥
-      </div>
-      <div class="tool-sub">
-        Randomly feature one of your highlights for 24 hours
-      </div>
-    </div>
-
-    <label class="switch">
-      <input type="checkbox" id="freeTonightToggle">
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="tool-foot">
-    <span class="cost">750 ⭐️ per activation</span>
-    <span id="freeTonightStatus" class="status">Inactive</span>
-  </div>
+ <!-- Free Tonight Toggle -->
+<div style="margin: 20px 0; padding: 20px; background: rgba(255,46,120,0.08); border-radius: 16px; border: 1px solid rgba(255,46,120,0.3); text-align: center;">
+  <h3 style="margin: 0 0 12px; color: #ff2e78; font-size: 20px; font-weight: 800;">
+    Free Tonight 🔥
+  </h3>
+  <p style="margin: 0 0 16px; color: #aaa; font-size: 14px;">
+    Boost one random clip to trending for 24h + add your location tag!<br>
+    <strong>Cost: 100 ⭐️</strong>
+  </p>
+  <button id="freeTonightBtn" style="
+    padding: 12px 32px; background: linear-gradient(90deg, #ff2e78, #ff5e2e);
+    color: white; border: none; border-radius: 50px; font-weight: 700; font-size: 16px;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(255,46,120,0.4);
+    transition: all 0.3s;
+  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(255,46,120,0.6)'"
+     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(255,46,120,0.4)'">
+    Activate Free Tonight
+  </button>
 </div>
 
 <!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
