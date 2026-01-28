@@ -6069,7 +6069,7 @@ function showHighlightsModal(videos) {
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
   const trendingBtn = document.createElement("button");
-  trendingBtn.textContent = "Trending";
+  trendingBtn.textContent = "Free Tonight";
   Object.assign(trendingBtn.style, {
     padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
     background: "linear-gradient(135deg, #8a2be2, #ff00f2)", color: "#fff",
