@@ -5935,67 +5935,63 @@ window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
 /* Highlights Button – shows ALL clips from ALL users */
 highlightsBtn.onclick = async () => {
-  try {
-    if (!currentUser?.uid) {
-      showGoldAlert("Please log in to view cuties");
-      return;
-    }
+    try {
+        if (!currentUser?.uid) {
+            showGoldAlert("Please log in to view cuties");
+            return;
+        }
 
-    const colRef = collection(db, "highlightVideos");
-    const snap = await getDocs(colRef);
+        const colRef = collection(db, "highlightVideos");
+        const snap = await getDocs(colRef);
 
-    console.log("Snapshot received:", snap);
+        if (snap.empty) {
+            showGoldAlert("No clips uploaded yet");
+            return;
+        }
 
-    if (snap.empty) {
-      showGoldAlert("No clips uploaded yet");
-      return;
-    }
+        const allClips = [];
 
-    const allClips = [];
+        snap.forEach(userDoc => {
+            const userData = userDoc.data();
+            const clips = userData.highlights || [];
 
-    snap.forEach(userDoc => {
-      const userData = userDoc.data() || {};
-      const clips = Array.isArray(userData.highlights) ? userData.highlights : [];
-
-      clips.forEach(clip => {
-        allClips.push({
-          id: clip.id,
-          highlightVideo: clip.videoUrl || "",
-          highlightVideoPrice: clip.highlightVideoPrice || 0,
-          title: clip.title || "Untitled",
-          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-          uploaderId: userData.uploaderId || userDoc.id,
-          uploaderEmail: userData.uploaderEmail || "unknown",
-          description: clip.description || "",
-          thumbnail: clip.thumbnailUrl || "",
-          createdAt: clip.uploadedAt || null,
-          unlockedBy: clip.unlockedBy || [],
-          previewClip: clip.previewClip || "",
-          videoUrl: clip.videoUrl || "",
-          isTrending: clip.isTrending || false,
-          tags: clip.tags || []
+            clips.forEach(clip => {
+                allClips.push({
+                    id: clip.id,
+                    highlightVideo: clip.videoUrl || "",
+                    highlightVideoPrice: clip.highlightVideoPrice || 0,
+                    title: clip.title || "Untitled",
+                    uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+                    uploaderId: userData.uploaderId || userDoc.id,
+                    uploaderEmail: userData.uploaderEmail || "unknown",
+                    description: clip.description || "",
+                    thumbnail: clip.thumbnailUrl || "",
+                    createdAt: clip.uploadedAt || null,
+                    unlockedBy: clip.unlockedBy || [],
+                    previewClip: clip.previewClip || "",
+                    videoUrl: clip.videoUrl || "",
+                    isTrending: clip.isTrending || false,
+                    tags: clip.tags || []
+                });
+            });
         });
-      });
-    });
 
-    console.log("All clips ready:", allClips.length);
+        if (allClips.length === 0) {
+            showGoldAlert("No clips available yet");
+            return;
+        }
 
-    if (allClips.length === 0) {
-      showGoldAlert("No clips available yet");
-      return;
+        showHighlightsModal(allClips);  // ← pass array, as your modal originally expects
+
+    } catch (err) {
+        console.error("Error fetching clips:", err);
+        showGoldAlert("Error fetching clips — please try again.");
     }
-
-    showHighlightsModal(allClips);
-  } catch (err) {
-    console.error("Error fetching clips:", err);
-    showGoldAlert("Error fetching clips — please try again.");
-  }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (ORIGINAL LAYOUT + SAFE) ---------- */
-function showHighlightsModal(videos = []) {
+/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
+function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
-
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
@@ -6007,8 +6003,7 @@ function showHighlightsModal(videos = []) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-
-  // HEADER (your original HTML - fixed quotes)
+  // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -6028,26 +6023,25 @@ function showHighlightsModal(videos = []) {
     </div>
   `;
   modal.appendChild(intro);
-
   // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
-  Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "8px",
-    right: "10px",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    zIndex: "1002",
-    transition: "all 0.25s ease",
-    filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
-  });
+ Object.assign(closeBtn.style, {
+  position: "absolute",
+  top: "8px",           // ← was 16px, now moved upward (smaller number = higher up)
+  right: "10px",        // ← was 16px, now moved a bit to the right (smaller number = more to the right)
+  width: "32px",
+  height: "32px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: "1002",
+  transition: "all 0.25s ease",
+  filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+});
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = (e) => {
@@ -6056,14 +6050,13 @@ function showHighlightsModal(videos = []) {
     setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
-
-  // CONTROLS (your original)
+  // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-
+  // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
   const unlockedBtn = document.createElement("button");
@@ -6084,7 +6077,7 @@ function showHighlightsModal(videos = []) {
   });
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
-
+  // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -6093,7 +6086,7 @@ function showHighlightsModal(videos = []) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
-
+  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
@@ -6101,27 +6094,24 @@ function showHighlightsModal(videos = []) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
-
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
-
-  function renderCards(videosToRender = []) {
+  function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
-
+    // Collect tags
     const allTags = new Set();
-    (videosToRender || []).forEach(v => {
+    videosToRender.forEach(v => {
       (v.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           allTags.add(t.trim().toLowerCase());
         }
       });
     });
-
     const sortedTags = [...allTags].sort();
-
+    // Tag buttons
     sortedTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -6144,22 +6134,22 @@ function showHighlightsModal(videos = []) {
       };
       tagContainer.appendChild(btn);
     });
-
-    let filtered = (videosToRender || []).filter(v => {
+    // Filter videos
+    let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
       return true;
     });
-
     if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
-
+    // === FIXED: SHUFFLE THE FILTERED LIST FOR RANDOM ORDER EVERY TIME ===
     filtered = filtered.sort(() => Math.random() - 0.5);
 
+    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = "No clips match your filters.";
@@ -6167,7 +6157,7 @@ function showHighlightsModal(videos = []) {
       grid.appendChild(empty);
       return;
     }
-
+    // Render cards
     filtered.forEach(video => {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
@@ -6185,18 +6175,13 @@ function showHighlightsModal(videos = []) {
         card.style.transform = "scale(1)";
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
-
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-
       const videoEl = document.createElement("video");
       videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-
       if (isUnlocked) {
         videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.poster = video.thumbnail || "";
-        console.log(`Poster for ${video.id}: ${video.thumbnail || "[no thumbnail]"}`);
         videoEl.load();
         vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
         vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
@@ -6211,23 +6196,24 @@ function showHighlightsModal(videos = []) {
           </div>`;
         vidContainer.appendChild(lock);
       }
-
       vidContainer.onclick = (e) => {
         e.stopPropagation();
         if (!isUnlocked) {
           showUnlockConfirm(video, () => {
+            // Refresh unlockedVideos from localStorage
             unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            renderCards(videosToRender);
+            // Re-render cards (with new random order)
+            renderCards(videos);
+            // Show success notification
             showStarPopup("Video unlocked! 🎉", "success");
           });
           return;
         }
         openFullScreenVideo(video.videoUrl || "");
       };
-
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
-
+      // Info overlay
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -6262,7 +6248,7 @@ function showHighlightsModal(videos = []) {
       });
       info.append(title, user, tagsEl);
       card.appendChild(info);
-
+      // Badge
       const badge = document.createElement("div");
       badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
       Object.assign(badge.style, {
@@ -6275,11 +6261,9 @@ function showHighlightsModal(videos = []) {
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
-
       grid.appendChild(card);
     });
   }
-
   // Filter buttons
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
@@ -6289,7 +6273,6 @@ function showHighlightsModal(videos = []) {
       : "linear-gradient(135deg, #240046, #3c0b5e)";
     renderCards();
   };
-
   trendingBtn.onclick = () => {
     filterMode = filterMode === "trending" ? "all" : "trending";
     trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
@@ -6298,8 +6281,7 @@ function showHighlightsModal(videos = []) {
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderCards();
   };
-
-  // SEARCH
+  // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -6314,9 +6296,8 @@ function showHighlightsModal(videos = []) {
       });
     });
   }
-
   // Initial render
-  renderCards(videos);
+  renderCards();
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 }
@@ -7501,84 +7482,31 @@ paystackNigeriaBanks.forEach(bank => {
 /*********************************
  * FREE TONIGHT 
  *********************************/
-// Free Tonight Toggle
-const freeTonightToggle = document.getElementById("freeTonightToggle");
-const freeTonightStatus = document.getElementById("freeTonightStatus");
+// Import if not already (for callable)
+const functions = getFunctions();
+const activateFreeTonight = httpsCallable(functions, 'activateFreeTonight');
 
-if (freeTonightToggle) {
-  // Load initial state
-  const loadFreeTonightState = async () => {
-    if (!currentUser?.uid) return;
-    const userRef = doc(db, "highlightVideos", currentUser.uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      const active = data.trendingVideoId && data.trendingUntil && data.trendingUntil.toDate() > new Date();
-      freeTonightToggle.checked = active;
-      freeTonightStatus.textContent = active ? "Active until " + data.trendingUntil.toDate().toLocaleString() : "Inactive";
-    }
-  };
+// Free Tonight button handler
+document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('freeTonightBtn');
+  btn.disabled = true;
+  btn.textContent = 'Activating...';
 
-  loadFreeTonightState();
+  try {
+    const result = await activateFreeTonight({});
+    showStarPopup(result.data.message, 'success');
 
-  freeTonightToggle.addEventListener("change", async (e) => {
-    const enabled = e.target.checked;
-    if (!enabled) return; // only handle activation (expiry is auto)
-
-    if (!currentUser?.uid) {
-      showStarPopup("Sign in to use Free Tonight", "error");
-      e.target.checked = false;
-      return;
-    }
-
-    const userRef = doc(db, "users", currentUser.uid);
-    const userSnap = await getDoc(userRef);
-    const stars = userSnap.data()?.stars ?? 0;
-
-    if (stars < 750) {
-      showStarPopup("Not enough STRZ! Need 750 for Free Tonight", "error");
-      e.target.checked = false;
-      return;
-    }
-
-    // Deduct stars
-    await updateDoc(userRef, { stars: increment(-750) });
-
-    // Get user's location tag
-    const location = userSnap.data()?.location || "lagos"; // fallback
-    const locationTag = `#${location.toLowerCase().replace(/\s+/g, '')}`;
-
-    // Get all user's videos
-    const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
-    const highlightsSnap = await getDoc(highlightsRef);
-    const videos = highlightsSnap.data()?.highlights || [];
-
-    if (videos.length === 0) {
-      showStarPopup("No highlights to feature", "error");
-      e.target.checked = false;
-      return;
-    }
-
-    // Pick random one
-    const randomIndex = Math.floor(Math.random() * videos.length);
-    const selectedVideo = videos[randomIndex];
-    const videoId = selectedVideo.id;
-
-    // Update trending status
-    await updateDoc(highlightsRef, {
-      trendingVideoId: videoId,
-      trendingUntil: serverTimestamp(new Date(Date.now() + 24 * 60 * 60 * 1000)),
-      [`highlights.${randomIndex}.isTrending`]: true,
-      [`highlights.${randomIndex}.tags`]: arrayUnion(locationTag)
-    });
-
-    showStarPopup(`Free Tonight activated! ${selectedVideo.title} is trending 🔥`, "success");
-    freeTonightStatus.textContent = "Active until tomorrow";
-
-    // Refresh modal if open
-    if (typeof loadMyClips === "function") loadMyClips();
-  });
-}
+    // Optional: refresh clips or tools UI
+    if (typeof loadMyClips === 'function') loadMyClips();
+  } catch (err) {
+    const msg = err.code === 'failed-precondition' ? err.message : 'Failed to activate — try again';
+    showStarPopup(msg, 'error');
+    console.error('Free Tonight failed:', err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Activate Free Tonight';
+  }
+});
 /*********************************
  * INIT
  *********************************/
