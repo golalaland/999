@@ -28,6 +28,7 @@ import {
   runTransaction,
   arrayUnion,
   writeBatch,
+   Timestamp,   // ← ADD THIS
   limitToLast
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
