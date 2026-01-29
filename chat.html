@@ -3360,206 +3360,15 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   height: 8px;               /* slightly thicker = more visible */
   ...
 }
-.tool-card {
-  background: linear-gradient(145deg, rgba(10, 5, 30, 0.95), rgba(20, 10, 50, 0.85));
-  border: 1px solid rgba(255, 0, 242, 0.35);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 10px 40px rgba(255, 0, 242, 0.18), inset 0 0 30px rgba(0, 255, 234, 0.08);
-  max-width: 540px;
-  margin: 24px auto;
-  backdrop-filter: blur(12px);
-  transition: all 0.4s ease;
-}
-
-.tool-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(255, 0, 242, 0.28), inset 0 0 40px rgba(0, 255, 234, 0.12);
-}
-
-.tool-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.tool-info {
-  flex: 1;
-}
-
-.tool-title {
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.gradient-fire {
-  font-size: 26px;
-  line-height: 1;
-  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: firePulse 3s infinite alternate;
-}
-
-.tool-sub {
-  font-size: 13.5px;
-  color: #ccc;
-  line-height: 1.5;
-  opacity: 0.9;
-}
-
-.tool-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: #aaa;
-  margin-top: 16px;
-}
-
-.cost {
-  font-weight: 700;
-  color: #ff4fd8;
-}
-
-.cost-sub {
-  font-weight: 400;
-  color: #888;
-  margin-left: 6px;
-}
-
-.status {
-  font-weight: 800;
-  color: #00ffea;
-  text-shadow: 0 0 10px rgba(0, 255, 234, 0.6);
-  transition: all 0.3s;
-}
-
-/* Toggle Switch – sluttier version */
-.switch {
-  position: relative;
-  width: 64px;
-  height: 34px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  inset: 0;
-  border-radius: 34px;
-  background: linear-gradient(135deg, #2a1a4a, #3c1f5e);
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 0, 242, 0.4);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
-}
-
-.slider::before {
-  content: "";
-  position: absolute;
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background: linear-gradient(135deg, #aaa, #ccc);
-  border-radius: 50%;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-}
-
-input:checked + .slider {
-  background: linear-gradient(135deg, #ff00f2, #8a2be2, #00ffea);
-  box-shadow: 0 0 30px rgba(255, 0, 242, 0.7), inset 0 0 20px rgba(0, 255, 234, 0.4);
-}
-
-input:checked + .slider::before {
-  transform: translateX(30px);
-  background: #00ffea;
-  box-shadow: 0 0 16px rgba(0, 255, 234, 0.9);
-}
-
-/* Status message (success/error) */
-.tool-message {
-  margin-top: 16px;
-  font-size: 13px;
-  text-align: center;
-  padding: 10px;
-  border-radius: 12px;
-  transition: all 0.4s;
-}
-
-.tool-message.success {
-  background: rgba(0, 255, 234, 0.15);
-  color: #00ffea;
-  border: 1px solid rgba(0, 255, 234, 0.4);
-  box-shadow: 0 0 20px rgba(0, 255, 234, 0.3);
-}
-
-.tool-message.error {
-  background: rgba(255, 51, 102, 0.15);
-  color: #ff3366;
-  border: 1px solid rgba(255, 51, 102, 0.4);
-}
-
-/* Pulse animation for fire emoji */
-@keyframes firePulse {
-  0% { opacity: 0.9; filter: brightness(1); }
-  100% { opacity: 1; filter: brightness(1.4); }
-}
 .free-tonight-mini {
   background: linear-gradient(135deg, rgba(138,43,226,0.12), rgba(255,0,242,0.08));
   border: 1px solid rgba(255,0,242,0.25);
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 8px 24px rgba(255,0,242,0.15);
-  max-width: 340px;
+  max-width: 320px; /* even smaller */
   margin: 20px auto;
   backdrop-filter: blur(8px);
-}
-
-.mini-head {
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.mini-title {
-  font-size: 18px;
-  font-weight: 800;
-  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.mini-fire {
-  font-size: 22px;
-  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.mini-sub {
-  font-size: 11.5px;
-  color: #bbb;
-  margin-top: 4px;
 }
 
 .mini-btn {
@@ -3576,55 +3385,23 @@ input:checked + .slider::before {
   transition: all 0.3s ease;
 }
 
-.mini-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(255,46,120,0.55);
-}
-
 .mini-btn:disabled {
-  opacity: 0.6;
+  background: linear-gradient(90deg, #666, #888);
   cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.9;
 }
 
-.mini-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-  font-size: 12px;
-  color: #ccc;
+.mini-btn.timer-active {
+  font-size: 13.5px;
+  padding: 10px;
+  background: linear-gradient(135deg, #00ffea, #ff00f2);
+  animation: subtlePulse 4s infinite;
 }
 
-.mini-cost {
-  font-weight: 600;
-  color: #ff4fd8;
-}
-
-.mini-status {
-  font-weight: 700;
-  color: #00ffea;
-  text-shadow: 0 0 8px rgba(0,255,234,0.5);
-}
-
-.mini-message {
-  margin-top: 12px;
-  font-size: 12.5px;
-  text-align: center;
-  padding: 8px 12px;
-  border-radius: 12px;
-  min-height: 20px;
-}
-
-.mini-message.success {
-  background: rgba(0,255,234,0.15);
-  color: #00ffea;
-  border: 1px solid rgba(0,255,234,0.4);
-}
-
-.mini-message.error {
-  background: rgba(255,51,102,0.15);
-  color: #ff3366;
-  border: 1px solid rgba(255,51,102,0.4);
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
 }
 </style>
 </head>
@@ -4353,7 +4130,7 @@ input:checked + .slider::before {
 
 
 
-  <!-- 🔥 FREE TONIGHT – Cute Mini Panel -->
+<!-- 🔥 FREE TONIGHT – Cute Mini Panel with Timer -->
 <div id="freeTonightCard" class="free-tonight-mini">
   <div class="mini-head">
     <div class="mini-title">
@@ -4376,7 +4153,6 @@ input:checked + .slider::before {
   <!-- Message area -->
   <div id="freeTonightMessage" class="mini-message"></div>
 </div>
-
 
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
