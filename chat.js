@@ -1817,32 +1817,33 @@ function stopMessagesListener() {
 
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
 /*
+  ✔ Loads from messages/{uid} doc → messages array
   ✔ Oldest messages render first (top)
   ✔ Newest messages render last (bottom)
-  ✔ Limit applied safely
   ✔ Optimistic message reconciliation preserved
-  ✔ Gift alerts preserved
+  ✔ Gift alerts persisted & shown only once
   ✔ Cache-aware logging
   ✔ Proper unsubscribe handling
+  ✔ Auto-scroll only on your own messages
 */
-
-let messagesUnsubscribe = null;
+let messagesUnsub = null;
 
 function attachMessagesListener() {
   // ---- Cleanup existing listener (prevents duplicates)
-  if (typeof messagesUnsubscribe === "function") {
-    messagesUnsubscribe();
-    messagesUnsubscribe = null;
+  if (typeof messagesUnsub === "function") {
+    messagesUnsub();
+    messagesUnsub = null;
   }
 
-  const CHAT_LIMIT = 21;
+  if (!currentUser?.uid || !refs.messagesEl) {
+    console.warn("[MESSAGES] Skipping listener — user or UI not ready");
+    return;
+  }
 
-  // ---- Correct chronological query
-  const q = query(
-    collection(db, CHAT_COLLECTION),
-    orderBy("timestamp", "asc"), // ← OLDEST → NEWEST (correct chat order)
-    limit(CHAT_LIMIT)
-  );
+  const CHAT_LIMIT = 21; // optional — we can slice array client-side
+
+  // ---- Listen to single user document
+  const userMsgRef = doc(db, "messages", currentUser.uid);
 
   // ---- Persisted gift alerts
   const shownGiftAlerts = new Set(
@@ -1851,91 +1852,103 @@ function attachMessagesListener() {
 
   function saveShownGift(id) {
     shownGiftAlerts.add(id);
-    localStorage.setItem(
-      "shownGiftAlerts",
-      JSON.stringify([...shownGiftAlerts])
-    );
+    localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
   }
 
-  // ---- Local optimistic messages
+  // ---- Local optimistic messages (tempId → pending msg)
   let localPendingMsgs = JSON.parse(
     localStorage.getItem("localPendingMsgs") || "{}"
   );
 
-  messagesUnsubscribe = onSnapshot(
-    q,
+  messagesUnsub = onSnapshot(
+    userMsgRef,
     { includeMetadataChanges: true },
     (snapshot) => {
       console.log(
         `Messages snapshot | ${snapshot.metadata.fromCache ? "✓ cache" : "server"} | ` +
-        `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
+        `exists: ${snapshot.exists()} | messages in array: ${snapshot.data()?.messages?.length || 0}`
       );
 
-      snapshot.docChanges().forEach((change) => {
-        if (change.type !== "added") return;
+      if (!snapshot.exists()) {
+        refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
+        return;
+      }
 
-        const msgId = change.doc.id;
-        const msg   = change.doc.data();
+      let messages = snapshot.data().messages || [];
 
-        // ---- Skip temp echoes
-        if (msg.tempId?.startsWith("temp_")) return;
+      // Sort oldest first (top of chat)
+      messages.sort((a, b) => {
+        const ta = a.timestamp?.toMillis?.() || a.timestamp || 0;
+        const tb = b.timestamp?.toMillis?.() || b.timestamp || 0;
+        return ta - tb;
+      });
 
-        // ---- Defensive: already rendered
-        if (document.getElementById(msgId)) return;
+      // Optional: limit client-side (last N messages)
+      if (messages.length > CHAT_LIMIT) {
+        messages = messages.slice(-CHAT_LIMIT);
+      }
 
-        // ---- Match optimistic message
-        for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
-          const sameUser = pending.uid === msg.uid;
-          const sameText = pending.content === msg.content;
+      // ---- Reconcile optimistic messages
+      for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
+        const serverMatch = messages.find(m => {
+          const sameUser = m.uid === pending.uid;
+          const sameText = m.content === pending.content;
+          const timeDiff = Math.abs((m.timestamp?.toMillis?.() || 0) - (pending.timestamp || 0));
+          return sameUser && sameText && timeDiff < 7000;
+        });
 
-          const timeDiff = Math.abs(
-            (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
-          );
-
-          if (sameUser && sameText && timeDiff < 7000) {
-            const tempEl = document.getElementById(tempId);
-            if (tempEl) tempEl.remove();
-
-            delete localPendingMsgs[tempId];
-            localStorage.setItem(
-              "localPendingMsgs",
-              JSON.stringify(localPendingMsgs)
-            );
-            break;
-          }
+        if (serverMatch) {
+          const tempEl = document.getElementById(tempId);
+          if (tempEl) tempEl.remove();
+          delete localPendingMsgs[tempId];
+          localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
         }
+      }
 
-        // ---- Render message (append → bottom)
-        renderMessagesFromArray([{ id: msgId, data: msg }]);
+      // ---- Render all messages
+      renderMessagesFromArray(messages);
 
-        // ---- Gift alert (receiver only)
+      // ---- Gift alert (receiver only)
+      messages.forEach(msg => {
         if (msg.highlight && msg.content?.includes("gifted")) {
           const myChatId = currentUser?.chatId?.toLowerCase();
           if (!myChatId) return;
 
           const [sender, , receiver, amount] = msg.content.split(" ");
-
           if (
             receiver?.toLowerCase() === myChatId &&
             amount &&
-            !shownGiftAlerts.has(msgId)
+            !shownGiftAlerts.has(msg.id)
           ) {
             showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
-            saveShownGift(msgId);
+            saveShownGift(msg.id);
           }
         }
-
-        // ---- Auto-scroll only when YOU send
-        if (refs.messagesEl && msg.uid === currentUser?.uid) {
-          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-        }
       });
+
+      // ---- Auto-scroll only when YOU send
+      if (refs.messagesEl && messages.some(m => m.uid === currentUser?.uid)) {
+        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+      }
     },
     (error) => {
       console.error("Messages listener error:", error);
+      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
     }
   );
+
+  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
 }
+
+// Cleanup function (call on logout or page close)
+function stopMessagesListener() {
+  if (typeof messagesUnsub === "function") {
+    messagesUnsub();
+    messagesUnsub = null;
+    console.log("[MESSAGES] Listener detached");
+  }
+}
+
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
 
@@ -3110,7 +3123,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED COLLAPSE + SAFE arrayUnion (no nested serverTimestamp)
+// SEND REGULAR MESSAGE — FIXED: arrayUnion to messages/{uid}, no crash, persists on reload
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser?.uid) {
     return showStarPopup("Sign in to chat.");
@@ -3143,14 +3156,14 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Optimistic message — use client timestamp for instant render
+  // Optimistic message (client timestamp)
   const tempId = "temp-" + Date.now() + Math.random().toString(36).slice(2);
   const optimisticMsg = {
     id: tempId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),  // ← client number (for sort + display)
+    timestamp: Date.now(),  // number for immediate sort/render
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3158,25 +3171,26 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Show immediately (optimistic UI)
+  // Render immediately
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI immediately (your critical fix)
+  // Reset UI
   refs.messageInputEl.value = "";
-  cancelReply?.(); // Clear reply preview
-  resizeAndExpand(); // Collapse input pill
+  cancelReply?.();
+  resizeAndExpand();
 
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Append to messages array — no nested serverTimestamp
+    // Make sure doc exists (merge: true creates if missing)
+    await setDoc(userMsgRef, { messages: [] }, { merge: true });
+
+    // Append to array — safe, no nested serverTimestamp
     await updateDoc(userMsgRef, {
-      messages: arrayUnion(optimisticMsg),
-      // Optional: track last message time at top level (server-confirmed)
-      lastMessageTimestamp: serverTimestamp()
+      messages: arrayUnion(optimisticMsg)
     });
 
-    console.log("Message appended to messages array");
+    console.log("Message added to messages array in messages/" + currentUser.uid);
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
@@ -3187,7 +3201,7 @@ refs.sendBtn?.addEventListener("click", async () => {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
-    // Remove optimistic message from UI
+    // Remove optimistic message
     const tempEl = document.getElementById(tempId);
     if (tempEl) tempEl.remove();
   }
