@@ -6071,7 +6071,7 @@ function showHighlightsModal(videos) {
  const trendingBtn = document.createElement("button");
 
 // Use innerHTML so we can style only the emoji
-trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #00f7ff, #ff00aa, #ffea00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
+trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
 Object.assign(trendingBtn.style, {
   padding: "8px 16px",
   borderRadius: "30px",
