@@ -322,13 +322,28 @@ async function pushNotification(userId, message) {
   }
 }
 
-
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
+  }
+  if (typeof messagesUnsub === "function") {
+    messagesUnsub();
+    messagesUnsub = null;
+  }
+  if (typeof privateMsgUnsubscribe === "function") {
+    privateMsgUnsubscribe();
+    privateMsgUnsubscribe = null;
+  }
+  if (typeof pollUnsubscribe === "function") {
+    pollUnsubscribe();
+    pollUnsubscribe = null;
+  }
+  if (typeof votesUnsubscribe === "function") {
+    votesUnsubscribe();
+    votesUnsubscribe = null;
   }
 
   // Reset globals
@@ -396,15 +411,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-// Wait a moment for auth to stabilize
-    await new Promise(r => setTimeout(r, 1500));
-
-    // Run cleanup once per login (optional)
-    await cleanupExpiredTokens();
-
-    await updateRedeemLink();
-    await updateTipLink();
-     
     // BUILD CURRENT USER OBJECT
     currentUser = {
       uid,
@@ -468,6 +474,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     console.log("[AUTH] Waiting 2s for token sync...");
     await new Promise(r => setTimeout(r, 2000));
 
+    // Run cleanup once per login
+    await cleanupExpiredTokens();
+
+    // Buttons — safe check
     if (typeof updateRedeemLink === "function") {
       console.log("[AUTH] Calling updateRedeemLink");
       await updateRedeemLink();
@@ -481,6 +491,9 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     } else {
       console.warn("[AUTH] updateTipLink not defined");
     }
+
+    // Start real-time messages listener (now safe — currentUser exists)
+    listenToMessages();
 
     // Delayed loads
     setTimeout(() => {
@@ -1753,14 +1766,30 @@ function renderMessagesFromArray(messages) {
 let messagesUnsub = null;
 
 function listenToMessages() {
-  if (messagesUnsub) messagesUnsub();
+  // Guard: only run if user is fully loaded
+  if (!currentUser?.uid || !refs.messagesEl) {
+    console.warn("[MESSAGES] Skipping listener — currentUser not ready yet");
+    return;
+  }
+
+  // Clean up any old listener first
+  if (messagesUnsub) {
+    messagesUnsub();
+    messagesUnsub = null;
+  }
 
   const userMsgRef = doc(db, "messages", currentUser.uid);
+
   messagesUnsub = onSnapshot(userMsgRef, (snap) => {
-    if (!snap.exists()) return;
+    if (!snap.exists()) {
+      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
+      return;
+    }
+
     const data = snap.data();
     const messages = data.messages || [];
 
+    // Sort oldest first
     messages.sort((a, b) => {
       const ta = a.timestamp?.toMillis?.() || a.timestamp || 0;
       const tb = b.timestamp?.toMillis?.() || b.timestamp || 0;
@@ -1768,17 +1797,20 @@ function listenToMessages() {
     });
 
     renderMessagesFromArray(messages);
+  }, (err) => {
+    console.error("Messages listener error:", err);
+    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
   });
+
+  console.log("[MESSAGES] Listener started for user:", currentUser.uid);
 }
 
-// Call after login
-listenToMessages();
-
-// Cleanup on logout/close
+// Cleanup function (call this on logout or page close)
 function stopMessagesListener() {
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
+    console.log("[MESSAGES] Listener stopped");
   }
 }
 
