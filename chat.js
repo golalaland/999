@@ -3115,7 +3115,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED: arrayUnion ONLY, no overwrite, appends forever
+// SEND REGULAR MESSAGE — FIXED: NO OVERWRITE, appends to array forever
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser?.uid) {
     return showStarPopup("Sign in to chat.");
@@ -3130,7 +3130,7 @@ refs.sendBtn?.addEventListener("click", async () => {
     return showStarPopup("Not enough stars to send message.");
   }
 
-  // Deduct stars locally
+  // Deduct stars locally (optimistic)
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
@@ -3148,8 +3148,8 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Unique ID
-  const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2, 10);
+  // Stable unique ID
+  const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2);
 
   const optimisticMsg = {
     id: messageId,
@@ -3164,10 +3164,10 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Optimistic render
+  // Render optimistic message
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI
+  // Reset UI immediately
   refs.messageInputEl.value = "";
   cancelReply?.();
   resizeAndExpand();
@@ -3175,10 +3175,7 @@ refs.sendBtn?.addEventListener("click", async () => {
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Create doc + empty array if missing (critical!)
-    await setDoc(userMsgRef, { messages: [] }, { merge: true });
-
-    // Append ONLY — this is the line that must be used
+    // Append ONLY — this is safe and adds to existing array
     await updateDoc(userMsgRef, {
       messages: arrayUnion(optimisticMsg)
     });
@@ -3188,11 +3185,13 @@ refs.sendBtn?.addEventListener("click", async () => {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
+    // Refund stars
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
+    // Remove optimistic message
     const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
