@@ -6194,13 +6194,7 @@ sortedVisibleTags.forEach(tag => {
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
-
-     // Define location keywords — expand this list with real tags your users actually use
-const locationKeywords = [
-  "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu", 
-  "ghana", "accra", "london", "usa", "new york", "paris", "naija", "lekki", "ikeja"
-  // Add more cities/countries as you see them in your data
-];
+     
     // === FIXED: SHUFFLE THE FILTERED LIST FOR RANDOM ORDER EVERY TIME ===
     filtered = filtered.sort(() => Math.random() - 0.5);
 
