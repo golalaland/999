@@ -6068,14 +6068,26 @@ function showHighlightsModal(videos) {
     border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-  const trendingBtn = document.createElement("button");
-  trendingBtn.textContent = "Free Tonight";
-  Object.assign(trendingBtn.style, {
-    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
-    background: "linear-gradient(135deg, #8a2be2, #ff00f2)", color: "#fff",
-    border: "1px solid rgba(255,0,242,0.7)", cursor: "pointer",
-    transition: "all 0.3s", boxShadow: "0 4px 14px rgba(255,0,242,0.5)"
-  });
+ const trendingBtn = document.createElement("button");
+
+// Use innerHTML so we can style only the emoji
+trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
+
+Object.assign(trendingBtn.style, {
+  padding: "8px 16px",
+  borderRadius: "30px",
+  fontSize: "13px",
+  fontWeight: "700",
+  background: "linear-gradient(135deg, #8a2be2, #ff00f2)",
+  color: "#fff",                  // whole button text stays white
+  border: "1px solid rgba(255,0,242,0.7)",
+  cursor: "pointer",
+  transition: "all 0.3s",
+  boxShadow: "0 4px 14px rgba(255,0,242,0.5)",
+  display: "inline-flex",         // helps align text + emoji nicely
+  alignItems: "center",
+  gap: "4px"                      // tiny spacing between text and emoji
+});
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
   // TAG FILTER BUTTONS
@@ -6292,16 +6304,21 @@ displayedTags.forEach(t => {
       : "linear-gradient(135deg, #240046, #3c0b5e)";
     renderCards();
   };
-  trendingBtn.onclick = () => {
-    filterMode = filterMode === "trending" ? "all" : "trending";
-trendingBtn.innerHTML = filterMode === "trending" 
-  ? "All Videos" 
-  : '<span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Free Tonight🔥</span>';
-    trendingBtn.style.background = filterMode === "trending"
-      ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
-      : "linear-gradient(135deg, #8a2be2, #ff00f2)";
-    renderCards();
-  };
+trendingBtn.onclick = () => {
+  filterMode = filterMode === "trending" ? "all" : "trending";
+  
+  // When in trending mode → show "All Videos" plain
+  // When not → show "Free Tonight" + gradient emoji only
+  trendingBtn.innerHTML = filterMode === "trending"
+    ? "All Videos"
+    : 'Free Tonight <span style="background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
+  
+  trendingBtn.style.background = filterMode === "trending"
+    ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
+    : "linear-gradient(135deg, #8a2be2, #ff00f2)";
+  
+  renderCards();
+};
   // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
