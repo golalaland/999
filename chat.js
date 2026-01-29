@@ -7548,7 +7548,7 @@ paystackNigeriaBanks.forEach(bank => {
 // Client-side Free Tonight with Live 24h Countdown
 // ───────────────────────────────────────────────
 
-// Ensure these are imported at the top of your file
+// Make sure these imports are at the top of your file
 // import { collection, query, where, limit, getDocs, doc, getDoc, updateDoc, increment, Timestamp } from "firebase/firestore";
 // import { auth } from your-firebase-init-file;
 
@@ -7561,6 +7561,9 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
+  const rawUid = auth.currentUser.uid;
+  const cost = 100;
+
   // Check if already active (from localStorage)
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
   if (savedEndTime && Number(savedEndTime) > Date.now()) {
@@ -7570,12 +7573,10 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   }
 
   btn.disabled = true;
-  btn.textContent = 'Boosting...✨';
+  const originalText = btn.textContent;
+  btn.textContent = 'Boosting... ✨';
 
   try {
-    const rawUid = auth.currentUser.uid;
-    const cost = 100;
-
     console.log("Searching for user doc with uid field:", rawUid);
 
     // 1. Find user document by uid field
@@ -7680,7 +7681,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
   } finally {
     btn.disabled = false;
-    // Text managed by countdown function
+    // Text is managed by countdown function now
   }
 });
 
