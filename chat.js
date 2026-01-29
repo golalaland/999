@@ -6114,40 +6114,74 @@ Object.assign(trendingBtn.style, {
   let activeTags = new Set();
   function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
-    tagContainer.innerHTML = "";
-    // Collect tags
-    const allTags = new Set();
-    videosToRender.forEach(v => {
-      (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim()) {
-          allTags.add(t.trim().toLowerCase());
-        }
-      });
-    });
-    const sortedTags = [...allTags].sort();
-    // Tag buttons
-    sortedTags.forEach(tag => {
-      const btn = document.createElement("button");
-      btn.textContent = `#${tag}`;
-      btn.dataset.tag = tag;
-      Object.assign(btn.style, {
-        padding: "6px 14px",
-        borderRadius: "24px",
-        fontSize: "12px",
-        fontWeight: "600",
-        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
-        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.6)",
-        cursor: "pointer",
-        transition: "all 0.25s"
-      });
-      btn.onclick = () => {
-        if (activeTags.has(tag)) activeTags.delete(tag);
-        else activeTags.add(tag);
-        renderCards(videosToRender);
-      };
-      tagContainer.appendChild(btn);
-    });
+   tagContainer.innerHTML = "";
+
+// Only build tag buttons from currently visible/filtered videos
+let visibleVideos = videosToRender.filter(v => {
+  if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
+  if (filterMode === "trending") return v.isTrending === true;
+  return true;
+});
+
+// Apply active tag filters (if any)
+if (activeTags.size > 0) {
+  visibleVideos = visibleVideos.filter(v => {
+    const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+    return [...activeTags].every(tag => videoTags.includes(tag));
+  });
+}
+
+// Now collect tags ONLY from visible videos
+const visibleTags = new Set();
+visibleVideos.forEach(v => {
+  (v.tags || []).forEach(t => {
+    if (t && typeof t === "string" && t.trim()) {
+      visibleTags.add(t.trim().toLowerCase());
+    }
+  });
+});
+
+const sortedVisibleTags = [...visibleTags].sort();
+
+// Define location keywords (expand as needed)
+const locationKeywords = [
+  "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu", 
+  "ghana", "accra", "naija", "lekki", "ikeja", "portharcourt", "ibadan"
+  // Add more real ones you see in your data
+];
+
+const isFreeTonightMode = filterMode === "trending";
+
+// Build tag buttons — skip location tags unless in Free Tonight mode
+sortedVisibleTags.forEach(tag => {
+  const lowerTag = tag.toLowerCase();
+  const isLocationTag = locationKeywords.some(kw => lowerTag.includes(kw));
+
+  // Hide location tag buttons completely outside Free Tonight tab
+  if (isLocationTag && !isFreeTonightMode) return;
+
+  const btn = document.createElement("button");
+  btn.textContent = `#${tag}`;
+  btn.dataset.tag = tag;
+  Object.assign(btn.style, {
+    padding: "6px 14px",
+    borderRadius: "24px",
+    fontSize: "12px",
+    fontWeight: "600",
+    background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+    color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+    border: "1px solid rgba(255,46,120,0.6)",
+    cursor: "pointer",
+    transition: "all 0.25s"
+  });
+  btn.onclick = () => {
+    if (activeTags.has(tag)) activeTags.delete(tag);
+    else activeTags.add(tag);
+    renderCards(videosToRender);
+  };
+  tagContainer.appendChild(btn);
+});
+   
     // Filter videos
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
