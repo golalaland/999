@@ -1831,14 +1831,6 @@ function stopMessagesListener() {
   }
 }
 
-// Cleanup function (call this on logout or page close)
-function stopMessagesListener() {
-  if (messagesUnsub) {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Listener stopped");
-  }
-}
 
 
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
