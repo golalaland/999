@@ -3360,49 +3360,114 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   height: 8px;               /* slightly thicker = more visible */
   ...
 }
-.free-tonight-mini {
-  background: linear-gradient(135deg, rgba(138,43,226,0.12), rgba(255,0,242,0.08));
-  border: 1px solid rgba(255,0,242,0.25);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(255,0,242,0.15);
-  max-width: 320px; /* even smaller */
-  margin: 20px auto;
-  backdrop-filter: blur(8px);
-}
+  .free-tonight-mini {
+    background: linear-gradient(135deg, rgba(138,43,226,0.12), rgba(255,0,242,0.08));
+    border: 1px solid rgba(255,0,242,0.25);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(255,0,242,0.15);
+    max-width: 320px;
+    margin: 20px auto;
+    backdrop-filter: blur(8px);
+  }
 
-.mini-btn {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(90deg, #ff2e78, #ff5e2e);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 15px;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(255,46,120,0.35);
-  transition: all 0.3s ease;
-}
+  .mini-head {
+    text-align: center;
+    margin-bottom: 12px;
+  }
 
-.mini-btn:disabled {
-  background: linear-gradient(90deg, #666, #888);
-  cursor: not-allowed;
-  box-shadow: none;
-  opacity: 0.9;
-}
+  .mini-title {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
 
-.mini-btn.timer-active {
-  font-size: 13.5px;
-  padding: 10px;
-  background: linear-gradient(135deg, #00ffea, #ff00f2);
-  animation: subtlePulse 4s infinite;
-}
+  .mini-fire {
+    font-size: 22px;
+    background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #ff6b6b; /* fallback */
+  }
 
-@keyframes subtlePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.92; }
-}
+  .mini-sub {
+    font-size: 11.5px;
+    color: #bbb;
+    margin-top: 4px;
+  }
+
+  .mini-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, #ff2e78, #ff5e2e);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255,46,120,0.35);
+    transition: all 0.3s ease;
+  }
+
+  .mini-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(255,46,120,0.55);
+  }
+
+  .mini-btn:disabled {
+    background: linear-gradient(90deg, #666, #888);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.9;
+  }
+
+  .mini-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #ccc;
+  }
+
+  .mini-cost {
+    font-weight: 600;
+    color: #ff4fd8;
+  }
+
+  .mini-status {
+    font-weight: 700;
+    color: #00ffea;
+    text-shadow: 0 0 8px rgba(0,255,234,0.5);
+  }
+
+  .mini-message {
+    margin-top: 12px;
+    font-size: 12.5px;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 12px;
+    min-height: 20px;
+  }
+
+  .mini-message.success {
+    background: rgba(0,255,234,0.15);
+    color: #00ffea;
+    border: 1px solid rgba(0,255,234,0.4);
+  }
+
+  .mini-message.error {
+    background: rgba(255,51,102,0.15);
+    color: #ff3366;
+    border: 1px solid rgba(255,51,102,0.4);
+  }
 </style>
 </head>
 <body>
@@ -4150,10 +4215,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <span id="freeTonightStatus" class="mini-status">Ready</span>
   </div>
 
-  <!-- Message area -->
   <div id="freeTonightMessage" class="mini-message"></div>
 </div>
-
+  
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
   <h4 style="
