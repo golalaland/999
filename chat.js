@@ -3110,7 +3110,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED + ARRAY UNION SAFE
+// SEND REGULAR MESSAGE — FIXED COLLAPSE + SAFE arrayUnion (no nested serverTimestamp)
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser?.uid) {
     return showStarPopup("Sign in to chat.");
@@ -3125,13 +3125,13 @@ refs.sendBtn?.addEventListener("click", async () => {
     return showStarPopup("Not enough stars to send message.");
   }
 
-  // Deduct stars locally
+  // Deduct stars locally (optimistic)
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 
-  // Prepare reply data
+  // Prepare reply data (unchanged)
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3143,14 +3143,14 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Optimistic message (client timestamp for instant render)
+  // Optimistic message — use client timestamp for instant render
   const tempId = "temp-" + Date.now() + Math.random().toString(36).slice(2);
   const optimisticMsg = {
     id: tempId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),  // ← client-side number (for sort + display)
+    timestamp: Date.now(),  // ← client number (for sort + display)
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3158,24 +3158,22 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Show immediately
+  // Show immediately (optimistic UI)
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI
+  // Reset UI immediately (your critical fix)
   refs.messageInputEl.value = "";
-  cancelReply?.();
-  resizeAndExpand();
+  cancelReply?.(); // Clear reply preview
+  resizeAndExpand(); // Collapse input pill
 
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Append with server timestamp at top level (not inside array item)
+    // Append to messages array — no nested serverTimestamp
     await updateDoc(userMsgRef, {
-      messages: arrayUnion({
-        ...optimisticMsg,
-        timestamp: serverTimestamp()  // ← this will be ignored by arrayUnion
-      }),
-      lastMessageTimestamp: serverTimestamp()  // ← optional: top-level field for sorting
+      messages: arrayUnion(optimisticMsg),
+      // Optional: track last message time at top level (server-confirmed)
+      lastMessageTimestamp: serverTimestamp()
     });
 
     console.log("Message appended to messages array");
@@ -3189,7 +3187,7 @@ refs.sendBtn?.addEventListener("click", async () => {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
-    // Remove optimistic message
+    // Remove optimistic message from UI
     const tempEl = document.getElementById(tempId);
     if (tempEl) tempEl.remove();
   }
