@@ -3110,7 +3110,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED COLLAPSE AFTER SEND + ARRAY IN messages/{uid}
+// SEND REGULAR MESSAGE — FIXED + ARRAY UNION SAFE
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser?.uid) {
     return showStarPopup("Sign in to chat.");
@@ -3125,13 +3125,13 @@ refs.sendBtn?.addEventListener("click", async () => {
     return showStarPopup("Not enough stars to send message.");
   }
 
-  // Deduct stars locally (optimistic)
+  // Deduct stars locally
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 
-  // Prepare reply data (same as original)
+  // Prepare reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3143,14 +3143,14 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Optimistic message object (shown immediately)
+  // Optimistic message (client timestamp for instant render)
   const tempId = "temp-" + Date.now() + Math.random().toString(36).slice(2);
   const optimisticMsg = {
     id: tempId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Timestamp.fromMillis(Date.now()), // client-side for instant render
+    timestamp: Date.now(),  // ← client-side number (for sort + display)
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3158,37 +3158,38 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Render optimistic message right away
+  // Show immediately
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI immediately (your critical fix)
+  // Reset UI
   refs.messageInputEl.value = "";
-  cancelReply?.(); // Clear reply preview
-  resizeAndExpand(); // Collapse input pill
+  cancelReply?.();
+  resizeAndExpand();
 
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Append to messages array (atomic)
+    // Append with server timestamp at top level (not inside array item)
     await updateDoc(userMsgRef, {
       messages: arrayUnion({
         ...optimisticMsg,
-        timestamp: serverTimestamp() // server gives real timestamp
-      })
+        timestamp: serverTimestamp()  // ← this will be ignored by arrayUnion
+      }),
+      lastMessageTimestamp: serverTimestamp()  // ← optional: top-level field for sorting
     });
 
-    console.log("Message appended to messages array in messages/" + currentUser.uid);
+    console.log("Message appended to messages array");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
-    // Refund stars on error
+    // Refund stars
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
-    // Remove optimistic message from UI
+    // Remove optimistic message
     const tempEl = document.getElementById(tempId);
     if (tempEl) tempEl.remove();
   }
