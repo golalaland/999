@@ -6089,6 +6089,8 @@ Object.assign(trendingBtn.style, {
 });
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
+
+
   // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
@@ -6158,6 +6160,13 @@ Object.assign(trendingBtn.style, {
         return [...activeTags].every(tag => videoTags.includes(tag));
       });
     }
+
+     // Define location keywords — expand this list with real tags your users actually use
+const locationKeywords = [
+  "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu", 
+  "ghana", "accra", "london", "usa", "new york", "paris", "naija", "lekki", "ikeja"
+  // Add more cities/countries as you see them in your data
+];
     // === FIXED: SHUFFLE THE FILTERED LIST FOR RANDOM ORDER EVERY TIME ===
     filtered = filtered.sort(() => Math.random() - 0.5);
 
@@ -6263,12 +6272,7 @@ const displayedTags = (video.tags || []).filter(tag => {
   if (!tag || typeof tag !== "string") return false;
   const lowerTag = tag.trim().toLowerCase();
 
-  // Simple location tag detection — expand this list as needed
-  const locationKeywords = [
-    "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu", 
-    "ghana", "accra", "london", "usa", "new york", "paris" // ← add real ones
-  ];
-
+  // Check if this tag is a location
   const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
 
   // Hide location tags unless we're in Free Tonight mode
@@ -6295,7 +6299,6 @@ displayedTags.forEach(t => {
   
   tagsEl.appendChild(span);
 });
-
 info.append(title, user, tagsEl);
       card.appendChild(info);
       // Badge
