@@ -1763,7 +1763,6 @@ function renderMessagesFromArray(messages) {
 }
 
 
-let messagesUnsub = null;
 
 function listenToMessages() {
   // Guard: only run if user is fully loaded
