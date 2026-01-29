@@ -1556,10 +1556,13 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FINAL SAFARI-FIXED + SMALLER FONT (2026 ETERNAL)
+// RENDER MESSAGES — FINAL VERSION (from messages/{uid} doc + array)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
+
+  // Clear existing messages to avoid duplicates
+  refs.messagesEl.innerHTML = "";
 
   messages.forEach(function(item) {
     const id = item.id || item.tempId || item.data?.id;
@@ -1581,7 +1584,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME — TAP → SOCIAL CARD (SAFARI-FRIENDLY) ===
+    // === USERNAME — TAP → SOCIAL CARD ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1591,38 +1594,31 @@ function renderMessagesFromArray(messages) {
     nameSpan.dataset.userId = realUid;
 
     const usernameColor = refs.userColors?.[m.uid] || "#ffffff";
-
     nameSpan.style.cssText = `
       cursor: pointer;
       font-weight: 600;
-      font-size: 13.5px;           /* Slightly smaller — cleaner look */
+      font-size: 13.5px;
       color: ${usernameColor};
       opacity: 0.9;
       user-select: none;
       display: inline;
       margin-right: 4px;
-      -webkit-tap-highlight-color: transparent; /* Removes Safari blue flash */
+      -webkit-tap-highlight-color: transparent;
     `;
 
-    // SAFARI-PROOF TAP: use 'touchend' + preventDefault + manual click
-    nameSpan.addEventListener("touchend", (e) => {
-      e.preventDefault(); // Stops Safari from ignoring the click
-      const chatIdLower = (m.chatId || "").toLowerCase();
-      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
-      if (user && user._docId !== currentUser?.uid) {
-        showSocialCard(user);
-      }
-    });
-
-    // Desktop click still works
-    nameSpan.addEventListener("click", (e) => {
+    // Tap handler
+    const openProfile = (e) => {
+      e.preventDefault();
       e.stopPropagation();
       const chatIdLower = (m.chatId || "").toLowerCase();
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
       if (user && user._docId !== currentUser?.uid) {
         showSocialCard(user);
       }
-    });
+    };
+
+    nameSpan.addEventListener("touchend", openProfile);
+    nameSpan.addEventListener("click", openProfile);
 
     wrapper.appendChild(nameSpan);
 
@@ -1645,7 +1641,6 @@ function renderMessagesFromArray(messages) {
       const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
       preview.innerHTML = `<strong style="color:#999;">⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
-
       preview.onclick = (e) => {
         e.stopPropagation();
         const target = document.getElementById(m.replyTo);
@@ -1663,11 +1658,10 @@ function renderMessagesFromArray(messages) {
     content.className = "content";
     content.textContent = m.content || "";
 
-    // NORMAL MESSAGES — LIGHT, SMALLER & AIRY
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
-        font-size: 13px;            /* Reduced from 14.5px — cleaner */
+        font-size: 13px;
         line-height: 1.55;
         color: #d0d0d0;
         word-wrap: break-word;
@@ -1678,7 +1672,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // BUZZ MESSAGES — EPIC
+    // BUZZ MESSAGES — your exact original epic style
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1695,23 +1689,19 @@ function renderMessagesFromArray(messages) {
         animation: stickerPop 0.7s ease-out;
         backdrop-filter: blur(4px);
       `;
-
       const confettiContainer = document.createElement("div");
       confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
       createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
       wrapper.appendChild(confettiContainer);
-
       wrapper.style.transition = "transform 0.2s";
       wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
       wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
-
       setTimeout(() => {
         wrapper.style.background = "rgba(255,255,255,0.06)";
         wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
         wrapper.style.border = "none";
         confettiContainer.remove();
       }, 20000);
-
       content.style.cssText = `
         font-size: 1.45em;
         font-weight: 900;
@@ -1742,23 +1732,14 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
-    wrapper.style.pointerEvents = "none";
-
-    // Re-enable on interactive parts
-    nameSpan.style.pointerEvents = "auto";
-    if (preview) preview.style.pointerEvents = "auto";
-    content.style.pointerEvents = "auto";
-
     refs.messagesEl.appendChild(wrapper);
   });
 
-  // Auto-scroll
+  // Auto-scroll (your original logic)
   const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
   if (distanceFromBottom < 200) {
     refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
   }
-
   if (!scrollPending) {
     scrollPending = true;
     requestAnimationFrame(() => {
@@ -1767,6 +1748,40 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
+
+
+let messagesUnsub = null;
+
+function listenToMessages() {
+  if (messagesUnsub) messagesUnsub();
+
+  const userMsgRef = doc(db, "messages", currentUser.uid);
+  messagesUnsub = onSnapshot(userMsgRef, (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const messages = data.messages || [];
+
+    messages.sort((a, b) => {
+      const ta = a.timestamp?.toMillis?.() || a.timestamp || 0;
+      const tb = b.timestamp?.toMillis?.() || b.timestamp || 0;
+      return ta - tb;
+    });
+
+    renderMessagesFromArray(messages);
+  });
+}
+
+// Call after login
+listenToMessages();
+
+// Cleanup on logout/close
+function stopMessagesListener() {
+  if (messagesUnsub) {
+    messagesUnsub();
+    messagesUnsub = null;
+  }
+}
+
 
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
 /*
@@ -3063,60 +3078,90 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED COLLAPSE AFTER SEND
+// SEND REGULAR MESSAGE — FIXED COLLAPSE AFTER SEND + ARRAY IN messages/{uid}
 refs.sendBtn?.addEventListener("click", async () => {
+  if (!currentUser?.uid) {
+    return showStarPopup("Sign in to chat.");
+  }
+
+  const txt = refs.messageInputEl?.value.trim();
+  if (!txt) {
+    return showStarPopup("Type a message first.");
+  }
+
+  if ((currentUser.stars || 0) < SEND_COST) {
+    return showStarPopup("Not enough stars to send message.");
+  }
+
+  // Deduct stars locally (optimistic)
+  currentUser.stars -= SEND_COST;
+  if (refs.starCountEl) {
+    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+  }
+
+  // Prepare reply data (same as original)
+  const replyData = currentReplyTarget
+    ? {
+        replyTo: currentReplyTarget.id,
+        replyToContent: (currentReplyTarget.content || "Original message")
+          .replace(/\n/g, " ")
+          .trim()
+          .substring(0, 80) + "...",
+        replyToChatId: currentReplyTarget.chatId || "someone"
+      }
+    : { replyTo: null, replyToContent: null, replyToChatId: null };
+
+  // Optimistic message object (shown immediately)
+  const tempId = "temp-" + Date.now() + Math.random().toString(36).slice(2);
+  const optimisticMsg = {
+    id: tempId,
+    uid: currentUser.uid,
+    chatId: currentUser.chatId,
+    content: txt,
+    timestamp: Timestamp.fromMillis(Date.now()), // client-side for instant render
+    type: "text",
+    usernameColor: currentUser.usernameColor || "#ff69b4",
+    highlight: false,
+    buzzColor: null,
+    ...replyData
+  };
+
+  // Render optimistic message right away
+  renderMessagesFromArray([optimisticMsg]);
+
+  // Reset UI immediately (your critical fix)
+  refs.messageInputEl.value = "";
+  cancelReply?.(); // Clear reply preview
+  resizeAndExpand(); // Collapse input pill
+
   try {
-    if (!currentUser) return showStarPopup("Sign in to chat.");
+    const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    const txt = refs.messageInputEl?.value.trim();
-    if (!txt) return showStarPopup("Type a message first.");
-
-    if ((currentUser.stars || 0) < SEND_COST)
-      return showStarPopup("Not enough stars to send message.");
-
-    // Deduct stars
-    currentUser.stars -= SEND_COST;
-    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-SEND_COST) });
-
-    // REPLY DATA
-    const replyData = currentReplyTarget
-      ? {
-          replyTo: currentReplyTarget.id,
-          replyToContent: (currentReplyTarget.content || "Original message")
-            .replace(/\n/g, " ").trim().substring(0, 80) + "...",
-          replyToChatId: currentReplyTarget.chatId || "someone"
-        }
-      : { replyTo: null, replyToContent: null, replyToChatId: null };
-
-    // SEND TO FIRESTORE
-    await addDoc(collection(db, CHAT_COLLECTION), {
-      content: txt,
-      uid: currentUser.uid,
-      chatId: currentUser.chatId,
-      usernameColor: currentUser.usernameColor || "#ff69b4",
-      timestamp: serverTimestamp(),
-      highlight: false,
-      buzzColor: null,
-      ...replyData
+    // Append to messages array (atomic)
+    await updateDoc(userMsgRef, {
+      messages: arrayUnion({
+        ...optimisticMsg,
+        timestamp: serverTimestamp() // server gives real timestamp
+      })
     });
 
-    // === CRITICAL FIX: FULL RESET & COLLAPSE ===
-    refs.messageInputEl.value = "";
-    cancelReply?.(); // Clear reply preview
-    resizeAndExpand(); // Manually trigger resize → collapses to original pill
-
-    console.log("Message sent to Firestore");
-
+    console.log("Message appended to messages array in messages/" + currentUser.uid);
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
+
+    // Refund stars on error
     currentUser.stars += SEND_COST;
-    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    if (refs.starCountEl) {
+      refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    }
+
+    // Remove optimistic message from UI
+    const tempEl = document.getElementById(tempId);
+    if (tempEl) tempEl.remove();
   }
 });
-
-
+   
 // Private Message Modal Logic
 const privateMsgBtn = document.getElementById('privateMsgBtn');
 const privateMsgModal = document.getElementById('privateMsgModal');
@@ -7569,7 +7614,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
   try {
     const rawUid = auth.currentUser.uid;
-    const cost = 100;
+    const cost = 21;
 
     // 1. Find user doc
     const usersQuery = query(
@@ -7638,7 +7683,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     startCountdown(btn, endTime);
 
     showStarPopup(
-      `Free Tonight activated! 🔥 One clip trending 24h${addedTag ? ` + #${addedTag}` : ''}`,
+      `Free Tonight activated! 🔥`,
       'success'
     );
 
