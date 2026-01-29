@@ -6360,7 +6360,7 @@ trendingBtn.onclick = () => {
   // When in trending mode → show "All Videos" plain
   // When not → show "Free Tonight" + fiery gradient emoji only
   trendingBtn.innerHTML = filterMode === "trending"
-    ? "All Videos"
+    ? "Show All Videos"
     : 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
 
   trendingBtn.style.background = filterMode === "trending"
