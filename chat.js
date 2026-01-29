@@ -6201,7 +6201,7 @@ sortedVisibleTags.forEach(tag => {
     // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = "No clips match your filters.";
+      empty.textContent = "No one's on free tonight right now";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
       grid.appendChild(empty);
       return;
@@ -6955,18 +6955,16 @@ function attachReelInteractions() {
   });
 }
 
-// Private Message Reader - Host Only (your original design + listener cleanup)
+// Private Message Reader - Host Only (fixed listener cleanup)
 const privateMsgReader = document.getElementById('privateMsgReader');
 const privateMessagesList = document.getElementById('privateMessagesList');
 const privateMsgCount = document.getElementById('privateMsgCount');
 let unreadCount = 0;
 let privateMsgUnsubscribe = null;
 
-// Only show if current user is the host and isLive = true
 if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'block';
 
-  // Listen to private messages in real-time
   const q = query(
     collection(db, "privateLiveMessages"),
     orderBy("timestamp", "asc")
@@ -7001,7 +6999,7 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
-// Cleanup listener when modal closes or page unloads
+// Cleanup private messages listener
 function stopPrivateMsgListener() {
   if (privateMsgUnsubscribe) {
     privateMsgUnsubscribe();
@@ -7012,7 +7010,7 @@ function stopPrivateMsgListener() {
 document.getElementById("closePrivateMsgBtn")?.addEventListener("click", stopPrivateMsgListener);
 window.addEventListener("beforeunload", stopPrivateMsgListener);
 
-// WIN $STRZ POLL — FINAL FIXED VERSION (your original design restored)
+// WIN $STRZ POLL — FIXED & WORKING VERSION (your original design untouched)
 let pollUnsubscribe = null;
 let votesUnsubscribe = null;
 
@@ -7027,11 +7025,9 @@ async function openPollModal() {
   showLoader("Loading poll...");
 
   try {
-    // Clean old listeners
     if (pollUnsubscribe) pollUnsubscribe();
     if (votesUnsubscribe) votesUnsubscribe();
 
-    // Listen to poll document
     pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
       if (!pollSnap.exists()) {
         hideLoader();
@@ -7041,9 +7037,20 @@ async function openPollModal() {
       }
 
       const poll = pollSnap.data();
-      const now = Date.now();
-      const endTime = poll.endsAt.toMillis();
 
+      // Safe endTime conversion (handles Timestamp, Date, number, null)
+      let endTime = 0;
+      if (poll.endsAt) {
+        if (poll.endsAt.toMillis) {
+          endTime = poll.endsAt.toMillis(); // Firestore Timestamp
+        } else if (poll.endsAt.getTime) {
+          endTime = poll.endsAt.getTime(); // JS Date
+        } else if (typeof poll.endsAt === 'number') {
+          endTime = poll.endsAt; // milliseconds
+        }
+      }
+
+      const now = Date.now();
       if (now > endTime) {
         hideLoader();
         document.getElementById("pollModal").style.display = "none";
@@ -7051,7 +7058,6 @@ async function openPollModal() {
         return;
       }
 
-      // Start listening to votes
       startVotesListener(poll, endTime);
     }, (err) => {
       hideLoader();
@@ -7067,7 +7073,6 @@ function startVotesListener(poll, endTime) {
   votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
     hideLoader();
 
-    // Count votes
     const voteCounts = {};
     poll.options.forEach(opt => voteCounts[opt] = 0);
 
@@ -7211,7 +7216,7 @@ document.getElementById("closePollBtn").onclick = () => {
   votesUnsubscribe = null;
 };
 
-// === CREATE NEW POLL ===
+// === CREATE NEW POLL (fixed endsAt with Timestamp)
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
   if (!currentAdmin || !currentAdmin.uid) {
     showGoldAlert("Admin login required to create poll!");
@@ -7237,13 +7242,14 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   btn.disabled = true;
 
   try {
-    const endsAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+    // Use Timestamp for endsAt (fixes toMillis crash)
+    const endsAt = Timestamp.fromMillis(Date.now() + hours * 60 * 60 * 1000);
 
     await setDoc(doc(db, "polls", "current"), {
       question,
       options,
       votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
-      endsAt: endsAt.getTime(),
+      endsAt, // now a Timestamp
       reward,
       createdAt: serverTimestamp(),
       createdBy: currentAdmin.uid
@@ -7277,20 +7283,19 @@ document.getElementById("create-new-poll")?.addEventListener("click", async () =
   }
 });
 
+// Poll Carousel (fixed loop, dots, swipe)
 function loadPollCarousel() {
   const carousel = document.getElementById("pollCarousel");
-  
-  // Clear any previous content
+  if (!carousel) return;
+
   carousel.innerHTML = "";
 
-  // Images array — easy to add/change later
   const images = [
     "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
     "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
     "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741"
   ];
 
-  // Carousel container
   const carouselWrapper = document.createElement("div");
   carouselWrapper.style.cssText = `
     position: relative;
@@ -7300,7 +7305,6 @@ function loadPollCarousel() {
     border-radius: 14px;
   `;
 
-  // Slides track
   const slidesTrack = document.createElement("div");
   slidesTrack.id = "carouselSlides";
   slidesTrack.style.cssText = `
@@ -7311,7 +7315,6 @@ function loadPollCarousel() {
     transform: translateX(0%);
   `;
 
-  // Create each slide
   images.forEach((src) => {
     const slide = document.createElement("div");
     slide.style.cssText = `
@@ -7319,7 +7322,6 @@ function loadPollCarousel() {
       height: 100%;
       flex-shrink: 0;
     `;
-
     const img = document.createElement("img");
     img.src = src;
     img.alt = "Cube Livestream Offline";
@@ -7329,14 +7331,12 @@ function loadPollCarousel() {
       object-fit: cover;
       display: block;
     `;
-
     slide.appendChild(img);
     slidesTrack.appendChild(slide);
   });
 
   carouselWrapper.appendChild(slidesTrack);
 
-  // Dots indicator
   const dotsContainer = document.createElement("div");
   dotsContainer.style.cssText = `
     position: absolute;
@@ -7358,26 +7358,28 @@ function loadPollCarousel() {
       transition: background 0.3s;
     `;
     dot.dataset.index = index;
+    dot.onclick = () => {
+      currentIndex = parseInt(dot.dataset.index);
+      updateCarousel();
+    };
     dotsContainer.appendChild(dot);
   });
 
   carouselWrapper.appendChild(dotsContainer);
   carousel.appendChild(carouselWrapper);
 
-  // ——— SWIPE & SLIDE LOGIC ———
+  // Swipe & slide logic
   let currentIndex = 0;
   const totalSlides = images.length;
 
   function updateCarousel() {
     slidesTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
-
-    // Update dots
     dotsContainer.querySelectorAll("div").forEach((dot, i) => {
-      dot.style.background = i === currentIndex ? "#c3f60c" : "rgba(255,255,255,0.4)";
+      dot.style.background = i === currentIndex ? '#c3f60c' : 'rgba(255,255,255,0.4)';
     });
   }
 
-  // Touch swipe support
+  // Touch swipe
   let touchStartX = 0;
   carouselWrapper.addEventListener("touchstart", (e) => {
     touchStartX = e.touches[0].clientX;
@@ -7386,8 +7388,7 @@ function loadPollCarousel() {
   carouselWrapper.addEventListener("touchend", (e) => {
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX - touchEndX;
-
-    if (Math.abs(diff) > 50) { // Minimum swipe distance
+    if (Math.abs(diff) > 50) {
       if (diff > 0 && currentIndex < totalSlides - 1) {
         currentIndex++;
       } else if (diff < 0 && currentIndex > 0) {
@@ -7397,20 +7398,11 @@ function loadPollCarousel() {
     }
   });
 
-  // Optional: Click dots to navigate
-  dotsContainer.addEventListener("click", (e) => {
-    const dot = e.target.closest("div");
-    if (dot && dot.dataset.index !== undefined) {
-      currentIndex = parseInt(dot.dataset.index);
-      updateCarousel();
-    }
-  });
-
-  // Auto-play (optional — uncomment if you want it)
- setInterval(() => {
-currentIndex = (currentIndex + 1) % totalSlides;
-  updateCarousel();
- }, 4000);
+  // Auto-play
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % totalSlides;
+    updateCarousel();
+  }, 4000);
 }
 
 
