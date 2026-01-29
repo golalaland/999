@@ -1766,13 +1766,11 @@ function renderMessagesFromArray(messages) {
 
 // ---------- Messages Real-time Listener – Clean & Production-ready ----------
 function listenToMessages() {
-  // Safety guard: skip if user or UI not ready
   if (!currentUser?.uid || !refs.messagesEl) {
     console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
     return;
   }
 
-  // Clean up any previous listener to avoid duplicates/leaks
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
@@ -1782,7 +1780,6 @@ function listenToMessages() {
   const userMsgRef = doc(db, "messages", currentUser.uid);
 
   messagesUnsub = onSnapshot(userMsgRef, (snap) => {
-    // Log source + count for debugging
     console.log(
       `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
       `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
@@ -1795,20 +1792,18 @@ function listenToMessages() {
 
     let messages = snap.data().messages || [];
 
-    // Sort oldest first (top of chat) → newest at bottom
+    // Safety: filter out any invalid/null messages
+    messages = messages.filter(m => m && m.id && m.content);
+
+    // Sort oldest first
     messages.sort((a, b) => {
       const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
       const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
       return ta - tb;
     });
 
-    // Optional: limit to last N messages if array gets very large
-    // messages = messages.slice(-50);
-
-    // Render the full sorted array
     renderMessagesFromArray(messages);
 
-    // Auto-scroll to bottom if user is near bottom
     const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
     if (distanceFromBottom < 200) {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
@@ -1820,17 +1815,6 @@ function listenToMessages() {
 
   console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
 }
-
-// Cleanup function — call this on logout / page unload / user change
-function stopMessagesListener() {
-  if (messagesUnsub) {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Listener stopped");
-  }
-}
-
-
 
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
 /*
@@ -3131,7 +3115,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED: arrayUnion ONLY, no overwrite, persists all messages
+// SEND REGULAR MESSAGE — FIXED: arrayUnion ONLY, no overwrite, appends forever
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser?.uid) {
     return showStarPopup("Sign in to chat.");
@@ -3152,7 +3136,7 @@ refs.sendBtn?.addEventListener("click", async () => {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 
-  // Reply data (unchanged)
+  // Reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3164,10 +3148,11 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Optimistic message
-  const tempId = "temp-" + Date.now() + Math.random().toString(36).slice(2);
+  // Unique ID
+  const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2, 10);
+
   const optimisticMsg = {
-    id: tempId,
+    id: messageId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
@@ -3179,7 +3164,7 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Show immediately
+  // Optimistic render
   renderMessagesFromArray([optimisticMsg]);
 
   // Reset UI
@@ -3190,15 +3175,15 @@ refs.sendBtn?.addEventListener("click", async () => {
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Ensure doc + array field exists (VERY IMPORTANT)
+    // Create doc + empty array if missing (critical!)
     await setDoc(userMsgRef, { messages: [] }, { merge: true });
 
-    // Append ONLY — never overwrite the array
+    // Append ONLY — this is the line that must be used
     await updateDoc(userMsgRef, {
       messages: arrayUnion(optimisticMsg)
     });
 
-    console.log("Message appended safely to array");
+    console.log("Message appended safely — array now has more items");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
@@ -3208,7 +3193,7 @@ refs.sendBtn?.addEventListener("click", async () => {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
-    const tempEl = document.getElementById(tempId);
+    const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
 });
