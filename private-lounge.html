@@ -2878,7 +2878,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   text-align: center;
 }
 
-.-intro h3 {
+.poll-intro h3 {
   margin: 0 0 12px;
   font-size: 19px;
   font-weight: 700;
@@ -3353,6 +3353,121 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 .reply-cancel-btn:active {
   transform: scale(0.95);
 }
+#progressContainer {
+  margin: 14px auto 0;
+  width: 80%;
+  max-width: 340px;          /* matches your dashed upload area */
+  height: 8px;               /* slightly thicker = more visible */
+  ...
+}
+  .free-tonight-mini {
+    background: linear-gradient(135deg, rgba(138,43,226,0.12), rgba(255,0,242,0.08));
+    border: 1px solid rgba(255,0,242,0.25);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(255,0,242,0.15);
+    max-width: 320px;
+    margin: 20px auto;
+    backdrop-filter: blur(8px);
+  }
+
+  .mini-head {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .mini-title {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .mini-fire {
+    font-size: 22px;
+    background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #ff6b6b; /* fallback */
+  }
+
+  .mini-sub {
+    font-size: 11.5px;
+    color: #bbb;
+    margin-top: 4px;
+  }
+
+  .mini-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, #ff2e78, #ff5e2e);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255,46,120,0.35);
+    transition: all 0.3s ease;
+  }
+
+  .mini-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(255,46,120,0.55);
+  }
+
+  .mini-btn:disabled {
+    background: linear-gradient(90deg, #666, #888);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.9;
+  }
+
+  .mini-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #ccc;
+  }
+
+  .mini-cost {
+    font-weight: 600;
+    color: #ff4fd8;
+  }
+
+  .mini-status {
+    font-weight: 700;
+    color: #00ffea;
+    text-shadow: 0 0 8px rgba(0,255,234,0.5);
+  }
+
+  .mini-message {
+    margin-top: 12px;
+    font-size: 12.5px;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 12px;
+    min-height: 20px;
+  }
+
+  .mini-message.success {
+    background: rgba(0,255,234,0.15);
+    color: #00ffea;
+    border: 1px solid rgba(0,255,234,0.4);
+  }
+
+  .mini-message.error {
+    background: rgba(255,51,102,0.15);
+    color: #ff3366;
+    border: 1px solid rgba(255,51,102,0.4);
+  }
 </style>
 </head>
 <body>
@@ -3388,7 +3503,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 <!-- Hello text -->
    <div id="helloText" aria-live="polite">HELLO</div>
-      <div class="room-desc">PRIVATE LOUNGE-HOSTS ONLY.
+      <div class="room-desc">Chat. Own your vibe.
 
 <!-- Controls under the video -->
 <div id="videoUnderControls">
@@ -3402,7 +3517,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     </div>
 <!-- Buttons (keep aligned) -->
 <div id="sessionBar">
-  <button class="session-btn" id="topBallersBtn">$TIPS</button>
+  <button class="session-btn" id="topBallersBtn">HOST $TIPS/button>
   <button id="highlightsBtn" class="session-btn star-hosts-btn">❤︎ Cuties ❤︎</button>
   <button class="session-btn" id="openHostsBtn">Liveshows</button>
 </div>
@@ -3479,9 +3594,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
               <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
             </div>
             <div class="poster-info">
-              <h3 class="poster-title">TapMaster</h3>
-              <p class="poster-time">Feburary 26th 2026</p>
-              <p class="poster-desc">$10,000 in cash gift this Feburary</p>
+              <h3 class="poster-title">Chill Vibes</h3>
+              <p class="poster-time">Tonight @ 10PM EST</p>
+              <p class="poster-desc">Late night lo-fi beats, deep talks, and good energy. Pull up and unwind.</p>
             </div>
           </div>
           <div class="poster-card">
@@ -3489,9 +3604,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
               <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
             </div>
             <div class="poster-info">
-              <h3 class="poster-title">TapMaster</h3>
+              <h3 class="poster-title">Late Night Talk</h3>
               <p class="poster-time">Tomorrow @ 1AM EST</p>
-              <p class="poster-desc">The Most Addictive Tap Game on the Internet!</p>
+              <p class="poster-desc">Real conversations, no filter. Stories, laughs, and truth bombs.</p>
             </div>
           </div>
           <div class="poster-card">
@@ -3499,9 +3614,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
               <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
             </div>
             <div class="poster-info">
-              <h3 class="poster-title">Fashion Nova Drop</h3>
+              <h3 class="poster-title">Exclusive Drop</h3>
               <p class="poster-time">Friday @ 9PM EST</p>
-              <p class="poster-desc">Special guest, new fashion reveal, and giveaways. You don't wanna miss this.</p>
+              <p class="poster-desc">Special guest, new music reveal, and giveaways. You don't wanna miss this.</p>
             </div>
           </div>
         </div>
@@ -3732,9 +3847,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   
   <label>Short Bio</label>
   <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
-
-  <!-- Inside your Media Tab — Host-Only Fields (Nature & Fruit Pick) -->
+<!-- Inside your Media Tab — Host-Only Fields (Nature & Body Type) -->
 <div id="hostOnlyFields" style="display:none;">
+
+  <!-- Nature Pick -->
   <label>Nature Pick</label>
   <select id="naturePick">
     <option value="" disabled selected>What describes you?</option>
@@ -3742,15 +3858,29 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <option value="Sexy">Sexy</option>
     <option value="Beautiful">Beautiful</option>
     <option value="Charming">Charming</option>
-    <option value="Curvy">Curvy</option>
+    <option value="Sweet">Sweet</option>
     <option value="Cool">Cool</option>
   </select>
 
-  <label>Fruit Pick</label>
+  <!-- Body Type Pick -->
+  <label>Body Type</label>
+  <select id="bodyTypePick">
+    <option value="" disabled selected>Choose your body type</option>
+    <option value="Slim">Slim</option>
+    <option value="Slim Thick">Slim thick</option>
+    <option value="Curvy">Curvy</option>
+    <option value="Chubby">Chubby</option>
+    <option value="Thick">Thick</option>
+    <option value="Athletic">Athletic</option>
+    <option value="Petite">Petite</option>
+    <option value="Plus Size">Plus Size</option>
+  </select>
+
+  <label>Vibe Pick</label>
   <select id="fruitPick">
     <option value="" disabled selected>Choose your vibe</option>
     <option value="🍇">🍇 Casual Hangout & Friendships</option>
-    <option value="🍑">🍑 Thrills & Meetups</option>
+    <option value="🍑">🍑 Thrills & Paid Meetups</option>
     <option value="🍒">🍒 Passionate Romance & Dates</option>
     <option value="🍓">🍓 Love Adventures</option>
   </select>
@@ -4063,6 +4193,31 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
+
+
+<!-- 🔥 FREE TONIGHT – Cute Mini Panel with Timer -->
+<div id="freeTonightCard" class="free-tonight-mini">
+  <div class="mini-head">
+    <div class="mini-title">
+      Free Tonight <span class="mini-fire">🔥</span>
+    </div>
+    <div class="mini-sub">
+    If you're available & ready to mingle tonight, we'll boost your clips.
+    </div>
+  </div>
+  
+  <button id="freeTonightBtn" class="mini-btn">
+   I'm Free Tonight
+  </button>
+
+  <div class="mini-foot">
+    <span class="mini-cost">Price: 750 ⭐️</span>
+    <span id="freeTonightStatus" class="mini-status">Ready</span>
+  </div>
+
+  <div id="freeTonightMessage" class="mini-message"></div>
+</div>
+  
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
   <h4 style="
@@ -4237,11 +4392,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
-
-
-
-
-
+  
 <!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
 <div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
   <div style="text-align:center; margin-bottom:28px;">
@@ -4251,12 +4402,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       background-size:200% auto; animation:gradient 4s linear infinite;
     ">
-     UPLOAD CLIPS
+      UPLOAD CLIPS
     </h2>
     <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
-      Upload your clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
+      Upload premium clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
     </p>
   </div>
+
   <!-- Main Card -->
   <div style="
     background:rgba(12,12,14,0.75); backdrop-filter:blur(20px);
@@ -4268,54 +4420,47 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <div style="position:absolute; inset:0; pointer-events:none;
                  background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
                  opacity:0.6;"></div>
-   
+  
     <div style="position:relative; z-index:2;">
-     <!-- Video Upload – Bigger & more prominent now -->
-<div style="margin-bottom:32px; text-align:center;">
-  <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
-    Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
-  </div>
-
-  <!-- Upload area with clean preview (video only + size) -->
-  <label for="highlightUploadInput" style="
-    display:block; padding:32px 24px;
-    background:#111111; border:2px dashed #444;
-    border-radius:16px; cursor:pointer; transition:all 0.3s ease;
-    color:#888; font-size:15px; font-weight:500;
-    margin:0 auto; max-width:340px;
-  "
-  onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
-  onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
-
-    <!-- Placeholder (before selection) -->
-    <div id="uploadPlaceholder">
-      <div style="margin-bottom:8px; font-size:36px;">↓</div>
-      Click or drag video here
-      <div style="margin-top:8px; font-size:13px; color:#666;">
-        MP4 • max 50MB
+      <!-- Video Upload -->
+      <div style="margin-bottom:32px; text-align:center;">
+        <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
+          Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
+        </div>
+        <label for="highlightUploadInput" style="
+          display:block; padding:32px 24px;
+          background:#111111; border:2px dashed #444;
+          border-radius:16px; cursor:pointer; transition:all 0.3s ease;
+          color:#888; font-size:15px; font-weight:500;
+          margin:0 auto; max-width:340px;
+        "
+        onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
+        onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
+          <div id="uploadPlaceholder">
+            <div style="margin-bottom:8px; font-size:36px;">↑</div>
+            Click or drag video here
+            <div style="margin-top:8px; font-size:13px; color:#666;">
+              MP4 • max 50MB
+            </div>
+          </div>
+          <div id="videoPreviewContainer" style="display:none; text-align:center;">
+            <video id="videoPreview" controls muted style="
+              width:100%;
+              max-height:220px;
+              border-radius:12px;
+              background:#000;
+              object-fit:contain;
+            "></video>
+            <div id="fileSizeInfo" style="
+              margin-top:12px;
+              font-size:13px;
+              color:#888;
+            "></div>
+          </div>
+          <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
+        </label>
       </div>
-    </div>
 
-    <!-- Preview container (hidden until file selected) -->
-    <div id="videoPreviewContainer" style="display:none; text-align:center;">
-      <video id="videoPreview" controls muted style="
-        width:100%;
-        max-height:220px;
-        border-radius:12px;
-        background:#000;
-        object-fit:contain;
-      "></video>
-      <div id="fileSizeInfo" style="
-        margin-top:12px;
-        font-size:13px;
-        color:#888;
-      "></div>
-    </div>
-
-    <!-- Hidden input -->
-    <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
-  </label>
-</div>
       <!-- Title -->
       <div style="margin-bottom:20px;">
         <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
@@ -4326,16 +4471,18 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
                onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
                onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
       </div>
-     <!-- Description -->
-<div style="margin-bottom:24px;">
-  <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
-    Description <span style="color:#666; font-size:13px;">(optional)</span>
-  </label>
-  <textarea id="highlightDescInput" placeholder="What's the story behind this moment?"
-            style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px; resize:vertical;"
-            onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
-            onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
-</div>
+
+      <!-- Description -->
+      <div style="margin-bottom:24px;">
+        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+          Description <span style="color:#666; font-size:13px;">(optional)</span>
+        </label>
+        <textarea id="highlightDescInput" placeholder="What's the story behind this moment?"
+                  style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px; resize:vertical;"
+                  onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+                  onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
+      </div>
+
       <!-- Price -->
       <div style="margin-bottom:28px; text-align:center;">
         <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">Unlock Price</div>
@@ -4347,6 +4494,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <span style="font-size:26px; font-weight:800; color:#888;">STRZ</span>
         </div>
       </div>
+
       <!-- Tags -->
       <div style="margin:28px 0; text-align:center;">
         <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
@@ -4365,35 +4513,50 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           <div class="tag-btn" data-tag="vibes">Vibes</div>
         </div>
       </div>
-      <!-- Upload Button -->
+
+      <!-- Upload Button + Progress Bar + Status -->
       <div style="text-align:center; margin-top:32px;">
         <button id="uploadHighlightBtn" style="
           padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
           color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
           cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
-          transition:all 0.3s ease;
-        "
-        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
-          Post Highlight
+          transition:all 0.3s ease; position:relative; z-index:2;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
+          Upload
         </button>
+
+       <div id="progressContainer" style="
+  margin:14px auto 0; 
+  width:80%; 
+  max-width:340px; 
+  height:8px;
+  background:rgba(255,255,255,0.08); 
+  border-radius:4px; 
+  overflow:hidden;
+  opacity:0; 
+  transition:opacity 0.4s ease;
+">
+  <div id="progressBar" style="
+    width:0%; 
+    height:100%; 
+    background:linear-gradient(90deg, #ff2e78, #ff8c2e);
+    border-radius:4px; 
+    transition:width 0.3s ease-out;
+  "></div>
+</div>
       </div>
-      <div id="highlightUploadStatus" style="margin-top:20px; text-align:center; font-size:14px; font-weight:600; min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;"></div>
+
+      <div id="highlightUploadStatus" style="
+        margin-top:12px; text-align:center; font-size:14px; font-weight:600;
+        min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;
+      "></div>
+
     </div>
   </div>
-  <style>
-    @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-    .tag-btn {
-      padding:8px 16px; background:#111; border:1px solid #333; border-radius:30px;
-      color:#ccc; font-size:13px; cursor:pointer; transition:all 0.2s;
-    }
-    .tag-btn.selected {
-      background:#ff2e78; color:white; border-color:#ff2e78;
-    }
-  </style>
 </div>
 
-
+  
 <!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
 <div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
   <h2 style="
@@ -4432,79 +4595,11 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     You haven't uploaded any clips yet.<br>
     <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
   </div>
-
-<!-- Tips / Learn Modal -->
-<div id="tipsModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-  <div class="modal" style="width:90%; max-width:380px; background:#0f0f0f; border:2px solid #FF1493; border-radius:20px; overflow:hidden; box-shadow:0 0 40px rgba(255,20,147,0.6); color:#eee; font-family:system-ui,sans-serif;">
-    
-    <!-- Header -->
-    <div style="padding:18px; text-align:center; background:rgba(255,20,147,0.1); border-bottom:1px solid rgba(255,20,147,0.3);">
-      <h3 style="margin:0; font-size:20px; color:#FF1493; font-weight:900;">CUBE TIPS</h3>
-      <p style="margin:6px 0 0; font-size:14px; color:#00e676;">Level up • Earn more • Dominate</p>
-    </div>
-    
-    <!-- Carousel Container -->
-    <div id="tipsCarousel" style="position:relative; height:420px; overflow:hidden;">
-      <div id="tipsSlides" style="display:flex; width:300%; height:100%; transition:transform 0.45s ease; transform:translateX(0%);">
-        <!-- Tip Card 1 -->
-        <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #FF1493;">
-          <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-            <h4 style="margin:0 0 12px; color:#FF1493; font-size:17px; text-align:center;">Welcome to Cube</h4>
-            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-              You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
-            </p>
-          </div>
-        </div>
-        
-        <!-- Tip Card 2 -->
-        <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #00e676;">
-          <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-            <h4 style="margin:0 0 12px; color:#00e676; font-size:17px; text-align:center;">Earn & Cash Out</h4>
-            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-              Earn <strong>STRZ ⭐️</strong> every minute you’re online.<br><br>
-              Use STRZ to unlock exclusive content, interact with creators, play games & win real rewards.<br><br>
-              From STRZ in your wallet → real cash in your bank.<br><br>
-              <strong>Getting paid is easy:</strong><br>1. Set up bank account first<br>2. We support 33+ NG banks, 15 ZA banks & 5 international
-            </p>
-          </div>
-        </div>
-        
-        <!-- Tip Card 3 -->
-        <div class="tip-card" style="width:33.33%; flex-shrink:0; display:flex; flex-direction:column; height:100%;">
-          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Buzz Message" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #FFD700;">
-          <div style="padding:20px; flex:1; display:flex; flex-direction:column; justify-content:center;">
-            <h4 style="margin:0 0 12px; color:#FFD700; font-size:17px; text-align:center;">Send BUZZ Messages 🚨</h4>
-            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#ddd;">
-              The <strong>🚨</strong> alert icon next to send button = <strong>BUZZ MESSAGE</strong><br><br>
-              Makes your message stand out in chat — everyone sees it + fun sound effect (keep volume on!)<br><br>
-              Costs STRZ — use wisely to get attention.<br><br>
-              <strong>How:</strong><br>1. Type message (max 15 chars)<br>2. Tap 🚨<br>That’s it!
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Dots -->
-      <div id="tipsDots" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:10;">
-        <div style="width:10px;height:10px;border-radius:50%;background:#FF1493;"></div>
-        <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
-        <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
-      </div>
-    </div>
-    
-    <!-- Footer / Close -->
-    <div style="padding:18px; text-align:center; background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,20,147,0.3);">
-      <button id="closeTipsBtn" style="padding:14px 50px; border:none; border-radius:14px; background:linear-gradient(90deg, #FF1493, #FF69B4); color:white; font-weight:800; font-size:17px; cursor:pointer; box-shadow:0 4px 15px rgba(255,20,147,0.5);">
-        GOT IT
-      </button>
-    </div>
-  </div>
+</div>
 </div>
 
-
-
+  
+  
   
       <!-- Messages / Additional Info -->
       <div id="hostMessagesContainer" style="padding:6px 0;">
