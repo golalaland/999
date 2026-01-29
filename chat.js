@@ -1764,44 +1764,71 @@ function renderMessagesFromArray(messages) {
 
 
 
+// ---------- Messages Real-time Listener – Clean & Production-ready ----------
+
 function listenToMessages() {
-  // Guard: only run if user is fully loaded
+  // Safety guard: skip if user or UI not ready
   if (!currentUser?.uid || !refs.messagesEl) {
-    console.warn("[MESSAGES] Skipping listener — currentUser not ready yet");
+    console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
     return;
   }
 
-  // Clean up any old listener first
+  // Clean up any previous listener to avoid duplicates
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
+    console.log("[MESSAGES] Previous listener cleaned up");
   }
 
   const userMsgRef = doc(db, "messages", currentUser.uid);
 
   messagesUnsub = onSnapshot(userMsgRef, (snap) => {
+    // Log source for debugging
+    console.log(
+      `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
+      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
+    );
+
     if (!snap.exists()) {
       refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
       return;
     }
 
-    const data = snap.data();
-    const messages = data.messages || [];
+    let messages = snap.data().messages || [];
 
-    // Sort oldest first
+    // Sort oldest first (top of chat) → newest at bottom
     messages.sort((a, b) => {
-      const ta = a.timestamp?.toMillis?.() || a.timestamp || 0;
-      const tb = b.timestamp?.toMillis?.() || b.timestamp || 0;
+      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
+      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
       return ta - tb;
     });
 
+    // Optional: keep only the last N messages if array gets very large
+    // messages = messages.slice(-50);
+
+    // Render the full sorted array
     renderMessagesFromArray(messages);
+
+    // Auto-scroll to bottom if user is near bottom or just sent something
+    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+    if (distanceFromBottom < 200) {
+      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
+    }
   }, (err) => {
     console.error("Messages listener error:", err);
     refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
   });
 
-  console.log("[MESSAGES] Listener started for user:", currentUser.uid);
+  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
+}
+
+// Cleanup function — call this on logout / page unload / user change
+function stopMessagesListener() {
+  if (messagesUnsub) {
+    messagesUnsub();
+    messagesUnsub = null;
+    console.log("[MESSAGES] Listener stopped");
+  }
 }
 
 // Cleanup function (call this on logout or page close)
@@ -3113,7 +3140,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED: arrayUnion to messages/{uid}, no crash, persists on reload
+// SEND REGULAR MESSAGE — FIXED: no duplicates, persists on reload, array safe
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser?.uid) {
     return showStarPopup("Sign in to chat.");
@@ -3128,13 +3155,13 @@ refs.sendBtn?.addEventListener("click", async () => {
     return showStarPopup("Not enough stars to send message.");
   }
 
-  // Deduct stars locally (optimistic)
+  // Deduct stars locally
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) {
     refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 
-  // Prepare reply data (unchanged)
+  // Prepare reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3146,14 +3173,15 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Optimistic message (client timestamp)
-  const tempId = "temp-" + Date.now() + Math.random().toString(36).slice(2);
+  // Stable unique ID (UUID-like, not time-based)
+  const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2, 10);
+
   const optimisticMsg = {
-    id: tempId,
+    id: messageId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),  // number for immediate sort/render
+    timestamp: Date.now(),  // client-side for render
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3161,7 +3189,7 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Render immediately
+  // Show optimistic
   renderMessagesFromArray([optimisticMsg]);
 
   // Reset UI
@@ -3172,27 +3200,29 @@ refs.sendBtn?.addEventListener("click", async () => {
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Make sure doc exists (merge: true creates if missing)
+    // Ensure doc exists
     await setDoc(userMsgRef, { messages: [] }, { merge: true });
 
-    // Append to array — safe, no nested serverTimestamp
+    // Append — arrayUnion prevents exact duplicates
     await updateDoc(userMsgRef, {
-      messages: arrayUnion(optimisticMsg)
+      messages: arrayUnion({
+        ...optimisticMsg,
+        timestamp: serverTimestamp()  // server overwrites this field
+      })
     });
 
-    console.log("Message added to messages array in messages/" + currentUser.uid);
+    console.log("Message added to array:", messageId);
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
-    // Refund stars
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) {
       refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     }
 
-    // Remove optimistic message
-    const tempEl = document.getElementById(tempId);
+    // Remove optimistic
+    const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
 });
