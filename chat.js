@@ -1939,15 +1939,6 @@ function attachMessagesListener() {
   console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
 }
 
-// Cleanup function (call on logout or page close)
-function stopMessagesListener() {
-  if (typeof messagesUnsub === "function") {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Listener detached");
-  }
-}
-
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
 
