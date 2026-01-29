@@ -6071,8 +6071,7 @@ function showHighlightsModal(videos) {
  const trendingBtn = document.createElement("button");
 
 // Use innerHTML so we can style only the emoji
-trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
-
+trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #00f7ff, #ff00aa, #ffea00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
 Object.assign(trendingBtn.style, {
   padding: "8px 16px",
   borderRadius: "30px",
@@ -6251,33 +6250,53 @@ Object.assign(trendingBtn.style, {
             .catch(err => console.error("Failed to load user:", err));
         }
       };
-    const tagsEl = document.createElement("div");
+// Inside renderCards function, replace the tagsEl creation with this:
+
+const tagsEl = document.createElement("div");
 tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-// Decide if we should show location tag
-const showLocationTag = filterMode === "trending";
+// Decide if we're in Free Tonight / Trending mode
+const isFreeTonightMode = filterMode === "trending";
 
-// Filter tags: hide location unless in trending mode
+// Only show location tags in Free Tonight mode
 const displayedTags = (video.tags || []).filter(tag => {
-  // Assume location tags are lowercase country/city names — adjust if needed
-  const isLocationTag = ["nigeria", "lagos", "abuja" /* add more */].includes(tag.toLowerCase());
-  return !isLocationTag || showLocationTag;
+  if (!tag || typeof tag !== "string") return false;
+  const lowerTag = tag.trim().toLowerCase();
+
+  // Simple location tag detection — expand this list as needed
+  const locationKeywords = [
+    "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu", 
+    "ghana", "accra", "london", "usa", "new york", "paris" // ← add real ones
+  ];
+
+  const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+
+  // Hide location tags unless we're in Free Tonight mode
+  return !isLocation || isFreeTonightMode;
 });
 
+// Render the remaining tags
 displayedTags.forEach(t => {
   const span = document.createElement("span");
-  span.textContent = `#${t}`;
+  span.textContent = `#${t.trim()}`;
+  
+  // Special style for location tags (only visible in Free Tonight mode)
+  const lowerT = t.trim().toLowerCase();
+  const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
+
   span.style.cssText = `
-    font-size:11px; 
-    padding:2px 8px; 
-    border-radius:10px; 
-    background: ${showLocationTag && t.toLowerCase() === "nigeria" ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
-    color: ${showLocationTag && t.toLowerCase() === "nigeria" ? "#00ffea" : "#ff4d8a"};
-    border: 1px solid ${showLocationTag && t.toLowerCase() === "nigeria" ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:10px;
+    background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
+    color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
+    border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
   `;
+  
   tagsEl.appendChild(span);
 });
-      info.append(title, user, tagsEl);
+
+info.append(title, user, tagsEl);
       card.appendChild(info);
       // Badge
       const badge = document.createElement("div");
@@ -6306,17 +6325,17 @@ displayedTags.forEach(t => {
   };
 trendingBtn.onclick = () => {
   filterMode = filterMode === "trending" ? "all" : "trending";
-  
+
   // When in trending mode → show "All Videos" plain
-  // When not → show "Free Tonight" + gradient emoji only
+  // When not → show "Free Tonight" + fiery gradient emoji only
   trendingBtn.innerHTML = filterMode === "trending"
     ? "All Videos"
-    : 'Free Tonight <span style="background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
-  
+    : 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
+
   trendingBtn.style.background = filterMode === "trending"
     ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
     : "linear-gradient(135deg, #8a2be2, #ff00f2)";
-  
+
   renderCards();
 };
   // SEARCH – live, case-insensitive, only username/chatId
