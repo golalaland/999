@@ -7572,13 +7572,15 @@ paystackNigeriaBanks.forEach(bank => {
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
-  if (!btn || !auth.currentUser?.uid) {
+  if (!btn) return;
+
+  if (!auth?.currentUser?.uid) {
     showStarPopup('Please sign in first', 'error');
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Activating...';
+  btn.textContent = 'Boosting...'; // nicer feedback during wait
 
   try {
     const rawUid = auth.currentUser.uid;
@@ -7586,7 +7588,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     console.log("Searching for user doc with uid field:", rawUid);
 
-    // 1. Find user document where uid field == current UID
+    // 1. Find user document where uid field matches current UID
     const usersQuery = query(
       collection(db, "users"),
       where("uid", "==", rawUid),
@@ -7596,12 +7598,12 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     if (userSnap.empty) {
       console.log("No user doc found with uid =", rawUid);
-      throw new Error("Your profile not found in database");
+      throw new Error("Profile not found – contact support");
     }
 
     const userDoc = userSnap.docs[0];
     const userData = userDoc.data();
-    const sanitizedId = userDoc.id;  // this is the correct doc ID (e.g. hivodaddy_hotmail_com)
+    const sanitizedId = userDoc.id; // e.g. hivodaddy_hotmail_com
 
     console.log("Found user profile:", sanitizedId, "with email:", userData.email);
 
@@ -7611,27 +7613,28 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       throw new Error(`Need ${cost} stars (you have ${stars})`);
     }
 
-    // 3. Get highlights doc using the sanitized ID we just found
+    // 3. Get highlights doc
     const highlightsRef = doc(db, "highlightVideos", sanitizedId);
     const highlightsSnap = await getDoc(highlightsRef);
+
     if (!highlightsSnap.exists()) {
       throw new Error("No highlights profile found");
     }
 
     const highlightsData = highlightsSnap.data() || {};
-    const highlights = Array.isArray(highlightsData.highlights) 
-      ? [...highlightsData.highlights] 
+    const highlights = Array.isArray(highlightsData.highlights)
+      ? [...highlightsData.highlights]
       : [];
 
     if (highlights.length === 0) {
-      throw new Error("No videos available to boost");
+      throw new Error("You have no videos to boost yet");
     }
 
     // 4. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 5. Add location tag
+    // 5. Add location tag (country fallback)
     let addedTag = null;
     const location = userData.location || {};
     let locTag = null;
@@ -7670,7 +7673,13 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     if (typeof loadMyClips === 'function') loadMyClips();
 
   } catch (err) {
-    const msg = err.message || 'Failed to activate — try again';
+    let msg = err.message || 'Failed to activate — try again';
+
+    // Make common errors friendlier
+    if (msg.includes("Need")) msg = `Not enough stars! ${msg}`;
+    if (msg.includes("profile not found")) msg = "Your profile is missing – contact support";
+    if (msg.includes("No videos")) msg = "Upload some clips first!";
+
     showStarPopup(msg, 'error');
     console.error('Client-side Free Tonight failed:', err);
 
