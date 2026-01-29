@@ -6239,14 +6239,32 @@ function showHighlightsModal(videos) {
             .catch(err => console.error("Failed to load user:", err));
         }
       };
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
-      (video.tags || []).forEach(t => {
-        const span = document.createElement("span");
-        span.textContent = `#${t}`;
-        span.style.cssText = "font-size:11px; padding:2px 8px; border-radius:10px; background:rgba(255,46,120,0.22); color:#ff4d8a;";
-        tagsEl.appendChild(span);
-      });
+    const tagsEl = document.createElement("div");
+tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
+// Decide if we should show location tag
+const showLocationTag = filterMode === "trending";
+
+// Filter tags: hide location unless in trending mode
+const displayedTags = (video.tags || []).filter(tag => {
+  // Assume location tags are lowercase country/city names — adjust if needed
+  const isLocationTag = ["nigeria", "lagos", "abuja" /* add more */].includes(tag.toLowerCase());
+  return !isLocationTag || showLocationTag;
+});
+
+displayedTags.forEach(t => {
+  const span = document.createElement("span");
+  span.textContent = `#${t}`;
+  span.style.cssText = `
+    font-size:11px; 
+    padding:2px 8px; 
+    border-radius:10px; 
+    background: ${showLocationTag && t.toLowerCase() === "nigeria" ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
+    color: ${showLocationTag && t.toLowerCase() === "nigeria" ? "#00ffea" : "#ff4d8a"};
+    border: 1px solid ${showLocationTag && t.toLowerCase() === "nigeria" ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
+  `;
+  tagsEl.appendChild(span);
+});
       info.append(title, user, tagsEl);
       card.appendChild(info);
       // Badge
@@ -6276,7 +6294,9 @@ function showHighlightsModal(videos) {
   };
   trendingBtn.onclick = () => {
     filterMode = filterMode === "trending" ? "all" : "trending";
-    trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
+trendingBtn.innerHTML = filterMode === "trending" 
+  ? "All Videos" 
+  : '<span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Free Tonight🔥</span>';
     trendingBtn.style.background = filterMode === "trending"
       ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
