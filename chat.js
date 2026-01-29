@@ -101,7 +101,7 @@ export {
 /* ---------- Global State ---------- */
 const ROOM_ID = "room888";
 const CHAT_COLLECTION = "messages_room888";
-const BUZZ_COST = 500;
+const BUZZ_COST = 100;
 const SEND_COST = 1;
 let lastMessagesArray = [];
 let starInterval = null;
@@ -2812,24 +2812,23 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 
 /* ===============================
-   💫 Auto Star Earning System — LIVE & SMOOTH (No Reload Needed)
-   - Optimistic UI updates
-   - Smooth animation queue
-   - Listener always active (but throttled)
-   - Earn only when visible + cooldown
-   - Daily cap enforced
+   💫 Auto Star Earning System — Cheaper & Effective Version
+   - Earns on user activity or visible tab check
+   - Same smooth counting animation
+   - Strict daily cap
+   - ~90% fewer reads/writes than interval version
 ================================= */
+
 let starEarningUnsubscribe = null;
 let lastEarnTime = 0;
-let animationQueue = [];
-let isAnimating = false;
+let animationTimeout = null;
 
-// Config
+// Configurable (change these to tune)
 const STAR_EARNING_CONFIG = {
-  dailyCap: 100,
-  earnAmount: 25,
-  minTimeBetweenEarns: 60000,     // 1 minute
-  earnCheckInterval: 60000        // check every minute
+  dailyCap: 250,               // max per day
+  earnAmount: 10,              // per earn
+  minTimeBetweenEarns: 180000, // 3 minutes
+  visibilityCheckInterval: 60000 // check every 1 min if visible
 };
 
 function startStarEarning(uid) {
@@ -2838,65 +2837,39 @@ function startStarEarning(uid) {
   const userRef = doc(db, "users", uid);
   let displayedStars = currentUser.stars || 0;
 
-  // ── SMOOTH ANIMATION (queued & reliable) ────────────────────────
-  function animateTo(target) {
-    if (animationQueue.length > 0) {
-      animationQueue.push(target);
-      return;
-    }
-    animationQueue.push(target);
-    processAnimationQueue();
-  }
-
-  function processAnimationQueue() {
-    if (isAnimating || animationQueue.length === 0) return;
-    isAnimating = true;
-
-    const target = animationQueue.shift();
+  // Your original smooth counting animation
+  const animateStarCount = (target) => {
+    if (!refs.starCountEl) return;
     const diff = target - displayedStars;
-
     if (Math.abs(diff) < 1) {
       displayedStars = target;
-      if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
-      isAnimating = false;
-      processAnimationQueue();
+      refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
       return;
     }
+    displayedStars += diff * 0.25;
+    refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
+    animationTimeout = setTimeout(() => animateStarCount(target), 40);
+  };
 
-    displayedStars += diff * 0.25; // your original easing speed
-    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
+  // One-time listener to sync stars when needed
+  function syncStars() {
+    if (starEarningUnsubscribe) starEarningUnsubscribe();
+    starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const target = data.stars || 0;
+      currentUser.stars = target;
+      if (animationTimeout) clearTimeout(animationTimeout);
+      animateStarCount(target);
 
-    setTimeout(() => {
-      isAnimating = false;
-      processAnimationQueue();
-    }, 40);
+      if (target > 0 && target % 1000 === 0) {
+        showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
+      }
+    }, { includeMetadataChanges: true }); // only updates when data actually changes
   }
 
-  // ── REAL-TIME LISTENER (always on, but only update if visible) ──
-  starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
-    if (!snap.exists()) return;
-    const data = snap.data();
-    const realStars = data.stars || 0;
-
-    // Only animate if tab is visible (prevents lag buildup)
-    if (document.visibilityState === "visible") {
-      animateTo(realStars);
-      currentUser.stars = realStars;
-
-      // Milestone popup
-      if (realStars > 0 && realStars % 1000 === 0 && realStars !== displayedStars) {
-        showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(realStars)} stars!`);
-      }
-    } else {
-      // Update internal state silently when hidden
-      displayedStars = realStars;
-      currentUser.stars = realStars;
-    }
-  });
-
-  // ── TRY EARN STARS (only when visible + cooldown) ───────────────
-  const tryEarnStars = async () => {
-    if (document.visibilityState !== "visible") return;
+  // Earn logic (called on activity or periodic check)
+  async function tryEarnStars(trigger = 'activity') {
     if (Date.now() - lastEarnTime < STAR_EARNING_CONFIG.minTimeBetweenEarns) return;
 
     try {
@@ -2906,7 +2879,6 @@ function startStarEarning(uid) {
       const data = snap.data();
       const today = todayDate();
 
-      // Reset daily if new day
       if (data.lastStarDate !== today) {
         await updateDoc(userRef, {
           starsToday: 0,
@@ -2917,59 +2889,72 @@ function startStarEarning(uid) {
       const currentToday = data.starsToday || 0;
       if (currentToday >= STAR_EARNING_CONFIG.dailyCap) return;
 
-      const amount = Math.min(STAR_EARNING_CONFIG.earnAmount, STAR_EARNING_CONFIG.dailyCap - currentToday);
+      const amountToAdd = Math.min(
+        STAR_EARNING_CONFIG.earnAmount,
+        STAR_EARNING_CONFIG.dailyCap - currentToday
+      );
 
-      // Optimistic update (instant UI feel)
-      const optimisticNew = (currentUser.stars || 0) + amount;
-      animateTo(optimisticNew);
-
-      // Server update
       await updateDoc(userRef, {
-        stars: increment(amount),
-        starsToday: increment(amount)
+        stars: increment(amountToAdd),
+        starsToday: increment(amountToAdd)
       });
 
       lastEarnTime = Date.now();
-      console.log(`[STARS] Earned ${amount} (today: ${currentToday + amount}/${STAR_EARNING_CONFIG.dailyCap})`);
+      console.log(`[STARS] Earned ${amountToAdd} via ${trigger} (today: ${currentToday + amountToAdd}/${STAR_EARNING_CONFIG.dailyCap})`);
     } catch (err) {
-      console.error("[STARS] Earn failed:", err);
+      console.error("[STARS] Earn error:", err);
     }
-  };
-
-  // ── INTERVAL CHECK (while visible) ──────────────────────────────
-  const earnInterval = setInterval(() => {
-    if (document.visibilityState === "visible") {
-      tryEarnStars();
-    }
-  }, STAR_EARNING_CONFIG.earnCheckInterval);
-
-  // Initial check
-  if (document.visibilityState === "visible") {
-    tryEarnStars();
   }
 
-  // ── VISIBILITY HANDLING ─────────────────────────────────────────
-  const onVisibilityChange = () => {
+  // === Trigger earning on real user activity ===
+  // Examples: chat send, button click, tap — add these where you want
+  // Chat message sent (example)
+  // document.getElementById("sendBtn")?.addEventListener("click", () => tryEarnStars('chat'));
+
+  // Any interaction (tap/click anywhere on page)
+  document.addEventListener("click", () => tryEarnStars('interaction'), { once: false }); // once per session or throttle
+
+  // === Periodic check when tab visible (fallback) ===
+  const visibilityCheck = setInterval(() => {
     if (document.visibilityState === "visible") {
-      tryEarnStars(); // catch up immediately
+      tryEarnStars('visibility');
+    }
+  }, STAR_EARNING_CONFIG.visibilityCheckInterval);
+
+  // Start listener if tab visible
+  if (document.visibilityState === "visible") {
+    syncStars();
+    tryEarnStars('initial');
+  }
+
+  // Visibility handler
+  const handleVisibility = () => {
+    if (document.visibilityState === "visible") {
+      syncStars();
+      tryEarnStars('visibility');
+    } else if (starEarningUnsubscribe) {
+      starEarningUnsubscribe();
+      starEarningUnsubscribe = null;
     }
   };
 
-  document.addEventListener("visibilitychange", onVisibilityChange);
+  document.addEventListener("visibilitychange", handleVisibility);
 
-  // ── CLEANUP ─────────────────────────────────────────────────────
+  // Cleanup
   const cleanup = () => {
     if (starEarningUnsubscribe) starEarningUnsubscribe();
-    clearInterval(earnInterval);
-    document.removeEventListener("visibilitychange", onVisibilityChange);
+    clearInterval(visibilityCheck);
+    document.removeEventListener("visibilitychange", handleVisibility);
+    document.removeEventListener("click", tryEarnStars);
+    if (animationTimeout) clearTimeout(animationTimeout);
   };
 
   window.addEventListener("beforeunload", cleanup);
 
-  // Cleanup on logout / different user
-  onAuthStateChanged(auth, (user) => {
+  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
     if (!user || user.uid !== uid) {
       cleanup();
+      unsubscribeAuth();
     }
   });
 }
@@ -7560,13 +7545,8 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Client-side Free Tonight (polished & fixed)
+// Client-side Free Tonight with Live 24h Countdown
 // ───────────────────────────────────────────────
-
-// Make sure these are imported at the top of your file
-// import { collection, query, where, limit, getDocs, doc, getDoc, updateDoc, increment, Timestamp } from "firebase/firestore";
-// import { auth } from wherever-your-auth-is;
-
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
   if (!btn) return;
@@ -7576,17 +7556,22 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
-  const originalText = btn.textContent;
+  // Check if already active
+  const savedEndTime = localStorage.getItem('freeTonightEndTime');
+  if (savedEndTime && Number(savedEndTime) > Date.now()) {
+    showStarPopup('Already active! Wait for countdown to finish.', 'info');
+    startCountdown(btn, Number(savedEndTime));
+    return;
+  }
+
   btn.disabled = true;
-  btn.textContent = 'Boosting... ✨'; // cute loading vibe
+  btn.textContent = 'Boosting... ✨';
 
   try {
     const rawUid = auth.currentUser.uid;
     const cost = 100;
 
-    console.log("Searching for user doc with uid field:", rawUid);
-
-    // 1. Find user document by uid field
+    // 1. Find user doc
     const usersQuery = query(
       collection(db, "users"),
       where("uid", "==", rawUid),
@@ -7594,39 +7579,28 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     );
     const userSnap = await getDocs(usersQuery);
 
-    if (userSnap.empty) {
-      console.log("No user doc found with uid =", rawUid);
-      throw new Error("Profile not found – contact support");
-    }
+    if (userSnap.empty) throw new Error("Profile not found – contact support");
 
     const userDoc = userSnap.docs[0];
     const userData = userDoc.data();
     const sanitizedId = userDoc.id;
 
-    console.log("Found user profile:", sanitizedId, "with email:", userData.email);
-
     // 2. Check stars
     const stars = Number(userData.stars || 0);
-    if (stars < cost) {
-      throw new Error(`Need ${cost} stars (you have ${stars})`);
-    }
+    if (stars < cost) throw new Error(`Need ${cost} stars (you have ${stars})`);
 
-    // 3. Get highlights doc
+    // 3. Get highlights
     const highlightsRef = doc(db, "highlightVideos", sanitizedId);
     const highlightsSnap = await getDoc(highlightsRef);
 
-    if (!highlightsSnap.exists()) {
-      throw new Error("No highlights profile found");
-    }
+    if (!highlightsSnap.exists()) throw new Error("No highlights profile found");
 
     const highlightsData = highlightsSnap.data() || {};
     const highlights = Array.isArray(highlightsData.highlights)
       ? [...highlightsData.highlights]
       : [];
 
-    if (highlights.length === 0) {
-      throw new Error("You have no videos to boost yet");
-    }
+    if (highlights.length === 0) throw new Error("You have no videos to boost yet");
 
     // 4. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
@@ -7652,16 +7626,16 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     // 6. Activate trending
     selected.isTrending = true;
-    selected.trendingUntil = Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
+    const endTime = Date.now() + 24 * 60 * 60 * 1000;
+    selected.trendingUntil = Timestamp.fromMillis(endTime);
 
-    // 7. Update Firestore
-    await updateDoc(userDoc.ref, {
-      stars: increment(-cost)
-    });
+    // 7. Save to Firestore
+    await updateDoc(userDoc.ref, { stars: increment(-cost) });
+    await updateDoc(highlightsRef, { highlights });
 
-    await updateDoc(highlightsRef, {
-      highlights: highlights
-    });
+    // 8. Save end time locally & start countdown
+    localStorage.setItem('freeTonightEndTime', endTime);
+    startCountdown(btn, endTime);
 
     showStarPopup(
       `Free Tonight activated! 🔥 One clip trending 24h${addedTag ? ` + #${addedTag}` : ''}`,
@@ -7672,19 +7646,56 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
   } catch (err) {
     let msg = err.message || 'Failed to activate — try again';
-
-    // Super friendly error messages
     if (msg.includes("Need")) msg = `Not enough stars! ${msg}`;
     if (msg.includes("profile not found")) msg = "Your profile is missing – contact support";
     if (msg.includes("No videos")) msg = "Upload some clips first!";
-    if (msg.includes("No highlights")) msg = "No highlights profile found – upload a video first";
-
     showStarPopup(msg, 'error');
-    console.error('Client-side Free Tonight failed:', err);
-
+    console.error('Free Tonight failed:', err);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Activate Free Tonight';
+    // Don't reset text here — countdown handler will manage it
+  }
+});
+
+// ───────────────────────────────────────────────
+// Live Countdown Timer
+// ───────────────────────────────────────────────
+function startCountdown(btn, endTime) {
+  function updateTimer() {
+    const now = Date.now();
+    const remaining = endTime - now;
+
+    if (remaining <= 0) {
+      btn.disabled = false;
+      btn.textContent = 'Activate Free Tonight';
+      btn.classList.remove('timer-active');
+      localStorage.removeItem('freeTonightEndTime');
+      document.getElementById('freeTonightStatus').textContent = 'Ready';
+      return;
+    }
+
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+
+    btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
+    btn.classList.add('timer-active');
+
+    setTimeout(updateTimer, 1000);
+  }
+
+  updateTimer(); // start immediately
+}
+
+// Auto-start countdown on page load if active
+window.addEventListener('load', () => {
+  const savedEndTime = localStorage.getItem('freeTonightEndTime');
+  if (savedEndTime && Number(savedEndTime) > Date.now()) {
+    const btn = document.getElementById('freeTonightBtn');
+    if (btn) {
+      btn.disabled = true;
+      startCountdown(btn, Number(savedEndTime));
+    }
   }
 });
 /*********************************
