@@ -7568,8 +7568,13 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Client-side Free Tonight (fixed for sanitized doc IDs)
+// Client-side Free Tonight (polished & fixed)
 // ───────────────────────────────────────────────
+
+// Make sure these are imported at the top of your file
+// import { collection, query, where, limit, getDocs, doc, getDoc, updateDoc, increment, Timestamp } from "firebase/firestore";
+// import { auth } from wherever-your-auth-is;
+
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
   if (!btn) return;
@@ -7579,8 +7584,9 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
+  const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Boosting...'; // nicer feedback during wait
+  btn.textContent = 'Boosting... ✨'; // cute loading vibe
 
   try {
     const rawUid = auth.currentUser.uid;
@@ -7588,7 +7594,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     console.log("Searching for user doc with uid field:", rawUid);
 
-    // 1. Find user document where uid field matches current UID
+    // 1. Find user document by uid field
     const usersQuery = query(
       collection(db, "users"),
       where("uid", "==", rawUid),
@@ -7603,7 +7609,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     const userDoc = userSnap.docs[0];
     const userData = userDoc.data();
-    const sanitizedId = userDoc.id; // e.g. hivodaddy_hotmail_com
+    const sanitizedId = userDoc.id;
 
     console.log("Found user profile:", sanitizedId, "with email:", userData.email);
 
@@ -7634,7 +7640,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 5. Add location tag (country fallback)
+    // 5. Add location tag
     let addedTag = null;
     const location = userData.location || {};
     let locTag = null;
@@ -7656,7 +7662,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     selected.isTrending = true;
     selected.trendingUntil = Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
 
-    // 7. Update both docs
+    // 7. Update Firestore
     await updateDoc(userDoc.ref, {
       stars: increment(-cost)
     });
@@ -7675,10 +7681,11 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   } catch (err) {
     let msg = err.message || 'Failed to activate — try again';
 
-    // Make common errors friendlier
+    // Super friendly error messages
     if (msg.includes("Need")) msg = `Not enough stars! ${msg}`;
     if (msg.includes("profile not found")) msg = "Your profile is missing – contact support";
     if (msg.includes("No videos")) msg = "Upload some clips first!";
+    if (msg.includes("No highlights")) msg = "No highlights profile found – upload a video first";
 
     showStarPopup(msg, 'error');
     console.error('Client-side Free Tonight failed:', err);
