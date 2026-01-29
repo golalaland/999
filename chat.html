@@ -3361,53 +3361,95 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   ...
 }
 .tool-card {
-  background: linear-gradient(135deg, rgba(138,43,226,0.18), rgba(255,0,242,0.12));
-  border: 1px solid rgba(255,0,242,0.4);
-  border-radius: 16px;
-  padding: 16px 18px;
-  box-shadow: 0 0 28px rgba(255,0,242,0.25);
-  max-width: 520px;
+  background: linear-gradient(145deg, rgba(10, 5, 30, 0.95), rgba(20, 10, 50, 0.85));
+  border: 1px solid rgba(255, 0, 242, 0.35);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(255, 0, 242, 0.18), inset 0 0 30px rgba(0, 255, 234, 0.08);
+  max-width: 540px;
+  margin: 24px auto;
+  backdrop-filter: blur(12px);
+  transition: all 0.4s ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(255, 0, 242, 0.28), inset 0 0 40px rgba(0, 255, 234, 0.12);
 }
 
 .tool-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.tool-info {
+  flex: 1;
 }
 
 .tool-title {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
   background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gradient-fire {
+  font-size: 26px;
+  line-height: 1;
+  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: firePulse 3s infinite alternate;
 }
 
 .tool-sub {
-  font-size: 12px;
-  color: #aaa;
-  margin-top: 4px;
+  font-size: 13.5px;
+  color: #ccc;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 
 .tool-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: 14px;
-  font-size: 12px;
-  color: #ccc;
+  align-items: center;
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 16px;
 }
 
-.status {
+.cost {
   font-weight: 700;
   color: #ff4fd8;
 }
 
-/* Toggle */
+.cost-sub {
+  font-weight: 400;
+  color: #888;
+  margin-left: 6px;
+}
+
+.status {
+  font-weight: 800;
+  color: #00ffea;
+  text-shadow: 0 0 10px rgba(0, 255, 234, 0.6);
+  transition: all 0.3s;
+}
+
+/* Toggle Switch – sluttier version */
 .switch {
   position: relative;
-  width: 54px;
-  height: 30px;
+  width: 64px;
+  height: 34px;
 }
 
 .switch input {
@@ -3419,32 +3461,65 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 .slider {
   position: absolute;
   inset: 0;
-  border-radius: 30px;
-  background: #333;
+  border-radius: 34px;
+  background: linear-gradient(135deg, #2a1a4a, #3c1f5e);
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 0, 242, 0.4);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .slider::before {
   content: "";
   position: absolute;
-  height: 24px;
-  width: 24px;
-  left: 3px;
-  top: 3px;
-  background: #aaa;
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background: linear-gradient(135deg, #aaa, #ccc);
   border-radius: 50%;
-  transition: 0.3s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
-.switch input:checked + .slider {
-  background: linear-gradient(135deg, #ff00f2, #8a2be2);
-  box-shadow: 0 0 16px rgba(255,0,242,0.8);
+input:checked + .slider {
+  background: linear-gradient(135deg, #ff00f2, #8a2be2, #00ffea);
+  box-shadow: 0 0 30px rgba(255, 0, 242, 0.7), inset 0 0 20px rgba(0, 255, 234, 0.4);
 }
 
-.switch input:checked + .slider::before {
-  transform: translateX(24px);
+input:checked + .slider::before {
+  transform: translateX(30px);
   background: #00ffea;
+  box-shadow: 0 0 16px rgba(0, 255, 234, 0.9);
+}
+
+/* Status message (success/error) */
+.tool-message {
+  margin-top: 16px;
+  font-size: 13px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 12px;
+  transition: all 0.4s;
+}
+
+.tool-message.success {
+  background: rgba(0, 255, 234, 0.15);
+  color: #00ffea;
+  border: 1px solid rgba(0, 255, 234, 0.4);
+  box-shadow: 0 0 20px rgba(0, 255, 234, 0.3);
+}
+
+.tool-message.error {
+  background: rgba(255, 51, 102, 0.15);
+  color: #ff3366;
+  border: 1px solid rgba(255, 51, 102, 0.4);
+}
+
+/* Pulse animation for fire emoji */
+@keyframes firePulse {
+  0% { opacity: 0.9; filter: brightness(1); }
+  100% { opacity: 1; filter: brightness(1.4); }
 }
 </style>
 </head>
@@ -4345,26 +4420,33 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 </div>
 
 
- <!-- Free Tonight Toggle -->
-<div style="margin: 20px 0; padding: 20px; background: rgba(255,46,120,0.08); border-radius: 16px; border: 1px solid rgba(255,46,120,0.3); text-align: center;">
-  <h3 style="margin: 0 0 12px; color: #ff2e78; font-size: 20px; font-weight: 800;">
-    Free Tonight 🔥
-  </h3>
-  <p style="margin: 0 0 16px; color: #aaa; font-size: 14px;">
-    Boost one random clip to trending for 24h + add your location tag!<br>
-    <strong>Cost: 100 ⭐️</strong>
-  </p>
-  <button id="freeTonightBtn" style="
-    padding: 12px 32px; background: linear-gradient(90deg, #ff2e78, #ff5e2e);
-    color: white; border: none; border-radius: 50px; font-weight: 700; font-size: 16px;
-    cursor: pointer; box-shadow: 0 6px 20px rgba(255,46,120,0.4);
-    transition: all 0.3s;
-  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(255,46,120,0.6)'"
-     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(255,46,120,0.4)'">
-    Activate Free Tonight
-  </button>
-</div>
+<!-- 🔥 FREE TONIGHT – ULTIMATE TOGGLE -->
+<div id="freeTonightCard" class="tool-card">
+  <div class="tool-head">
+    <div class="tool-info">
+      <div class="tool-title">
+        Free Tonight <span class="gradient-fire">🔥</span>
+      </div>
+      <div class="tool-sub">
+        Randomly crown one of your clips trending for 24h + auto-add your location tag
+      </div>
+    </div>
 
+    <label class="switch">
+      <input type="checkbox" id="freeTonightToggle">
+      <span class="slider round"></span>
+    </label>
+  </div>
+
+  <div class="tool-foot">
+    <span class="cost">750 ⭐️ <span class="cost-sub">per activation</span></span>
+    <span id="freeTonightStatus" class="status">Inactive</span>
+  </div>
+
+  <!-- Status message (shows success/error) -->
+  <div id="freeTonightMessage" class="tool-message"></div>
+</div>
+  
 <!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
 <div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
   <div style="text-align:center; margin-bottom:28px;">
