@@ -7547,11 +7547,6 @@ paystackNigeriaBanks.forEach(bank => {
 // ───────────────────────────────────────────────
 // Client-side Free Tonight with Live 24h Countdown
 // ───────────────────────────────────────────────
-
-// Make sure these imports are at the top of your file
-// import { collection, query, where, limit, getDocs, doc, getDoc, updateDoc, increment, Timestamp } from "firebase/firestore";
-// import { auth } from your-firebase-init-file;
-
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
   if (!btn) return;
@@ -7561,25 +7556,22 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
-  const rawUid = auth.currentUser.uid;
-  const cost = 100;
-
-  // Check if already active (from localStorage)
+  // Check if already active
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
   if (savedEndTime && Number(savedEndTime) > Date.now()) {
-    showStarPopup('Already active! Countdown in progress.', 'info');
+    showStarPopup('Already active! Wait for countdown to finish.', 'info');
     startCountdown(btn, Number(savedEndTime));
     return;
   }
 
   btn.disabled = true;
-  const originalText = btn.textContent;
   btn.textContent = 'Boosting... ✨';
 
   try {
-    console.log("Searching for user doc with uid field:", rawUid);
+    const rawUid = auth.currentUser.uid;
+    const cost = 100;
 
-    // 1. Find user document by uid field
+    // 1. Find user doc
     const usersQuery = query(
       collection(db, "users"),
       where("uid", "==", rawUid),
@@ -7587,45 +7579,34 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     );
     const userSnap = await getDocs(usersQuery);
 
-    if (userSnap.empty) {
-      console.log("No user doc found with uid =", rawUid);
-      throw new Error("Profile not found – contact support");
-    }
+    if (userSnap.empty) throw new Error("Profile not found – contact support");
 
     const userDoc = userSnap.docs[0];
     const userData = userDoc.data();
     const sanitizedId = userDoc.id;
 
-    console.log("Found user profile:", sanitizedId, "with email:", userData.email);
-
     // 2. Check stars
     const stars = Number(userData.stars || 0);
-    if (stars < cost) {
-      throw new Error(`Need ${cost} stars (you have ${stars})`);
-    }
+    if (stars < cost) throw new Error(`Need ${cost} stars (you have ${stars})`);
 
-    // 3. Get highlights doc
+    // 3. Get highlights
     const highlightsRef = doc(db, "highlightVideos", sanitizedId);
     const highlightsSnap = await getDoc(highlightsRef);
 
-    if (!highlightsSnap.exists()) {
-      throw new Error("No highlights profile found");
-    }
+    if (!highlightsSnap.exists()) throw new Error("No highlights profile found");
 
     const highlightsData = highlightsSnap.data() || {};
     const highlights = Array.isArray(highlightsData.highlights)
       ? [...highlightsData.highlights]
       : [];
 
-    if (highlights.length === 0) {
-      throw new Error("You have no videos to boost yet");
-    }
+    if (highlights.length === 0) throw new Error("You have no videos to boost yet");
 
     // 4. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 5. Add location tag (country fallback)
+    // 5. Add location tag
     let addedTag = null;
     const location = userData.location || {};
     let locTag = null;
@@ -7648,16 +7629,11 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     selected.trendingUntil = Timestamp.fromMillis(endTime);
 
-    // 7. Update Firestore
-    await updateDoc(userDoc.ref, {
-      stars: increment(-cost)
-    });
+    // 7. Save to Firestore
+    await updateDoc(userDoc.ref, { stars: increment(-cost) });
+    await updateDoc(highlightsRef, { highlights });
 
-    await updateDoc(highlightsRef, {
-      highlights: highlights
-    });
-
-    // 8. Start live countdown & save end time
+    // 8. Save end time locally & start countdown
     localStorage.setItem('freeTonightEndTime', endTime);
     startCountdown(btn, endTime);
 
@@ -7670,23 +7646,19 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
   } catch (err) {
     let msg = err.message || 'Failed to activate — try again';
-
     if (msg.includes("Need")) msg = `Not enough stars! ${msg}`;
     if (msg.includes("profile not found")) msg = "Your profile is missing – contact support";
     if (msg.includes("No videos")) msg = "Upload some clips first!";
-    if (msg.includes("No highlights")) msg = "No highlights profile found";
-
     showStarPopup(msg, 'error');
-    console.error('Client-side Free Tonight failed:', err);
-
+    console.error('Free Tonight failed:', err);
   } finally {
     btn.disabled = false;
-    // Text is managed by countdown function now
+    // Don't reset text here — countdown handler will manage it
   }
 });
 
 // ───────────────────────────────────────────────
-// Live 24h Countdown Timer (no Firestore reads/writes)
+// Live Countdown Timer
 // ───────────────────────────────────────────────
 function startCountdown(btn, endTime) {
   function updateTimer() {
@@ -7698,13 +7670,13 @@ function startCountdown(btn, endTime) {
       btn.textContent = 'Activate Free Tonight';
       btn.classList.remove('timer-active');
       localStorage.removeItem('freeTonightEndTime');
-      document.getElementById('freeTonightStatus')?.textContent = 'Ready';
+      document.getElementById('freeTonightStatus').textContent = 'Ready';
       return;
     }
 
-    const hours = Math.floor(remaining / (1000 * 60 * 60));
-    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
 
     btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
     btn.classList.add('timer-active');
@@ -7715,19 +7687,14 @@ function startCountdown(btn, endTime) {
   updateTimer(); // start immediately
 }
 
-// Auto-resume countdown on page load
+// Auto-start countdown on page load if active
 window.addEventListener('load', () => {
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
-  if (savedEndTime) {
-    const end = Number(savedEndTime);
-    if (end > Date.now()) {
-      const btn = document.getElementById('freeTonightBtn');
-      if (btn) {
-        btn.disabled = true;
-        startCountdown(btn, end);
-      }
-    } else {
-      localStorage.removeItem('freeTonightEndTime');
+  if (savedEndTime && Number(savedEndTime) > Date.now()) {
+    const btn = document.getElementById('freeTonightBtn');
+    if (btn) {
+      btn.disabled = true;
+      startCountdown(btn, Number(savedEndTime));
     }
   }
 });
