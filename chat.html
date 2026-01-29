@@ -3360,114 +3360,135 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   height: 8px;               /* slightly thicker = more visible */
   ...
 }
-  .free-tonight-mini {
-    background: linear-gradient(135deg, rgba(138,43,226,0.12), rgba(255,0,242,0.08));
-    border: 1px solid rgba(255,0,242,0.25);
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 8px 24px rgba(255,0,242,0.15);
-    max-width: 320px;
-    margin: 20px auto;
-    backdrop-filter: blur(8px);
-  }
+.tool-card {
+  background: linear-gradient(135deg, rgba(138,43,226,0.15), rgba(255,0,242,0.1));
+  border: 1px solid rgba(255,0,242,0.35);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 32px rgba(255,0,242,0.22);
+  max-width: 480px; /* smaller than 520px */
+  margin: 24px auto;
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+}
 
-  .mini-head {
-    text-align: center;
-    margin-bottom: 12px;
-  }
+.tool-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(255,0,242,0.3);
+}
 
-  .mini-title {
-    font-size: 18px;
-    font-weight: 800;
-    background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
+.tool-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap; /* responsive on small screens */
+}
 
-  .mini-fire {
-    font-size: 22px;
-    background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: #ff6b6b; /* fallback */
-  }
+.tool-info {
+  flex: 1;
+  min-width: 200px;
+}
 
-  .mini-sub {
-    font-size: 11.5px;
-    color: #bbb;
-    margin-top: 4px;
-  }
+.tool-title {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-  .mini-btn {
-    width: 100%;
-    padding: 12px;
-    background: linear-gradient(90deg, #ff2e78, #ff5e2e);
-    color: white;
-    border: none;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    box-shadow: 0 6px 16px rgba(255,46,120,0.35);
-    transition: all 0.3s ease;
-  }
+.gradient-fire {
+  font-size: 24px;
+  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fireGlow 3s infinite alternate;
+}
 
-  .mini-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(255,46,120,0.55);
-  }
+.tool-sub {
+  font-size: 12.5px;
+  color: #ccc;
+  margin-top: 6px;
+  line-height: 1.4;
+}
 
-  .mini-btn:disabled {
-    background: linear-gradient(90deg, #666, #888);
-    cursor: not-allowed;
-    box-shadow: none;
-    opacity: 0.9;
-  }
+.tool-btn {
+  padding: 12px 28px;
+  background: linear-gradient(90deg, #ff2e78, #ff5e2e);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,46,120,0.4);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
 
-  .mini-foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    font-size: 12px;
-    color: #ccc;
-  }
+.tool-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255,46,120,0.6);
+}
 
-  .mini-cost {
-    font-weight: 600;
-    color: #ff4fd8;
-  }
+.tool-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
-  .mini-status {
-    font-weight: 700;
-    color: #00ffea;
-    text-shadow: 0 0 8px rgba(0,255,234,0.5);
-  }
+.tool-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: #bbb;
+}
 
-  .mini-message {
-    margin-top: 12px;
-    font-size: 12.5px;
-    text-align: center;
-    padding: 8px 12px;
-    border-radius: 12px;
-    min-height: 20px;
-  }
+.cost {
+  font-weight: 700;
+  color: #ff4fd8;
+}
 
-  .mini-message.success {
-    background: rgba(0,255,234,0.15);
-    color: #00ffea;
-    border: 1px solid rgba(0,255,234,0.4);
-  }
+.status {
+  font-weight: 800;
+  color: #00ffea;
+  text-shadow: 0 0 10px rgba(0,255,234,0.6);
+}
 
-  .mini-message.error {
-    background: rgba(255,51,102,0.15);
-    color: #ff3366;
-    border: 1px solid rgba(255,51,102,0.4);
-  }
+.tool-message {
+  margin-top: 14px;
+  font-size: 13px;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  min-height: 22px;
+  transition: all 0.4s;
+}
+
+.tool-message.success {
+  background: rgba(0,255,234,0.15);
+  color: #00ffea;
+  border: 1px solid rgba(0,255,234,0.4);
+}
+
+.tool-message.error {
+  background: rgba(255,51,102,0.15);
+  color: #ff3366;
+  border: 1px solid rgba(255,51,102,0.4);
+}
+
+/* Subtle fire glow animation */
+@keyframes fireGlow {
+  0% { opacity: 0.9; filter: brightness(1); }
+  100% { opacity: 1; filter: brightness(1.3); }
+}
 </style>
 </head>
 <body>
@@ -4195,28 +4216,32 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
 
-<!-- 🔥 FREE TONIGHT – Cute Mini Panel with Timer -->
-<div id="freeTonightCard" class="free-tonight-mini">
-  <div class="mini-head">
-    <div class="mini-title">
-      Free Tonight <span class="mini-fire">🔥</span>
+<!-- 🔥 FREE TONIGHT – Cute & Compact -->
+<div id="freeTonightCard" class="tool-card">
+  <div class="tool-head">
+    <div class="tool-info">
+      <div class="tool-title">
+        Free Tonight <span class="gradient-fire">🔥</span>
+      </div>
+      <div class="tool-sub">
+        If you're available & ready to mingle tonight, we'll boost your clips.
+      </div>
     </div>
-    <div class="mini-sub">
-    If you're available & ready to mingle tonight, we'll boost your clips.
-    </div>
-  </div>
-  
-  <button id="freeTonightBtn" class="mini-btn">
-   I'm Free Tonight
-  </button>
 
-  <div class="mini-foot">
-    <span class="mini-cost">Price: 750 ⭐️</span>
-    <span id="freeTonightStatus" class="mini-status">Ready</span>
+    <button id="freeTonightBtn" class="tool-btn">
+      I'm Free Tonight
+    </button>
   </div>
 
-  <div id="freeTonightMessage" class="mini-message"></div>
+  <div class="tool-foot">
+    <span class="cost">750 ⭐️ per activation</span>
+    <span id="freeTonightStatus" class="status">Ready</span>
+  </div>
+
+  <!-- Message area for success/error -->
+  <div id="freeTonightMessage" class="tool-message"></div>
 </div>
+  
   
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
