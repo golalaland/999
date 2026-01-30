@@ -296,7 +296,6 @@ let currentReplyTarget = null;
 
 let currentUser = null;
 let currentAdmin = null;
-let messagesUnsub = null;
 
 
 // UNIVERSAL ID SANITIZER — RESTORED & FINAL
@@ -1835,41 +1834,26 @@ function stopRoomListener() {
 }
 
 
-function listenToMessages() {
-  // Your full listener code here (the one you pasted earlier)
-  if (!currentUser?.uid || !refs.messagesEl) {
-    console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
-    return;
-  }
+let messagesUnsub = null;
 
+function listenToMessages() {
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
-    console.log("[MESSAGES] Previous listener cleaned up");
   }
 
-  const userMsgRef = doc(db, "messages", currentUser.uid);
+  const q = query(
+    collection(db, "messages_room888"),
+    orderBy("timestamp", "asc")
+  );
 
-  messagesUnsub = onSnapshot(userMsgRef, (snap) => {
-    console.log(
-      `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
-      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
-    );
+  messagesUnsub = onSnapshot(q, (snap) => {
+    console.log(`Shared messages snapshot | docs: ${snap.size}`);
 
-    if (!snap.exists()) {
-      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
-      return;
-    }
-
-    let messages = snap.data().messages || [];
-
-    messages = messages.filter(m => m && m.id && m.content != null);
-
-    messages.sort((a, b) => {
-      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
-      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
-      return ta - tb;
-    });
+    const messages = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
     renderMessagesFromArray(messages);
 
@@ -1878,11 +1862,15 @@ function listenToMessages() {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
     }
   }, (err) => {
-    console.error("Messages listener error:", err);
-    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
+    console.error("Shared messages listener error:", err);
   });
+}
 
-  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
+function stopMessagesListener() {
+  if (messagesUnsub) {
+    messagesUnsub();
+    messagesUnsub = null;
+  }
 }
 
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
@@ -3186,7 +3174,6 @@ function clearReplyAfterSend() {
 const ROOM_REF = doc(db, "chat_rooms", "room888");
 
    
-// SEND REGULAR MESSAGE — SHARED ROOM, FIXED (creates doc if missing)
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser) return showStarPopup("Sign in to chat.");
 
@@ -3208,57 +3195,31 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2);
-
-  const msg = {
-    id: messageId,
-    uid: currentUser.uid,
-    chatId: currentUser.chatId,
-    content: txt,
-    timestamp: Date.now(),  // client-side for instant UI
-    type: "text",
-    usernameColor: currentUser.usernameColor || "#ff69b4",
-    highlight: false,
-    buzzColor: null,
-    ...replyData
-  };
-
-  // Optimistic render
-  renderMessagesFromArray([msg]);
-
-  // Reset UI
-  refs.messageInputEl.value = "";
-  cancelReply?.();
-  resizeAndExpand();
-
   try {
-    // Check if room doc exists — create if not
-    const roomSnap = await getDoc(ROOM_REF);
-    if (!roomSnap.exists()) {
-      await setDoc(ROOM_REF, {
-        messages: [],
-        createdAt: serverTimestamp(),
-        roomId: "room888"
-      });
-      console.log("[SEND] Created shared chat room document");
-    }
+    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-SEND_COST) });
 
-    // Append message
-    await updateDoc(ROOM_REF, {
-      messages: arrayUnion(msg),
-      lastMessageAt: serverTimestamp()
+    await addDoc(collection(db, "messages_room888"), {
+      content: txt,
+      uid: currentUser.uid,
+      chatId: currentUser.chatId,
+      usernameColor: currentUser.usernameColor || "#ff69b4",
+      timestamp: serverTimestamp(),
+      highlight: false,
+      buzzColor: null,
+      ...replyData
     });
 
-    console.log("Message sent to shared room");
+    refs.messageInputEl.value = "";
+    cancelReply?.();
+    resizeAndExpand();
+
+    console.log("Message sent to shared public room");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-
-    const tempEl = document.getElementById(messageId);
-    if (tempEl) tempEl.remove();
   }
 });
    
