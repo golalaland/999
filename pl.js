@@ -6937,26 +6937,23 @@ modal.innerHTML = `
         </p>
       </div>
 
-      <!-- CARD 2: Your original "How You Make Bank on Cube" -->
-      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-        <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
-          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
-        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
-          Your cube is your own private party list, you open your circle to a select few who recognize your worth and we'll handle the entertainment, you only can invite 5 VIPs each month, so give your invites to the right people.<br><br>
-
-          Each VIP who joins you, steps in also because it’ll benefit them. <br><br>
-
-          They get access to meet other beautiful verified hosts, 
-          if they’re interested in mingling. <br><br>
-
-          They get access to house games, to play to win for you both daily. 
-          
-          They get access to exclusive liveshows & streams not open to the rest of the world. <br><br>
-
-          So, you’re really presenting them an opportunity, to make money, meet beautiful verified women and get entertained, they’ll be lucky to join your VIP
-        </p>
-      </div>
+<!-- CARD 2: How You Make Bank on Cube -->
+<div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+  <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+    style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+  <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
+  <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
+    Your Cube is your private party list.<br><br>
+    You curate the circle, invite <strong>only 5 VIPs</strong> a month who actually get your vibe.<br><br>
+    We run the show: exclusive parties, live streams, skill games where your VIPs win real cash daily.<br><br>
+    Each VIP you bring in gets:<br>
+    • Access to meet other verified beautiful hosts (if they’re down to mingle)🔥<br>
+    • Daily Grind Games to stack real money (pure skill, no luck needed)<br>
+    • Liveshows & streams the rest of the world can’t touch<br><br>
+    You’re not begging, you’re <strong>gifting</strong> them an opportunity to make money, meet cuties, and live the elite life.<br><br>
+    They’ll be lucky to make your VIP list.
+  </p>
+</div>
 
       <!-- CARD 3: Your original "Withdrawing Your Cash" -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
@@ -6974,92 +6971,85 @@ modal.innerHTML = `
         </p>
       </div>
 
-      <!-- CARD 4: Your original "Using Tools as a Host" -->
-      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-        <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
-          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Using Tools as a Host</h4>
-        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
-          The Tools tab holds all the apps you need to grow on cube and even more powerful features are coming soon.<br><br>
+<!-- CARD 4: Using Tools as a Host -->
+<div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+  <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+    style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+  <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center; font-weight:bold;">Using Tools as a Host</h4>
+  <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
+    The <strong>Tools tab</strong> holds all the apps you need to grow on Cube — and even more powerful features are coming soon.<br><br>
 
-          NUMBER VERIFY 🔍 <br>
-          As a host, you can verify anyone who messages you to meet or mingle  by their phone number to see if they’re truly on cube, to protect yourself from scams and danger. <br><br>
+    <strong>NUMBER VERIFY 🔍</strong><br>
+    As a host, you can verify anyone who messages you to meet or mingle by their phone number to see if they’re truly on Cube — protecting yourself from scams and danger.<br><br>
 
-          UPLOAD CLIPS 🎬<br>
-          Upload your exclusive clips for new admirers and your VIPS  to unlock with  STRZ, you keep 100% of it, your uploaded clips are secure & whoever views it, you’ll know who they are. <br><br>
+    <strong>UPLOAD CLIPS 🎬</strong><br>
+    Upload your exclusive clips for new admirers and your VIPs to unlock with STRZ. You keep 100% of the earnings, your clips are secure, and you’ll know exactly who views them.<br><br>
 
-          FREE TONIGHT 🔥 <br>
-          Whenever you’re ready to mingle or go out with people on cube , enter the free tonight section, it’ll  boost any of your uploaded videos for 24hrs, be sure you’ve set & saved your location already in your profile.
-        </p>
-      </div>
+    <strong>FREE TONIGHT 🔥</strong><br>
+    Whenever you’re ready to mingle or go out with people on Cube, enter the Free Tonight section. It’ll boost any of your uploaded videos for 24hrs — just make sure you’ve set & saved your location in your profile.
+  </p>
+</div>
 
-      <!-- CARD 5: Your original "Daily Grind & House Games" -->
-      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-        <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
-          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Daily Grind & House Games</h4>
-        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
-          TapMaster is a skill & strategy based game. <br>
-          Fun to play & doesn’t rely on luck, <br>
-          The more taps you score,<br>
-          the higher it puts you on the leaderboard. <br><br>
+      <!-- CARD 5: Daily Grind & House Games -->
+<div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+  <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+    style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+  <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center; font-weight:bold;">Daily Grind & House Games</h4>
+  <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
+    <strong>TapMaster</strong> is pure skill and strategy. No luck involved.<br><br>
 
-          Your VIPs can play TapMaster every day  and win cash rewards or unlock gift prizes, real experiences everyday depending on the promotion we’re on. <br><br>
+    Your VIPs play daily, rack up taps, climb the leaderboard, and win real cash rewards or unlock gift prizes and experiences.<br><br>
 
-          Each day, they have a 100% chance to WIN, it doesn’t matter when they joined, everyone starts at 0 taps each day for daily rewards. <br><br>
+    Everyone starts fresh at 0 taps every day. <strong>100% chance to win</strong> no matter when they joined.<br><br>
 
-          Their skill also becomes your steady income flow <br>
-          building cash rewards month after month.<br><br>
+    Their skill turns into <strong>your steady income flow</strong>, stacking cash month after month.<br><br>
 
-          When the VIP’s of your invited hosts win on any daily grind games , you also get a share of the win!<br><br>
-
-          You’re not chasing money.<br>
-          The money is chasing you 💚.
-        </p>
-      </div>
+    You’re not chasing money.<br>
+    <strong>The money is chasing you 💚</strong>
+  </p>
+</div>
 
     </div>
 
-    <!-- Dots - placed correctly now -->
-    <div id="tipsDots" style="
-      position: absolute;
-      bottom: 16px;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      z-index: 10;
-    ">
-      ${[0,1,2,3,4].map(i => 
-        `<div data-index="${i}" class="dot" style="
-          width:10px;
-          height:10px;
-          border-radius:50%;
-          background: ${i===0 ? '#c3f60c' : 'rgba(195,246,12,0.3)'};
-          transition: background 0.3s;
-        "></div>`
-      ).join('')}
-    </div>
-  </div>
+<!-- Dots - moved up, smaller & tighter -->
+<div id="tipsDots" style="
+  position: absolute;
+  bottom: 80px;  /* Moved up higher (adjust 60-100px to taste) */
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  z-index: 10;
+">
+  ${[0,1,2,3,4].map(i => 
+    `<div data-index="${i}" class="dot" style="
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background: ${i===0 ? '#c3f60c' : 'rgba(195,246,12,0.4)'};
+      transition: background 0.3s;
+    "></div>`
+  ).join('')}
+</div>
 
-  <!-- Close Button -->
-  <div style="
-    padding: 16px;
-    text-align: center;
-    border-top: 1px solid rgba(195,246,12,0.2);
-  ">
-    <button id="closeTipsBtn" style="
-      padding: 12px 48px;
-      border-radius: 12px;
-      border: none;
-      background: #c3f60c;
-      color: #000;
-      font-size: 16px;
-      font-weight: 900;
-      cursor: pointer;
-    ">I'm Ready</button>
-  </div>
+<!-- Close Button - slimmer padding -->
+<div style="
+  padding: 12px 16px;
+  text-align: center;
+  border-top: 1px solid rgba(195,246,12,0.2);
+">
+  <button id="closeTipsBtn" style="
+    padding: 10px 40px;
+    border-radius: 10px;
+    border: none;
+    background: #c3f60c;
+    color: #000;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+  ">I'm Ready</button>
+</div>
 </div>
 `;
 
