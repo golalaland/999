@@ -1808,30 +1808,16 @@ function stopRoomListener() {
 
 
 // ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
-let messagesUnsub = null;
+let roomUnsub = null;
 
 function listenToMessages() {
-  // Safety guard: skip if user or UI not ready
-  if (!currentUser?.uid || !refs.messagesEl) {
-    console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
-    return;
+  if (roomUnsub) {
+    roomUnsub();
+    roomUnsub = null;
   }
 
-  // Clean up any previous listener to avoid duplicates/leaks
-  if (messagesUnsub) {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Previous listener cleaned up");
-  }
-
-  const userMsgRef = doc(db, "messages", currentUser.uid);
-
-  messagesUnsub = onSnapshot(userMsgRef, (snap) => {
-    // Log source + count for debugging
-    console.log(
-      `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
-      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
-    );
+  roomUnsub = onSnapshot(ROOM_REF, (snap) => {
+    console.log(`Shared room snapshot | exists: ${snap.exists()} | messages: ${snap.data()?.messages?.length || 0}`);
 
     if (!snap.exists()) {
       refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
@@ -1840,33 +1826,28 @@ function listenToMessages() {
 
     let messages = snap.data().messages || [];
 
-    // Safety: filter out any invalid/null messages (prevents render crash)
-    messages = messages.filter(m => m && m.id && m.content != null);
-
-    // Sort oldest first (top of chat) → newest at bottom
     messages.sort((a, b) => {
-      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
-      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
+      const ta = a.timestamp ?? 0;
+      const tb = b.timestamp ?? 0;
       return ta - tb;
     });
 
-    // Optional: limit to last N messages if array grows very large (uncomment if needed)
-    // messages = messages.slice(-100);
-
-    // Render the full sorted array
     renderMessagesFromArray(messages);
 
-    // Auto-scroll to bottom if user is near bottom (your original logic)
     const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
     if (distanceFromBottom < 200) {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
     }
   }, (err) => {
-    console.error("Messages listener error:", err);
-    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
+    console.error("Room listener error:", err);
   });
+}
 
-  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
+function stopMessagesListener() {
+  if (roomUnsub) {
+    roomUnsub();
+    roomUnsub = null;
+  }
 }
 
 // Cleanup function — call this on logout / page unload / user change
@@ -3179,7 +3160,7 @@ function clearReplyAfterSend() {
 const ROOM_DOC_REF = doc(db, "chat_rooms", "room888");
 
    
-// SEND REGULAR MESSAGE — FIXED: creates room doc if missing, appends safely
+// SEND REGULAR MESSAGE — SHARED ROOM, FIXED (creates doc if missing)
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser) return showStarPopup("Sign in to chat.");
 
@@ -3189,11 +3170,9 @@ refs.sendBtn?.addEventListener("click", async () => {
   if ((currentUser.stars || 0) < SEND_COST)
     return showStarPopup("Not enough stars to send message.");
 
-  // Deduct stars locally
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-  // Reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3203,7 +3182,6 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Unique ID
   const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2);
 
   const msg = {
@@ -3211,7 +3189,7 @@ refs.sendBtn?.addEventListener("click", async () => {
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),  // client-side for instant render
+    timestamp: Date.now(),  // client-side for instant UI
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3228,28 +3206,24 @@ refs.sendBtn?.addEventListener("click", async () => {
   resizeAndExpand();
 
   try {
-    const roomRef = doc(db, "chat_rooms", "room888");
-
-    // Check if room doc exists
-    const roomSnap = await getDoc(roomRef);
-
+    // Check if room doc exists — create if not
+    const roomSnap = await getDoc(ROOM_REF);
     if (!roomSnap.exists()) {
-      // Create room doc with empty messages array
-      await setDoc(roomRef, {
+      await setDoc(ROOM_REF, {
         messages: [],
         createdAt: serverTimestamp(),
         roomId: "room888"
       });
-      console.log("[SEND] Created new chat room document: chat_rooms/room888");
+      console.log("[SEND] Created shared chat room document");
     }
 
-    // Now safely append the message
-    await updateDoc(roomRef, {
+    // Append message
+    await updateDoc(ROOM_REF, {
       messages: arrayUnion(msg),
-      lastMessageAt: serverTimestamp()  // optional: top-level server time
+      lastMessageAt: serverTimestamp()
     });
 
-    console.log("Message appended to shared room array");
+    console.log("Message sent to shared room");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
@@ -3257,7 +3231,6 @@ refs.sendBtn?.addEventListener("click", async () => {
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-    // Remove optimistic message on error
     const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
