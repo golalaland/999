@@ -1833,43 +1833,96 @@ function stopRoomListener() {
   }
 }
 
+function removeNoMessagesPlaceholder() {
+  const placeholder = refs.messagesEl.querySelector('p');
+  if (placeholder && placeholder.textContent.includes("No messages yet")) {
+    placeholder.remove();
+  }
+}
 
+
+// ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
 let messagesUnsub = null;
 
 function listenToMessages() {
+  // Safety guard: skip if user or UI not ready
+  if (!currentUser?.uid || !refs.messagesEl) {
+    console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
+    return;
+  }
+
+  // Clean up any previous listener to avoid duplicates/leaks
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
+    console.log("[MESSAGES] Previous listener cleaned up");
   }
 
-  const q = query(
-    collection(db, "messages_room888"),
-    orderBy("timestamp", "asc")
-  );
+  const userMsgRef = doc(db, "messages", currentUser.uid);
 
-  messagesUnsub = onSnapshot(q, (snap) => {
-    console.log(`Shared messages snapshot | docs: ${snap.size}`);
+  messagesUnsub = onSnapshot(userMsgRef, (snap) => {
+    // Log source + count for debugging
+    console.log(
+      `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
+      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
+    );
 
-    const messages = snap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    if (!snap.exists()) {
+      // Show placeholder if doc doesn't exist
+      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
+      return;
+    }
 
+    let messages = snap.data().messages || [];
+
+    // If we have real messages → remove the placeholder immediately
+    if (messages.length > 0) {
+      removeNoMessagesPlaceholder();
+    }
+
+    // Safety: filter out any invalid/null messages
+    messages = messages.filter(m => m && m.id && m.content != null);
+
+    // Sort oldest first (top of chat) → newest at bottom
+    messages.sort((a, b) => {
+      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
+      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
+      return ta - tb;
+    });
+
+    // Optional: limit to last N messages if array gets very large
+    // messages = messages.slice(-50);
+
+    // Render the full sorted array
     renderMessagesFromArray(messages);
 
+    // Auto-scroll to bottom if user is near bottom
     const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
     if (distanceFromBottom < 200) {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
     }
   }, (err) => {
-    console.error("Shared messages listener error:", err);
+    console.error("Messages listener error:", err);
+    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
   });
+
+  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
 }
 
+// Helper function to remove the "No messages yet..." placeholder
+function removeNoMessagesPlaceholder() {
+  const placeholder = refs.messagesEl.querySelector('p');
+  if (placeholder && placeholder.textContent.includes("No messages yet")) {
+    placeholder.remove();
+  }
+}
+
+// Cleanup function — call this on logout / page unload / user change
 function stopMessagesListener() {
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
+    console.log("[MESSAGES] Listener stopped");
   }
 }
 
