@@ -1833,14 +1833,6 @@ function stopRoomListener() {
   }
 }
 
-function removeNoMessagesPlaceholder() {
-  const placeholder = refs.messagesEl.querySelector('p');
-  if (placeholder && placeholder.textContent.includes("No messages yet")) {
-    placeholder.remove();
-  }
-}
-
-
 // ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
 let messagesUnsub = null;
 
