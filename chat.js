@@ -475,19 +475,19 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     await new Promise(r => setTimeout(r, 2000));
 
     // Run cleanup once per login
-    await cleanupExpiredTokens();
+   // await cleanupExpiredTokens();
 
     // Buttons — safe check
     if (typeof updateRedeemLink === "function") {
       console.log("[AUTH] Calling updateRedeemLink");
-      await updateRedeemLink();
+     // await updateRedeemLink();
     } else {
       console.warn("[AUTH] updateRedeemLink not defined");
     }
 
     if (typeof updateTipLink === "function") {
       console.log("[AUTH] Calling updateTipLink");
-      await updateTipLink();
+     // await updateTipLink();
     } else {
       console.warn("[AUTH] updateTipLink not defined");
     }
@@ -497,8 +497,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     // Delayed loads
     setTimeout(() => {
-      syncUserUnlocks?.();
-      loadNotifications?.();
+     // syncUserUnlocks?.();
+    //  loadNotifications?.();
     }, 600);
 
     if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
@@ -3117,38 +3117,29 @@ function clearReplyAfterSend() {
 
 // SEND REGULAR MESSAGE — FIXED: NO OVERWRITE, appends to array forever
 refs.sendBtn?.addEventListener("click", async () => {
-  if (!currentUser?.uid) {
-    return showStarPopup("Sign in to chat.");
-  }
+  if (!currentUser?.uid) return showStarPopup("Sign in to chat.");
 
   const txt = refs.messageInputEl?.value.trim();
-  if (!txt) {
-    return showStarPopup("Type a message first.");
-  }
+  if (!txt) return showStarPopup("Type a message first.");
 
-  if ((currentUser.stars || 0) < SEND_COST) {
+  if ((currentUser.stars || 0) < SEND_COST)
     return showStarPopup("Not enough stars to send message.");
-  }
 
-  // Deduct stars locally (optimistic)
+  // Deduct stars locally
   currentUser.stars -= SEND_COST;
-  if (refs.starCountEl) {
-    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-  }
+  if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
   // Reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
         replyToContent: (currentReplyTarget.content || "Original message")
-          .replace(/\n/g, " ")
-          .trim()
-          .substring(0, 80) + "...",
+          .replace(/\n/g, " ").trim().substring(0, 80) + "...",
         replyToChatId: currentReplyTarget.chatId || "someone"
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Stable unique ID
+  // Unique ID
   const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2);
 
   const optimisticMsg = {
@@ -3164,10 +3155,10 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Render optimistic message
+  // Optimistic render
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI immediately
+  // Reset UI
   refs.messageInputEl.value = "";
   cancelReply?.();
   resizeAndExpand();
@@ -3175,23 +3166,19 @@ refs.sendBtn?.addEventListener("click", async () => {
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Append ONLY — this is safe and adds to existing array
+    // Append ONLY — never overwrite
     await updateDoc(userMsgRef, {
       messages: arrayUnion(optimisticMsg)
     });
 
-    console.log("Message appended safely — array now has more items");
+    console.log("Message appended — array should grow");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
-    // Refund stars
     currentUser.stars += SEND_COST;
-    if (refs.starCountEl) {
-      refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-    }
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-    // Remove optimistic message
     const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
