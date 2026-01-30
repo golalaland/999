@@ -1764,13 +1764,17 @@ function renderMessagesFromArray(messages) {
 
 
 
-// ---------- Messages Real-time Listener – Clean & Production-ready ----------
+// ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
+let messagesUnsub = null;
+
 function listenToMessages() {
+  // Safety guard: skip if user or UI not ready
   if (!currentUser?.uid || !refs.messagesEl) {
     console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
     return;
   }
 
+  // Clean up any previous listener to avoid duplicates/leaks
   if (messagesUnsub) {
     messagesUnsub();
     messagesUnsub = null;
@@ -1780,6 +1784,7 @@ function listenToMessages() {
   const userMsgRef = doc(db, "messages", currentUser.uid);
 
   messagesUnsub = onSnapshot(userMsgRef, (snap) => {
+    // Log source + count for debugging
     console.log(
       `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
       `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
@@ -1792,18 +1797,23 @@ function listenToMessages() {
 
     let messages = snap.data().messages || [];
 
-    // Safety: filter out any invalid/null messages
-    messages = messages.filter(m => m && m.id && m.content);
+    // Safety: filter out any invalid/null messages (prevents render crash)
+    messages = messages.filter(m => m && m.id && m.content != null);
 
-    // Sort oldest first
+    // Sort oldest first (top of chat) → newest at bottom
     messages.sort((a, b) => {
       const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
       const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
       return ta - tb;
     });
 
+    // Optional: limit to last N messages if array grows very large (uncomment if needed)
+    // messages = messages.slice(-100);
+
+    // Render the full sorted array
     renderMessagesFromArray(messages);
 
+    // Auto-scroll to bottom if user is near bottom (your original logic)
     const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
     if (distanceFromBottom < 200) {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
@@ -1814,6 +1824,15 @@ function listenToMessages() {
   });
 
   console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
+}
+
+// Cleanup function — call this on logout / page unload / user change
+function stopMessagesListener() {
+  if (messagesUnsub) {
+    messagesUnsub();
+    messagesUnsub = null;
+    console.log("[MESSAGES] Listener stopped");
+  }
 }
 
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
@@ -1827,7 +1846,6 @@ function listenToMessages() {
   ✔ Proper unsubscribe handling
   ✔ Auto-scroll only on your own messages
 */
-let messagesUnsub = null;
 
 function attachMessagesListener() {
   // ---- Cleanup existing listener (prevents duplicates)
@@ -3115,39 +3133,48 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-// SEND REGULAR MESSAGE — FIXED: NO OVERWRITE, appends to array forever
+// SEND REGULAR MESSAGE — FIXED APPEND-ONLY + NO OVERWRITE (array grows forever)
 refs.sendBtn?.addEventListener("click", async () => {
-  if (!currentUser?.uid) return showStarPopup("Sign in to chat.");
+  if (!currentUser?.uid) {
+    return showStarPopup("Sign in to chat.");
+  }
 
   const txt = refs.messageInputEl?.value.trim();
-  if (!txt) return showStarPopup("Type a message first.");
+  if (!txt) {
+    return showStarPopup("Type a message first.");
+  }
 
-  if ((currentUser.stars || 0) < SEND_COST)
+  if ((currentUser.stars || 0) < SEND_COST) {
     return showStarPopup("Not enough stars to send message.");
+  }
 
-  // Deduct stars locally
+  // Deduct stars locally (optimistic)
   currentUser.stars -= SEND_COST;
-  if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+  if (refs.starCountEl) {
+    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+  }
 
-  // Reply data
+  // Reply data (unchanged)
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
         replyToContent: (currentReplyTarget.content || "Original message")
-          .replace(/\n/g, " ").trim().substring(0, 80) + "...",
+          .replace(/\n/g, " ")
+          .trim()
+          .substring(0, 80) + "...",
         replyToChatId: currentReplyTarget.chatId || "someone"
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Unique ID
-  const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2);
+  // Stable unique ID (crypto.randomUUID if available, fallback to time+random)
+  const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2, 12);
 
   const optimisticMsg = {
     id: messageId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),
+    timestamp: Date.now(),  // client-side number for instant sort/render
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3155,10 +3182,10 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Optimistic render
+  // Render optimistic message immediately
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI
+  // Reset UI immediately (your critical fix)
   refs.messageInputEl.value = "";
   cancelReply?.();
   resizeAndExpand();
@@ -3166,19 +3193,23 @@ refs.sendBtn?.addEventListener("click", async () => {
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Append ONLY — never overwrite
+    // Append ONLY — this is safe and adds to existing array (doc auto-created on first write)
     await updateDoc(userMsgRef, {
       messages: arrayUnion(optimisticMsg)
     });
 
-    console.log("Message appended — array should grow");
+    console.log("Message appended safely — array should grow");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
+    // Refund stars
     currentUser.stars += SEND_COST;
-    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    if (refs.starCountEl) {
+      refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    }
 
+    // Remove optimistic message from UI on error
     const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
