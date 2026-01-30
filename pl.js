@@ -7024,10 +7024,7 @@ modal.innerHTML = `
         </p>
       </div>
 
-    </div>
-  </div>
-</div>
-`;
+
 
       <!-- Dots -->
       <div id="tipsDots" style="
