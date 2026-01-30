@@ -6653,7 +6653,7 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
 
   const chatId = currentUser.chatId || 'friend';
   const prettyHandle = chatId.startsWith('@') ? chatId : `@${chatId}`;
-  const message = `Hey! join my Cube and let’s win some together! Sign up using my rare invite link: `;
+  const message = `Hey! join my Cube, Sign up using my invite link: `;
   const link = `https://cube.xixi.live/sign-up?ref=${encodeURIComponent(prettyHandle)}`;
   const fullText = message + link;
 
