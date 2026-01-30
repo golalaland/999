@@ -6869,134 +6869,165 @@ function openTipsModal() {
   // Remove existing modal
   document.getElementById("tipsModal")?.remove();
 
-  const modal = document.createElement("div");
-  modal.id = "tipsModal";
-  modal.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: #0a0a0a;
-    z-index: 2147483647;
-    display: flex;
-    justify-content: center;
-    overflow: hidden;
-  `;
+const modal = document.createElement("div");
+modal.id = "tipsModal";
+modal.style.cssText = `
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  z-index: 2147483647;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+`;
 
-  modal.innerHTML = `
+modal.innerHTML = `
+<div style="
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  background: #0a0a0a;
+  color: #eee;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+">
+  <!-- Header -->
   <div style="
-    width: 100%;
-    max-width: 420px;
-    height: 100vh;
-    background: #0a0a0a;
-    color: #eee;
-    font-family: system-ui, sans-serif;
-    display: flex;
-    flex-direction: column;
+    padding: 20px 16px 12px;
+    text-align: center;
+    background: linear-gradient(to bottom, rgba(195,246,12,0.10), transparent);
+    border-bottom: 1px solid rgba(195,246,12,0.20);
   ">
-    <!-- Header -->
-    <div style="
-      padding: 20px 16px 12px;
-      text-align: center;
-      background: linear-gradient(to bottom, rgba(195,246,12,0.10), transparent);
-      border-bottom: 1px solid rgba(195,246,12,0.20);
+    <h3 style="
+      margin: 0;
+      font-size: 20px;
+      color: #c3f60c;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      text-shadow: 0 0 8px rgba(195,246,12,0.4);
+    ">TIPS</h3>
+    <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">
+      Level up • Slay • Get Paid
+    </p>
+  </div>
+
+  <!-- Carousel -->
+  <div id="tipsCarousel" style="
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+  ">
+    <div id="tipsSlides" style="
+      display: flex;
+      height: 100%;
+      width: 500%;
+      will-change: transform;
+      transition: transform 0.45s ease;
     ">
-      <h3 style="
-        margin: 0;
-        font-size: 20px;
-        color: #c3f60c;
-        font-weight: 900;
-        letter-spacing: 0.8px;
-        text-shadow: 0 0 8px rgba(195,246,12,0.4);
-      ">TIPS</h3>
-      <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">
-        Level up • Slay • Get Paid
-      </p>
-    </div>
 
-    <!-- Carousel -->
-    <div id="tipsCarousel" style="
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-      touch-action: pan-y;
-    ">
-      <div id="tipsSlides" style="
-        display: flex;
-        height: 100%;
-        width: 500%;
-        will-change: transform;
-        transition: transform 0.45s ease;
-      ">
-
-        <!-- CARD 1 -->
-        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80"
-            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Welcome to Cube</h4>
-          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
-            You’re not just joining another platform, you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
-          </p>
-        </div>
-
-        <!-- CARD 2 -->
-        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
-            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
-          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
-            Everything flows toward you quietly, naturally, without force.<br><br>
-            <strong>1. VIP Invites</strong><br>
-            You open your circle to a select few who recognize your worth.<br>
-            Each one who steps in pays a premium to be close to you.<br>
-            You receive a meaningful share immediately and again every month they stay.<br><br>
-            <strong>2. Parties & Liveshows</strong><br>
-            When you choose to step forward, Cube opens doors most never see.<br>
-            Weekly liveshows and intimate Cube Nights become your stage.<br>
-            Tips, hearts, and connections turn into real rewards — all on your terms.
-          </p>
-        </div>
-
-        <!-- CARD 3 -->
-        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
-            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Withdrawing Your Cash</h4>
-          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
-            Cash out your earnings easily and quickly.<br><br>
-            Set up your bank account once — we support 33+ Nigerian banks, 15 South African banks, and 5 international options.<br><br>
-            Withdrawals are processed fast — your money lands where it belongs: in your pocket.
-          </p>
-        </div>
-
-        <!-- CARD 4 -->
-        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
-            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Using Tools as a Host</h4>
-          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
-            Unlock powerful features to grow your presence.<br><br>
-            Schedule liveshows, pin important messages, manage VIPs, and control your room vibe.<br><br>
-            The more you use the tools, the more Cube rewards you — visibility, earnings, and influence.
-          </p>
-        </div>
-
-        <!-- CARD 5 -->
-        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
-            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
-          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Daily Grind Conquests</h4>
-          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
-            Your VIPs play TapMaster every day.<br><br>
-            Every time they place in the top ranks, you receive your share automatically.<br><br>
-            Their skill becomes your steady flow, building quietly month after month.<br><br>
-            You’re not chasing money.<br>
-            The money is chasing you.<br><br>
-            That’s the quiet power of Cube.<br>
-            No pressure. No performance.<br>
-            Just elegant, effortless abundance — made for women who already know they’re the prize.
-          </p>
-        </div>
-
+      <!-- CARD 1 (kept original as placeholder) -->
+      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+        <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80"
+          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Welcome to Cube</h4>
+        <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
+          You’re not just joining another platform, you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+        </p>
       </div>
+
+      <!-- CARD 2: Updated - How You Make Bank on Cube -->
+      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+        <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
+        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
+          Your Cube is your private party list — an exclusive circle you open only to those who truly see your value.<br><br>
+
+          <strong>You invite just 5 VIPs each month.</strong> Choose wisely.<br><br>
+
+          Every VIP who joins pays for their seat at your table — because being close to you is worth it.<br><br>
+
+          What they get in return:
+        </p>
+        <ul style="font-size:14px; line-height:1.6; color:#ddd; margin:8px 0; padding-left:24px; text-align:left;">
+          <li>Access to meet <strong>beautiful verified women</strong> ready to mingle</li>
+          <li>Chance to earn real money + unlock gift prizes & experiences through daily skill games (no luck involved — it's all strategy & grind)</li>
+          <li>Exclusive liveshows & streams the rest of the world can't touch</li>
+        </ul>
+        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center; margin-top:12px;">
+          You're not selling spots — you're offering an elite opportunity: <strong>money</strong>, connections, and entertainment.<br><br>
+          They'll feel lucky to be in your VIP circle. 💎
+        </p>
+      </div>
+
+      <!-- CARD 3: Updated - Withdrawing Your Cash -->
+      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+        <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Withdrawing Your Cash</h4>
+        <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
+          Get your earnings out fast and easy — no stress.<br><br>
+
+          Go to your profile tab → click the gear ⚙️ icon in your profile card → set up & save your bank details once.<br><br>
+
+          We support:
+        </p>
+        <ul style="font-size:14px; line-height:1.6; color:#ddd; margin:8px 0; padding-left:24px; text-align:left;">
+          <li>33+ West African banks</li>
+          <li>15+ South African banks</li>
+          <li>5 international options</li>
+        </ul>
+        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center; margin-top:12px;">
+          Withdrawals hit your account quickly — your money belongs in your pocket. 💸✨
+        </p>
+      </div>
+
+      <!-- CARD 4: Updated - Using Tools as a Host -->
+      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+        <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Using Tools as a Host</h4>
+        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
+          The Tools tab gives you everything to grow your Cube empire — more powerful features dropping soon.<br><br>
+
+          <strong>NUMBER VERIFY 🔍</strong><br>
+          Verify anyone who wants to meet or mingle by phone — confirm they're real Cube users and stay safe from fakes/scams.<br><br>
+
+          <strong>UPLOAD CLIPS 🎬</strong><br>
+          Drop exclusive clips for admirers & VIPs to unlock with STRZ — you keep 100% of earnings. Clips stay secure, and you see exactly who views them.<br><br>
+
+          <strong>FREE TONIGHT 🔥</strong><br>
+          Ready to mingle or link up IRL? Drop into Free Tonight — it boosts any uploaded video for 24hrs (make sure your location is saved in profile first).
+        </p>
+      </div>
+
+      <!-- CARD 5: Updated - Daily Grind -->
+      <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+        <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+          style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+        <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Daily Grind Wins</h4>
+        <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
+          <strong>TapMaster</strong> is pure skill & strategy — no luck, just taps.<br>
+          More taps = higher leaderboard spot. Simple, addictive, fun.<br><br>
+
+          Your VIPs play daily for cash rewards, gift prizes, or real experiences (changes with promotions).<br><br>
+
+          <strong>100% chance to win every day</strong> — everyone resets to 0 taps daily, no matter when they joined.<br><br>
+
+          Their grind = your steady income stream.<br>
+          When your invited hosts' VIPs win on any Daily Grind game — you get your cut too.<br><br>
+
+          You're not chasing money.<br>
+          <strong>The money is chasing you.</strong> 💚
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+`;
 
       <!-- Dots -->
       <div id="tipsDots" style="
