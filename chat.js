@@ -1569,17 +1569,19 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FINAL VERSION (from messages/{uid} doc + array)
+// RENDER MESSAGES — FIXED APPEND-ONLY VERSION (from messages/{uid} doc + array)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
 
-  // Clear existing messages to avoid duplicates
-  refs.messagesEl.innerHTML = "";
+  // Track already rendered message IDs to avoid duplicates
+  const renderedIds = new Set(
+    Array.from(refs.messagesEl.querySelectorAll('.msg')).map(el => el.id)
+  );
 
   messages.forEach(function(item) {
     const id = item.id || item.tempId || item.data?.id;
-    if (!id || document.getElementById(id)) return;
+    if (!id || renderedIds.has(id)) return; // skip if already rendered
 
     const m = item.data ?? item;
 
@@ -1619,7 +1621,7 @@ function renderMessagesFromArray(messages) {
       -webkit-tap-highlight-color: transparent;
     `;
 
-    // Tap handler
+    // Tap handler (your exact logic)
     const openProfile = (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -1745,7 +1747,9 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
+    // Append — no clearing the container!
     refs.messagesEl.appendChild(wrapper);
+    renderedIds.add(id); // track for next snapshot
   });
 
   // Auto-scroll (your original logic)
@@ -1761,7 +1765,6 @@ function renderMessagesFromArray(messages) {
     });
   }
 }
-
 
 
 // ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
@@ -3135,46 +3138,36 @@ function clearReplyAfterSend() {
 
 // SEND REGULAR MESSAGE — FIXED APPEND-ONLY + NO OVERWRITE (array grows forever)
 refs.sendBtn?.addEventListener("click", async () => {
-  if (!currentUser?.uid) {
-    return showStarPopup("Sign in to chat.");
-  }
+  if (!currentUser?.uid) return showStarPopup("Sign in to chat.");
 
   const txt = refs.messageInputEl?.value.trim();
-  if (!txt) {
-    return showStarPopup("Type a message first.");
-  }
+  if (!txt) return showStarPopup("Type a message first.");
 
-  if ((currentUser.stars || 0) < SEND_COST) {
+  if ((currentUser.stars || 0) < SEND_COST)
     return showStarPopup("Not enough stars to send message.");
-  }
 
-  // Deduct stars locally (optimistic)
+  // Deduct stars locally
   currentUser.stars -= SEND_COST;
-  if (refs.starCountEl) {
-    refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-  }
+  if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-  // Reply data (unchanged)
+  // Reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
         replyToContent: (currentReplyTarget.content || "Original message")
-          .replace(/\n/g, " ")
-          .trim()
-          .substring(0, 80) + "...",
+          .replace(/\n/g, " ").trim().substring(0, 80) + "...",
         replyToChatId: currentReplyTarget.chatId || "someone"
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  // Stable unique ID (crypto.randomUUID if available, fallback to time+random)
-  const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2, 12);
+  const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2);
 
   const optimisticMsg = {
     id: messageId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),  // client-side number for instant sort/render
+    timestamp: Date.now(),
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3182,10 +3175,8 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  // Render optimistic message immediately
   renderMessagesFromArray([optimisticMsg]);
 
-  // Reset UI immediately (your critical fix)
   refs.messageInputEl.value = "";
   cancelReply?.();
   resizeAndExpand();
@@ -3193,23 +3184,26 @@ refs.sendBtn?.addEventListener("click", async () => {
   try {
     const userMsgRef = doc(db, "messages", currentUser.uid);
 
-    // Append ONLY — this is safe and adds to existing array (doc auto-created on first write)
+    // Check if doc exists — create with empty array if not
+    const docSnap = await getDoc(userMsgRef);
+    if (!docSnap.exists()) {
+      await setDoc(userMsgRef, { messages: [] });
+      console.log("[SEND] Created new messages doc for user");
+    }
+
+    // Append safely
     await updateDoc(userMsgRef, {
       messages: arrayUnion(optimisticMsg)
     });
 
-    console.log("Message appended safely — array should grow");
+    console.log("Message appended safely");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
-    // Refund stars
     currentUser.stars += SEND_COST;
-    if (refs.starCountEl) {
-      refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-    }
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-    // Remove optimistic message from UI on error
     const tempEl = document.getElementById(messageId);
     if (tempEl) tempEl.remove();
   }
