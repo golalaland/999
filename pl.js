@@ -6892,6 +6892,7 @@ modal.innerHTML = `
   display: flex;
   flex-direction: column;
 ">
+
   <!-- Header -->
   <div style="
     padding: 20px 16px 12px;
@@ -6912,13 +6913,15 @@ modal.innerHTML = `
     </p>
   </div>
 
-  <!-- Carousel -->
+  <!-- Carousel Container -->
   <div id="tipsCarousel" style="
     flex: 1;
     position: relative;
     overflow: hidden;
     touch-action: pan-y;
   ">
+
+    <!-- Slides -->
     <div id="tipsSlides" style="
       display: flex;
       height: 100%;
@@ -6927,7 +6930,7 @@ modal.innerHTML = `
       transition: transform 0.45s ease;
     ">
 
-      <!-- CARD 1 (kept original as placeholder) -->
+      <!-- CARD 1 -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
         <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
@@ -6937,123 +6940,125 @@ modal.innerHTML = `
         </p>
       </div>
 
-      <!-- CARD 2: Updated - How You Make Bank on Cube -->
+      <!-- CARD 2 -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
         <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
         <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
         <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
           Your Cube is your private party list — an exclusive circle you open only to those who truly see your value.<br><br>
-
           <strong>You invite just 5 VIPs each month.</strong> Choose wisely.<br><br>
-
           Every VIP who joins pays for their seat at your table — because being close to you is worth it.<br><br>
-
           What they get in return:
         </p>
-        <ul style="font-size:14px; line-height:1.6; color:#ddd; margin:8px 0; padding-left:24px; text-align:left;">
+        <ul style="font-size:14px; line-height:1.6; color:#ddd; margin:8px 16px; padding-left:20px; text-align:left;">
           <li>Access to meet <strong>beautiful verified women</strong> ready to mingle</li>
-          <li>Chance to earn real money + unlock gift prizes & experiences through daily skill games (no luck involved — it's all strategy & grind)</li>
-          <li>Exclusive liveshows & streams the rest of the world can't touch</li>
+          <li>Chance to earn real money + unlock gift prizes & experiences through daily skill games (no luck — all strategy & grind)</li>
+          <li>Exclusive liveshows & streams the world can't see</li>
         </ul>
         <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center; margin-top:12px;">
-          You're not selling spots — you're offering an elite opportunity: <strong>money</strong>, connections, and entertainment.<br><br>
+          You're offering an elite opportunity: <strong>money</strong>, connections, entertainment.<br><br>
           They'll feel lucky to be in your VIP circle. 💎
         </p>
       </div>
 
-      <!-- CARD 3: Updated - Withdrawing Your Cash -->
+      <!-- CARD 3 -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
         <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
         <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Withdrawing Your Cash</h4>
         <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
-          Get your earnings out fast and easy — no stress.<br><br>
-
-          Go to your profile tab → click the gear ⚙️ icon in your profile card → set up & save your bank details once.<br><br>
-
-          We support:
+          Get your earnings out fast — no stress.<br><br>
+          Profile tab → gear ⚙️ in your profile card → save bank details once.<br><br>
+          Supports:
         </p>
-        <ul style="font-size:14px; line-height:1.6; color:#ddd; margin:8px 0; padding-left:24px; text-align:left;">
+        <ul style="font-size:14px; line-height:1.6; color:#ddd; margin:8px 16px; padding-left:20px; text-align:left;">
           <li>33+ West African banks</li>
           <li>15+ South African banks</li>
           <li>5 international options</li>
         </ul>
         <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center; margin-top:12px;">
-          Withdrawals hit your account quickly — your money belongs in your pocket. 💸✨
+          Money lands quickly — straight to your pocket. 💸✨
         </p>
       </div>
 
-      <!-- CARD 4: Updated - Using Tools as a Host -->
+      <!-- CARD 4 -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
         <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
         <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Using Tools as a Host</h4>
         <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
-          The Tools tab gives you everything to grow your Cube empire — more powerful features dropping soon.<br><br>
-
-          <strong>NUMBER VERIFY 🔍</strong><br>
-          Verify anyone who wants to meet or mingle by phone — confirm they're real Cube users and stay safe from fakes/scams.<br><br>
-
-          <strong>UPLOAD CLIPS 🎬</strong><br>
-          Drop exclusive clips for admirers & VIPs to unlock with STRZ — you keep 100% of earnings. Clips stay secure, and you see exactly who views them.<br><br>
-
-          <strong>FREE TONIGHT 🔥</strong><br>
-          Ready to mingle or link up IRL? Drop into Free Tonight — it boosts any uploaded video for 24hrs (make sure your location is saved in profile first).
+          Tools tab = your growth kit (more features coming).<br><br>
+          <strong>NUMBER VERIFY 🔍</strong><br>Check phone → confirm real Cube users, block fakes/scams.<br><br>
+          <strong>UPLOAD CLIPS 🎬</strong><br>Exclusive clips for VIPs/admirers — unlock with STRZ, you keep 100%, see who views.<br><br>
+          <strong>FREE TONIGHT 🔥</strong><br>Ready to link IRL? Boosts a video 24hrs (save location in profile first).
         </p>
       </div>
 
-      <!-- CARD 5: Updated - Daily Grind -->
+      <!-- CARD 5 -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
         <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
         <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Daily Grind Wins</h4>
         <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
-          <strong>TapMaster</strong> is pure skill & strategy — no luck, just taps.<br>
-          More taps = higher leaderboard spot. Simple, addictive, fun.<br><br>
-
-          Your VIPs play daily for cash rewards, gift prizes, or real experiences (changes with promotions).<br><br>
-
-          <strong>100% chance to win every day</strong> — everyone resets to 0 taps daily, no matter when they joined.<br><br>
-
-          Their grind = your steady income stream.<br>
-          When your invited hosts' VIPs win on any Daily Grind game — you get your cut too.<br><br>
-
-          You're not chasing money.<br>
-          <strong>The money is chasing you.</strong> 💚
+          <strong>TapMaster</strong>: skill + strategy, no luck — just taps.<br>
+          Higher score → better leaderboard rank.<br><br>
+          VIPs play daily → win cash, prizes, experiences.<br>
+          <strong>100% win chance every day</strong> — resets to zero for everyone.<br><br>
+          Their wins = your passive income.<br>
+          Your invited hosts' VIPs win? You get a cut too.<br><br>
+          You don't chase money.<br>
+          <strong>Money chases you.</strong> 💚
         </p>
       </div>
 
-
-
-      <!-- Dots -->
-      <div id="tipsDots" style="
-        position:absolute;
-        bottom:16px;
-        left:0;
-        right:0;
-        display:flex;
-        justify-content:center;
-        gap:12px;
-      ">
-        ${[0,1,2,3,4].map(i =>
-          `<div data-index="${i}" style="width:10px;height:10px;border-radius:50%;background:${i===0?'#c3f60c':'rgba(195,246,12,0.3)'}"></div>`
-        ).join("")}
-      </div>
     </div>
 
-    <!-- Close -->
-    <div style="padding:12px; text-align:center; border-top:1px solid rgba(195,246,12,0.2);">
-      <button id="closeTipsBtn" style="
-        padding:10px 32px;
-        border-radius:10px;
-        border:none;
-        background:#c3f60c;
-        font-weight:900;
-      ">I'm Ready</button>
+    <!-- Navigation Dots (fixed at bottom of carousel) -->
+    <div id="tipsDots" style="
+      position: absolute;
+      bottom: 16px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      z-index: 10;
+    ">
+      ${[0,1,2,3,4].map(i => 
+        `<div data-index="${i}" class="dot" style="
+          width:10px;
+          height:10px;
+          border-radius:50%;
+          background: ${i===0 ? '#c3f60c' : 'rgba(195,246,12,0.3)'};
+          transition: all 0.3s;
+        "></div>`
+      ).join('')}
     </div>
+
   </div>
-  `;
+
+  <!-- Close Button (always visible at very bottom) -->
+  <div style="
+    padding: 16px;
+    text-align: center;
+    border-top: 1px solid rgba(195,246,12,0.2);
+    background: #0a0a0a;
+  ">
+    <button id="closeTipsBtn" style="
+      padding: 12px 40px;
+      border-radius: 12px;
+      border: none;
+      background: #c3f60c;
+      color: #000;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+    ">I'm Ready</button>
+  </div>
+
+</div>
+`;
 
 // Close handler with confetti (RESTORED — EXACT)
 const closeBtn = modal.querySelector("#closeTipsBtn");
