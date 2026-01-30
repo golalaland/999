@@ -6855,27 +6855,21 @@ if (currentUser && currentUser.isLive) {
 
 // ===== TIPS MODAL LOGIC =====
 document.addEventListener("DOMContentLoaded", () => {
-  const button = document.getElementById("topBallersBtn");
-  if (!button) {
-    console.error("Button #topBallersBtn not found");
-    return;
-  }
-  button.addEventListener("click", openTipsModal);
-  console.log("Tips button listener attached");
+  const button = document.getElementById("topBallersBtn");
+  if (!button) {
+    console.error("Button #topBallersBtn not found");
+    return;
+  }
+  button.addEventListener("click", openTipsModal);
 });
 
 function openTipsModal() {
   console.log("openTipsModal called");
 
-  // Clean up old modal
-  let modal = document.getElementById("tipsModal");
-  if (modal) {
-    modal.remove();
-    console.log("Old modal removed");
-  }
+  // Remove existing modal
+  document.getElementById("tipsModal")?.remove();
 
-  // Create modal (page-like feel)
-  modal = document.createElement("div");
+  const modal = document.createElement("div");
   modal.id = "tipsModal";
   modal.style.cssText = `
     position: fixed;
@@ -6883,28 +6877,20 @@ function openTipsModal() {
     background: #0a0a0a;
     z-index: 2147483647;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow-y: auto;
-    pointer-events: auto;
-    visibility: visible;
-    opacity: 1;
-    padding: 0;
-    margin: 0;
+    justify-content: center;
+    overflow: hidden;
   `;
 
-modal.innerHTML = `
+  modal.innerHTML = `
   <div style="
     width: 100%;
     max-width: 420px;
+    height: 100vh;
     background: #0a0a0a;
     color: #eee;
     font-family: system-ui, sans-serif;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
-    max-height: 100vh;
-    overflow-y: auto;
   ">
     <!-- Header -->
     <div style="
@@ -6921,48 +6907,42 @@ modal.innerHTML = `
         letter-spacing: 0.8px;
         text-shadow: 0 0 8px rgba(195,246,12,0.4);
       ">TIPS</h3>
-      <p style="margin: 8px 0 0; font-size: 14px; color: #eee; opacity: 0.9;">
+      <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">
         Level up • Slay • Get Paid
       </p>
     </div>
 
-    <!-- Carousel / Content Pages -->
-    <div id="tipsCarousel" style="position: relative; flex: 1; overflow: hidden; min-height: 300px;">
+    <!-- Carousel -->
+    <div id="tipsCarousel" style="
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      touch-action: pan-y;
+    ">
       <div id="tipsSlides" style="
         display: flex;
-        width: 500%;  /* Updated for 5 cards */
         height: 100%;
-        transition: transform 0.5s ease;
-        transform: translateX(0%);
+        width: 500%;
+        will-change: transform;
+        transition: transform 0.45s ease;
       ">
-        <!-- Card 1: Welcome -->
-        <div style="width: 20%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
-          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80" alt="Club Vibe" style="
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin: 16px 0 12px;
-            border: 1px solid rgba(195,246,12,0.25);
-          ">
-          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Welcome to Cube</h4>
-          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+
+        <!-- CARD 1 -->
+        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+          <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80"
+            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Welcome to Cube</h4>
+          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
             You’re not just joining another platform, you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
           </p>
         </div>
 
-        <!-- Card 2: How You Make Bank on Cube -->
-        <div style="width: 20%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
-          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin: 16px 0 12px;
-            border: 1px solid rgba(195,246,12,0.25);
-          ">
-          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">How You Make Bank on Cube</h4>
-          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+        <!-- CARD 2 -->
+        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
+          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
             Everything flows toward you quietly, naturally, without force.<br><br>
             <strong>1. VIP Invites</strong><br>
             You open your circle to a select few who recognize your worth.<br>
@@ -6975,54 +6955,36 @@ modal.innerHTML = `
           </p>
         </div>
 
-        <!-- Card 3: Withdrawing Your Cash -->
-        <div style="width: 20%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
-          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Withdraw Cash" style="
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin: 16px 0 12px;
-            border: 1px solid rgba(195,246,12,0.25);
-          ">
-          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Withdrawing Your Cash</h4>
-          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+        <!-- CARD 3 -->
+        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+          <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Withdrawing Your Cash</h4>
+          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
             Cash out your earnings easily and quickly.<br><br>
             Set up your bank account once — we support 33+ Nigerian banks, 15 South African banks, and 5 international options.<br><br>
             Withdrawals are processed fast — your money lands where it belongs: in your pocket.
           </p>
         </div>
 
-        <!-- Card 4: Using Tools as a Host -->
-        <div style="width: 20%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
-          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Host Tools" style="
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin: 16px 0 12px;
-            border: 1px solid rgba(195,246,12,0.25);
-          ">
-          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Using Tools as a Host</h4>
-          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+        <!-- CARD 4 -->
+        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Using Tools as a Host</h4>
+          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
             Unlock powerful features to grow your presence.<br><br>
             Schedule liveshows, pin important messages, manage VIPs, and control your room vibe.<br><br>
             The more you use the tools, the more Cube rewards you — visibility, earnings, and influence.
           </p>
         </div>
 
-        <!-- Card 5: Daily Grind Conquests -->
-        <div style="width: 20%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
-          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Daily Grind" style="
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin: 16px 0 12px;
-            border: 1px solid rgba(195,246,12,0.25);
-          ">
-          <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Daily Grind Conquests</h4>
-          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+        <!-- CARD 5 -->
+        <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+            style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
+          <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Daily Grind Conquests</h4>
+          <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
             Your VIPs play TapMaster every day.<br><br>
             Every time they place in the top ranks, you receive your share automatically.<br><br>
             Their skill becomes your steady flow, building quietly month after month.<br><br>
@@ -7033,152 +6995,84 @@ modal.innerHTML = `
             Just elegant, effortless abundance — made for women who already know they’re the prize.
           </p>
         </div>
+
       </div>
 
-      <!-- Dots - centered perfectly (now 5 dots) -->
+      <!-- Dots -->
       <div id="tipsDots" style="
-        position: absolute;
-        bottom: 16px;
-        left: 0;
-        right: 0;
-        margin: 0 auto;
-        width: fit-content;
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        z-index: 10;
+        position:absolute;
+        bottom:16px;
+        left:0;
+        right:0;
+        display:flex;
+        justify-content:center;
+        gap:12px;
       ">
-        <div data-index="0" style="width:10px; height:10px; border-radius:50%; background:#c3f60c; cursor:pointer;"></div>
-        <div data-index="1" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
-        <div data-index="2" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
-        <div data-index="3" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
-        <div data-index="4" style="width:10px; height:10px; border-radius:50%; background:rgba(195,246,12,0.3); cursor:pointer;"></div>
+        ${[0,1,2,3,4].map(i =>
+          `<div data-index="${i}" style="width:10px;height:10px;border-radius:50%;background:${i===0?'#c3f60c':'rgba(195,246,12,0.3)'}"></div>`
+        ).join("")}
       </div>
     </div>
 
-    <!-- Close button - always visible at bottom (smaller version) -->
-    <div style="
-      padding: 12px;
-      text-align: center;
-      background: rgba(0,0,0,0.7);
-      border-top: 1px solid rgba(195,246,12,0.2);
-      flex-shrink: 0;
-    ">
+    <!-- Close -->
+    <div style="padding:12px; text-align:center; border-top:1px solid rgba(195,246,12,0.2);">
       <button id="closeTipsBtn" style="
-        padding: 10px 32px;
-        border: none;
-        border-radius: 10px;
-        background: #c3f60c;
-        color: #000;
-        font-weight: 900;
-        font-size: 14px;
-        cursor: pointer;
-        box-shadow: 0 3px 12px rgba(195,246,12,0.35);
+        padding:10px 32px;
+        border-radius:10px;
+        border:none;
+        background:#c3f60c;
+        font-weight:900;
       ">I'm Ready</button>
     </div>
   </div>
-`;
+  `;
 
   document.body.appendChild(modal);
-  console.log("Modal appended to body");
-
   initTipsCarousel();
 
-  // Close handler with confetti
-  const closeBtn = modal.querySelector("#closeTipsBtn");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      console.log("Close button clicked");
-      if (typeof confetti === "function") {
-        confetti({
-          particleCount: 180,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
-          zIndex: 2147483647
-        });
-      }
-      setTimeout(() => {
-        modal.style.display = "none";
-        modal.remove();
-        console.log("Modal hidden & removed");
-      }, 800);
-    });
-  }
+  modal.querySelector("#closeTipsBtn").onclick = () => modal.remove();
 }
+
+// ===== CAROUSEL LOGIC (FIXED) =====
 function initTipsCarousel() {
   const slides = document.getElementById("tipsSlides");
-  const dotsContainer = document.getElementById("tipsDots");
-  if (!slides || !dotsContainer) {
-    console.warn("Carousel elements missing");
-    return;
-  }
+  const dots = document.querySelectorAll("#tipsDots [data-index]");
+  const carousel = document.getElementById("tipsCarousel");
 
-  const dots = dotsContainer.querySelectorAll("[data-index]");
   let current = 0;
   const total = dots.length;
-
-  // Fade timeout reference
-  let fadeTimeout = null;
+  let startX = 0;
 
   function update() {
-    slides.style.transform = `translateX(-${current * 33.333}%)`;
-    dots.forEach((dot, i) => {
-      dot.style.background = i === current ? "#c3f60c" : "rgba(195,246,12,0.3)";
+    slides.style.transform = `translateX(-${current * 20}%)`;
+    dots.forEach((d, i) => {
+      d.style.background = i === current ? "#c3f60c" : "rgba(195,246,12,0.3)";
     });
-    // Reset fade timer whenever update happens (swipe or click)
-    resetFadeTimer();
   }
 
-  function resetFadeTimer() {
-    // Clear any existing timeout
-    if (fadeTimeout) clearTimeout(fadeTimeout);
-    // Show dots fully
-    dotsContainer.style.opacity = "1";
-    dotsContainer.style.transition = "opacity 0.4s ease";
-    // Start fade-out after 2 seconds
-    fadeTimeout = setTimeout(() => {
-      dotsContainer.style.opacity = "0.13"; // almost invisible but still there
-    }, 1800);
-  }
+  carousel.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+  }, { passive: true });
 
-  // Touch swipe
-  let startX = 0;
-  const carousel = document.getElementById("tipsCarousel");
-  if (carousel) {
-    carousel.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-      // Show dots on touch
-      resetFadeTimer();
-    }, { passive: true });
-
-    carousel.addEventListener("touchend", e => {
-      const diff = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 60) {
-        if (diff > 0 && current < total - 1) current++;
-        else if (diff < 0 && current > 0) current--;
-        update();
-      }
-      // Show dots again after swipe ends
-      resetFadeTimer();
-    }, { passive: true });
-  }
-
-  // Dot clicks
-  dots.forEach((dot, index) => {
-    dot.addEventListener("click", () => {
-      current = index;
+  carousel.addEventListener("touchend", e => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0 && current < total - 1) current++;
+      if (diff < 0 && current > 0) current--;
       update();
-      // Show dots on click
-      resetFadeTimer();
-    });
+    }
+  }, { passive: true });
+
+  dots.forEach(dot => {
+    dot.onclick = () => {
+      current = Number(dot.dataset.index);
+      update();
+    };
   });
 
-  // Initial update + start fade timer
   update();
-
-  console.log("Carousel initialized with fade-out dots");
 }
+
 /*********************************
  * fruity punch!!
  *********************************/
