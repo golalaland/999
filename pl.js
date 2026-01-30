@@ -7091,6 +7091,20 @@ function initTipsCarousel() {
       update();
     };
   });
+  
+  // ===== FADE DOT LOGIC (RESTORED — EXACT BEHAVIOR) =====
+let fadeTimeout = null;
+
+function resetFadeTimer() {
+  if (fadeTimeout) clearTimeout(fadeTimeout);
+
+  tipsDots.style.opacity = "1";
+  tipsDots.style.transition = "opacity 0.4s ease";
+
+  fadeTimeout = setTimeout(() => {
+    tipsDots.style.opacity = "0.13";
+  }, 1800);
+}
 
   update();
 }
