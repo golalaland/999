@@ -7027,6 +7027,28 @@ function openTipsModal() {
   </div>
   `;
 
+// Close handler with confetti (RESTORED — EXACT)
+const closeBtn = modal.querySelector("#closeTipsBtn");
+if (closeBtn) {
+  closeBtn.addEventListener("click", () => {
+    console.log("Close button clicked");
+    if (typeof confetti === "function") {
+      confetti({
+        particleCount: 180,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#FF1493', '#00e676', '#FFD700', '#FF69B4', '#0f9'],
+        zIndex: 2147483647
+      });
+    }
+    setTimeout(() => {
+      modal.style.display = "none";
+      modal.remove();
+      console.log("Modal hidden & removed");
+    }, 800);
+  });
+}
+
   document.body.appendChild(modal);
   initTipsCarousel();
 
