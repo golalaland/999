@@ -3183,7 +3183,7 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-const ROOM_DOC_REF = doc(db, "chat_rooms", "room888");
+const ROOM_REF = doc(db, "chat_rooms", "room888");
 
    
 // SEND REGULAR MESSAGE — SHARED ROOM, FIXED (creates doc if missing)
