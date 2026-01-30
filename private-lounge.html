@@ -2259,172 +2259,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     padding: 0 6px;
   }
 }
-
-/* Reels Gallery Tab - Pro TikTok/YouTube style grid */
-#reelsGallery {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
-  gap: 8px;
-  padding: 0 8px;
-}
-
-.reel-item {
-  position: relative;
-  aspect-ratio: 9 / 16;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #111;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  transition: transform 0.25s ease;
-}
-
-.reel-item:hover,
-.reel-item:active {
-  transform: scale(1.02); /* Very subtle lift — feels responsive but not aggressive */
-}
-
-.reel-item video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Center play icon */
-.play-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 48px;
-  color: rgba(255, 255, 255, 0.8);
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-/* Bottom overlay with gradient */
-.reel-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.92) 100%);
-  display: flex;
-  align-items: flex-end;
-  padding: 16px 14px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.reel-item:hover .reel-overlay,
-.reel-item:active .reel-overlay {
-  opacity: 1;
-}
-
-.reel-item:hover .play-icon {
-  opacity: 0.6;
-}
-
-/* Text info — left-aligned, clean hierarchy */
-.reel-info {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: flex-start;
-  text-align: left;
-}
-
-/* Views row — bold, top priority */
-.reel-views {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  opacity: 0.98;
-}
-
-.views-icon-svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-/* Title — strong, aligned with views */
-.reel-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  opacity: 0.98;
-  line-height: 1.3;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-/* Description — subtle caption, 2-line clamp */
-.reel-description {
-  font-size: 11px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.4;
-  max-width: 95%;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-}
-
-/* Desktop enhancements */
-@media (min-width: 768px) {
-  #reelsGallery {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    padding: 0 16px;
-  }
-
-  .reel-overlay {
-    padding: 20px 18px;
-  }
-
-  .reel-views {
-    font-size: 9px;
-    gap: 7px;
-  }
-
-  .views-icon-svg {
-    width: 11px;
-    height: 11px;
-  }
-
-  .reel-title {
-    font-size: 16px;
-  }
-
-  .reel-description {
-    font-size: 14.5px;
-    -webkit-line-clamp: 3; /* Allow 3 lines on larger screens */
-    max-width: 90%;
-  }
-
-  .reel-description.expanded {
-  -webkit-line-clamp: unset;
-  overflow: visible;
-  display: block;
-  text-overflow: unset;
-}
-
-
-  .reel-item:hover,
-  .reel-item:active {
-    transform: scale(1.03);
-  }
-}
-
-@media (min-width: 1024px) {
-  #reelsGallery {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
 .google-block { 
   width: 100%;  /* ← Matches wrapper width */
   text-align: center;  /* ← Centers text + inline elements */
@@ -3530,7 +3364,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <div class="live-content-tabs">
       <button class="live-tab-btn active" data-content="live">Livestreams</button>
       <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
-      <button class="live-tab-btn" data-content="reels">Reels</button>
     </div>
 
     <!-- Live Tab (Livestreams) - Player + Private Message Feature + Reader -->
@@ -3622,11 +3455,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       </div>
     </div>
 
-    <!-- Reels Tab -->
-    <div id="reels" class="live-tab-content">
-      <div id="reelsGallery">
-        <p style="text-align:center; padding-top:40%; color:#666;">Reels Loading...</p>
-      </div>
     </div>
 
   </div> <!-- End of .live-modal-content -->
