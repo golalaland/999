@@ -6920,7 +6920,7 @@ function openTipsModal() {
           font-weight: 900;
           letter-spacing: 0.8px;
           text-shadow: 0 0 8px rgba(195,246,12,0.4);
-        ">LEARN HOW TO HOST ON CUBE</h3>
+        ">$TIPS</h3>
         <p style="margin: 8px 0 0; font-size: 14px; color: #eee; opacity: 0.9;">
           Level up • Slay • Get Paid
         </p>
@@ -6947,11 +6947,12 @@ function openTipsModal() {
             ">
             <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">Welcome to Cube</h4>
             <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
-              You’re not just joining another platform — you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
+              You’re not just joining another platform, you’re stepping into <strong>Cube</strong>, an invite-only club where <strong>you call the shots</strong>, build wealth on your terms, and live like the prize you are.
             </p>
           </div>
 
-          <!-- Card 2: How You Make Bank on Cube -->
+
+           <!-- Card 2: How You Make Bank on Cube -->
           <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
             <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
               width: 100%;
@@ -6975,7 +6976,106 @@ function openTipsModal() {
             </p>
           </div>
 
-          <!-- Card 3: Daily Grind Conquests -->
+
+         
+            <!-- Card B: Withdrawing Your Cash -->
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
+              width: 100%;
+              height: 160px;
+              object-fit: cover;
+              border-radius: 10px;
+              margin: 16px 0 12px;
+              border: 1px solid rgba(195,246,12,0.25);
+            ">
+            <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">How You Make Bank on Cube</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+              Everything flows toward you quietly, naturally, without force.<br><br>
+              <strong>1. VIP Invites</strong><br>
+              You open your circle to a select few who recognize your worth.<br>
+              Each one who steps in pays a premium to be close to you.<br>
+              You receive a meaningful share immediately and again every month they stay.<br><br>
+              <strong>2. Parties & Liveshows</strong><br>
+              When you choose to step forward, Cube opens doors most never see.<br>
+              Weekly liveshows and intimate Cube Nights become your stage.<br>
+              Tips, hearts, and connections turn into real rewards — all on your terms.
+            </p>
+          </div>
+
+           <!-- Card 2: Using Tools as a Host -->
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
+              width: 100%;
+              height: 160px;
+              object-fit: cover;
+              border-radius: 10px;
+              margin: 16px 0 12px;
+              border: 1px solid rgba(195,246,12,0.25);
+            ">
+            <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">How You Make Bank on Cube</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+              Everything flows toward you quietly, naturally, without force.<br><br>
+              <strong>1. VIP Invites</strong><br>
+              You open your circle to a select few who recognize your worth.<br>
+              Each one who steps in pays a premium to be close to you.<br>
+              You receive a meaningful share immediately and again every month they stay.<br><br>
+              <strong>2. Parties & Liveshows</strong><br>
+              When you choose to step forward, Cube opens doors most never see.<br>
+              Weekly liveshows and intimate Cube Nights become your stage.<br>
+              Tips, hearts, and connections turn into real rewards — all on your terms.
+            </p>
+          </div>
+
+
+           <!-- Card B: Featuring in Liveshows & Streams -->
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
+              width: 100%;
+              height: 160px;
+              object-fit: cover;
+              border-radius: 10px;
+              margin: 16px 0 12px;
+              border: 1px solid rgba(195,246,12,0.25);
+            ">
+            <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">How You Make Bank on Cube</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+              Everything flows toward you quietly, naturally, without force.<br><br>
+              <strong>1. VIP Invites</strong><br>
+              You open your circle to a select few who recognize your worth.<br>
+              Each one who steps in pays a premium to be close to you.<br>
+              You receive a meaningful share immediately and again every month they stay.<br><br>
+              <strong>2. Parties & Liveshows</strong><br>
+              When you choose to step forward, Cube opens doors most never see.<br>
+              Weekly liveshows and intimate Cube Nights become your stage.<br>
+              Tips, hearts, and connections turn into real rewards — all on your terms.
+            </p>
+          </div>
+
+           <!-- Card B: Uploading Clips & Free Tonight-->
+          <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
+            <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80" alt="Earn STRZ" style="
+              width: 100%;
+              height: 160px;
+              object-fit: cover;
+              border-radius: 10px;
+              margin: 16px 0 12px;
+              border: 1px solid rgba(195,246,12,0.25);
+            ">
+            <h4 style="margin: 0 0 10px; color: #c3f60c; font-size: 17px; text-align: center;">How You Make Bank on Cube</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #ddd; text-align: center;">
+              Everything flows toward you quietly, naturally, without force.<br><br>
+              <strong>1. VIP Invites</strong><br>
+              You open your circle to a select few who recognize your worth.<br>
+              Each one who steps in pays a premium to be close to you.<br>
+              You receive a meaningful share immediately and again every month they stay.<br><br>
+              <strong>2. Parties & Liveshows</strong><br>
+              When you choose to step forward, Cube opens doors most never see.<br>
+              Weekly liveshows and intimate Cube Nights become your stage.<br>
+              Tips, hearts, and connections turn into real rewards — all on your terms.
+            </p>
+          </div>
+
+          <!-- Card 3: Daily Grind & Reward Tasks-->
           <div style="width: 33.333%; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column;">
             <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80" alt="Daily Grind" style="
               width: 100%;
@@ -7018,26 +7118,26 @@ function openTipsModal() {
         </div>
       </div>
 
-      <!-- Close button - always visible at bottom -->
-      <div style="
-        padding: 16px;
-        text-align: center;
-        background: rgba(0,0,0,0.7);
-        border-top: 1px solid rgba(195,246,12,0.2);
-        flex-shrink: 0;
-      ">
-        <button id="closeTipsBtn" style="
-          padding: 14px 48px;
-          border: none;
-          border-radius: 14px;
-          background: #c3f60c;
-          color: #000;
-          font-weight: 900;
-          font-size: 16px;
-          cursor: pointer;
-          box-shadow: 0 4px 16px rgba(195,246,12,0.4);
-        ">GOT IT 🔥</button>
-      </div>
+    <!-- Close button - always visible at bottom (smaller version) -->
+<div style="
+  padding: 12px;
+  text-align: center;
+  background: rgba(0,0,0,0.7);
+  border-top: 1px solid rgba(195,246,12,0.2);
+  flex-shrink: 0;
+">
+  <button id="closeTipsBtn" style="
+    padding: 10px 32px;
+    border: none;
+    border-radius: 10px;
+    background: #c3f60c;
+    color: #000;
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(195,246,12,0.35);
+  ">I'm Ready</button>
+</div>
     </div>
   `;
 
@@ -7100,7 +7200,7 @@ function initTipsCarousel() {
     dotsContainer.style.transition = "opacity 0.4s ease";
     // Start fade-out after 2 seconds
     fadeTimeout = setTimeout(() => {
-      dotsContainer.style.opacity = "0.15"; // almost invisible but still there
+      dotsContainer.style.opacity = "0.13"; // almost invisible but still there
     }, 1800);
   }
 
