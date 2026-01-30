@@ -7058,6 +7058,7 @@ if (closeBtn) {
 // ===== CAROUSEL LOGIC (FIXED) =====
 function initTipsCarousel() {
   const slides = document.getElementById("tipsSlides");
+  const tipsDots = document.getElementById("tipsDots"); // ✅ MISSING
   const dots = document.querySelectorAll("#tipsDots [data-index]");
   const carousel = document.getElementById("tipsCarousel");
 
@@ -7065,23 +7066,44 @@ function initTipsCarousel() {
   const total = dots.length;
   let startX = 0;
 
+  // ===== FADE DOT LOGIC (RESTORED — EXACT BEHAVIOR) =====
+  let fadeTimeout = null;
+
+  function resetFadeTimer() {
+    if (fadeTimeout) clearTimeout(fadeTimeout);
+
+    tipsDots.style.opacity = "1";
+    tipsDots.style.transition = "opacity 0.4s ease";
+
+    fadeTimeout = setTimeout(() => {
+      tipsDots.style.opacity = "0.13";
+    }, 1800);
+  }
+
   function update() {
-    slides.style.transform = `translateX(-${current * 20}%)`;
+    slides.style.transform = `translateX(-${current * 20}%)`; // ✅ correct math
     dots.forEach((d, i) => {
-      d.style.background = i === current ? "#c3f60c" : "rgba(195,246,12,0.3)";
+      d.style.background =
+        i === current ? "#c3f60c" : "rgba(195,246,12,0.3)";
     });
+
+    resetFadeTimer(); // ✅ IMPORTANT
   }
 
   carousel.addEventListener("touchstart", e => {
     startX = e.touches[0].clientX;
+    resetFadeTimer(); // ✅ show dots on touch
   }, { passive: true });
 
   carousel.addEventListener("touchend", e => {
     const diff = startX - e.changedTouches[0].clientX;
+
     if (Math.abs(diff) > 60) {
       if (diff > 0 && current < total - 1) current++;
       if (diff < 0 && current > 0) current--;
       update();
+    } else {
+      resetFadeTimer(); // ✅ even if no slide change
     }
   }, { passive: true });
 
@@ -7091,22 +7113,8 @@ function initTipsCarousel() {
       update();
     };
   });
-  
-  // ===== FADE DOT LOGIC (RESTORED — EXACT BEHAVIOR) =====
-let fadeTimeout = null;
 
-function resetFadeTimer() {
-  if (fadeTimeout) clearTimeout(fadeTimeout);
-
-  tipsDots.style.opacity = "1";
-  tipsDots.style.transition = "opacity 0.4s ease";
-
-  fadeTimeout = setTimeout(() => {
-    tipsDots.style.opacity = "0.13";
-  }, 1800);
-}
-
-  update();
+  update(); // ✅ initial fade timer kick-off
 }
 
 /*********************************
