@@ -324,29 +324,26 @@ async function pushNotification(userId, message) {
 
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ——— CLEANUP PREVIOUS LISTENERS ———
-  if (typeof notificationsUnsubscribe === "function") {
-    notificationsUnsubscribe();
-    notificationsUnsubscribe = null;
-  }
-  if (typeof messagesUnsub === "function") {
-    messagesUnsub();
-    messagesUnsub = null;
-  }
-  if (typeof privateMsgUnsubscribe === "function") {
-    privateMsgUnsubscribe();
-    privateMsgUnsubscribe = null;
-  }
-  if (typeof pollUnsubscribe === "function") {
-    pollUnsubscribe();
-    pollUnsubscribe = null;
-  }
-  if (typeof votesUnsubscribe === "function") {
-    votesUnsubscribe();
-    votesUnsubscribe = null;
-  }
+  // ——— CLEANUP ALL PREVIOUS LISTENERS ———
+  [
+    notificationsUnsubscribe,
+    messagesUnsub,
+    privateMsgUnsubscribe,
+    pollUnsubscribe,
+    votesUnsubscribe
+  ].forEach(unsub => {
+    if (typeof unsub === "function") {
+      unsub();
+    }
+  });
 
-  // Reset globals
+  // Reset global vars
+  notificationsUnsubscribe = null;
+  messagesUnsub = null;
+  privateMsgUnsubscribe = null;
+  pollUnsubscribe = null;
+  votesUnsubscribe = null;
+
   currentUser = null;
   currentAdmin = null;
 
@@ -378,7 +375,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— USER LOGGED IN ———
   console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid || "unknown");
 
-  // Guard against invalid user object
+  // Guard: invalid user object
   if (!firebaseUser.uid) {
     console.warn("[AUTH] Invalid user object - no UID");
     await signOut(auth);
@@ -386,7 +383,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 
   const email = firebaseUser.email?.toLowerCase()?.trim() || "";
-
   if (!email) {
     console.warn("[AUTH] No email in firebaseUser");
     showStarPopup("Login error — no email found");
@@ -470,35 +466,35 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
 
-    // Wait for auth token to be fully synced before button updates
+    // Wait for auth token to stabilize before calling tip/redeem functions
     console.log("[AUTH] Waiting 2s for token sync...");
     await new Promise(r => setTimeout(r, 2000));
 
     // Run cleanup once per login
-   // await cleanupExpiredTokens();
+    await cleanupExpiredTokens?.();
 
     // Buttons — safe check
     if (typeof updateRedeemLink === "function") {
       console.log("[AUTH] Calling updateRedeemLink");
-     // await updateRedeemLink();
+      await updateRedeemLink();
     } else {
       console.warn("[AUTH] updateRedeemLink not defined");
     }
 
     if (typeof updateTipLink === "function") {
       console.log("[AUTH] Calling updateTipLink");
-     // await updateTipLink();
+      await updateTipLink();
     } else {
       console.warn("[AUTH] updateTipLink not defined");
     }
 
-    // Start real-time messages listener (now safe — currentUser exists)
+    // Start real-time messages listener (safe — currentUser exists)
     listenToMessages();
 
     // Delayed loads
     setTimeout(() => {
-     // syncUserUnlocks?.();
-    //  loadNotifications?.();
+      syncUserUnlocks?.();
+      loadNotifications?.();
     }, 600);
 
     if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
@@ -536,6 +532,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     await signOut(auth);
   }
 });
+
 
 function setupNotificationsListener(userId) {
   if (!userId) return;
@@ -1763,6 +1760,49 @@ function renderMessagesFromArray(messages) {
       refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
       scrollPending = false;
     });
+  }
+}
+
+
+let roomUnsub = null;
+
+function listenToRoomMessages() {
+  if (roomUnsub) {
+    roomUnsub();
+    roomUnsub = null;
+  }
+
+  roomUnsub = onSnapshot(ROOM_DOC_REF, (snap) => {
+    console.log(`Room snapshot | exists: ${snap.exists()} | messages: ${snap.data()?.messages?.length || 0}`);
+
+    if (!snap.exists()) {
+      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
+      return;
+    }
+
+    let messages = snap.data().messages || [];
+
+    messages.sort((a, b) => {
+      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
+      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
+      return ta - tb;
+    });
+
+    renderMessagesFromArray(messages);
+
+    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+    if (distanceFromBottom < 200) {
+      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
+    }
+  }, (err) => {
+    console.error("Room listener error:", err);
+  });
+}
+
+function stopRoomListener() {
+  if (roomUnsub) {
+    roomUnsub();
+    roomUnsub = null;
   }
 }
 
@@ -3136,9 +3176,12 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
+const ROOM_DOC_REF = doc(db, "chat_rooms", "room888");
+
+   
 // SEND REGULAR MESSAGE — FIXED APPEND-ONLY + NO OVERWRITE (array grows forever)
 refs.sendBtn?.addEventListener("click", async () => {
-  if (!currentUser?.uid) return showStarPopup("Sign in to chat.");
+  if (!currentUser) return showStarPopup("Sign in to chat.");
 
   const txt = refs.messageInputEl?.value.trim();
   if (!txt) return showStarPopup("Type a message first.");
@@ -3146,11 +3189,9 @@ refs.sendBtn?.addEventListener("click", async () => {
   if ((currentUser.stars || 0) < SEND_COST)
     return showStarPopup("Not enough stars to send message.");
 
-  // Deduct stars locally
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-  // Reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3160,14 +3201,14 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
-  const messageId = "msg-" + Date.now() + Math.random().toString(36).slice(2);
+  const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2);
 
-  const optimisticMsg = {
+  const msg = {
     id: messageId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: Date.now(),
+    timestamp: serverTimestamp(),
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3175,37 +3216,24 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  renderMessagesFromArray([optimisticMsg]);
-
-  refs.messageInputEl.value = "";
-  cancelReply?.();
-  resizeAndExpand();
-
   try {
-    const userMsgRef = doc(db, "messages", currentUser.uid);
+    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-SEND_COST) });
 
-    // Check if doc exists — create with empty array if not
-    const docSnap = await getDoc(userMsgRef);
-    if (!docSnap.exists()) {
-      await setDoc(userMsgRef, { messages: [] });
-      console.log("[SEND] Created new messages doc for user");
-    }
-
-    // Append safely
-    await updateDoc(userMsgRef, {
-      messages: arrayUnion(optimisticMsg)
+    await updateDoc(ROOM_DOC_REF, {
+      messages: arrayUnion(msg)
     });
 
-    console.log("Message appended safely");
+    refs.messageInputEl.value = "";
+    cancelReply?.();
+    resizeAndExpand();
+
+    console.log("Message sent to shared room array");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-
-    const tempEl = document.getElementById(messageId);
-    if (tempEl) tempEl.remove();
   }
 });
    
