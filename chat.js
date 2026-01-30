@@ -1764,7 +1764,6 @@ function renderMessagesFromArray(messages) {
 }
 
 
-let roomUnsub = null;
 
 function listenToRoomMessages() {
   if (roomUnsub) {
