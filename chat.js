@@ -1834,6 +1834,57 @@ function stopRoomListener() {
   }
 }
 
+
+function listenToMessages() {
+  // Your full listener code here (the one you pasted earlier)
+  if (!currentUser?.uid || !refs.messagesEl) {
+    console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
+    return;
+  }
+
+  if (messagesUnsub) {
+    messagesUnsub();
+    messagesUnsub = null;
+    console.log("[MESSAGES] Previous listener cleaned up");
+  }
+
+  const userMsgRef = doc(db, "messages", currentUser.uid);
+
+  messagesUnsub = onSnapshot(userMsgRef, (snap) => {
+    console.log(
+      `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
+      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
+    );
+
+    if (!snap.exists()) {
+      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
+      return;
+    }
+
+    let messages = snap.data().messages || [];
+
+    messages = messages.filter(m => m && m.id && m.content != null);
+
+    messages.sort((a, b) => {
+      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
+      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
+      return ta - tb;
+    });
+
+    renderMessagesFromArray(messages);
+
+    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+    if (distanceFromBottom < 200) {
+      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
+    }
+  }, (err) => {
+    console.error("Messages listener error:", err);
+    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
+  });
+
+  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
+}
+
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
 /*
   ✔ Loads from messages/{uid} doc → messages array
