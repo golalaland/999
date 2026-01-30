@@ -6987,7 +6987,7 @@ modal.innerHTML = `
 
       <!-- CARD 5: Daily Grind & House Games -->
 <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-  <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+  <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
     style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
   <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center; font-weight:bold;">Daily Grind & House Games</h4>
   <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
