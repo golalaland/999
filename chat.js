@@ -3179,7 +3179,7 @@ function clearReplyAfterSend() {
 const ROOM_DOC_REF = doc(db, "chat_rooms", "room888");
 
    
-// SEND REGULAR MESSAGE — FIXED APPEND-ONLY + NO OVERWRITE (array grows forever)
+// SEND REGULAR MESSAGE — FIXED: NO nested serverTimestamp, appends safely to shared room
 refs.sendBtn?.addEventListener("click", async () => {
   if (!currentUser) return showStarPopup("Sign in to chat.");
 
@@ -3189,9 +3189,11 @@ refs.sendBtn?.addEventListener("click", async () => {
   if ((currentUser.stars || 0) < SEND_COST)
     return showStarPopup("Not enough stars to send message.");
 
+  // Deduct stars locally (optimistic)
   currentUser.stars -= SEND_COST;
   if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
+  // Reply data
   const replyData = currentReplyTarget
     ? {
         replyTo: currentReplyTarget.id,
@@ -3201,14 +3203,16 @@ refs.sendBtn?.addEventListener("click", async () => {
       }
     : { replyTo: null, replyToContent: null, replyToChatId: null };
 
+  // Stable unique ID
   const messageId = crypto.randomUUID?.() || "msg-" + Date.now() + Math.random().toString(36).slice(2);
 
-  const msg = {
+  // Optimistic message — client timestamp for instant UI
+  const optimisticMsg = {
     id: messageId,
     uid: currentUser.uid,
     chatId: currentUser.chatId,
     content: txt,
-    timestamp: serverTimestamp(),
+    timestamp: Date.now(),           // ← client-side number (safe)
     type: "text",
     usernameColor: currentUser.usernameColor || "#ff69b4",
     highlight: false,
@@ -3216,26 +3220,36 @@ refs.sendBtn?.addEventListener("click", async () => {
     ...replyData
   };
 
-  try {
-    await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-SEND_COST) });
+  // Render immediately (optimistic)
+  renderMessagesFromArray([optimisticMsg]);
 
-    await updateDoc(ROOM_DOC_REF, {
-      messages: arrayUnion(msg)
+  // Reset UI
+  refs.messageInputEl.value = "";
+  cancelReply?.();
+  resizeAndExpand();
+
+  try {
+    const roomRef = doc(db, "chat_rooms", "room888");
+
+    await updateDoc(roomRef, {
+      messages: arrayUnion(optimisticMsg),         // ← plain object, no sentinel
+      lastMessageAt: serverTimestamp()             // ← safe top-level timestamp
     });
 
-    refs.messageInputEl.value = "";
-    cancelReply?.();
-    resizeAndExpand();
-
-    console.log("Message sent to shared room array");
+    console.log("Message appended to shared room array");
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
 
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+
+    // Remove optimistic message on error
+    const tempEl = document.getElementById(messageId);
+    if (tempEl) tempEl.remove();
   }
 });
+   
    
 // Private Message Modal Logic
 const privateMsgBtn = document.getElementById('privateMsgBtn');
