@@ -6853,6 +6853,17 @@ if (currentUser && currentUser.isLive) {
   privateMsgReader.style.display = 'none';
 }
 
+// ===== TIPS MODAL LOGIC =====
+document.addEventListener("DOMContentLoaded", () => {
+  const button = document.getElementById("topBallersBtn");
+  if (!button) {
+    console.error("Button #topBallersBtn not found");
+    return;
+  }
+  button.addEventListener("click", openTipsModal);
+  console.log("Tips button listener attached");
+});
+
 function openTipsModal() {
   console.log("openTipsModal called");
 
