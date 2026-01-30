@@ -6659,7 +6659,7 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
 
   navigator.clipboard.writeText(fullText)
     .then(() => {
-      showStarPopup('Copied!', 'Your invite link is ready to share!', 2500);
+      showStarPopup('Invite Link Copied!', 'Your invite link is ready to share!', 2500);
     })
     .catch(() => {
       showStarPopup('Error', 'Could not copy link — try again', 3000);
@@ -6929,7 +6929,7 @@ modal.innerHTML = `
 
       <!-- CARD 1 -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-        <img src="https://images.unsplash.com/photo-1556155099-490a1ba16284?w=800&q=80"
+        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
         <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Welcome to Cube</h4>
         <p style="font-size:14px; line-height:1.6; color:#ddd; text-align:center;">
@@ -6939,7 +6939,7 @@ modal.innerHTML = `
 
 <!-- CARD 2: How You Make Bank on Cube -->
 <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-  <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+  <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
     style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
   <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">How You Make Bank on Cube</h4>
   <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
@@ -6957,7 +6957,7 @@ modal.innerHTML = `
 
       <!-- CARD 3: Your original "Withdrawing Your Cash" -->
       <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-        <img src="https://images.unsplash.com/photo-1556740714-a8395b3a74dd?w=800&q=80"
+        <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
           style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
         <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center;">Withdrawing Your Cash</h4>
         <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
@@ -6973,7 +6973,7 @@ modal.innerHTML = `
 
 <!-- CARD 4: Using Tools as a Host -->
 <div style="width:20%; flex-shrink:0; padding:0 16px; box-sizing:border-box;">
-  <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&q=80"
+  <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962"
     style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin:16px 0 12px; border:1px solid rgba(195,246,12,0.25);">
   <h4 style="margin:0 0 10px; color:#c3f60c; font-size:17px; text-align:center; font-weight:bold;">Using Tools as a Host</h4>
   <p style="font-size:14px; line-height:1.5; color:#ddd; text-align:center;">
