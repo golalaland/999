@@ -6920,9 +6920,9 @@ function openTipsModal() {
           font-weight: 900;
           letter-spacing: 0.8px;
           text-shadow: 0 0 8px rgba(195,246,12,0.4);
-        ">CUBE TIPS</h3>
+        ">LEARN HOW TO HOST ON CUBE</h3>
         <p style="margin: 8px 0 0; font-size: 14px; color: #eee; opacity: 0.9;">
-          Level up • Earn more • Dominate
+          Level up • Slay • Get Paid
         </p>
       </div>
 
@@ -7080,18 +7080,40 @@ function initTipsCarousel() {
   let current = 0;
   const total = dots.length;
 
+  // Fade timeout reference
+  let fadeTimeout = null;
+
   function update() {
     slides.style.transform = `translateX(-${current * 33.333}%)`;
     dots.forEach((dot, i) => {
       dot.style.background = i === current ? "#c3f60c" : "rgba(195,246,12,0.3)";
     });
+    // Reset fade timer whenever update happens (swipe or click)
+    resetFadeTimer();
+  }
+
+  function resetFadeTimer() {
+    // Clear any existing timeout
+    if (fadeTimeout) clearTimeout(fadeTimeout);
+    // Show dots fully
+    dotsContainer.style.opacity = "1";
+    dotsContainer.style.transition = "opacity 0.4s ease";
+    // Start fade-out after 2 seconds
+    fadeTimeout = setTimeout(() => {
+      dotsContainer.style.opacity = "0.15"; // almost invisible but still there
+    }, 1800);
   }
 
   // Touch swipe
   let startX = 0;
   const carousel = document.getElementById("tipsCarousel");
   if (carousel) {
-    carousel.addEventListener("touchstart", e => startX = e.touches[0].clientX, { passive: true });
+    carousel.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+      // Show dots on touch
+      resetFadeTimer();
+    }, { passive: true });
+
     carousel.addEventListener("touchend", e => {
       const diff = startX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 60) {
@@ -7099,6 +7121,8 @@ function initTipsCarousel() {
         else if (diff < 0 && current > 0) current--;
         update();
       }
+      // Show dots again after swipe ends
+      resetFadeTimer();
     }, { passive: true });
   }
 
@@ -7107,12 +7131,16 @@ function initTipsCarousel() {
     dot.addEventListener("click", () => {
       current = index;
       update();
+      // Show dots on click
+      resetFadeTimer();
     });
   });
 
-  console.log("Carousel initialized");
-}
+  // Initial update + start fade timer
+  update();
 
+  console.log("Carousel initialized with fade-out dots");
+}
 /*********************************
  * fruity punch!!
  *********************************/
