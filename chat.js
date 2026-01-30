@@ -322,28 +322,16 @@ async function pushNotification(userId, message) {
   }
 }
 
+
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ——— CLEANUP ALL PREVIOUS LISTENERS ———
-  const unsubs = [
-    notificationsUnsubscribe,
-    messagesUnsub,
-    privateMsgUnsubscribe,
-    pollUnsubscribe,
-    votesUnsubscribe
-  ];
-
-  unsubs.forEach(unsub => {
-    if (typeof unsub === "function") unsub();
-  });
+  // ——— CLEANUP PREVIOUS LISTENERS ———
+  if (typeof notificationsUnsubscribe === "function") {
+    notificationsUnsubscribe();
+    notificationsUnsubscribe = null;
+  }
 
   // Reset globals
-  notificationsUnsubscribe = null;
-  messagesUnsub = null;
-  privateMsgUnsubscribe = null;
-  pollUnsubscribe = null;
-  votesUnsubscribe = null;
-
   currentUser = null;
   currentAdmin = null;
 
@@ -375,7 +363,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— USER LOGGED IN ———
   console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid || "unknown");
 
-  // Guard: invalid user object
+  // Guard against invalid user object
   if (!firebaseUser.uid) {
     console.warn("[AUTH] Invalid user object - no UID");
     await signOut(auth);
@@ -383,6 +371,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 
   const email = firebaseUser.email?.toLowerCase()?.trim() || "";
+
   if (!email) {
     console.warn("[AUTH] No email in firebaseUser");
     showStarPopup("Login error — no email found");
@@ -407,6 +396,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
+// Wait a moment for auth to stabilize
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Run cleanup once per login (optional)
+    await cleanupExpiredTokens();
+
+    await updateRedeemLink();
+    await updateTipLink();
+     
     // BUILD CURRENT USER OBJECT
     currentUser = {
       uid,
@@ -466,14 +464,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
 
-    // Wait for auth token to stabilize before calling tip/redeem functions
+    // Wait for auth token to be fully synced before button updates
     console.log("[AUTH] Waiting 2s for token sync...");
     await new Promise(r => setTimeout(r, 2000));
 
-    // Run cleanup once per login
-    await cleanupExpiredTokens?.();
-
-    // Buttons — safe check
     if (typeof updateRedeemLink === "function") {
       console.log("[AUTH] Calling updateRedeemLink");
       await updateRedeemLink();
@@ -487,9 +481,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     } else {
       console.warn("[AUTH] updateTipLink not defined");
     }
-
-    // Start real-time messages listener (safe — currentUser exists)
-    listenToMessages();
 
     // Delayed loads
     setTimeout(() => {
@@ -532,7 +523,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     await signOut(auth);
   }
 });
-
 
 function setupNotificationsListener(userId) {
   if (!userId) return;
@@ -1566,19 +1556,14 @@ function createConfettiInside(container, colors) {
 }
 
 // =============================
-// RENDER MESSAGES — FIXED APPEND-ONLY VERSION (from messages/{uid} doc + array)
+// RENDER MESSAGES — FINAL SAFARI-FIXED + SMALLER FONT (2026 ETERNAL)
 // =============================
 function renderMessagesFromArray(messages) {
   if (!refs.messagesEl) return;
 
-  // Track already rendered message IDs to avoid duplicates
-  const renderedIds = new Set(
-    Array.from(refs.messagesEl.querySelectorAll('.msg')).map(el => el.id)
-  );
-
   messages.forEach(function(item) {
     const id = item.id || item.tempId || item.data?.id;
-    if (!id || renderedIds.has(id)) return; // skip if already rendered
+    if (!id || document.getElementById(id)) return;
 
     const m = item.data ?? item;
 
@@ -1596,7 +1581,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME — TAP → SOCIAL CARD ===
+    // === USERNAME — TAP → SOCIAL CARD (SAFARI-FRIENDLY) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1606,31 +1591,38 @@ function renderMessagesFromArray(messages) {
     nameSpan.dataset.userId = realUid;
 
     const usernameColor = refs.userColors?.[m.uid] || "#ffffff";
+
     nameSpan.style.cssText = `
       cursor: pointer;
       font-weight: 600;
-      font-size: 13.5px;
+      font-size: 13.5px;           /* Slightly smaller — cleaner look */
       color: ${usernameColor};
       opacity: 0.9;
       user-select: none;
       display: inline;
       margin-right: 4px;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent; /* Removes Safari blue flash */
     `;
 
-    // Tap handler (your exact logic)
-    const openProfile = (e) => {
-      e.preventDefault();
+    // SAFARI-PROOF TAP: use 'touchend' + preventDefault + manual click
+    nameSpan.addEventListener("touchend", (e) => {
+      e.preventDefault(); // Stops Safari from ignoring the click
+      const chatIdLower = (m.chatId || "").toLowerCase();
+      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
+      if (user && user._docId !== currentUser?.uid) {
+        showSocialCard(user);
+      }
+    });
+
+    // Desktop click still works
+    nameSpan.addEventListener("click", (e) => {
       e.stopPropagation();
       const chatIdLower = (m.chatId || "").toLowerCase();
       const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
       if (user && user._docId !== currentUser?.uid) {
         showSocialCard(user);
       }
-    };
-
-    nameSpan.addEventListener("touchend", openProfile);
-    nameSpan.addEventListener("click", openProfile);
+    });
 
     wrapper.appendChild(nameSpan);
 
@@ -1653,6 +1645,7 @@ function renderMessagesFromArray(messages) {
       const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
       const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
       preview.innerHTML = `<strong style="color:#999;">⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
+
       preview.onclick = (e) => {
         e.stopPropagation();
         const target = document.getElementById(m.replyTo);
@@ -1670,10 +1663,11 @@ function renderMessagesFromArray(messages) {
     content.className = "content";
     content.textContent = m.content || "";
 
+    // NORMAL MESSAGES — LIGHT, SMALLER & AIRY
     if (m.type !== "buzz") {
       content.style.cssText = `
         font-weight: 400;
-        font-size: 13px;
+        font-size: 13px;            /* Reduced from 14.5px — cleaner */
         line-height: 1.55;
         color: #d0d0d0;
         word-wrap: break-word;
@@ -1684,7 +1678,7 @@ function renderMessagesFromArray(messages) {
       `;
     }
 
-    // BUZZ MESSAGES — your exact original epic style
+    // BUZZ MESSAGES — EPIC
     if (m.type === "buzz" && m.stickerGradient) {
       wrapper.className += " super-sticker";
       wrapper.style.cssText = `
@@ -1701,19 +1695,23 @@ function renderMessagesFromArray(messages) {
         animation: stickerPop 0.7s ease-out;
         backdrop-filter: blur(4px);
       `;
+
       const confettiContainer = document.createElement("div");
       confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
       createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
       wrapper.appendChild(confettiContainer);
+
       wrapper.style.transition = "transform 0.2s";
       wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
       wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+
       setTimeout(() => {
         wrapper.style.background = "rgba(255,255,255,0.06)";
         wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
         wrapper.style.border = "none";
         confettiContainer.remove();
       }, 20000);
+
       content.style.cssText = `
         font-size: 1.45em;
         font-weight: 900;
@@ -1744,16 +1742,23 @@ function renderMessagesFromArray(messages) {
 
     wrapper.appendChild(content);
 
-    // Append — no clearing the container!
+    // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
+    wrapper.style.pointerEvents = "none";
+
+    // Re-enable on interactive parts
+    nameSpan.style.pointerEvents = "auto";
+    if (preview) preview.style.pointerEvents = "auto";
+    content.style.pointerEvents = "auto";
+
     refs.messagesEl.appendChild(wrapper);
-    renderedIds.add(id); // track for next snapshot
   });
 
-  // Auto-scroll (your original logic)
+  // Auto-scroll
   const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
   if (distanceFromBottom < 200) {
     refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
   }
+
   if (!scrollPending) {
     scrollPending = true;
     requestAnimationFrame(() => {
@@ -1763,189 +1768,34 @@ function renderMessagesFromArray(messages) {
   }
 }
 
-
-
-// ---------- Global for shared room listener ----------
-let roomListenerUnsub = null;
-
-// ---------- Shared Public Room Listener – Clean & Production-ready ----------
-function listenToRoomMessages() {
-  // Safety guard
-  if (!currentUser || !refs.messagesEl) {
-    console.warn("[ROOM] Listener skipped — user or messages container not ready");
-    return;
-  }
-
-  // Clean up any existing listener first (prevents duplicates/leaks)
-  if (roomListenerUnsub) {
-    roomListenerUnsub();
-    roomListenerUnsub = null;
-    console.log("[ROOM] Previous listener cleaned up");
-  }
-
-  const roomRef = doc(db, "chat_rooms", "room888");
-
-  roomListenerUnsub = onSnapshot(roomRef, (snap) => {
-    console.log(
-      `Room snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
-      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
-    );
-
-    if (!snap.exists()) {
-      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
-      return;
-    }
-
-    let messages = snap.data().messages || [];
-
-    // Sort oldest first (top of chat) → newest at bottom
-    messages.sort((a, b) => {
-      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
-      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
-      return ta - tb;
-    });
-
-    // Optional: limit to last N messages if array grows very large
-    // messages = messages.slice(-100);
-
-    // Render
-    renderMessagesFromArray(messages);
-
-    // Auto-scroll if near bottom
-    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
-    if (distanceFromBottom < 200) {
-      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
-    }
-  }, (err) => {
-    console.error("Room listener error:", err);
-    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
-  });
-
-  console.log("[ROOM] Listener attached to chat_rooms/room888");
-}
-
-// Cleanup — call on logout / page unload / auth change
-function stopRoomListener() {
-  if (roomListenerUnsub) {
-    roomListenerUnsub();
-    roomListenerUnsub = null;
-    console.log("[ROOM] Listener stopped");
-  }
-}
-
-// ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
-let messagesUnsub = null;
-
-function listenToMessages() {
-  // Safety guard: skip if user or UI not ready
-  if (!currentUser?.uid || !refs.messagesEl) {
-    console.warn("[MESSAGES] Listener skipped — user or messages container not ready");
-    return;
-  }
-
-  // Clean up any previous listener to avoid duplicates/leaks
-  if (messagesUnsub) {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Previous listener cleaned up");
-  }
-
-  const userMsgRef = doc(db, "messages", currentUser.uid);
-
-  messagesUnsub = onSnapshot(userMsgRef, (snap) => {
-    // Log source + count for debugging
-    console.log(
-      `Messages snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
-      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
-    );
-
-    if (!snap.exists()) {
-      // Show placeholder if doc doesn't exist
-      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
-      return;
-    }
-
-    let messages = snap.data().messages || [];
-
-    // If we have real messages → remove the placeholder immediately
-    if (messages.length > 0) {
-      removeNoMessagesPlaceholder();
-    }
-
-    // Safety: filter out any invalid/null messages
-    messages = messages.filter(m => m && m.id && m.content != null);
-
-    // Sort oldest first (top of chat) → newest at bottom
-    messages.sort((a, b) => {
-      const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
-      const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
-      return ta - tb;
-    });
-
-    // Optional: limit to last N messages if array gets very large
-    // messages = messages.slice(-50);
-
-    // Render the full sorted array
-    renderMessagesFromArray(messages);
-
-    // Auto-scroll to bottom if user is near bottom
-    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
-    if (distanceFromBottom < 200) {
-      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
-    }
-  }, (err) => {
-    console.error("Messages listener error:", err);
-    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
-  });
-
-  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
-}
-
-// Helper function to remove the "No messages yet..." placeholder
-function removeNoMessagesPlaceholder() {
-  const placeholder = refs.messagesEl.querySelector('p');
-  if (placeholder && placeholder.textContent.includes("No messages yet")) {
-    placeholder.remove();
-  }
-}
-
-// Cleanup function — call this on logout / page unload / user change
-function stopMessagesListener() {
-  if (messagesUnsub) {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Listener stopped");
-  }
-}
-
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
 /*
-  ✔ Loads from messages/{uid} doc → messages array
   ✔ Oldest messages render first (top)
   ✔ Newest messages render last (bottom)
+  ✔ Limit applied safely
   ✔ Optimistic message reconciliation preserved
-  ✔ Gift alerts persisted & shown only once
+  ✔ Gift alerts preserved
   ✔ Cache-aware logging
   ✔ Proper unsubscribe handling
-  ✔ Auto-scroll only on your own messages
 */
+
+let messagesUnsubscribe = null;
 
 function attachMessagesListener() {
   // ---- Cleanup existing listener (prevents duplicates)
-  if (typeof messagesUnsub === "function") {
-    messagesUnsub();
-    messagesUnsub = null;
+  if (typeof messagesUnsubscribe === "function") {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
   }
 
-  if (!currentUser?.uid || !refs.messagesEl) {
-    console.warn("[MESSAGES] Skipping listener — user or UI not ready");
-    return;
-  }
+  const CHAT_LIMIT = 21;
 
-  const CHAT_LIMIT = 21; // optional — we can slice array client-side
-
-  // ---- Listen to single user document
-  const userMsgRef = doc(db, "messages", currentUser.uid);
+  // ---- Correct chronological query
+  const q = query(
+    collection(db, CHAT_COLLECTION),
+    orderBy("timestamp", "asc"), // ← OLDEST → NEWEST (correct chat order)
+    limit(CHAT_LIMIT)
+  );
 
   // ---- Persisted gift alerts
   const shownGiftAlerts = new Set(
@@ -1954,94 +1804,91 @@ function attachMessagesListener() {
 
   function saveShownGift(id) {
     shownGiftAlerts.add(id);
-    localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
+    localStorage.setItem(
+      "shownGiftAlerts",
+      JSON.stringify([...shownGiftAlerts])
+    );
   }
 
-  // ---- Local optimistic messages (tempId → pending msg)
+  // ---- Local optimistic messages
   let localPendingMsgs = JSON.parse(
     localStorage.getItem("localPendingMsgs") || "{}"
   );
 
-  messagesUnsub = onSnapshot(
-    userMsgRef,
+  messagesUnsubscribe = onSnapshot(
+    q,
     { includeMetadataChanges: true },
     (snapshot) => {
       console.log(
         `Messages snapshot | ${snapshot.metadata.fromCache ? "✓ cache" : "server"} | ` +
-        `exists: ${snapshot.exists()} | messages in array: ${snapshot.data()?.messages?.length || 0}`
+        `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
       );
 
-      if (!snapshot.exists()) {
-        refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
-        return;
-      }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type !== "added") return;
 
-      let messages = snapshot.data().messages || [];
+        const msgId = change.doc.id;
+        const msg   = change.doc.data();
 
-      // Sort oldest first (top of chat)
-      messages.sort((a, b) => {
-        const ta = a.timestamp?.toMillis?.() || a.timestamp || 0;
-        const tb = b.timestamp?.toMillis?.() || b.timestamp || 0;
-        return ta - tb;
-      });
+        // ---- Skip temp echoes
+        if (msg.tempId?.startsWith("temp_")) return;
 
-      // Optional: limit client-side (last N messages)
-      if (messages.length > CHAT_LIMIT) {
-        messages = messages.slice(-CHAT_LIMIT);
-      }
+        // ---- Defensive: already rendered
+        if (document.getElementById(msgId)) return;
 
-      // ---- Reconcile optimistic messages
-      for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
-        const serverMatch = messages.find(m => {
-          const sameUser = m.uid === pending.uid;
-          const sameText = m.content === pending.content;
-          const timeDiff = Math.abs((m.timestamp?.toMillis?.() || 0) - (pending.timestamp || 0));
-          return sameUser && sameText && timeDiff < 7000;
-        });
+        // ---- Match optimistic message
+        for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
+          const sameUser = pending.uid === msg.uid;
+          const sameText = pending.content === msg.content;
 
-        if (serverMatch) {
-          const tempEl = document.getElementById(tempId);
-          if (tempEl) tempEl.remove();
-          delete localPendingMsgs[tempId];
-          localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
+          const timeDiff = Math.abs(
+            (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
+          );
+
+          if (sameUser && sameText && timeDiff < 7000) {
+            const tempEl = document.getElementById(tempId);
+            if (tempEl) tempEl.remove();
+
+            delete localPendingMsgs[tempId];
+            localStorage.setItem(
+              "localPendingMsgs",
+              JSON.stringify(localPendingMsgs)
+            );
+            break;
+          }
         }
-      }
 
-      // ---- Render all messages
-      renderMessagesFromArray(messages);
+        // ---- Render message (append → bottom)
+        renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-      // ---- Gift alert (receiver only)
-      messages.forEach(msg => {
+        // ---- Gift alert (receiver only)
         if (msg.highlight && msg.content?.includes("gifted")) {
           const myChatId = currentUser?.chatId?.toLowerCase();
           if (!myChatId) return;
 
           const [sender, , receiver, amount] = msg.content.split(" ");
+
           if (
             receiver?.toLowerCase() === myChatId &&
             amount &&
-            !shownGiftAlerts.has(msg.id)
+            !shownGiftAlerts.has(msgId)
           ) {
             showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
-            saveShownGift(msg.id);
+            saveShownGift(msgId);
           }
         }
-      });
 
-      // ---- Auto-scroll only when YOU send
-      if (refs.messagesEl && messages.some(m => m.uid === currentUser?.uid)) {
-        refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
-      }
+        // ---- Auto-scroll only when YOU send
+        if (refs.messagesEl && msg.uid === currentUser?.uid) {
+          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+        }
+      });
     },
     (error) => {
       console.error("Messages listener error:", error);
-      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
     }
   );
-
-  console.log("[MESSAGES] Listener attached to messages/" + currentUser.uid);
 }
-
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
 
@@ -3216,34 +3063,34 @@ function clearReplyAfterSend() {
   refs.messageInputEl.placeholder = "Type a message...";
 }
 
-const ROOM_REF = doc(db, "chat_rooms", "room888");
-
-   
+// SEND REGULAR MESSAGE — FIXED COLLAPSE AFTER SEND
 refs.sendBtn?.addEventListener("click", async () => {
-  if (!currentUser) return showStarPopup("Sign in to chat.");
-
-  const txt = refs.messageInputEl?.value.trim();
-  if (!txt) return showStarPopup("Type a message first.");
-
-  if ((currentUser.stars || 0) < SEND_COST)
-    return showStarPopup("Not enough stars to send message.");
-
-  currentUser.stars -= SEND_COST;
-  if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-
-  const replyData = currentReplyTarget
-    ? {
-        replyTo: currentReplyTarget.id,
-        replyToContent: (currentReplyTarget.content || "Original message")
-          .replace(/\n/g, " ").trim().substring(0, 80) + "...",
-        replyToChatId: currentReplyTarget.chatId || "someone"
-      }
-    : { replyTo: null, replyToContent: null, replyToChatId: null };
-
   try {
+    if (!currentUser) return showStarPopup("Sign in to chat.");
+
+    const txt = refs.messageInputEl?.value.trim();
+    if (!txt) return showStarPopup("Type a message first.");
+
+    if ((currentUser.stars || 0) < SEND_COST)
+      return showStarPopup("Not enough stars to send message.");
+
+    // Deduct stars
+    currentUser.stars -= SEND_COST;
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
     await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-SEND_COST) });
 
-    await addDoc(collection(db, "messages_room888"), {
+    // REPLY DATA
+    const replyData = currentReplyTarget
+      ? {
+          replyTo: currentReplyTarget.id,
+          replyToContent: (currentReplyTarget.content || "Original message")
+            .replace(/\n/g, " ").trim().substring(0, 80) + "...",
+          replyToChatId: currentReplyTarget.chatId || "someone"
+        }
+      : { replyTo: null, replyToContent: null, replyToChatId: null };
+
+    // SEND TO FIRESTORE
+    await addDoc(collection(db, CHAT_COLLECTION), {
       content: txt,
       uid: currentUser.uid,
       chatId: currentUser.chatId,
@@ -3254,20 +3101,22 @@ refs.sendBtn?.addEventListener("click", async () => {
       ...replyData
     });
 
+    // === CRITICAL FIX: FULL RESET & COLLAPSE ===
     refs.messageInputEl.value = "";
-    cancelReply?.();
-    resizeAndExpand();
+    cancelReply?.(); // Clear reply preview
+    resizeAndExpand(); // Manually trigger resize → collapses to original pill
 
-    console.log("Message sent to shared public room");
+    console.log("Message sent to Firestore");
+
   } catch (err) {
     console.error("Send failed:", err);
     showStarPopup("Failed to send — check connection", { type: "error" });
-
     currentUser.stars += SEND_COST;
     if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
   }
 });
-   
+
+
 // Private Message Modal Logic
 const privateMsgBtn = document.getElementById('privateMsgBtn');
 const privateMsgModal = document.getElementById('privateMsgModal');
