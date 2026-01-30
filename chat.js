@@ -325,19 +325,19 @@ async function pushNotification(userId, message) {
 // ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ——— CLEANUP ALL PREVIOUS LISTENERS ———
-  [
+  const unsubs = [
     notificationsUnsubscribe,
     messagesUnsub,
     privateMsgUnsubscribe,
     pollUnsubscribe,
     votesUnsubscribe
-  ].forEach(unsub => {
-    if (typeof unsub === "function") {
-      unsub();
-    }
+  ];
+
+  unsubs.forEach(unsub => {
+    if (typeof unsub === "function") unsub();
   });
 
-  // Reset global vars
+  // Reset globals
   notificationsUnsubscribe = null;
   messagesUnsub = null;
   privateMsgUnsubscribe = null;
@@ -1765,14 +1765,31 @@ function renderMessagesFromArray(messages) {
 
 
 
+// ---------- Global for shared room listener ----------
+let roomListenerUnsub = null;
+
+// ---------- Shared Public Room Listener – Clean & Production-ready ----------
 function listenToRoomMessages() {
-  if (roomUnsub) {
-    roomUnsub();
-    roomUnsub = null;
+  // Safety guard
+  if (!currentUser || !refs.messagesEl) {
+    console.warn("[ROOM] Listener skipped — user or messages container not ready");
+    return;
   }
 
-  roomUnsub = onSnapshot(ROOM_DOC_REF, (snap) => {
-    console.log(`Room snapshot | exists: ${snap.exists()} | messages: ${snap.data()?.messages?.length || 0}`);
+  // Clean up any existing listener first (prevents duplicates/leaks)
+  if (roomListenerUnsub) {
+    roomListenerUnsub();
+    roomListenerUnsub = null;
+    console.log("[ROOM] Previous listener cleaned up");
+  }
+
+  const roomRef = doc(db, "chat_rooms", "room888");
+
+  roomListenerUnsub = onSnapshot(roomRef, (snap) => {
+    console.log(
+      `Room snapshot | ${snap.metadata.fromCache ? "✓ cache" : "server"} | ` +
+      `exists: ${snap.exists()} | messages count: ${snap.data()?.messages?.length || 0}`
+    );
 
     if (!snap.exists()) {
       refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
@@ -1781,71 +1798,38 @@ function listenToRoomMessages() {
 
     let messages = snap.data().messages || [];
 
+    // Sort oldest first (top of chat) → newest at bottom
     messages.sort((a, b) => {
       const ta = a.timestamp?.toMillis?.() ?? a.timestamp ?? 0;
       const tb = b.timestamp?.toMillis?.() ?? b.timestamp ?? 0;
       return ta - tb;
     });
 
+    // Optional: limit to last N messages if array grows very large
+    // messages = messages.slice(-100);
+
+    // Render
     renderMessagesFromArray(messages);
 
+    // Auto-scroll if near bottom
     const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
     if (distanceFromBottom < 200) {
       refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
     }
   }, (err) => {
     console.error("Room listener error:", err);
+    refs.messagesEl.innerHTML = '<p style="text-align:center;color:#f66;padding:40px;">Failed to load messages</p>';
   });
+
+  console.log("[ROOM] Listener attached to chat_rooms/room888");
 }
 
+// Cleanup — call on logout / page unload / auth change
 function stopRoomListener() {
-  if (roomUnsub) {
-    roomUnsub();
-    roomUnsub = null;
-  }
-}
-
-
-// ---------- Messages Real-time Listener – Clean & Production-ready (2026) ----------
-let roomUnsub = null;
-
-function listenToMessages() {
-  if (roomUnsub) {
-    roomUnsub();
-    roomUnsub = null;
-  }
-
-  roomUnsub = onSnapshot(ROOM_REF, (snap) => {
-    console.log(`Shared room snapshot | exists: ${snap.exists()} | messages: ${snap.data()?.messages?.length || 0}`);
-
-    if (!snap.exists()) {
-      refs.messagesEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">No messages yet...</p>';
-      return;
-    }
-
-    let messages = snap.data().messages || [];
-
-    messages.sort((a, b) => {
-      const ta = a.timestamp ?? 0;
-      const tb = b.timestamp ?? 0;
-      return ta - tb;
-    });
-
-    renderMessagesFromArray(messages);
-
-    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
-    if (distanceFromBottom < 200) {
-      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
-    }
-  }, (err) => {
-    console.error("Room listener error:", err);
-  });
-}
-
-function stopMessagesListener() {
-  if (roomUnsub) {
-    roomUnsub();
-    roomUnsub = null;
+  if (roomListenerUnsub) {
+    roomListenerUnsub();
+    roomListenerUnsub = null;
+    console.log("[ROOM] Listener stopped");
   }
 }
 
