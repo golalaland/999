@@ -296,6 +296,7 @@ let currentReplyTarget = null;
 
 let currentUser = null;
 let currentAdmin = null;
+let messagesUnsub = null;
 
 
 // UNIVERSAL ID SANITIZER — RESTORED & FINAL
