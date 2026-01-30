@@ -4863,8 +4863,8 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
     return n;
   }
 
-  // Start in a realistic zone for a moderately active site
-  let count = parseInt(localStorage.getItem(storageKey)) || 1240;
+  // Start in a realistic zone for a smaller/mid-active site
+  let count = parseInt(localStorage.getItem(storageKey)) || 142;
 
   function updateDisplay() {
     onlineCountEl.textContent = formatCount(count);
@@ -4878,80 +4878,75 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
   setInterval(() => {
     const dice = Math.random();
 
-    // 1. Most of the time: very small natural breathing (±1–8)
-    if (dice < 0.55) {
-      count += Math.floor(Math.random() * 17) - 8;
+    // 1. Most of the time: very small natural breathing (±1–5)
+    if (dice < 0.58) {
+      count += Math.floor(Math.random() * 11) - 5;
     }
-    // 2. Small group join/leave waves (±10–35)
-    else if (dice < 0.82) {
-      count += Math.floor(Math.random() * 51) - 25;
+    // 2. Small group join/leave waves (±6–18)
+    else if (dice < 0.84) {
+      count += Math.floor(Math.random() * 25) - 12;
     }
-    // 3. Occasional medium bump (new share / small promo / refresh wave) +45–+140
-    else if (dice < 0.94) {
-      count += Math.floor(Math.random() * 96) + 45;
-      // slightly increase upward pressure after a bump
-      baseTrend = Math.min(1, baseTrend + 0.3);
+    // 3. Occasional medium bump (share / small promo / refresh) +18–+55
+    else if (dice < 0.95) {
+      count += Math.floor(Math.random() * 38) + 18;
+      baseTrend = Math.min(1, baseTrend + 0.35);
     }
-    // 4. Small drop-off after video ends / tab closed (±40–110 down)
+    // 4. Small drop-off after session ends (±15–45 down)
     else if (dice < 0.99) {
-      count -= Math.floor(Math.random() * 71) + 40;
-      // slight downward pressure
-      baseTrend = Math.max(-1, baseTrend - 0.3);
+      count -= Math.floor(Math.random() * 31) + 15;
+      baseTrend = Math.max(-1, baseTrend - 0.35);
     }
-    // 5. Rare bigger spike — feels like influencer just mentioned it
+    // 5. Rare bigger spike — feels like shoutout/mention
     else {
-      count += Math.floor(Math.random() * 220) + 120; // +120–340
+      count += Math.floor(Math.random() * 80) + 45; // +45–125
       baseTrend = 1;
     }
 
-    // Gentle time-of-day influence (assumes your audience timezone)
+    // Gentle time-of-day influence (assumes audience timezone)
     const hour = new Date().getHours();
     if (hour >= 23 || hour < 7) {
       baseTrend = -1; // night → slow drain
     } else if ((hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 22)) {
       baseTrend = 1;  // lunch + evening = active
     } else if (hour >= 8 && hour <= 11) {
-      baseTrend = 0.3; // morning slow build
+      baseTrend = 0.4; // morning slow build
     } else {
       baseTrend = 0;
     }
 
     // Apply very gentle trend force
     if (baseTrend > 0) {
-      count += Math.random() > 0.6 ? 2 : 1;
+      count += Math.random() > 0.65 ? 2 : 1;
     } else if (baseTrend < 0) {
-      count -= Math.random() > 0.6 ? 2 : 1;
+      count -= Math.random() > 0.65 ? 2 : 1;
     }
 
-    // ------------------- Hard realistic boundaries -------------------
-    // Almost never go below ~650 or above ~1950
-    if (count < 650) {
-      count = 650 + Math.floor(Math.random() * 350); // jump back into believable range
-      baseTrend = 0.5; // give it some upward momentum after floor hit
+    // ------------------- Hard realistic boundaries (tightened for max ~235) -------------------
+    if (count < 65) {
+      count = 65 + Math.floor(Math.random() * 80); // rebound into range
+      baseTrend = 0.6;
     }
-    if (count > 1950) {
-      count = 1950 - Math.floor(Math.random() * 450);
-      baseTrend = -0.5;
-    }
-
-    // Prevent staying stuck on xxx0 or xxx00 too long
-    if ((count % 100 === 0 || count % 1000 === 0) && Math.random() < 0.85) {
-      count += Math.floor(Math.random() * 70) - 35;
+    if (count > 235) {
+      count = 235 - Math.floor(Math.random() * 60); // pull back harder
+      baseTrend = -0.6;
     }
 
-    // Keep it integer
+    // Prevent getting stuck on round numbers too long
+    if ((count % 10 === 0 || count % 50 === 0) && Math.random() < 0.8) {
+      count += Math.floor(Math.random() * 19) - 9;
+    }
+
     count = Math.round(count);
-
     updateDisplay();
-  }, 2800 + Math.floor(Math.random() * 3400)); // ~3–6 second updates → natural jitter
+  }, 2800 + Math.floor(Math.random() * 3600)); // ~3–6.5s updates
 
-  // Very gentle long-term recentering (prevents infinite upward/downward creep)
+  // Gentle long-term recentering → target zone 120–210
   setInterval(() => {
-    const target = 1100 + Math.floor(Math.random() * 700); // 1100–1800 zone
+    const target = 120 + Math.floor(Math.random() * 91); // 120–210 sweet spot
     const diff = target - count;
-    count += Math.round(diff * 0.08); // move ~8% toward target
+    count += Math.round(diff * 0.09); // ~9% correction
     updateDisplay();
-  }, 8 * 60 * 1000); // every ~8 minutes
+  }, 7 * 60 * 1000); // every ~7 minutes
 
 })();
 
