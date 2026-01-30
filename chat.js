@@ -1849,15 +1849,6 @@ function stopMessagesListener() {
   }
 }
 
-// Cleanup function — call this on logout / page unload / user change
-function stopMessagesListener() {
-  if (messagesUnsub) {
-    messagesUnsub();
-    messagesUnsub = null;
-    console.log("[MESSAGES] Listener stopped");
-  }
-}
-
 /* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
 /*
   ✔ Loads from messages/{uid} doc → messages array
