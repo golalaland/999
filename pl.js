@@ -2584,149 +2584,137 @@ async function sendStarsToUser(targetUser, amt) {
   }
 }
 /* =====================================================
-   HOST-ONLY SECURE LOGIN SYSTEM — 2025
-   • Google disabled
-   • Only isHost:true + non-empty hiveName allowed
-   • Blocks UI & auto-login for non-hosts
-   • Redirects invalid users → https://visitcube.xyz
+   HOST-ONLY SECURE LOGIN — FINAL 2025
+   • Only isHost:true + non-empty trimmed hiveName
+   • Immediate rejection + redirect for everyone else
+   • No UI flicker / partial access for non-hosts
 ===================================================== */
+
 // ──────────────────────────────────────────────
-// Block Google sign-in button completely
+// Block Google button
 document.addEventListener("DOMContentLoaded", () => {
   const googleBtn = document.getElementById("googleSignInBtn");
   if (!googleBtn) return;
 
-  // Clone to remove old listeners safely
   const freshBtn = googleBtn.cloneNode(true);
   googleBtn.parentNode.replaceChild(freshBtn, googleBtn);
 
   freshBtn.style.cssText = "";
   freshBtn.disabled = false;
 
-  freshBtn.addEventListener("click", (e) => {
+  freshBtn.addEventListener("click", e => {
     e.preventDefault();
     e.stopPropagation();
-    showStarPopup("Google Sign-In is disabled.<br>Use Host Email Login only.");
+    showStarPopup("Google Sign-In disabled.<br>Use Host Email Login.");
   });
 });
 
 // ──────────────────────────────────────────────
-// MAIN LOGIN BUTTON — Host check happens immediately
+// Login button — early host check
 // ──────────────────────────────────────────────
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value?.trim().toLowerCase() ?? "";
   const password = document.getElementById("passwordInput")?.value ?? "";
 
   if (!email || !password) {
-    showStarPopup("Please enter email and password.");
+    showStarPopup("Email and password required.");
     return;
   }
 
   const loader = typeof showLoadingBar === "function" ? showLoadingBar() : { update: () => {} };
 
   try {
-    loader.update(10); // Starting...
+    loader.update(10);
 
-    // Step 1: Firebase Auth
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Firebase Auth success →", userCredential.user.uid);
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Auth success:", user.uid);
 
-    loader.update(40);
-
-    // Step 2: Immediate host validation (before any listener can act)
-    const uidKey = sanitizeKey(email);
-    const userRef = doc(db, "users", uidKey);
-    const userSnap = await getDoc(userRef);
-
-    loader.update(70);
-
-    if (!userSnap.exists()) {
-      showStarPopup("No account found. Contact support.");
-      await signOut(auth);
-      loader.update(100);
-      setTimeout(() => window.location.href = REDIRECT_URL, 1200);
-      return;
-    }
-
-    const data = userSnap.data() ?? {};
-
-    // Required: isHost true + hiveName present and non-empty
-    const isValidHost =
-      data.isHost === true &&
-      typeof data.hiveName === "string" &&
-      data.hiveName.trim().length >= 1;
-
-    if (!isValidHost) {
-      let message = "Access denied.";
-
-      if (data.isHost !== true) {
-        message = "This account is not registered as a Host.";
-      } else {
-        message = "Host profile incomplete — missing hive name.\nPlease update your profile.";
-      }
-
-      showStarPopup(message + "\nRedirecting you...");
-      await signOut(auth);
-      loader.update(100);
-
-      // Redirect so even if listener fires, user is already out
-      setTimeout(() => {
-        window.location.href = REDIRECT_URL;
-      }, 1800);
-
-      return;
-    }
-
-    // ── ONLY VALID HOSTS REACH HERE ──
-    loader.update(100);
-    console.log(`Host login OK — hive: "${data.hiveName.trim()}"`);
-
-    // Normal flow continues → onAuthStateChanged will handle setup
-
-  } catch (err) {
-    console.error("Login failed:", err);
-
-    let msg = "Login error — please try again.";
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      msg = "Incorrect email or password.";
-    } else if (err.code === "auth/too-many-requests") {
-      msg = "Too many attempts. Wait a minute.";
-    } else if (err.code === "auth/invalid-email") {
-      msg = "Invalid email format.";
-    }
-
-    showStarPopup(msg);
-    loader.update(100);
-  }
-});
-
-// ──────────────────────────────────────────────
-// CRITICAL: Replace your existing onAuthStateChanged listener
-// with this version — it blocks non-hosts completely
-// ──────────────────────────────────────────────
-onAuthStateChanged(auth, async (firebaseUser) => {
-  // No user → logged out state
-  if (!firebaseUser) {
-    currentUser = null;
-    localStorage.removeItem("vipUser");
-    // → show login screen / landing (your existing logic)
-    return;
-  }
-
-  // User is signed in → VERIFY HOST BEFORE ANY SETUP
-  try {
-    const email = firebaseUser.email?.toLowerCase();
-    if (!email) throw new Error("No email found");
+    loader.update(45);
 
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const snap = await getDoc(userRef);
 
+    loader.update(75);
+
     if (!snap.exists()) {
+      showStarPopup("Account not found. Contact support.");
       await signOut(auth);
-      window.location.href = REDIRECT_URL;
+      loader.update(100);
+      setTimeout(() => location.href = REDIRECT_URL, 1200);
       return;
     }
+
+    const data = snap.data() ?? {};
+
+    const validHost =
+      data.isHost === true &&
+      typeof data.hiveName === "string" &&
+      data.hiveName.trim().length >= 1;
+
+    if (!validHost) {
+      const msg = data.isHost !== true
+        ? "This account is not a host account."
+        : "Host profile incomplete — hive name is missing.";
+
+      showStarPopup(msg + "\nRedirecting...");
+      await signOut(auth);
+      loader.update(100);
+      setTimeout(() => location.href = REDIRECT_URL, 1800);
+      return;
+    }
+
+    // Only valid hosts continue
+    loader.update(100);
+    console.log(`Valid host login — hive: ${data.hiveName.trim()}`);
+
+  } catch (err) {
+    console.error("Login error:", err.code, err.message);
+    let txt = "Login failed — try again";
+
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      txt = "Wrong email or password.";
+    } else if (err.code === "auth/too-many-requests") {
+      txt = "Too many attempts. Wait a minute.";
+    } else if (err.code === "auth/invalid-email") {
+      txt = "Invalid email format.";
+    }
+
+    showStarPopup(txt);
+    loader.update(100);
+  }
+});
+
+// ──────────────────────────────────────────────
+// Secure onAuthStateChanged — rejects invalid hosts early
+// ──────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  // ── Cleanup ──
+  if (typeof notificationsUnsubscribe === "function") {
+    notificationsUnsubscribe();
+    notificationsUnsubscribe = null;
+  }
+
+  currentUser = null;
+  // currentAdmin = null;  // uncomment if you use it
+
+  if (!user) {
+    localStorage.removeItem("vipUser");
+    // Add any other cleanup you have (show login screen, etc.)
+    console.log("Logged out / no user");
+    return;
+  }
+
+  // ── Verify host status BEFORE doing ANY UI or listener setup ──
+  try {
+    const email = user.email?.toLowerCase()?.trim();
+    if (!email) throw new Error("No email");
+
+    const uidKey = sanitizeKey(email);
+    const ref = doc(db, "users", uidKey);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) throw new Error("No profile");
 
     const data = snap.data() ?? {};
 
@@ -2736,24 +2724,26 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       data.hiveName.trim().length >= 1;
 
     if (!isValidHost) {
+      console.warn("Rejected non-host / invalid host:", email);
       await signOut(auth);
-      window.location.href = REDIRECT_URL;
+      // No delay here — redirect fast to prevent UI setup race
+      location.href = REDIRECT_URL;
       return;
     }
 
-    // ── VALID HOST → SAFE TO INITIALIZE ──
+    // ── ONLY VALID HOSTS REACH THIS POINT ──
     setCurrentUserFromData(data, uidKey, email);
     setupPostLogin();
 
   } catch (err) {
-    console.error("Auth verification failed:", err);
+    console.error("Auth state rejection:", err);
     await signOut(auth);
-    window.location.href = REDIRECT_URL;
+    location.href = REDIRECT_URL;
   }
 });
 
 // ──────────────────────────────────────────────
-// Your existing helpers (unchanged — just make sure they're only called for valid hosts)
+// Helpers (unchanged)
 // ──────────────────────────────────────────────
 
 function setCurrentUserFromData(data, uidKey, email) {
@@ -2788,7 +2778,7 @@ function setupPostLogin() {
   if (!currentUser?.uid) return;
 
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%cHost session started — UID:", "color:#00cc77", currentUser.uid);
+  console.log("%cHost logged in — UID:", "color:#00dd88", currentUser.uid);
 
   updateRedeemLink?.();
   setupPresence?.(currentUser);
@@ -2796,9 +2786,8 @@ function setupPostLogin() {
   startStarEarning?.(currentUser.uid);
 
   if (currentUser.chatId?.startsWith("GUEST")) {
-    promptForChatID?.(doc(db, "users", currentUser.uid), currentUser).catch(e =>
-      console.warn("ChatID prompt skipped:", e)
-    );
+    promptForChatID?.(doc(db, "users", currentUser.uid), currentUser)
+      .catch(e => console.warn("ChatID prompt cancelled:", e));
   }
 
   showChatUI?.(currentUser);
@@ -2806,18 +2795,15 @@ function setupPostLogin() {
   safeUpdateDOM?.();
   revealHostTabs?.();
 
-  console.log("%cHost UI ready →", "color:#00ffaa", currentUser.chatId || currentUser.hiveName);
+  console.log("%cHost UI initialized", "color:#00ff9d", currentUser.hiveName || currentUser.chatId);
 }
 
-// ──────────────────────────────────────────────
-// Logout functions (unchanged)
-// ──────────────────────────────────────────────
-
+// Logout (unchanged)
 window.logoutVIP = async () => {
   try {
     await signOut(auth);
   } catch (e) {
-    console.warn("Sign out error:", e);
+    console.warn("Sign out failed:", e);
   } finally {
     localStorage.removeItem("vipUser");
     localStorage.removeItem("lastVipEmail");
@@ -2827,7 +2813,7 @@ window.logoutVIP = async () => {
   }
 };
 
-document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) => {
+document.getElementById("hostLogoutBtn")?.addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
 
@@ -2835,7 +2821,7 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
   if (!btn || btn.disabled) return;
   btn.disabled = true;
 
-  const funMessages = [
+  const messages = [
     "See ya later, Alligator!",
     "Off you go — $STRZ waiting when you return!",
     "Catch you on the flip side!",
@@ -2846,15 +2832,15 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
     "Off you go, Champ!"
   ];
 
-  const msg = funMessages[Math.floor(Math.random() * funMessages.length)];
+  const farewell = messages[Math.floor(Math.random() * messages.length)];
 
   try {
     await signOut(auth);
-    showStarPopup(msg);
+    showStarPopup(farewell);
     setTimeout(() => location.reload(), 1600);
   } catch (err) {
-    console.error("Logout failed:", err);
-    showStarPopup("Logout failed — try again.");
+    console.error("Logout error:", err);
+    showStarPopup("Couldn't log out — try again.");
     btn.disabled = false;
   }
 });
