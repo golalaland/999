@@ -341,21 +341,20 @@ async function pushNotification(userId, message) {
   }
 }
 
-// ON AUTH STATE CHANGED — HOST-ONLY + HIVENAME REQUIRED — FIXED 2025
+// ON AUTH STATE CHANGED — HOST-ONLY + HIVENAME REQUIRED — 2025 SECURE VERSION
 const REDIRECT_URL = "https://visitcube.xyz";
 
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ─── CLEANUP PREVIOUS LISTENERS ───
+  // ─── ALWAYS CLEAN UP FIRST ───
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
   }
 
-  // Reset globals
   currentUser = null;
   currentAdmin = null;
 
-  // ─── LOGGED OUT ───
+  // ─── NO USER → LOGGED OUT STATE ───
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
@@ -365,24 +364,22 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     if (typeof showLoginUI === "function") showLoginUI();
 
-    // Clear clips
+    // Clear UI fragments
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
     if (noMsg) noMsg.style.display = "none";
 
-    // Hide host fields
     const hostFields = document.getElementById("hostOnlyFields");
     if (hostFields) hostFields.style.display = "none";
 
-    console.log("User logged out / no session");
+    console.log("No active session");
     return;
   }
 
-  // ─── LOGGED IN — VERIFY BEFORE ANY SETUP ───
-  const email = firebaseUser.email?.toLowerCase().trim();
+  // ─── USER IS SIGNED IN → MUST BE VALID HOST ───
+  const email = firebaseUser.email?.toLowerCase()?.trim();
   if (!email) {
-    console.error("No email in firebase user");
     await signOut(auth);
     window.location.href = REDIRECT_URL;
     return;
@@ -395,41 +392,46 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.warn("Profile document missing:", uid);
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      setTimeout(() => { window.location.href = REDIRECT_URL; }, 1200);
+      setTimeout(() => window.location.href = REDIRECT_URL, 1400);
       return;
     }
 
     const data = userSnap.data() ?? {};
 
-    // ─── STRICT HOST + HIVE NAME CHECK ───
+    // ─── THE ONLY DECISION POINT FOR REDIRECT ───
     const isValidHost =
       data.isHost === true &&
       typeof data.hiveName === "string" &&
       data.hiveName.trim().length >= 1;
 
     if (!isValidHost) {
+      // ── ONLY INVALID USERS REACH THIS BLOCK ──
       let reason = "Access restricted to verified hosts only.";
 
       if (data.isHost !== true) {
-        reason = "This account is not registered as a host.";
+        reason = "Account not registered as host.";
       } else {
-        reason = "Host profile incomplete — missing hive name.";
+        reason = "Host profile incomplete — hive name missing.";
       }
 
       showStarPopup(reason + "<br>Redirecting...");
       await signOut(auth);
 
+      // Redirect ONLY non-permitted users
       setTimeout(() => {
         window.location.href = REDIRECT_URL;
       }, 1800);
 
-      return;
+      return;   // ← important: stop here — no setup for invalid users
     }
 
-    // ─── VALID HOST → PROCEED ───
+    // ─────────────────────────────────────────────────────────────
+    // ONLY PERMITTED / VALID HOSTS REACH THIS POINT
+    // NO REDIRECT HAPPENS FROM HERE DOWN
+    // ─────────────────────────────────────────────────────────────
+
     currentUser = {
       uid,
       email,
@@ -439,7 +441,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       fullName: data.fullName || "Host",
       gender: data.gender || "person",
       isVIP: !!data.isVIP,
-      isHost: true,               // enforced
+      isHost: true,
       isAdmin: !!data.isAdmin,
       hasPaid: !!data.hasPaid,
       stars: Number(data.stars ?? 0),
@@ -454,26 +456,25 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
       hostLink: data.hostLink || null,
-      hiveName: data.hiveName.trim()   // store it
+      hiveName: data.hiveName.trim()
     };
 
-    // ─── ADMIN ACTIVATION (still allowed even if not host — adjust if needed) ───
+    // Admin activation (independent of host check)
     if (currentUser.isAdmin) {
       currentAdmin = {
         uid: currentUser.uid,
         email: currentUser.email,
         chatId: currentUser.chatId
       };
-      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+      console.log("%cADMIN MODE", "color:#0f9; font-size:18px; font-weight:bold");
 
       const pollSection = document.getElementById("polls");
       if (pollSection) pollSection.style.display = "block";
     }
 
-    console.log("HOST WELCOME:", currentUser.chatId.toUpperCase(), currentUser.hiveName);
-    console.log("[HOST DATA]", currentUser);
+    console.log(`VALID HOST LOGIN → ${currentUser.chatId} (${currentUser.hiveName})`);
 
-    // ─── POST-LOGIN SETUP (only reached by valid hosts) ───
+    // ─── NORMAL POST-LOGIN FLOW (only for permitted users) ───
     revealHostTabs();
     updateInfoTab();
 
@@ -492,7 +493,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     updateRedeemLink?.();
     updateTipLink?.();
 
-    // Delayed / non-blocking
     setTimeout(() => {
       syncUserUnlocks?.();
       loadNotifications?.();
@@ -503,39 +503,32 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     }
 
     if (currentUser.chatId.startsWith("GUEST")) {
-      setTimeout(() => {
-        promptForChatID?.(userRef, currentUser);
-      }, 2000);
+      setTimeout(() => promptForChatID?.(userRef, currentUser), 2000);
     }
 
-    // Host-only UI fields
     const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) {
-      hostFields.style.display = "block";   // always show for valid hosts
-    }
+    if (hostFields) hostFields.style.display = "block";
 
-    // ─── WELCOME POPUP ───
+    // Welcome popup (only shown to valid hosts)
     const holyColors = ["#FF1493","#FFD700","#00FFFF","#FF4500","#DA70D6","#FF69B4","#32CD32","#FFA500","#FF00FF"];
     const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
 
     showStarPopup(`
       <div style="text-align:center; font-size:13px;">
-        Welcome back, Host
-        <b style="font-size:14px; color:${glow}; text-shadow:0 0 20px ${glow}88;">
+        Welcome, Host
+        <b style="color:${glow}; text-shadow:0 0 20px ${glow}88;">
           ${currentUser.chatId.toUpperCase()}
         </b>
-        <br><small style="opacity:0.8;">${currentUser.hiveName}</small>
-        ${currentUser.isAdmin ? "<br><span style='color:#0f9;font-size:15px;'>ADMIN MODE</span>" : ""}
+        <br><small>${currentUser.hiveName}</small>
+        ${currentUser.isAdmin ? "<br><span style='color:#0f9;'>ADMIN MODE</span>" : ""}
       </div>
     `);
 
-    console.log("YOU HAVE ENTERED THE ETERNAL CUBE — HOST VERIFIED");
-
   } catch (error) {
-    console.error("Critical auth flow error:", error);
-    showStarPopup("Failed to verify host status — redirecting...");
+    console.error("Auth flow error:", error);
+    showStarPopup("Profile verification failed — redirecting...");
     await signOut(auth);
-    setTimeout(() => { window.location.href = REDIRECT_URL; }, 1400);
+    setTimeout(() => window.location.href = REDIRECT_URL, 1400);
   }
 });
 
