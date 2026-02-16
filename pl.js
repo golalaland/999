@@ -2597,9 +2597,6 @@ async function sendStarsToUser(targetUser, amt) {
    • Blocks UI & auto-login for non-hosts
    • Redirects invalid users → https://visitcube.xyz
 ===================================================== */
-
-const REDIRECT_URL = "https://visitcube.xyz";
-
 // ──────────────────────────────────────────────
 // Block Google sign-in button completely
 document.addEventListener("DOMContentLoaded", () => {
