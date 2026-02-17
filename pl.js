@@ -416,32 +416,52 @@ console.log("isValidHost result:",
 );
 console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    // ─── THE ONLY DECISION POINT FOR REDIRECT ───
-    const isValidHost =
-      data.isHost === true &&
-      typeof data.hiveName === "string" &&
-      data.hiveName.trim().length >= 1;
+  // ─── THE ONLY DECISION POINT FOR REDIRECT ───
+const isValidHost = 
+  data.isHost === true &&
+  typeof data.hiveName === "string" &&
+  data.hiveName.trim().length >= 1;
 
-    if (!isValidHost) {
-      // ── ONLY INVALID USERS REACH THIS BLOCK ──
-      let reason = "Access restricted to verified hosts only.";
+if (!isValidHost) {
+  // ── REJECTION PATH ── only invalid users reach here
 
-      if (data.isHost !== true) {
-        reason = "Account not registered as host.";
-      } else {
-        reason = "Host profile incomplete — hive name missing.";
-      }
+  let reason = "Access restricted to verified hosts only.";
 
-      showStarPopup(reason + "<br>Redirecting...");
-      await signOut(auth);
+  if (data.isHost !== true) {
+    reason = "This account is not registered as a host.";
+  } else if (typeof data.hiveName !== "string" || !data.hiveName.trim()) {
+    reason = "Host profile incomplete — hive name is missing or empty.";
+  }
 
-      // Redirect ONLY non-permitted users
-      setTimeout(() => {
-        window.location.href = REDIRECT_URL;
-      }, 8800);
+  // Show message briefly
+  showStarPopup(reason + "<br>Redirecting...");
 
-     return;   // ← important: stop here — no setup for invalid users
-   }
+  // Log for debugging (remove in production if not needed)
+  console.warn(`Host rejection: ${reason} | email: ${email} | isHost: ${data.isHost} | hiveName:`, 
+    data.hiveName, 
+    `(length after trim: ${String(data.hiveName || "").trim().length})`
+  );
+
+  // Sign out + immediate history-replacing redirect
+  // Using .replace() prevents back button from returning to the chat
+  signOut(auth)
+    .then(() => {
+      window.location.replace(REDIRECT_URL);
+    })
+    .catch((err) => {
+      console.error("Sign-out failed during rejection:", err);
+      // Fallback: redirect anyway
+      window.location.replace(REDIRECT_URL);
+    });
+
+  // Throw to immediately stop further execution of this callback
+  // (prevents any chance of setupPostLogin or other code running)
+  throw new Error("Invalid host → forced exit");
+}
+
+// ── If we reach here, user is valid ──
+// No need for else — just continue normally
+console.log(`Valid host verified → hive: "${data.hiveName.trim()}"`);
 
     // ─────────────────────────────────────────────────────────────
     // ONLY PERMITTED / VALID HOSTS REACH THIS POINT
