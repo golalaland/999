@@ -399,6 +399,22 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     }
 
     const data = userSnap.data() ?? {};
+     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+console.log("DIAGNOSTIC — Auth state check");
+console.log("Email:", email);
+console.log("Firestore doc ID:", uid);
+console.log("isHost value:", data.isHost, "→ type:", typeof data.isHost);
+console.log("hiveName raw:", data.hiveName, "→ type:", typeof data.hiveName);
+if (data.hiveName != null) {
+  console.log("hiveName .trim():", data.hiveName.trim());
+  console.log("hiveName length after trim:", data.hiveName.trim().length);
+}
+console.log("isValidHost result:", 
+  data.isHost === true && 
+  typeof data.hiveName === "string" && 
+  data.hiveName.trim().length >= 1
+);
+console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     // ─── THE ONLY DECISION POINT FOR REDIRECT ───
     const isValidHost =
