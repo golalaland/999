@@ -544,7 +544,7 @@ console.log("━━━━━━━━━━━━━━━━━━━━━━�
     console.error("Auth flow error:", error);
     showStarPopup("Profile verification failed — redirecting...");
     await signOut(auth);
-    setTimeout(() => window.location.href = REDIRECT_URL, 1400);
+    setTimeout(() => window.location.href = REDIRECT_URL, 8400);
   }
 });
 
@@ -2657,7 +2657,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
       showStarPopup("Account not found. Contact support.");
       await signOut(auth);
       loader.update(100);
-      setTimeout(() => location.href = REDIRECT_URL, 1200);
+      setTimeout(() => location.href = REDIRECT_URL, 8200);
       return;
     }
 
@@ -2676,7 +2676,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
       showStarPopup(msg + "\nRedirecting...");
       await signOut(auth);
       loader.update(100);
-      setTimeout(() => location.href = REDIRECT_URL, 1800);
+      setTimeout(() => location.href = REDIRECT_URL, 8800);
       return;
     }
 
