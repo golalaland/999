@@ -341,19 +341,20 @@ async function pushNotification(userId, message) {
   }
 }
 
-// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
+// ON AUTH STATE CHANGED — HOST-ONLY + HIVENAME REQUIRED — 2025 FINAL VERSION
+const REDIRECT_URL = "https://visitcube.xyz";
+
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ——— CLEANUP PREVIOUS LISTENERS ———
+  // ─── CLEANUP ───
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
   }
 
-  // Reset globals
   currentUser = null;
   currentAdmin = null;
 
-  // ——— USER LOGGED OUT ———
+  // ─── LOGGED OUT ───
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
@@ -363,23 +364,27 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     if (typeof showLoginUI === "function") showLoginUI();
 
-    console.log("User logged out");
-
-    // Clear clips grid
     const grid = document.getElementById("myClipsGrid");
     const noMsg = document.getElementById("noClipsMessage");
     if (grid) grid.innerHTML = "";
     if (noMsg) noMsg.style.display = "none";
 
-    // Hide host-only fields
     const hostFields = document.getElementById("hostOnlyFields");
     if (hostFields) hostFields.style.display = "none";
 
+    console.log("User logged out / no session");
     return;
   }
 
-  // ——— USER LOGGED IN ———
-  const email = firebaseUser.email.toLowerCase().trim();
+  // ─── USER SIGNED IN → VERIFY HOST ───
+  const email = firebaseUser.email?.toLowerCase()?.trim();
+  if (!email) {
+    console.warn("No email in firebaseUser — signing out");
+    await signOut(auth);
+    window.location.replace(REDIRECT_URL);
+    return;
+  }
+
   const uid = sanitizeKey(email);
   const userRef = doc(db, "users", uid);
 
@@ -387,118 +392,150 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.error("Profile not found for:", uid);
+      console.error("Profile not found:", uid);
       showStarPopup("Profile missing — contact support");
       await signOut(auth);
+      window.location.replace(REDIRECT_URL);
       return;
     }
 
-    const data = userSnap.data();
+    const data = userSnap.data() ?? {};
 
-    // BUILD CURRENT USER OBJECT
+    // ─── HOST VALIDATION ───
+    const isValidHost =
+      data.isHost === true &&
+      typeof data.hiveName === "string" &&
+      data.hiveName.trim().length >= 1;
+
+    if (!isValidHost) {
+      let reason = "Access restricted to verified hosts only.";
+      if (data.isHost !== true) {
+        reason = "This account is not registered as a host.";
+      } else {
+        reason = "Host profile incomplete — hive name missing or empty.";
+      }
+
+      showStarPopup(reason + "<br>Redirecting...");
+      console.warn(`Rejected: ${reason} | email: ${email}`);
+
+      signOut(auth).finally(() => {
+        window.location.replace(REDIRECT_URL);
+      });
+
+      return; // prevent any further execution
+    }
+
+    // ── VALID HOST ONLY ──
     currentUser = {
       uid,
       email,
       firebaseUid: firebaseUser.uid,
       chatId: data.chatId || email.split("@")[0],
       chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-      fullName: data.fullName || "VIP",
+      fullName: data.fullName || "Host",
       gender: data.gender || "person",
       isVIP: !!data.isVIP,
-      isHost: !!data.isHost,
+      isHost: true,
       isAdmin: !!data.isAdmin,
       hasPaid: !!data.hasPaid,
-      stars: data.stars || 0,
-      cash: data.cash || 0,
-      starsGifted: data.starsGifted || 0,
-      starsToday: data.starsToday || 0,
+      stars: Number(data.stars ?? 0),
+      cash: Number(data.cash ?? 0),
+      starsGifted: Number(data.starsGifted ?? 0),
+      starsToday: Number(data.starsToday ?? 0),
       usernameColor: data.usernameColor || "#ff69b4",
       subscriptionActive: !!data.subscriptionActive,
-      subscriptionCount: data.subscriptionCount || 0,
+      subscriptionCount: Number(data.subscriptionCount ?? 0),
       lastStarDate: data.lastStarDate || todayDate(),
       unlockedVideos: data.unlockedVideos || [],
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
-      hostLink: data.hostLink || null
+      hostLink: data.hostLink || null,
+      hiveName: data.hiveName.trim()
     };
 
-    // ADMIN MODE ACTIVATION
+    // ─── ADMIN ACTIVATION ───
     if (currentUser.isAdmin) {
       currentAdmin = {
         uid: currentUser.uid,
         email: currentUser.email,
         chatId: currentUser.chatId
       };
-      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+      console.log("%cADMIN MODE ACTIVATED", "color:#0f9; font-size:18px; font-weight:bold");
 
       const pollSection = document.getElementById("polls");
       if (pollSection) pollSection.style.display = "block";
     }
 
     console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-    console.log("[USER STATUS]", currentUser);
+    console.log("[HOST STATUS]", currentUser);
 
-    // ——— POST-LOGIN UI & FUNCTION SETUP ———
-    revealHostTabs();
-    updateInfoTab();
+    // ─── POST-LOGIN SETUP (protected) ───
+    try {
+      revealHostTabs();
+      updateInfoTab();
 
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+      document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
-    localStorage.setItem("userId", uid);
-    localStorage.setItem("lastVipEmail", email);
+      localStorage.setItem("userId", uid);
+      localStorage.setItem("lastVipEmail", email);
 
-    setupUsersListener();
-    showChatUI(currentUser);
-    attachMessagesListener();
-    startStarEarning(uid);
-    setupPresence(currentUser);
-    setupNotificationsListener(uid);
-    updateRedeemLink();
-    updateTipLink();
+      setupUsersListener?.();
+      showChatUI(currentUser);
+      attachMessagesListener?.();
+      startStarEarning?.(uid);
+      setupPresence?.(currentUser);
+      setupNotificationsListener?.(uid);
+      updateRedeemLink?.();
+      updateTipLink?.();
 
-    // Delayed loads to avoid blocking
-    setTimeout(() => {
-      syncUserUnlocks?.();
-      loadNotifications?.();
-    }, 600);
-
-    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-      setTimeout(loadMyClips, 1000);
-    }
-
-    if (currentUser.chatId.startsWith("GUEST")) {
       setTimeout(() => {
-        promptForChatID?.(userRef, data);
-      }, 2000);
+        syncUserUnlocks?.();
+        loadNotifications?.();
+      }, 600);
+
+      if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
+        setTimeout(loadMyClips, 1000);
+      }
+
+      if (currentUser.chatId?.startsWith("GUEST")) {
+        setTimeout(() => {
+          promptForChatID?.(userRef, currentUser);
+        }, 2000);
+      }
+
+      const hostFields = document.getElementById("hostOnlyFields");
+      if (hostFields) {
+        hostFields.style.display = "block";
+      }
+
+      // ─── WELCOME POPUP ───
+      const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
+      const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+
+      showStarPopup(`
+        <div style="text-align:center; font-size:13px;">
+          Welcome back, Host
+          <b style="font-size:14px; color:${glow}; text-shadow:0 0 20px ${glow}88;">
+            ${currentUser.chatId.toUpperCase()}
+          </b>
+          <br><small>${currentUser.hiveName}</small>
+          ${currentUser.isAdmin ? "<br><span style='color:#0f9; font-size:16px;'>ADMIN MODE</span>" : ""}
+        </div>
+      `);
+
+      console.log("YOU HAVE ENTERED THE ETERNAL CUBE — HOST VERIFIED");
+
+    } catch (setupErr) {
+      console.error("Post-login setup error (user stays logged in):", setupErr);
+      showStarPopup("Some features failed to load — refresh page if needed");
     }
-
-    // ——— SHOW HOST-ONLY FIELDS (Nature Pick & Fruit Pick) ———
-    const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) {
-      hostFields.style.display = currentUser.isHost ? "block" : "none";
-    }
-
-    // ——— DIVINE WELCOME POPUP ———
-    const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
-    const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-
-    showStarPopup(`
-      <div style="text-align:center;font-size:13px;">
-        Welcome back,
-        <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">
-          ${currentUser.chatId.toUpperCase()}
-        </b>
-        ${currentUser.isAdmin ? "<br><span style='color:#0f9;font-size:16px;'>ADMIN MODE</span>" : ""}
-      </div>
-    `);
-
-    console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
 
   } catch (error) {
-    console.error("Error during login process:", error);
-    showStarPopup("Failed to load profile — please try again");
+    console.error("Auth flow error:", error);
+    showStarPopup("Failed to verify profile — redirecting...");
     await signOut(auth);
+    window.location.replace(REDIRECT_URL);
   }
 });
 
@@ -2554,90 +2591,112 @@ async function sendStarsToUser(targetUser, amt) {
     showGoldAlert("Failed — try again", 4000);
   }
 }
-/* ===============================
-   FINAL VIP LOGIN SYSTEM — 100% WORKING
-   Google disabled | VIP button works | Safe auto-login
-================================= */
+
+/* =====================================================
+   HOST-ONLY SECURE LOGIN — FINAL 2025 (NO REDIRECTS)
+   • Only isHost:true + non-empty trimmed hiveName
+   • Invalid users are signed out + shown message
+   • No automatic redirect — stays on current page
+===================================================== */
+
+// ──────────────────────────────────────────────
+// Block Google button (unchanged)
+// ──────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   const googleBtn = document.getElementById("googleSignInBtn");
   if (!googleBtn) return;
 
-  // Reset any previous styles / states
-  googleBtn.style.cssText = "";
-  googleBtn.disabled = false;
+  const freshBtn = googleBtn.cloneNode(true);
+  googleBtn.parentNode.replaceChild(freshBtn, googleBtn);
 
-  // Remove old listeners (safe way)
-  const newBtn = googleBtn.cloneNode(true);
-  googleBtn.parentNode.replaceChild(newBtn, googleBtn);
+  freshBtn.style.cssText = "";
+  freshBtn.disabled = false;
 
-  // Add your block handler
-  newBtn.addEventListener("click", e => {
+  freshBtn.addEventListener("click", e => {
     e.preventDefault();
     e.stopPropagation();
-    showStarPopup("Google Sign-Up is not available at the moment.<br>Use VIP Email Login instead.");
+    showStarPopup("Google Sign-In disabled.<br>Use Host Email Login.");
   });
 });
 
-
-// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
+// ──────────────────────────────────────────────
+// Login button — early host check (no redirects)
+// ──────────────────────────────────────────────
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
-  const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
-  const password = document.getElementById("passwordInput")?.value;
+  const email = document.getElementById("emailInput")?.value?.trim().toLowerCase() ?? "";
+  const password = document.getElementById("passwordInput")?.value ?? "";
 
   if (!email || !password) {
-    showStarPopup("Enter email and password");
+    showStarPopup("Email and password required.");
     return;
   }
 
-  // Start smart accurate loader
-  const loader = showLoadingBar();
+  const loader = typeof showLoadingBar === "function" ? showLoadingBar() : { update: () => {} };
 
   try {
-    loader.update(18); // Starting login...
+    loader.update(10);
 
-    // STEP 1: Firebase Auth login
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Firebase Auth Success:", userCredential.user.uid);
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Auth success:", user.uid);
 
-    loader.update(55); // Authenticated, checking profile...
+    loader.update(45);
 
-    // STEP 2: Check if allowed
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
-    const userSnap = await getDoc(userRef);
+    const snap = await getDoc(userRef);
 
-    loader.update(82); // Profile loaded...
+    loader.update(75);
 
-    if (!userSnap.exists()) {
-      showStarPopup("Profile not found — contact support");
-      await signOut(auth);
-      loader.update(100); // finish cleanly
-      return;
-    }
-
-    const data = userSnap.data();
-
-    if (data.isHost || (data.isVIP && data.hasPaid === true)) {
-      console.log("Access granted");
-      loader.update(100); // Success → full bar + hide
-      // Chat opens normally via onAuthStateChanged
-    } else {
-      showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
+    if (!snap.exists()) {
+      showStarPopup("No profile found for this account.<br>Contact support.");
       await signOut(auth);
       loader.update(100);
-      return;
+      return; // stays on login page
     }
 
-  } catch (err) {
-    console.error("Login failed:", err);
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      showStarPopup("Wrong password or email");
-    } else if (err.code === "auth/too-many-requests") {
-      showStarPopup("Too many attempts. Wait a minute.");
-    } else {
-      showStarPopup("Login failed — try again");
+    const data = snap.data() ?? {};
+
+    const validHost =
+      data.isHost === true &&
+      typeof data.hiveName === "string" &&
+      data.hiveName.trim().length >= 1;
+
+    if (!validHost) {
+      let msg = "Access denied — only verified hosts allowed.";
+
+      if (data.isHost !== true) {
+        msg = "This account is not registered as a host.";
+      } else {
+        msg = "Host profile incomplete — hive name is missing or empty.";
+      }
+
+      showStarPopup(msg + "<br>Please contact support if this is your account.");
+      await signOut(auth);
+      loader.update(100);
+      return; // stays on current page (login form should be visible)
     }
-    loader.update(100); // Always finish bar on error
+
+    // ── Only valid hosts reach here ──
+    loader.update(100);
+    console.log(`Valid host login — hive: "${data.hiveName.trim()}"`);
+
+    // Normal flow continues → onAuthStateChanged will handle the rest
+
+  } catch (err) {
+    console.error("Login error:", err.code, err.message);
+
+    let txt = "Login failed — please try again.";
+
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      txt = "Incorrect email or password.";
+    } else if (err.code === "auth/too-many-requests") {
+      txt = "Too many attempts. Please wait a minute.";
+    } else if (err.code === "auth/invalid-email") {
+      txt = "Invalid email format.";
+    }
+
+    showStarPopup(txt);
+    loader.update(100);
   }
 });
 
