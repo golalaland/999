@@ -440,8 +440,8 @@ console.log("━━━━━━━━━━━━━━━━━━━━━━�
        // window.location.href = REDIRECT_URL;
      // }, 8800);
 
-      return;   // ← important: stop here — no setup for invalid users
-    }
+     return;   // ← important: stop here — no setup for invalid users
+  //  }
 
     // ─────────────────────────────────────────────────────────────
     // ONLY PERMITTED / VALID HOSTS REACH THIS POINT
