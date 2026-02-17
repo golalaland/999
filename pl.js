@@ -394,7 +394,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      setTimeout(() => window.location.href = REDIRECT_URL, 1400);
+      setTimeout(() => window.location.href = REDIRECT_URL, 8400);
       return;
     }
 
@@ -438,7 +438,7 @@ console.log("━━━━━━━━━━━━━━━━━━━━━━�
       // Redirect ONLY non-permitted users
       setTimeout(() => {
         window.location.href = REDIRECT_URL;
-      }, 1800);
+      }, 8800);
 
       return;   // ← important: stop here — no setup for invalid users
     }
