@@ -345,7 +345,7 @@ async function pushNotification(userId, message) {
 const REDIRECT_URL = "https://visitcube.xyz";
 
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ─── CLEANUP ───
+  // ─── CLEANUP LISTENERS & GLOBALS ───
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -354,7 +354,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   currentUser = null;
   currentAdmin = null;
 
-  // ─── LOGGED OUT ───
+  // ─── LOGGED OUT / NO USER ───
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
@@ -376,10 +376,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     return;
   }
 
-  // ─── VERIFY HOST ───
+  // ─── USER SIGNED IN → VERIFY HOST ───
   const email = firebaseUser.email?.toLowerCase()?.trim();
   if (!email) {
-    console.warn("No email found — signing out");
+    console.warn("No email in firebaseUser — signing out");
     await signOut(auth);
     window.location.replace(REDIRECT_URL);
     return;
@@ -400,7 +400,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data() ?? {};
 
-    // Diagnostic logs (remove later)
+    // ─── DIAGNOSTIC LOGS (remove when stable) ───
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("DIAGNOSTIC — Auth state check");
     console.log("Email:", email);
@@ -417,6 +417,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     );
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
+    // ─── HOST VALIDATION ───
     const isValidHost = 
       data.isHost === true &&
       typeof data.hiveName === "string" &&
@@ -424,8 +425,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     if (!isValidHost) {
       let reason = "Access restricted to verified hosts only.";
-      if (data.isHost !== true) reason = "This account is not a host.";
-      else reason = "Host profile incomplete — hive name missing.";
+      if (data.isHost !== true) {
+        reason = "This account is not registered as a host.";
+      } else {
+        reason = "Host profile incomplete — hive name missing or empty.";
+      }
 
       showStarPopup(reason + "<br>Redirecting...");
       console.warn(`Rejected: ${reason} | ${email}`);
@@ -434,38 +438,38 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         window.location.replace(REDIRECT_URL);
       });
 
-      return; // stop execution
+      return; // stop further execution
     }
 
-    // ── VALID HOST ──
+    // ── VALID HOST ONLY ──
     console.log(`Valid host → hive: "${data.hiveName.trim()}"`);
 
-  currentUser = {
-  uid: uid,
-  email: email,
-  firebaseUid: firebaseUser.uid,
-  chatId: data.chatId || email.split("@")[0],
-  chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-  fullName: data.fullName || "Host",
-  gender: data.gender || "person",
-  isVIP: !!data.isVIP,
-  isHost: true,
-  isAdmin: !!data.isAdmin,
-  hasPaid: !!data.hasPaid,
-  stars: Number(data.stars ?? 0),
-  cash: Number(data.cash ?? 0),
-  starsGifted: Number(data.starsGifted ?? 0),
-  starsToday: Number(data.starsToday ?? 0),
-  usernameColor: data.usernameColor || "#ff69b4",
-  subscriptionActive: !!data.subscriptionActive,
-  subscriptionCount: Number(data.subscriptionCount ?? 0),
-  lastStarDate: data.lastStarDate || todayDate(),
-  unlockedVideos: data.unlockedVideos || [],
-  invitedBy: data.invitedBy || null,
-  inviteeGiftShown: !!data.inviteeGiftShown,
-  hostLink: data.hostLink || null,
-  hiveName: data.hiveName.trim()
-};
+    currentUser = {
+      uid,
+      email,
+      firebaseUid: firebaseUser.uid,
+      chatId: data.chatId || email.split("@")[0],
+      chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+      fullName: data.fullName || "Host",
+      gender: data.gender || "person",
+      isVIP: !!data.isVIP,
+      isHost: true,
+      isAdmin: !!data.isAdmin,
+      hasPaid: !!data.hasPaid,
+      stars: Number(data.stars ?? 0),
+      cash: Number(data.cash ?? 0),
+      starsGifted: Number(data.starsGifted ?? 0),
+      starsToday: Number(data.starsToday ?? 0),
+      usernameColor: data.usernameColor || "#ff69b4",
+      subscriptionActive: !!data.subscriptionActive,
+      subscriptionCount: Number(data.subscriptionCount ?? 0),
+      lastStarDate: data.lastStarDate || todayDate(),
+      unlockedVideos: data.unlockedVideos || [],
+      invitedBy: data.invitedBy || null,
+      inviteeGiftShown: !!data.inviteeGiftShown,
+      hostLink: data.hostLink || null,
+      hiveName: data.hiveName.trim()
+    };
 
     if (currentUser.isAdmin) {
       currentAdmin = {
@@ -479,10 +483,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log(`VALID HOST LOGIN → ${currentUser.chatId} (${currentUser.hiveName})`);
 
-    // ─── POST-LOGIN FLOW (protected against crashes) ───
+    // ─── POST-LOGIN FLOW (protected) ───
     try {
       revealHostTabs();
       updateInfoTab();
+
       document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
       document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
@@ -529,21 +534,19 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       `);
 
     } catch (setupErr) {
-      console.error("Post-login setup error (kept logged in):", setupErr);
-      showStarPopup("Some features failed to load — refresh if needed");
+      console.error("Post-login setup failed (kept user logged in):", setupErr);
+      showStarPopup("Some features failed to load — refresh page if needed");
     }
 
   } catch (error) {
-    console.error("Auth flow error:", error);
+    console.error("Auth flow critical error:", error);
     await signOut(auth);
-    window.location.replace(REDIRECT_URL);
+    window.location.replace(REDIRECT_URL); // only for real critical failures
   }
 });
 
-// Your notifications listener remains unchanged — it's fine
 function setupNotificationsListener(userId) {
   if (!userId) return;
-
   const list = document.getElementById("notificationsList");
   if (!list) {
     setTimeout(() => setupNotificationsListener(userId), 500);
@@ -562,9 +565,11 @@ function setupNotificationsListener(userId) {
       return;
     }
 
-    list.innerHTML = snap.docs.map(docSnap => {
-      const n = docSnap.data();
+    list.innerHTML = snap.docs.map(doc => {
+      const n = doc.data();
       const time = n.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "--:--";
+
+      // Normalize line breaks in message
       const formattedMessage = (n.message || "").replace(/\n/g, "<br>");
 
       return `
@@ -578,6 +583,7 @@ function setupNotificationsListener(userId) {
     }).join("");
   });
 }
+
 // MARK ALL READ
 document.getElementById("markAllRead")?.addEventListener("click", async () => {
   const userId = localStorage.getItem("userId");
@@ -2591,16 +2597,17 @@ async function sendStarsToUser(targetUser, amt) {
     showGoldAlert("Failed — try again", 4000);
   }
 }
-/* =====================================================
-   HOST-ONLY SECURE LOGIN — FINAL 2025 (NO REDIRECTS)
-   • Only isHost:true + non-empty trimmed hiveName
-   • Invalid users are signed out + shown message
-   • No automatic redirect — stays on current page
-===================================================== */
+/* ================================================
+   HOST-ONLY LOGIN SYSTEM — 2025 SECURE VERSION
+   • Only isHost: true + non-empty hiveName allowed
+   • Invalid users → signed out + redirect
+   • No VIP / paid logic
+   • Safe, no UI flicker, crash-protected
+================================================ */
 
-// ──────────────────────────────────────────────
-// Block Google button (unchanged)
-// ──────────────────────────────────────────────
+const REDIRECT_URL = "https://visitcube.xyz";
+
+// Block Google sign-in button
 document.addEventListener("DOMContentLoaded", () => {
   const googleBtn = document.getElementById("googleSignInBtn");
   if (!googleBtn) return;
@@ -2611,7 +2618,7 @@ document.addEventListener("DOMContentLoaded", () => {
   freshBtn.style.cssText = "";
   freshBtn.disabled = false;
 
-  freshBtn.addEventListener("click", e => {
+  freshBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     showStarPopup("Google Sign-In disabled.<br>Use Host Email Login.");
@@ -2619,287 +2626,202 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ──────────────────────────────────────────────
-// Login button — early host check (no redirects)
+// MAIN LOGIN HANDLER — early host check
 // ──────────────────────────────────────────────
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value?.trim().toLowerCase() ?? "";
   const password = document.getElementById("passwordInput")?.value ?? "";
 
   if (!email || !password) {
-    showStarPopup("Email and password required.");
+    showStarPopup("Enter email and password");
     return;
   }
 
   const loader = typeof showLoadingBar === "function" ? showLoadingBar() : { update: () => {} };
 
   try {
-    loader.update(10);
+    loader.update(18);
 
-    const { user } = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Auth success:", user.uid);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Firebase Auth success:", userCredential.user.uid);
 
-    loader.update(45);
+    loader.update(55);
 
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
-    const snap = await getDoc(userRef);
-
-    loader.update(75);
-
-    if (!snap.exists()) {
-      showStarPopup("No profile found for this account.<br>Contact support.");
-      await signOut(auth);
-      loader.update(100);
-      return; // stays on login page
-    }
-
-    const data = snap.data() ?? {};
-
-    const validHost =
-      data.isHost === true &&
-      typeof data.hiveName === "string" &&
-      data.hiveName.trim().length >= 1;
-
-    if (!validHost) {
-      let msg = "Access denied — only verified hosts allowed.";
-
-      if (data.isHost !== true) {
-        msg = "This account is not registered as a host.";
-      } else {
-        msg = "Host profile incomplete — hive name is missing or empty.";
-      }
-
-      showStarPopup(msg + "<br>Please contact support if this is your account.");
-      await signOut(auth);
-      loader.update(100);
-      return; // stays on current page (login form should be visible)
-    }
-
-    // ── Only valid hosts reach here ──
-    loader.update(100);
-    console.log(`Valid host login — hive: "${data.hiveName.trim()}"`);
-
-    // Normal flow continues → onAuthStateChanged will handle the rest
-
-  } catch (err) {
-    console.error("Login error:", err.code, err.message);
-
-    let txt = "Login failed — please try again.";
-
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      txt = "Incorrect email or password.";
-    } else if (err.code === "auth/too-many-requests") {
-      txt = "Too many attempts. Please wait a minute.";
-    } else if (err.code === "auth/invalid-email") {
-      txt = "Invalid email format.";
-    }
-
-    showStarPopup(txt);
-    loader.update(100);
-  }
-});
-
-// ON AUTH STATE CHANGED — HOST-ONLY + HIVENAME REQUIRED — 2025 SECURE VERSION
-const REDIRECT_URL = "https://visitcube.xyz";
-
-onAuthStateChanged(auth, async (firebaseUser) => {
-  // ─── CLEANUP LISTENERS & GLOBALS ───
-  if (typeof notificationsUnsubscribe === "function") {
-    notificationsUnsubscribe();
-    notificationsUnsubscribe = null;
-  }
-
-  currentUser = null;
-  currentAdmin = null;
-
-  // ─── LOGGED OUT / NO USER ───
-  if (!firebaseUser) {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("lastVipEmail");
-
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-
-    if (typeof showLoginUI === "function") showLoginUI();
-
-    const grid = document.getElementById("myClipsGrid");
-    const noMsg = document.getElementById("noClipsMessage");
-    if (grid) grid.innerHTML = "";
-    if (noMsg) noMsg.style.display = "none";
-
-    const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) hostFields.style.display = "none";
-
-    console.log("No active session");
-    return;
-  }
-
-  // ─── USER SIGNED IN → VERIFY HOST ───
-  const email = firebaseUser.email?.toLowerCase()?.trim();
-  if (!email) {
-    console.warn("No email in firebaseUser — signing out");
-    await signOut(auth);
-    window.location.replace(REDIRECT_URL);
-    return;
-  }
-
-  const uid = sanitizeKey(email);
-  const userRef = doc(db, "users", uid);
-
-  try {
     const userSnap = await getDoc(userRef);
+
+    loader.update(82);
 
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      window.location.replace(REDIRECT_URL);
+      loader.update(100);
+      setTimeout(() => window.location.replace(REDIRECT_URL), 1400);
       return;
     }
 
     const data = userSnap.data() ?? {};
 
-    // ─── DIAGNOSTIC LOGS (remove when stable) ───
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("DIAGNOSTIC — Auth state check");
-    console.log("Email:", email);
-    console.log("Doc ID:", uid);
-    console.log("isHost:", data.isHost, typeof data.isHost);
-    console.log("hiveName raw:", data.hiveName, typeof data.hiveName);
-    if (data.hiveName != null) {
-      console.log("hiveName trimmed:", data.hiveName.trim(), "length:", data.hiveName.trim().length);
-    }
-    console.log("isValidHost:", 
-      data.isHost === true &&
-      typeof data.hiveName === "string" &&
-      data.hiveName.trim().length >= 1
-    );
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-    // ─── HOST VALIDATION ───
     const isValidHost = 
       data.isHost === true &&
       typeof data.hiveName === "string" &&
       data.hiveName.trim().length >= 1;
 
     if (!isValidHost) {
-      let reason = "Access restricted to verified hosts only.";
+      let msg = "Access denied — only verified hosts allowed.";
       if (data.isHost !== true) {
-        reason = "This account is not registered as a host.";
+        msg = "This account is not registered as a host.";
       } else {
-        reason = "Host profile incomplete — hive name missing or empty.";
+        msg = "Host profile incomplete — hive name missing.";
       }
 
-      showStarPopup(reason + "<br>Redirecting...");
-      console.warn(`Rejected: ${reason} | ${email}`);
-
-      signOut(auth).finally(() => {
-        window.location.replace(REDIRECT_URL);
-      });
-
-      return; // stop further execution
+      showStarPopup(msg + "<br>Redirecting...");
+      await signOut(auth);
+      loader.update(100);
+      setTimeout(() => window.location.replace(REDIRECT_URL), 1800);
+      return;
     }
 
-    // ── VALID HOST ONLY ──
-    console.log(`Valid host → hive: "${data.hiveName.trim()}"`);
+    loader.update(100);
+    console.log(`Valid host login — hive: "${data.hiveName.trim()}"`);
 
-    currentUser = {
-      uid,
-      email,
-      firebaseUid: firebaseUser.uid,
-      chatId: data.chatId || email.split("@")[0],
-      chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-      fullName: data.fullName || "Host",
-      gender: data.gender || "person",
-      isVIP: !!data.isVIP,
-      isHost: true,
-      isAdmin: !!data.isAdmin,
-      hasPaid: !!data.hasPaid,
-      stars: Number(data.stars ?? 0),
-      cash: Number(data.cash ?? 0),
-      starsGifted: Number(data.starsGifted ?? 0),
-      starsToday: Number(data.starsToday ?? 0),
-      usernameColor: data.usernameColor || "#ff69b4",
-      subscriptionActive: !!data.subscriptionActive,
-      subscriptionCount: Number(data.subscriptionCount ?? 0),
-      lastStarDate: data.lastStarDate || todayDate(),
-      unlockedVideos: data.unlockedVideos || [],
-      invitedBy: data.invitedBy || null,
-      inviteeGiftShown: !!data.inviteeGiftShown,
-      hostLink: data.hostLink || null,
-      hiveName: data.hiveName.trim()
-    };
+    // Normal flow → onAuthStateChanged will handle setup
 
-    if (currentUser.isAdmin) {
-      currentAdmin = {
-        uid: currentUser.uid,
-        email: currentUser.email,
-        chatId: currentUser.chatId
-      };
-      console.log("%cADMIN MODE ACTIVATED", "color:#0f9; font-size:18px; font-weight:bold");
-      document.getElementById("polls")?.style.display = "block";
+  } catch (err) {
+    console.error("Login failed:", err.code, err.message);
+
+    let msg = "Login failed — try again.";
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      msg = "Wrong email or password.";
+    } else if (err.code === "auth/too-many-requests") {
+      msg = "Too many attempts. Wait a minute.";
+    } else if (err.code === "auth/invalid-email") {
+      msg = "Invalid email format.";
     }
 
-    console.log(`VALID HOST LOGIN → ${currentUser.chatId} (${currentUser.hiveName})`);
+    showStarPopup(msg);
+    loader.update(100);
+  }
+});
 
-    // ─── POST-LOGIN FLOW (protected) ───
-    try {
-      revealHostTabs();
-      updateInfoTab();
+// ──────────────────────────────────────────────
+// SET CURRENT USER HELPER
+// ──────────────────────────────────────────────
+function setCurrentUserFromData(data, uidKey, email) {
+  currentUser = {
+    uid: uidKey,
+    email: email.toLowerCase(),
+    phone: data.phone ?? "",
+    chatId: data.chatId ?? null,
+    chatIdLower: data.chatIdLower ?? null,
+    stars: Number(data.stars ?? 0),
+    cash: Number(data.cash ?? 0),
+    usernameColor: data.usernameColor || randomColor(),
+    isAdmin: !!data.isAdmin,
+    isHost: !!data.isHost,
+    isVIP: !!data.isVIP,
+    hasPaid: !!data.hasPaid,
+    fullName: data.fullName?.trim() ?? "",
+    gender: data.gender ?? "",
+    subscriptionActive: !!data.subscriptionActive,
+    subscriptionCount: Number(data.subscriptionCount ?? 0),
+    lastStarDate: data.lastStarDate || todayDate(),
+    starsGifted: Number(data.starsGifted ?? 0),
+    starsToday: Number(data.starsToday ?? 0),
+    hostLink: data.hostLink ?? null,
+    invitedBy: data.invitedBy ?? null,
+    inviteeGiftShown: !!data.inviteeGiftShown,
+    hiveName: (data.hiveName ?? "").trim()
+  };
+}
 
-      document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-      document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+// ──────────────────────────────────────────────
+// POST-LOGIN SETUP (crash-protected)
+// ──────────────────────────────────────────────
+function setupPostLogin() {
+  if (!currentUser?.uid) {
+    console.warn("setupPostLogin called without valid user — aborted");
+    return;
+  }
 
-      localStorage.setItem("userId", uid);
-      localStorage.setItem("lastVipEmail", email);
+  try {
+    localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
+    console.log("%c vipUser saved:", "color:#00ffaa", currentUser.uid);
 
-      setupUsersListener?.();
-      showChatUI(currentUser);
-      attachMessagesListener?.();
-      startStarEarning?.(uid);
-      setupPresence?.(currentUser);
-      setupNotificationsListener?.(uid);
-      updateRedeemLink?.();
-      updateTipLink?.();
+    updateRedeemLink?.();
+    setupPresence?.(currentUser);
+    attachMessagesListener?.();
+    startStarEarning?.(currentUser.uid);
 
-      setTimeout(() => {
-        syncUserUnlocks?.();
-        loadNotifications?.();
-      }, 600);
-
-      if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-        setTimeout(loadMyClips, 1000);
-      }
-
-      if (currentUser.chatId.startsWith("GUEST")) {
-        setTimeout(() => promptForChatID?.(userRef, currentUser), 2000);
-      }
-
-      document.getElementById("hostOnlyFields")?.style.display = "block";
-
-      // Welcome popup
-      const colors = ["#FF1493","#FFD700","#00FFFF","#FF4500","#DA70D6","#FF69B4","#32CD32","#FFA500","#FF00FF"];
-      const glow = colors[Math.floor(Math.random() * colors.length)];
-
-      showStarPopup(`
-        <div style="text-align:center; font-size:13px;">
-          Welcome, Host
-          <b style="color:${glow}; text-shadow:0 0 20px ${glow}88;">
-            ${currentUser.chatId.toUpperCase()}
-          </b>
-          <br><small>${currentUser.hiveName}</small>
-          ${currentUser.isAdmin ? "<br><span style='color:#0f9;'>ADMIN MODE</span>" : ""}
-        </div>
-      `);
-
-    } catch (setupErr) {
-      console.error("Post-login setup failed (kept user logged in):", setupErr);
-      showStarPopup("Some features failed to load — refresh page if needed");
+    if (currentUser.chatId?.startsWith("GUEST")) {
+      promptForChatID?.(doc(db, "users", currentUser.uid), currentUser)
+        .catch(e => console.warn("ChatID prompt cancelled:", e));
     }
 
-  } catch (error) {
-    console.error("Auth flow critical error:", error);
+    showChatUI?.(currentUser);
+    updateInfoTab?.();
+
+    // Protected call — won't crash whole flow if missing
+    try { safeUpdateDOM?.(); } catch (e) {
+      console.warn("safeUpdateDOM failed (non-fatal):", e);
+    }
+
+    revealHostTabs?.();
+
+    console.log("%cPost-login complete — Welcome!", "color:#00ff9d", currentUser.chatId || currentUser.hiveName);
+  } catch (err) {
+    console.error("Post-login error (user stays logged in):", err);
+    showStarPopup("Some features failed to load — refresh page if needed");
+  }
+}
+
+// ──────────────────────────────────────────────
+// LOGOUT — CLEAN & FUN
+// ──────────────────────────────────────────────
+window.logoutVIP = async () => {
+  try {
     await signOut(auth);
-    window.location.replace(REDIRECT_URL); // only for real critical failures
+  } catch (e) {
+    console.warn("Sign out failed:", e);
+  } finally {
+    localStorage.removeItem("vipUser");
+    localStorage.removeItem("lastVipEmail");
+    sessionStorage.setItem("justLoggedOut", "true");
+    currentUser = null;
+    location.reload();
+  }
+};
+
+document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const btn = e.target.closest("button");
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+
+  const messages = [
+    "See ya later, Alligator!",
+    "Off you go — $STRZ waiting when you return!",
+    "Catch you on the flip side!",
+    "Adios, Amigo!",
+    "Peace out, Player!",
+    "Hasta la vista, Baby!",
+    "Hmmm, now why'd you do that...",
+    "Off you go, Champ!"
+  ];
+
+  const farewell = messages[Math.floor(Math.random() * messages.length)];
+
+  try {
+    await signOut(auth);
+    showStarPopup(farewell);
+    setTimeout(() => location.reload(), 1800);
+  } catch (err) {
+    console.error("Logout failed:", err);
+    showStarPopup("Logout failed — try again!");
+    btn.disabled = false;
   }
 });
 
