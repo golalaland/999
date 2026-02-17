@@ -2620,14 +2620,15 @@ async function sendStarsToUser(targetUser, amt) {
   }
 }
 /* =====================================================
-   HOST-ONLY SECURE LOGIN — FINAL 2025
+   HOST-ONLY SECURE LOGIN — FINAL 2025 (NO REDIRECTS)
    • Only isHost:true + non-empty trimmed hiveName
-   • Immediate rejection + redirect for everyone else
-   • No UI flicker / partial access for non-hosts
+   • Invalid users are signed out + shown message
+   • No automatic redirect — stays on current page
 ===================================================== */
 
 // ──────────────────────────────────────────────
-// Block Google button
+// Block Google button (unchanged)
+// ──────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   const googleBtn = document.getElementById("googleSignInBtn");
   if (!googleBtn) return;
@@ -2646,7 +2647,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ──────────────────────────────────────────────
-// Login button — early host check
+// Login button — early host check (no redirects)
 // ──────────────────────────────────────────────
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("emailInput")?.value?.trim().toLowerCase() ?? "";
@@ -2674,11 +2675,10 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     loader.update(75);
 
     if (!snap.exists()) {
-      showStarPopup("Account not found. Contact support.");
+      showStarPopup("No profile found for this account.<br>Contact support.");
       await signOut(auth);
       loader.update(100);
-     setTimeout(() => location.href = REDIRECT_URL, 8200);
-      return;
+      return; // stays on login page
     }
 
     const data = snap.data() ?? {};
@@ -2689,29 +2689,35 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
       data.hiveName.trim().length >= 1;
 
     if (!validHost) {
-      const msg = data.isHost !== true
-        ? "This account is not a host account."
-        : "Host profile incomplete — hive name is missing.";
+      let msg = "Access denied — only verified hosts allowed.";
 
-      showStarPopup(msg + "\nRedirecting...");
+      if (data.isHost !== true) {
+        msg = "This account is not registered as a host.";
+      } else {
+        msg = "Host profile incomplete — hive name is missing or empty.";
+      }
+
+      showStarPopup(msg + "<br>Please contact support if this is your account.");
       await signOut(auth);
       loader.update(100);
-      setTimeout(() => location.href = REDIRECT_URL, 8800);
-      return;
+      return; // stays on current page (login form should be visible)
     }
 
-    // Only valid hosts continue
+    // ── Only valid hosts reach here ──
     loader.update(100);
-    console.log(`Valid host login — hive: ${data.hiveName.trim()}`);
+    console.log(`Valid host login — hive: "${data.hiveName.trim()}"`);
+
+    // Normal flow continues → onAuthStateChanged will handle the rest
 
   } catch (err) {
     console.error("Login error:", err.code, err.message);
-    let txt = "Login failed — try again";
+
+    let txt = "Login failed — please try again.";
 
     if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      txt = "Wrong email or password.";
+      txt = "Incorrect email or password.";
     } else if (err.code === "auth/too-many-requests") {
-      txt = "Too many attempts. Wait a minute.";
+      txt = "Too many attempts. Please wait a minute.";
     } else if (err.code === "auth/invalid-email") {
       txt = "Invalid email format.";
     }
@@ -2722,7 +2728,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 });
 
 // ──────────────────────────────────────────────
-// Secure onAuthStateChanged — rejects invalid hosts early
+// Secure onAuthStateChanged — rejects invalid hosts by signing them out (no redirect)
 // ──────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
   // ── Cleanup ──
@@ -2732,25 +2738,35 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   currentUser = null;
-  // currentAdmin = null;  // uncomment if you use it
+  // currentAdmin = null; // uncomment if you use it
 
   if (!user) {
     localStorage.removeItem("vipUser");
-    // Add any other cleanup you have (show login screen, etc.)
     console.log("Logged out / no user");
+    // You can add UI reset here if needed, e.g.:
+    // document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
+    // document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
     return;
   }
 
   // ── Verify host status BEFORE doing ANY UI or listener setup ──
   try {
     const email = user.email?.toLowerCase()?.trim();
-    if (!email) throw new Error("No email");
+    if (!email) {
+      console.warn("No email found in firebase user — signing out");
+      await signOut(auth);
+      return;
+    }
 
     const uidKey = sanitizeKey(email);
     const ref = doc(db, "users", uidKey);
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) throw new Error("No profile");
+    if (!snap.exists()) {
+      console.warn("No profile document found — signing out", email);
+      await signOut(auth);
+      return;
+    }
 
     const data = snap.data() ?? {};
 
@@ -2760,21 +2776,31 @@ onAuthStateChanged(auth, async (user) => {
       data.hiveName.trim().length >= 1;
 
     if (!isValidHost) {
-      console.warn("Rejected non-host / invalid host:", email);
+      console.warn("Rejected non-host or invalid host profile:", {
+        email,
+        isHost: data.isHost,
+        hiveName: data.hiveName,
+        hiveNameTrimmedLength: data.hiveName?.trim?.()?.length ?? "N/A"
+      });
+
       await signOut(auth);
-      // No delay here — redirect fast to prevent UI setup race
-      location.href = REDIRECT_URL;
+      // No redirect — just signed out → user should see login form again
       return;
     }
 
     // ── ONLY VALID HOSTS REACH THIS POINT ──
+    console.log("Valid host verified → proceeding", {
+      email,
+      hiveName: data.hiveName.trim()
+    });
+
     setCurrentUserFromData(data, uidKey, email);
     setupPostLogin();
 
   } catch (err) {
-    console.error("Auth state rejection:", err);
+    console.error("Error during auth state verification:", err);
     await signOut(auth);
-    location.href = REDIRECT_URL;
+    // No redirect here either — stay on page
   }
 });
 
@@ -2834,7 +2860,10 @@ function setupPostLogin() {
   console.log("%cHost UI initialized", "color:#00ff9d", currentUser.hiveName || currentUser.chatId);
 }
 
+// ──────────────────────────────────────────────
 // Logout (unchanged)
+// ──────────────────────────────────────────────
+
 window.logoutVIP = async () => {
   try {
     await signOut(auth);
