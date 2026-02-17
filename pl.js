@@ -440,32 +440,32 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     // ── VALID HOST ──
     console.log(`Valid host → hive: "${data.hiveName.trim()}"`);
 
-    currentUser = {
-      uid,
-      email,
-      firebaseUid: firebaseUser.uid,
-      chatId: data.chatId || email.split("@")[0],
-      chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-      fullName: data.fullName || "Host",
-      gender: data.gender || "person",
-      isVIP: !!data.isVIP,
-      isHost: true,
-      isAdmin: !!data.isAdmin,
-      hasPaid: !!data.hasPaid,
-      stars: Number(data.stars ?? 0),
-      cash: Number(data.cash ?? 0),
-      starsGifted: Number(data.starsGifted ?? 0),
-      starsToday: Number(data.starsToday ?? 0),
-      usernameColor: data.usernameColor || "#ff69b4",
-      subscriptionActive: !!data.subscriptionActive,
-      subscriptionCount: Number(data.subscriptionCount ?? 0),
-      lastStarDate: data.lastStarDate || todayDate(),
-      unlockedVideos: data.unlockedVideos || [],
-      invitedBy: data.invitedBy || null,
-      inviteeGiftShown: !!data.inviteeGiftShown,
-      hostLink: data.hostLink || null,
-      hiveName: data.hiveName.trim()
-    };
+  currentUser = {
+  uid: uid,
+  email: email,
+  firebaseUid: firebaseUser.uid,
+  chatId: data.chatId || email.split("@")[0],
+  chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+  fullName: data.fullName || "Host",
+  gender: data.gender || "person",
+  isVIP: !!data.isVIP,
+  isHost: true,
+  isAdmin: !!data.isAdmin,
+  hasPaid: !!data.hasPaid,
+  stars: Number(data.stars ?? 0),
+  cash: Number(data.cash ?? 0),
+  starsGifted: Number(data.starsGifted ?? 0),
+  starsToday: Number(data.starsToday ?? 0),
+  usernameColor: data.usernameColor || "#ff69b4",
+  subscriptionActive: !!data.subscriptionActive,
+  subscriptionCount: Number(data.subscriptionCount ?? 0),
+  lastStarDate: data.lastStarDate || todayDate(),
+  unlockedVideos: data.unlockedVideos || [],
+  invitedBy: data.invitedBy || null,
+  inviteeGiftShown: !!data.inviteeGiftShown,
+  hostLink: data.hostLink || null,
+  hiveName: data.hiveName.trim()
+};
 
     if (currentUser.isAdmin) {
       currentAdmin = {
