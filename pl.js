@@ -381,7 +381,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   const email = firebaseUser.email?.toLowerCase()?.trim();
   if (!email) {
     await signOut(auth);
-    window.location.href = REDIRECT_URL;
+  //  window.location.href = REDIRECT_URL;
     return;
   }
 
@@ -394,7 +394,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      setTimeout(() => window.location.href = REDIRECT_URL, 8400);
+     // setTimeout(() => window.location.href = REDIRECT_URL, 8400);
       return;
     }
 
@@ -437,8 +437,8 @@ console.log("━━━━━━━━━━━━━━━━━━━━━━�
 
       // Redirect ONLY non-permitted users
       setTimeout(() => {
-        window.location.href = REDIRECT_URL;
-      }, 8800);
+       // window.location.href = REDIRECT_URL;
+     // }, 8800);
 
       return;   // ← important: stop here — no setup for invalid users
     }
@@ -544,7 +544,7 @@ console.log("━━━━━━━━━━━━━━━━━━━━━━�
     console.error("Auth flow error:", error);
     showStarPopup("Profile verification failed — redirecting...");
     await signOut(auth);
-    setTimeout(() => window.location.href = REDIRECT_URL, 8400);
+   // setTimeout(() => window.location.href = REDIRECT_URL, 8400);
   }
 });
 
@@ -2657,7 +2657,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
       showStarPopup("Account not found. Contact support.");
       await signOut(auth);
       loader.update(100);
-      setTimeout(() => location.href = REDIRECT_URL, 8200);
+     // setTimeout(() => location.href = REDIRECT_URL, 8200);
       return;
     }
 
@@ -2676,7 +2676,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
       showStarPopup(msg + "\nRedirecting...");
       await signOut(auth);
       loader.update(100);
-      setTimeout(() => location.href = REDIRECT_URL, 8800);
+      //setTimeout(() => location.href = REDIRECT_URL, 8800);
       return;
     }
 
