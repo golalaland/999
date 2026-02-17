@@ -341,9 +341,7 @@ async function pushNotification(userId, message) {
   }
 }
 
-// ON AUTH STATE CHANGED — HOST-ONLY + HIVENAME REQUIRED — 2025 SECURE VERSION
-const REDIRECT_URL = "https://visitcube.xyz";
-
+// ON AUTH STATE CHANGED — HOST-ONLY + HIVENAME REQUIRED — 2025 SECURE VERSION (NO REDIRECTS)
 onAuthStateChanged(auth, async (firebaseUser) => {
   // ─── ALWAYS CLEAN UP FIRST ───
   if (typeof notificationsUnsubscribe === "function") {
@@ -380,8 +378,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   // ─── USER IS SIGNED IN → MUST BE VALID HOST ───
   const email = firebaseUser.email?.toLowerCase()?.trim();
   if (!email) {
+    console.warn("No email found in Firebase user — signing out");
     await signOut(auth);
-   window.location.href = REDIRECT_URL;
     return;
   }
 
@@ -394,79 +392,62 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-     setTimeout(() => window.location.href = REDIRECT_URL, 8400);
       return;
     }
 
     const data = userSnap.data() ?? {};
-     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-console.log("DIAGNOSTIC — Auth state check");
-console.log("Email:", email);
-console.log("Firestore doc ID:", uid);
-console.log("isHost value:", data.isHost, "→ type:", typeof data.isHost);
-console.log("hiveName raw:", data.hiveName, "→ type:", typeof data.hiveName);
-if (data.hiveName != null) {
-  console.log("hiveName .trim():", data.hiveName.trim());
-  console.log("hiveName length after trim:", data.hiveName.trim().length);
-}
-console.log("isValidHost result:", 
-  data.isHost === true && 
-  typeof data.hiveName === "string" && 
-  data.hiveName.trim().length >= 1
-);
-console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-  // ─── THE ONLY DECISION POINT FOR REDIRECT ───
-const isValidHost = 
-  data.isHost === true &&
-  typeof data.hiveName === "string" &&
-  data.hiveName.trim().length >= 1;
+    // ─── DIAGNOSTIC LOGS (keep for now, remove later) ───
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("DIAGNOSTIC — Auth state check");
+    console.log("Email:", email);
+    console.log("Firestore doc ID:", uid);
+    console.log("isHost value:", data.isHost, "→ type:", typeof data.isHost);
+    console.log("hiveName raw:", data.hiveName, "→ type:", typeof data.hiveName);
+    if (data.hiveName != null) {
+      console.log("hiveName .trim():", data.hiveName.trim());
+      console.log("hiveName length after trim:", data.hiveName.trim().length);
+    }
+    console.log("isValidHost result:",
+      data.isHost === true &&
+      typeof data.hiveName === "string" &&
+      data.hiveName.trim().length >= 1
+    );
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-if (!isValidHost) {
-  // ── REJECTION PATH ── only invalid users reach here
+    // ─── THE ONLY DECISION POINT FOR REJECTION ───
+    const isValidHost =
+      data.isHost === true &&
+      typeof data.hiveName === "string" &&
+      data.hiveName.trim().length >= 1;
 
-  let reason = "Access restricted to verified hosts only.";
+    if (!isValidHost) {
+      // ── REJECTION PATH ── only invalid users reach here
+      let reason = "Access restricted to verified hosts only.";
 
-  if (data.isHost !== true) {
-    reason = "This account is not registered as a host.";
-  } else if (typeof data.hiveName !== "string" || !data.hiveName.trim()) {
-    reason = "Host profile incomplete — hive name is missing or empty.";
-  }
+      if (data.isHost !== true) {
+        reason = "This account is not registered as a host.";
+      } else if (typeof data.hiveName !== "string" || !data.hiveName.trim()) {
+        reason = "Host profile incomplete — hive name is missing or empty.";
+      }
 
-  // Show message briefly
-  showStarPopup(reason + "<br>Redirecting...");
+      showStarPopup(reason + "<br>Please contact support if this is your account.");
 
-  // Log for debugging (remove in production if not needed)
-  console.warn(`Host rejection: ${reason} | email: ${email} | isHost: ${data.isHost} | hiveName:`, 
-    data.hiveName, 
-    `(length after trim: ${String(data.hiveName || "").trim().length})`
-  );
+      // Debug log
+      console.warn(`Host rejection: ${reason} | email: ${email} | isHost: ${data.isHost} | hiveName:`,
+        data.hiveName,
+        `(length after trim: ${String(data.hiveName || "").trim().length})`
+      );
 
-  // Sign out + immediate history-replacing redirect
-  // Using .replace() prevents back button from returning to the chat
-  signOut(auth)
-    .then(() => {
-      window.location.replace(REDIRECT_URL);
-    })
-    .catch((err) => {
-      console.error("Sign-out failed during rejection:", err);
-      // Fallback: redirect anyway
-      window.location.replace(REDIRECT_URL);
-    });
+      // Sign out — no redirect
+      await signOut(auth);
 
-  // Throw to immediately stop further execution of this callback
-  // (prevents any chance of setupPostLogin or other code running)
-  throw new Error("Invalid host → forced exit");
-}
+      // Throw to stop further execution immediately
+      throw new Error("Invalid host → forced exit");
+    }
 
-// ── If we reach here, user is valid ──
-// No need for else — just continue normally
-console.log(`Valid host verified → hive: "${data.hiveName.trim()}"`);
-
-    // ─────────────────────────────────────────────────────────────
-    // ONLY PERMITTED / VALID HOSTS REACH THIS POINT
-    // NO REDIRECT HAPPENS FROM HERE DOWN
-    // ─────────────────────────────────────────────────────────────
+    // ── VALID HOST ONLY REACHES HERE ──
+    console.log(`Valid host verified → hive: "${data.hiveName.trim()}"`);
 
     currentUser = {
       uid,
@@ -495,7 +476,7 @@ console.log(`Valid host verified → hive: "${data.hiveName.trim()}"`);
       hiveName: data.hiveName.trim()
     };
 
-    // Admin activation (independent of host check)
+    // Admin activation
     if (currentUser.isAdmin) {
       currentAdmin = {
         uid: currentUser.uid,
@@ -510,61 +491,67 @@ console.log(`Valid host verified → hive: "${data.hiveName.trim()}"`);
 
     console.log(`VALID HOST LOGIN → ${currentUser.chatId} (${currentUser.hiveName})`);
 
-    // ─── NORMAL POST-LOGIN FLOW (only for permitted users) ───
-    revealHostTabs();
-    updateInfoTab();
+    // ─── NORMAL POST-LOGIN FLOW (protected against crashes) ───
+    try {
+      revealHostTabs();
+      updateInfoTab();
 
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+      document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
-    localStorage.setItem("userId", uid);
-    localStorage.setItem("lastVipEmail", email);
+      localStorage.setItem("userId", uid);
+      localStorage.setItem("lastVipEmail", email);
 
-    setupUsersListener?.();
-    showChatUI(currentUser);
-    attachMessagesListener?.();
-    startStarEarning?.(uid);
-    setupPresence?.(currentUser);
-    setupNotificationsListener?.(uid);
-    updateRedeemLink?.();
-    updateTipLink?.();
+      setupUsersListener?.();
+      showChatUI(currentUser);
+      attachMessagesListener?.();
+      startStarEarning?.(uid);
+      setupPresence?.(currentUser);
+      setupNotificationsListener?.(uid);
+      updateRedeemLink?.();
+      updateTipLink?.();
 
-    setTimeout(() => {
-      syncUserUnlocks?.();
-      loadNotifications?.();
-    }, 600);
+      setTimeout(() => {
+        syncUserUnlocks?.();
+        loadNotifications?.();
+      }, 600);
 
-    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-      setTimeout(loadMyClips, 1000);
+      if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
+        setTimeout(loadMyClips, 1000);
+      }
+
+      if (currentUser.chatId.startsWith("GUEST")) {
+        setTimeout(() => promptForChatID?.(userRef, currentUser), 2000);
+      }
+
+      const hostFields = document.getElementById("hostOnlyFields");
+      if (hostFields) hostFields.style.display = "block";
+
+      // Welcome popup
+      const holyColors = ["#FF1493","#FFD700","#00FFFF","#FF4500","#DA70D6","#FF69B4","#32CD32","#FFA500","#FF00FF"];
+      const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+
+      showStarPopup(`
+        <div style="text-align:center; font-size:13px;">
+          Welcome, Host
+          <b style="color:${glow}; text-shadow:0 0 20px ${glow}88;">
+            ${currentUser.chatId.toUpperCase()}
+          </b>
+          <br><small>${currentUser.hiveName}</small>
+          ${currentUser.isAdmin ? "<br><span style='color:#0f9;'>ADMIN MODE</span>" : ""}
+        </div>
+      `);
+    } catch (setupError) {
+      console.error("Post-login setup failed (non-fatal):", setupError);
+      // Do NOT sign out — keep user logged in
+      showStarPopup("Some features failed to load — try refreshing the page");
     }
-
-    if (currentUser.chatId.startsWith("GUEST")) {
-      setTimeout(() => promptForChatID?.(userRef, currentUser), 2000);
-    }
-
-    const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) hostFields.style.display = "block";
-
-    // Welcome popup (only shown to valid hosts)
-    const holyColors = ["#FF1493","#FFD700","#00FFFF","#FF4500","#DA70D6","#FF69B4","#32CD32","#FFA500","#FF00FF"];
-    const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
-
-    showStarPopup(`
-      <div style="text-align:center; font-size:13px;">
-        Welcome, Host
-        <b style="color:${glow}; text-shadow:0 0 20px ${glow}88;">
-          ${currentUser.chatId.toUpperCase()}
-        </b>
-        <br><small>${currentUser.hiveName}</small>
-        ${currentUser.isAdmin ? "<br><span style='color:#0f9;'>ADMIN MODE</span>" : ""}
-      </div>
-    `);
 
   } catch (error) {
     console.error("Auth flow error:", error);
-    showStarPopup("Profile verification failed — redirecting...");
+    showStarPopup("Profile verification failed — please try logging in again");
     await signOut(auth);
-   setTimeout(() => window.location.href = REDIRECT_URL, 8400);
+    // No redirect — stay on current page
   }
 });
 
