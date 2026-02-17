@@ -345,7 +345,7 @@ async function pushNotification(userId, message) {
 const REDIRECT_URL = "https://visitcube.xyz";
 
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ─── CLEANUP LISTENERS & GLOBALS ───
+  // ─── CLEANUP ───
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -354,7 +354,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   currentUser = null;
   currentAdmin = null;
 
-  // ─── LOGGED OUT / NO USER ───
+  // ─── NO USER ───
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
@@ -376,7 +376,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     return;
   }
 
-  // ─── USER SIGNED IN → VERIFY HOST ───
+  // ─── VERIFY HOST ───
   const email = firebaseUser.email?.toLowerCase()?.trim();
   if (!email) {
     console.warn("No email in firebaseUser — signing out");
@@ -400,7 +400,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data() ?? {};
 
-    // ─── DIAGNOSTIC LOGS (remove when stable) ───
+    // Diagnostic logs (remove when no longer needed)
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("DIAGNOSTIC — Auth state check");
     console.log("Email:", email);
@@ -425,11 +425,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     if (!isValidHost) {
       let reason = "Access restricted to verified hosts only.";
-      if (data.isHost !== true) {
-        reason = "This account is not registered as a host.";
-      } else {
-        reason = "Host profile incomplete — hive name missing or empty.";
-      }
+      if (data.isHost !== true) reason = "This account is not registered as a host.";
+      else reason = "Host profile incomplete — hive name missing or empty.";
 
       showStarPopup(reason + "<br>Redirecting...");
       console.warn(`Rejected: ${reason} | ${email}`);
@@ -438,15 +435,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         window.location.replace(REDIRECT_URL);
       });
 
-      return; // stop further execution
+      return;
     }
 
-    // ── VALID HOST ONLY ──
+    // ── VALID HOST ──
     console.log(`Valid host → hive: "${data.hiveName.trim()}"`);
 
     currentUser = {
-      uid,
-      email,
+      uid: uid,
+      email: email,
       firebaseUid: firebaseUser.uid,
       chatId: data.chatId || email.split("@")[0],
       chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
@@ -483,7 +480,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log(`VALID HOST LOGIN → ${currentUser.chatId} (${currentUser.hiveName})`);
 
-    // ─── POST-LOGIN FLOW (protected) ───
+    // ─── POST-LOGIN FLOW ───
     try {
       revealHostTabs();
       updateInfoTab();
@@ -512,7 +509,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         setTimeout(loadMyClips, 1000);
       }
 
-      if (currentUser.chatId.startsWith("GUEST")) {
+      if (currentUser.chatId?.startsWith("GUEST")) {
         setTimeout(() => promptForChatID?.(userRef, currentUser), 2000);
       }
 
@@ -534,14 +531,14 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       `);
 
     } catch (setupErr) {
-      console.error("Post-login setup failed (kept user logged in):", setupErr);
+      console.error("Post-login setup error (user remains logged in):", setupErr);
       showStarPopup("Some features failed to load — refresh page if needed");
     }
 
   } catch (error) {
-    console.error("Auth flow critical error:", error);
+    console.error("Auth flow error:", error);
     await signOut(auth);
-    window.location.replace(REDIRECT_URL); // only for real critical failures
+    window.location.replace(REDIRECT_URL);
   }
 });
 
