@@ -345,7 +345,7 @@ async function pushNotification(userId, message) {
 const REDIRECT_URL = "https://visitcube.xyz";
 
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // ─── ALWAYS CLEAN UP FIRST ───
+  // ─── CLEANUP ───
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -354,7 +354,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   currentUser = null;
   currentAdmin = null;
 
-  // ─── NO USER → LOGGED OUT STATE ───
+  // ─── LOGGED OUT ───
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
@@ -376,10 +376,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     return;
   }
 
-  // ─── USER SIGNED IN → VERIFY HOST ───
+  // ─── VERIFY HOST ───
   const email = firebaseUser.email?.toLowerCase()?.trim();
   if (!email) {
-    console.warn("No email in firebaseUser — signing out");
+    console.warn("No email found — signing out");
     await signOut(auth);
     window.location.replace(REDIRECT_URL);
     return;
@@ -400,11 +400,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data() ?? {};
 
-    // Diagnostic logs (remove when fixed)
+    // Diagnostic logs (remove later)
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("DIAGNOSTIC — Auth state check");
     console.log("Email:", email);
-    console.log("Firestore doc ID:", uid);
+    console.log("Doc ID:", uid);
     console.log("isHost:", data.isHost, typeof data.isHost);
     console.log("hiveName raw:", data.hiveName, typeof data.hiveName);
     if (data.hiveName != null) {
@@ -417,18 +417,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     );
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    const isValidHost =
+    const isValidHost = 
       data.isHost === true &&
       typeof data.hiveName === "string" &&
       data.hiveName.trim().length >= 1;
 
     if (!isValidHost) {
       let reason = "Access restricted to verified hosts only.";
-      if (data.isHost !== true) {
-        reason = "This account is not registered as a host.";
-      } else {
-        reason = "Host profile incomplete — hive name missing or empty.";
-      }
+      if (data.isHost !== true) reason = "This account is not a host.";
+      else reason = "Host profile incomplete — hive name missing.";
 
       showStarPopup(reason + "<br>Redirecting...");
       console.warn(`Rejected: ${reason} | ${email}`);
@@ -437,10 +434,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         window.location.replace(REDIRECT_URL);
       });
 
-      throw new Error("Invalid host — redirecting");
+      return; // stop execution
     }
 
-    // ── VALID HOST ONLY ──
+    // ── VALID HOST ──
     console.log(`Valid host → hive: "${data.hiveName.trim()}"`);
 
     currentUser = {
@@ -482,11 +479,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log(`VALID HOST LOGIN → ${currentUser.chatId} (${currentUser.hiveName})`);
 
-    // ─── POST-LOGIN FLOW (protected) ───
+    // ─── POST-LOGIN FLOW (protected against crashes) ───
     try {
       revealHostTabs();
       updateInfoTab();
-
       document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
       document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
@@ -518,8 +514,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       document.getElementById("hostOnlyFields")?.style.display = "block";
 
       // Welcome popup
-      const holyColors = ["#FF1493","#FFD700","#00FFFF","#FF4500","#DA70D6","#FF69B4","#32CD32","#FFA500","#FF00FF"];
-      const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+      const colors = ["#FF1493","#FFD700","#00FFFF","#FF4500","#DA70D6","#FF69B4","#32CD32","#FFA500","#FF00FF"];
+      const glow = colors[Math.floor(Math.random() * colors.length)];
 
       showStarPopup(`
         <div style="text-align:center; font-size:13px;">
@@ -531,16 +527,16 @@ onAuthStateChanged(auth, async (firebaseUser) => {
           ${currentUser.isAdmin ? "<br><span style='color:#0f9;'>ADMIN MODE</span>" : ""}
         </div>
       `);
+
     } catch (setupErr) {
-      console.error("Post-login setup error (non-fatal):", setupErr);
-      // Do NOT sign out — keep user logged in
-      showStarPopup("Some features failed to load — refresh page if needed");
+      console.error("Post-login setup error (kept logged in):", setupErr);
+      showStarPopup("Some features failed to load — refresh if needed");
     }
 
   } catch (error) {
-    console.error("Critical auth error:", error);
+    console.error("Auth flow error:", error);
     await signOut(auth);
-    window.location.replace(REDIRECT_URL);  // safety net only for real errors
+    window.location.replace(REDIRECT_URL);
   }
 });
 
