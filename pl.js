@@ -6246,27 +6246,21 @@ info.append(title, user, tagsEl);
     });
   }
   // Filter buttons
-  unlockedBtn.onclick = () => {
-    filterMode = filterMode === "unlocked" ? "all" : "unlocked";
-    unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
-    unlockedBtn.style.background = filterMode === "unlocked"
-      ? "linear-gradient(135deg, #ff00f2, #00ffea)"
-      : "linear-gradient(135deg, #240046, #3c0b5e)";
-    renderCards();
-  };
+unlockedBtn.onclick = () => {
+  filterMode = filterMode === "unlocked" ? "all" : "unlocked";
+  unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
+  unlockedBtn.style.background = filterMode === "unlocked"
+    ? "linear-gradient(135deg, #ff00f2, #00ffea)"
+    : "linear-gradient(135deg, #240046, #3c0b5e)";
+  renderCards();
+};
+
 trendingBtn.onclick = () => {
   filterMode = filterMode === "trending" ? "all" : "trending";
-
-  // When in trending mode → show "All Videos" plain
-  // When not → show "Free Tonight" + fiery gradient emoji only
-  trendingBtn.innerHTML = filterMode === "trending"
-    ? "Show All Videos"
-    : 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
-
+  trendingBtn.textContent = filterMode === "trending" ? "All Videos" : "Trending";
   trendingBtn.style.background = filterMode === "trending"
     ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
     : "linear-gradient(135deg, #8a2be2, #ff00f2)";
-
   renderCards();
 };
   // SEARCH – live, case-insensitive, only username/chatId
