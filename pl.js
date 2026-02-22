@@ -7339,6 +7339,3 @@ paystackNigeriaBanks.forEach(bank => {
   option.textContent = bank;
   bankSelect.appendChild(option);
 });
-/*********************************
- * INIT
- *********************************
