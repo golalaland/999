@@ -977,12 +977,11 @@ submitBtn.onclick = async () => {
   }
 };
 
-// === VIP PAYSTACK PAYMENT (FULLY FIXED & SAFE - ₦19,999) ===
 vipPayBtn.onclick = () => {
   const email = emailInput.value.trim().toLowerCase();
-  
+
   if (!email || !/@/.test(email)) {
-    showPopup('Enter a valid email before paying');
+    showPopup('Please enter a valid email address');
     return;
   }
 
@@ -992,23 +991,23 @@ vipPayBtn.onclick = () => {
   const handler = PaystackPop.setup({
     key: 'pk_test_9446fa6b81888ffce77cc94294530d761aac4ccd',
     email: email,
-    amount: 99999 * 100,           // ₦99,999 in kobo
+    amount: 29999 * 100,              // ₦29,999 in kobo
     currency: 'NGN',
-    ref: 'VIP_' + Date.now(),
-    metadata: { type: 'vip_activation' },
-    
-    callback: async function(response) {
+    ref: 'VIP_' + Date.now() + Math.random().toString(36).substr(2, 5),
+    metadata: {
+      type: 'vip_activation'
+    },
+
+    callback: async function (response) {
       vipPayBtn.classList.remove('loading');
-      
-      console.log('Paystack callback received:', response);
 
       if (response.status !== 'success' || !response.reference) {
-        showPopup('Payment completed but no reference received');
+        showPopup('Payment completed but no reference was returned');
         messageEl.textContent = "";
         return;
       }
 
-      console.log('Sending verification with:', { reference: response.reference, email });
+      messageEl.textContent = "Verifying payment...";
 
       try {
         const verifyRes = await fetch('https://cube-payment-server.onrender.com/api/verify-vip-payment', {
@@ -1020,9 +1019,7 @@ vipPayBtn.onclick = () => {
           })
         });
 
-        console.log('Server status code:', verifyRes.status);
         const verifyData = await verifyRes.json();
-        console.log('Server full response:', verifyData);
 
         if (!verifyData.success) {
           showPopup('Payment verification failed: ' + (verifyData.message || 'Unknown error'));
@@ -1030,101 +1027,84 @@ vipPayBtn.onclick = () => {
           return;
         }
 
-        // === Server confirmed → do ALL rewards + notifications on frontend ===
-        messageEl.textContent = "VIP Activated!! ✌︎㋡";
+        // Server says OK → proceed with frontend updates
+        messageEl.textContent = "VIP Activated! 🎉";
 
-        const docId = sanitizeKey(email);
+        const docId = sanitizeKey(email); // your sanitize function
         const userRef = doc(db, "users", docId);
 
-        try {
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            console.error("User not found after payment");
-            setTimeout(() => window.location.href = "https://visitcube.xyz", 1800);
-            return;
-          }
-
-          const userData = userSnap.data();
-          const inviterId = userData.invitedBy;
-
-        // Update current user (VIP)
-try {
-  await updateDoc(userRef, {
-    isVIP: true,
-    hasPaid: true,
-    vipActivatedAt: serverTimestamp(),
-    vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
-    stars: increment(500),
-    lastUpdated: serverTimestamp()
-  });
-} catch (updateErr) {
-  console.error("Failed to update VIP user:", updateErr);
-  // Still continue to rewards/notifications — don't block everything
-}
-
-// Reward inviter/host (stars + CASH + vipCount)
-if (inviterId) {
-  try {
-    const inviterRef = doc(db, "users", inviterId);
-    const cashRewardAmount = 2000;
-
-    await updateDoc(inviterRef, {
-      stars: increment(250),
-      cash: increment(cashRewardAmount),
-      cashReward: increment(cashRewardAmount),
-      lastUpdated: serverTimestamp()
-    });
-
-    // Cash reward notification to host
-    await addDoc(collection(db, "notifications"), {
-      recipientId: inviterId,
-      type: "vip_cash_reward",
-      title: "₦2,000 Cash Reward Earned!",
-      message: `@${userData.chatId || 'Someone'} just went VIP!\n+250 STRZ + ₦2,000 in rewards added to your balance`,
-      vipUserId: userData.uid,
-      vipUserName: userData.chatId,
-      read: false,
-      createdAt: serverTimestamp()
-    });
-  } catch (err) {
-    console.warn("Inviter reward/notification failed:", err);
-  }
-}
-
-// Welcome notification for new VIP (isolated so it always tries)
-try {
-  await addDoc(collection(db, "notifications"), {
-    recipientId: userData.uid,
-    type: "vip_bonus",
-    title: "Welcome to Cube VIP! 🎉",
-    message: "You activated VIP and received 500 STRZ bonus!\nEnjoy your elite access",
-    read: false,
-    createdAt: serverTimestamp()
-  });
-} catch (err) {
-  console.warn("VIP welcome notification failed:", err);
-}
-
-// Success redirect
-setTimeout(() => {
-  window.location.href = "https://visitcube.xyz";
-}, 1800);
-          
-        } catch (err) {
-          console.error("VIP activation processing failed:", err);
-          setTimeout(() => window.location.href = "https://visitcube.xyz", 1800);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          console.error("User document not found after successful payment");
+          setTimeout(() => window.location.href = "https://visitcube.xyz", 2000);
+          return;
         }
 
-      } catch (fetchError) {
-        console.error("Failed to contact verification server:", fetchError);
-        showPopup("Could not verify payment. Please contact support.");
+        const userData = userSnap.data();
+        const inviterId = userData.invitedBy;
+
+        // Update current user → VIP status + bonus
+        await updateDoc(userRef, {
+          isVIP: true,
+          hasPaid: true,
+          vipActivatedAt: serverTimestamp(),
+          vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+          stars: increment(500),
+          lastUpdated: serverTimestamp()
+        });
+
+        // Reward inviter (if exists)
+        if (inviterId) {
+          const inviterRef = doc(db, "users", inviterId);
+
+          // 23% of 29,999 = 6,899.77 → rounded to 6900
+          const cashRewardAmount = 6900;
+
+          await updateDoc(inviterRef, {
+            stars: increment(250),               // adjust if you want different amount
+            cash: increment(cashRewardAmount),
+            cashReward: increment(cashRewardAmount),
+            lastUpdated: serverTimestamp()
+          });
+
+          // Notification to host/inviter
+          await addDoc(collection(db, "notifications"), {
+            recipientId: inviterId,
+            type: "vip_cash_reward",
+            title: `₦${cashRewardAmount.toLocaleString()} Cash Reward Earned!`,
+            message: `@${userData.chatId || 'Someone'} just activated VIP for ₦29,999!\n₦${cashRewardAmount.toLocaleString()} + 250 STRZ added to your account.`,
+            vipUserId: userData.uid || docId,
+            vipUserName: userData.chatId || 'New VIP',
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        // Welcome notification for the new VIP
+        await addDoc(collection(db, "notifications"), {
+          recipientId: userData.uid || docId,
+          type: "vip_bonus",
+          title: "Welcome to VIP! 🎖️",
+          message: "You've unlocked VIP status + 500 STRZ bonus!\nEnjoy premium features for the next 31 days.",
+          read: false,
+          createdAt: serverTimestamp()
+        });
+
+        // Redirect after success
+        setTimeout(() => {
+          window.location.href = "https://visitcube.xyz";
+        }, 2200);
+
+      } catch (err) {
+        console.error("VIP flow error:", err);
+        showPopup("Something went wrong during activation. Contact support if the issue persists.");
         messageEl.textContent = "";
       }
     },
 
-    onClose: function() {
+    onClose: function () {
       vipPayBtn.classList.remove('loading');
-      messageEl.textContent = "Payment cancelled";
+      messageEl.textContent = "Payment was cancelled";
     }
   });
 
