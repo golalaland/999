@@ -6009,9 +6009,10 @@ function startCountdown(btn, endTime) {
       btn.textContent = 'Activate Free Tonight';
       btn.classList.remove('timer-active');
       localStorage.removeItem('freeTonightEndTime');
-      document.getElementById('freeTonightStatus')?.textContent = 'Ready';
-      return;
-    }
+const statusEl = document.getElementById('freeTonightStatus');
+if (statusEl) {
+  statusEl.textContent = 'Ready';
+}
 
     const hours = Math.floor(remaining / 3600000);
     const minutes = Math.floor((remaining % 3600000) / 60000);
