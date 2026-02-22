@@ -6017,221 +6017,216 @@ Object.assign(trendingBtn.style, {
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
-  function renderCards(videosToRender = videos) {
-    grid.innerHTML = "";
-   tagContainer.innerHTML = "";
+function renderCards(videosToRender = videos) {
+  grid.innerHTML = "";
+  tagContainer.innerHTML = "";
 
-// Only build tag buttons from currently visible/filtered videos
-let visibleVideos = videosToRender.filter(v => {
-  if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-  if (filterMode === "trending") return v.isTrending === true;
-  return true;
-});
-
-// Apply active tag filters (if any)
-if (activeTags.size > 0) {
-  visibleVideos = visibleVideos.filter(v => {
-    const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-    return [...activeTags].every(tag => videoTags.includes(tag));
+  // === SAFE: only build tags from currently visible videos ===
+  let visibleVideos = videosToRender.filter(v => {
+    if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
+    if (filterMode === "trending") return v.isTrending === true;
+    return true;
   });
-}
 
-// Now collect tags ONLY from visible videos
-const visibleTags = new Set();
-visibleVideos.forEach(v => {
-  (v.tags || []).forEach(t => {
-    if (t && typeof t === "string" && t.trim()) {
-      visibleTags.add(t.trim().toLowerCase());
-    }
-  });
-});
-
-const sortedVisibleTags = [...visibleTags].sort();
-
-// Define location keywords (expand as needed)
-const locationKeywords = [
-  "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu", 
-  "ghana", "accra", "naija", "lekki", "ikeja", "portharcourt", "ibadan"
-  // Add more real ones you see in your data
-];
-
-const isFreeTonightMode = filterMode === "trending";
-
-// Build tag buttons — skip location tags unless in Free Tonight mode
-sortedVisibleTags.forEach(tag => {
-  const lowerTag = tag.toLowerCase();
-  const isLocationTag = locationKeywords.some(kw => lowerTag.includes(kw));
-
-  // Hide location tag buttons completely outside Free Tonight tab
-  if (isLocationTag && !isFreeTonightMode) return;
-
-  const btn = document.createElement("button");
-  btn.textContent = `#${tag}`;
-  btn.dataset.tag = tag;
-  Object.assign(btn.style, {
-    padding: "6px 14px",
-    borderRadius: "24px",
-    fontSize: "12px",
-    fontWeight: "600",
-    background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
-    color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-    border: "1px solid rgba(255,46,120,0.6)",
-    cursor: "pointer",
-    transition: "all 0.25s"
-  });
-  btn.onclick = () => {
-    if (activeTags.has(tag)) activeTags.delete(tag);
-    else activeTags.add(tag);
-    renderCards(videosToRender);
-  };
-  tagContainer.appendChild(btn);
-});
-   
-    // Filter videos
-    let filtered = videosToRender.filter(v => {
-      if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-      if (filterMode === "trending") return v.isTrending === true;
-      return true;
+  // Apply active tag filters (if any)
+  if (activeTags.size > 0) {
+    visibleVideos = visibleVideos.filter(v => {
+      const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+      return [...activeTags].every(tag => videoTags.includes(tag));
     });
-    if (activeTags.size > 0) {
-      filtered = filtered.filter(v => {
-        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-        return [...activeTags].every(tag => videoTags.includes(tag));
-      });
-    }
-     
-    // === FIXED: SHUFFLE THE FILTERED LIST FOR RANDOM ORDER EVERY TIME ===
-    filtered = filtered.sort(() => Math.random() - 0.5);
+  }
 
-    // Empty state
-    if (filtered.length === 0) {
-      const empty = document.createElement("div");
-      empty.textContent = "No one's on free tonight right now";
-      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
-      grid.appendChild(empty);
-      return;
-    }
-    // Render cards
-    filtered.forEach(video => {
-      const isUnlocked = unlockedVideos.includes(video.id);
-      const card = document.createElement("div");
-      Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        border: "1px solid rgba(138,43,226,0.4)"
-      });
-      card.onmouseenter = () => {
-        card.style.transform = "scale(1.03)";
-        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-      };
-      card.onmouseleave = () => {
-        card.style.transform = "scale(1)";
-        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-      };
-      const vidContainer = document.createElement("div");
-      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-      const videoEl = document.createElement("video");
-      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
-      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      if (isUnlocked) {
-        videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.load();
-        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
-      } else {
-        const lock = document.createElement("div");
-        lock.innerHTML = `
-          <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
-                      display:flex; align-items:center; justify-content:center;">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
-            </svg>
-          </div>`;
-        vidContainer.appendChild(lock);
+  // Now collect tags ONLY from visible videos
+  const visibleTags = new Set();
+  visibleVideos.forEach(v => {
+    (v.tags || []).forEach(t => {
+      if (t && typeof t === "string" && t.trim()) {
+        visibleTags.add(t.trim().toLowerCase());
       }
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        if (!isUnlocked) {
-          showUnlockConfirm(video, () => {
-            // Refresh unlockedVideos from localStorage
-            unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            // Re-render cards (with new random order)
-            renderCards(videos);
-            // Show success notification
-            showStarPopup("Video unlocked! 🎉", "success");
-          });
-          return;
-        }
-        openFullScreenVideo(video.videoUrl || "");
-      };
-      vidContainer.appendChild(videoEl);
-      card.appendChild(vidContainer);
-      // Info overlay
-      const info = document.createElement("div");
-      info.style.cssText = `
-        position:absolute; bottom:0; left:0; right:0;
-        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-        padding:60px 12px 12px;
+    });
+  });
+
+  const sortedVisibleTags = [...visibleTags].sort();
+
+  // === Define location keywords (expand as you have in data) ===
+  const locationKeywords = [
+    "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu",
+    "ghana", "accra", "naija", "lekki", "ikeja", "portharcourt", "ibadan"
+    // add more real ones you see
+  ];
+
+  const isTrendingMode = filterMode === "trending";
+
+  // === Build tag buttons — hide location tags outside Trending mode ===
+  sortedVisibleTags.forEach(tag => {
+    const lowerTag = tag.toLowerCase();
+    const isLocationTag = locationKeywords.some(kw => lowerTag.includes(kw));
+
+    // Hide location tag buttons completely unless in Trending/Free Tonight mode
+    if (isLocationTag && !isTrendingMode) return;
+
+    const btn = document.createElement("button");
+    btn.textContent = `#${tag}`;
+    btn.dataset.tag = tag;
+    Object.assign(btn.style, {
+      padding: "6px 14px",
+      borderRadius: "24px",
+      fontSize: "12px",
+      fontWeight: "600",
+      background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+      color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+      border: "1px solid rgba(255,46,120,0.6)",
+      cursor: "pointer",
+      transition: "all 0.25s"
+    });
+    btn.onclick = () => {
+      if (activeTags.has(tag)) activeTags.delete(tag);
+      else activeTags.add(tag);
+      renderCards(videosToRender);
+    };
+    tagContainer.appendChild(btn);
+  });
+
+  // === Filter videos (unchanged) ===
+  let filtered = videosToRender.filter(v => {
+    if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
+    if (filterMode === "trending") return v.isTrending === true;
+    return true;
+  });
+
+  if (activeTags.size > 0) {
+    filtered = filtered.filter(v => {
+      const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+      return [...activeTags].every(tag => videoTags.includes(tag));
+    });
+  }
+
+  filtered = filtered.sort(() => Math.random() - 0.5);
+
+  if (filtered.length === 0) {
+    const empty = document.createElement("div");
+    empty.textContent = isTrendingMode ? "No one's on Free Tonight right now" : "No clips match your filters.";
+    empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
+    grid.appendChild(empty);
+    return;
+  }
+
+  // === Render cards (keep your exact original card code) ===
+  filtered.forEach(video => {
+    const isUnlocked = unlockedVideos.includes(video.id);
+    const card = document.createElement("div");
+    Object.assign(card.style, {
+      position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+      background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+      transition: "transform 0.25s ease, box-shadow 0.25s ease",
+      border: "1px solid rgba(138,43,226,0.4)"
+    });
+    card.onmouseenter = () => {
+      card.style.transform = "scale(1.03)";
+      card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
+    };
+    card.onmouseleave = () => {
+      card.style.transform = "scale(1)";
+      card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+    };
+    const vidContainer = document.createElement("div");
+    vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+    const videoEl = document.createElement("video");
+    videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+    videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+    if (isUnlocked) {
+      videoEl.src = video.previewClip || video.videoUrl || "";
+      videoEl.load();
+      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
+    } else {
+      const lock = document.createElement("div");
+      lock.innerHTML = `
+        <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
+                    display:flex; align-items:center; justify-content:center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
+          </svg>
+        </div>`;
+      vidContainer.appendChild(lock);
+    }
+    vidContainer.onclick = (e) => {
+      e.stopPropagation();
+      if (!isUnlocked) {
+        showUnlockConfirm(video, () => {
+          unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+          renderCards(videosToRender);
+          showStarPopup("Video unlocked! 🎉", "success");
+        });
+        return;
+      }
+      openFullScreenVideo(video.videoUrl || "");
+    };
+    vidContainer.appendChild(videoEl);
+    card.appendChild(vidContainer);
+
+    const info = document.createElement("div");
+    info.style.cssText = `
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+      padding:60px 12px 12px;
+    `;
+    const title = document.createElement("div");
+    title.textContent = video.title || "Cute moment";
+    title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
+    const user = document.createElement("div");
+    user.textContent = `@${video.uploaderName || "cutie"}`;
+    user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
+    user.onclick = (e) => {
+      e.stopPropagation();
+      if (video.uploaderId) {
+        getDoc(doc(db, "users", video.uploaderId))
+          .then(userSnap => {
+            if (userSnap.exists()) {
+              showSocialCard(userSnap.data());
+            }
+          })
+          .catch(err => console.error("Failed to load user:", err));
+      }
+    };
+
+    // === TAGS: show fruit emoji + location only in Trending/Free Tonight mode ===
+    const tagsEl = document.createElement("div");
+    tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
+    // Decide if we're in Free Tonight / Trending mode
+    const isFreeTonightMode = filterMode === "trending";
+
+    // Only show fruit + location tags in Free Tonight mode
+    const displayedTags = (video.tags || []).filter(tag => {
+      if (!tag || typeof tag !== "string") return false;
+      const lowerTag = tag.trim().toLowerCase();
+      // Check if this tag is location or fruit emoji
+      const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+      const isFruit = /\p{Emoji_Presentation}/.test(tag.trim()); // detects emoji like 🍑
+      // Show fruit/location only in Free Tonight mode
+      return isFreeTonightMode || (!isLocation && !isFruit);
+    });
+
+    displayedTags.forEach(t => {
+      const span = document.createElement("span");
+      span.textContent = `#${t.trim()}`;
+
+      const lowerT = t.trim().toLowerCase();
+      const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
+      const isFruitTag = /\p{Emoji_Presentation}/.test(t.trim());
+
+      span.style.cssText = `
+        font-size:11px;
+        padding:2px 8px;
+        border-radius:10px;
+        background: ${isFruitTag ? "rgba(255, 215, 0, 0.3)" : isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
+        color: ${isFruitTag ? "#FFD700" : isLocationTag ? "#00ffea" : "#ff4d8a"};
+        border: 1px solid ${isFruitTag ? "rgba(255, 215, 0, 0.6)" : isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
       `;
-      const title = document.createElement("div");
-      title.textContent = video.title || "Cute moment";
-      title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
-      const user = document.createElement("div");
-      user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
-      user.onclick = (e) => {
-        e.stopPropagation();
-        if (video.uploaderId) {
-          getDoc(doc(db, "users", video.uploaderId))
-            .then(userSnap => {
-              if (userSnap.exists()) {
-                showSocialCard(userSnap.data());
-              }
-            })
-            .catch(err => console.error("Failed to load user:", err));
-        }
-      };
-// Inside renderCards function, replace the tagsEl creation with this:
 
-const tagsEl = document.createElement("div");
-tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
-
-// Decide if we're in Free Tonight / Trending mode
-const isFreeTonightMode = filterMode === "trending";
-
-// Only show location tags in Free Tonight mode
-const displayedTags = (video.tags || []).filter(tag => {
-  if (!tag || typeof tag !== "string") return false;
-  const lowerTag = tag.trim().toLowerCase();
-
-  // Check if this tag is a location
-  const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-
-  // Hide location tags unless we're in Free Tonight mode
-  return !isLocation || isFreeTonightMode;
-});
-
-// Render the remaining tags
-displayedTags.forEach(t => {
-  const span = document.createElement("span");
-  span.textContent = `#${t.trim()}`;
-  
-  // Special style for location tags (only visible in Free Tonight mode)
-  const lowerT = t.trim().toLowerCase();
-  const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
-
-  span.style.cssText = `
-    font-size:11px;
-    padding:2px 8px;
-    border-radius:10px;
-    background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
-    color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
-    border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
-  `;
-  
-  tagsEl.appendChild(span);
-});
+      tagsEl.appendChild(span);
+    });
 info.append(title, user, tagsEl);
       card.appendChild(info);
       // Badge
