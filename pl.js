@@ -7423,7 +7423,11 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     selected.trendingUntil = Timestamp.fromMillis(endTime);
 
-    // 6. Deduct stars + save highlights (atomic)
+    // 6. Define refs for batch (THIS WAS MISSING — FIXES THE ERROR)
+    const userRef = doc(db, "users", uid);
+    const highlightsRef = doc(db, "highlightVideos", uid);
+
+    // Deduct stars + save highlights (atomic)
     const batch = writeBatch(db);
     batch.update(userRef, { stars: increment(-cost) });
     batch.update(highlightsRef, { highlights });
