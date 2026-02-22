@@ -7341,7 +7341,7 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Client-side Free Tonight with Live 24h Countdown
+// Client-side Free Tonight with Live 24h Countdown + Fruit Emoji
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
@@ -7359,6 +7359,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     }
 
     const uid = auth.currentUser.uid;
+    const cost = 750;
 
     // Quick local check (fast UX)
     const savedEndTime = localStorage.getItem('freeTonightEndTime');
@@ -7368,20 +7369,19 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       return;
     }
 
-    // 1. Get user profile + highlights in parallel (faster)
-    const [userSnap, highlightsSnap] = await Promise.all([
-      getDoc(doc(db, "users", uid)),
-      getDoc(doc(db, "highlightVideos", uid))
-    ]);
-
+    // 1. Get user profile
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) throw new Error("Profile not found – contact support");
 
     const userData = userSnap.data();
     const stars = Number(userData.stars || 0);
-    const cost = 750;
 
     if (stars < cost) throw new Error(`Need ${cost} stars (you have ${stars})`);
 
+    // 2. Get highlights
+    const highlightsRef = doc(db, "highlightVideos", uid);
+    const highlightsSnap = await getDoc(highlightsRef);
     if (!highlightsSnap.exists()) throw new Error("No highlights profile found");
 
     const highlightsData = highlightsSnap.data() || {};
@@ -7389,18 +7389,18 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     if (highlights.length === 0) throw new Error("You have no videos to boost yet");
 
-    // Server-side active check (reliable)
+    // Server-side active check
     if (highlightsData.trendingUntil && highlightsData.trendingUntil.toDate() > new Date()) {
       showStarPopup('Already active! Countdown running.', 'info');
       startCountdown(btn, highlightsData.trendingUntil.toDate().getTime());
       return;
     }
 
-    // 2. Pick random video
+    // 3. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 3. Add location tag
+    // 4. Add location tag
     let locationTag = null;
     const location = userData.location || {};
     if (typeof location === "string" && location.trim()) {
@@ -7409,10 +7409,10 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       locationTag = `#${location.city.trim().toLowerCase()}`;
     }
 
-    // 4. Add fruit emoji
+    // 5. Add fruit emoji
     const fruitEmoji = userData.fruitPick || "🍇";
 
-    // 5. Update selected video
+    // 6. Update selected video
     selected.isTrending = true;
     selected.tags = [
       ...(selected.tags || []),
@@ -7423,17 +7423,13 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     selected.trendingUntil = Timestamp.fromMillis(endTime);
 
-    // 6. Define refs for batch (THIS WAS MISSING — FIXES THE ERROR)
-    const userRef = doc(db, "users", uid);
-    const highlightsRef = doc(db, "highlightVideos", uid);
-
-    // Deduct stars + save highlights (atomic)
+    // 7. Atomic batch write
     const batch = writeBatch(db);
     batch.update(userRef, { stars: increment(-cost) });
     batch.update(highlightsRef, { highlights });
     await batch.commit();
 
-    // 7. Start countdown & UI
+    // 8. Start countdown & UI
     localStorage.setItem('freeTonightEndTime', endTime);
     startCountdown(btn, endTime);
 
@@ -7453,7 +7449,9 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   }
 });
 
-// Countdown timer (unchanged)
+// ───────────────────────────────────────────────
+// Live Countdown Timer
+// ───────────────────────────────────────────────
 function startCountdown(btn, endTime) {
   function updateTimer() {
     const now = Date.now();
