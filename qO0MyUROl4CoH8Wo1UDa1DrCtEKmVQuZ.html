@@ -764,8 +764,8 @@ vipToggle.onclick = () => {
     document.getElementById('vipLabel').classList.toggle('on', isVIP);
     document.getElementById('vipMessage').style.opacity = isVIP ? '1' : '0';
     document.getElementById('vipMessage').textContent = isVIP 
-      ? "VIP mode activated — you're elite now" 
-      : "VIP off";
+      ? "VIP mode activated, you're elite status now" 
+      : "";
     if (isVIP) triggerSprayConfetti();
   }
 };
