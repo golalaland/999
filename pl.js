@@ -5896,7 +5896,6 @@ highlightsBtn.onclick = async () => {
 };
 
 
-
 // ───────────────────────────────────────────────
 // Client-side Free Tonight with Live 24h Countdown + Fruit Emoji
 // ───────────────────────────────────────────────
@@ -6006,9 +6005,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   }
 });
 
-// ───────────────────────────────────────────────
-// Live Countdown Timer
-// ───────────────────────────────────────────────
+// Countdown timer (unchanged)
 function startCountdown(btn, endTime) {
   function updateTimer() {
     const now = Date.now();
