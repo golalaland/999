@@ -348,19 +348,75 @@
   display: block;
 }
 
-/* Gold Luxe Button — Rich, Shiny, Premium */
+/* Gold Luxe Button — Rich, Shiny, Premium + Continuous Attention Grabber */
 .btn.gold {
+  /* Core premium gold look */
   background: linear-gradient(135deg, #d4af37, #ffd700, #d4af37);
   color: #000;
   font-weight: 800;
-  box-shadow: 
-    0 4px 15px rgba(212,175,55,0.4),
-    inset 0 2px 8px rgba(255,255,255,0.4); /* inner shine */
+  padding: 14px 32px;                /* ← added sensible default padding */
+  border: none;
+  border-radius: 12px;               /* ← modern rounded corners */
+  cursor: pointer;
   position: relative;
   overflow: hidden;
+  box-shadow: 
+    0 4px 15px rgba(212, 175, 55, 0.4),
+    inset 0 2px 8px rgba(255, 255, 255, 0.4); /* inner highlight */
+
+  /* Continuous subtle pulse + shimmer */
+  animation: 
+    gold-pulse 4s ease-in-out infinite,
+    gold-shimmer 3.2s linear infinite;
+
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Gentle breathing pulse (scale + brightness) */
+@keyframes gold-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.035);         /* subtle — not too bouncy */
+    filter: brightness(1.1);
+  }
+}
+
+/* Continuous moving shimmer highlight */
 .btn.gold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-flow 3.2s linear infinite;
+}
+
+@keyframes shimmer-flow {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200%  0; }
+}
+
+/* Hover — amplify the premium feel */
+.btn.gold:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 
+    0 12px 40px rgba(212, 175, 55, 0.7),
+    inset 0 3px 12px rgba(255, 255, 255, 0.6);
+  filter: brightness(1.15);
+  animation-play-state: paused;      /* optional: calm animations on hover */
+}
+
+/* Your original hover shine sweep (kept + improved timing) */
+.btn.gold::after {
   content: '';
   position: absolute;
   top: -50%;
@@ -370,40 +426,29 @@
   background: linear-gradient(
     45deg,
     transparent,
-    rgba(255,255,255,0.3),
+    rgba(255, 255, 255, 0.25),
     transparent
   );
   transform: translateX(-100%);
-  transition: transform 0.8s ease;
+  transition: transform 0.9s ease;
 }
 
-.btn.gold:hover::before {
+.btn.gold:hover::after {
   transform: translateX(100%);
 }
 
-.btn.gold:hover {
-  transform: translateY(-3px);
-  box-shadow: 
-    0 10px 30px rgba(212,175,55,0.6),
-    inset 0 2px 10px rgba(255,255,255,0.5);
-}
-
-/* General hover lift */
-.btn:hover {
+/* General button hover lift (for non-gold buttons) */
+.btn:hover:not(.gold) {
   transform: translateY(-3px);
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-}
-
-/* Animation */
-@keyframes spin {
-  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* Hidden class */
 .hidden {
   display: none;
 }
-  
+
+/* Chat ID validation styles (unchanged) */
 #chatId {
   transition: border-color 0.3s ease;
 }
@@ -432,10 +477,10 @@
   
 <div id="vipLabel">VIP</div>
 <div class="vip-toggle" id="vipToggle"><div class="vip-circle"></div></div>
-<div id="vipMessage">You're in VIP zone, way to go!</div>
+<div id="vipMessage">Congratulations, You're in VIP zone!</div>
 
 <button id="submitBtn" class="btn primary">
-  <span class="btn-text">Create Account</span>
+  <span class="btn-text">Sign Up</span>
   <span class="spinner"></span>
 </button>
 
@@ -457,7 +502,7 @@
   font-size: 0.92rem;
 ">
   <div style="line-height: 1.7; margin-bottom: 20px;">
-    By creating an account or using CUBE, you agree to our
+    By signing up or using CUBE, you agree to our
     <a href="/terms" style="
       color: #c3f60c;
       text-decoration: none;
@@ -963,7 +1008,7 @@ submitBtn.onclick = async () => {
       triggerSprayConfetti();
       submitBtn.classList.add('hidden');
       vipPayBtn.classList.remove('hidden');
-      messageEl.textContent = "Your VIP slot is reserved 🔒";
+      messageEl.textContent = "Your VIP Access is reserved 🔒";
     } else {
       setTimeout(() => window.location.href = "https://visitcube.xyz", 1800);
     }
@@ -1072,7 +1117,7 @@ vipPayBtn.onclick = () => {
             recipientId: inviterId,
             type: "vip_cash_reward",
             title: `₦${cashRewardAmount.toLocaleString()} Cash Reward Earned!`,
-            message: `@${userData.chatId || 'Someone'} just activated VIP for ₦29,999!\n₦${cashRewardAmount.toLocaleString()} + 250 STRZ added to your account.`,
+            message: `@${userData.chatId || 'Someone'} just activated VIP \n₦${cashRewardAmount.toLocaleString()} + 250 STRZ in rewards added to your account.`,
             vipUserId: userData.uid || docId,
             vipUserName: userData.chatId || 'New VIP',
             read: false,
@@ -1084,8 +1129,8 @@ vipPayBtn.onclick = () => {
         await addDoc(collection(db, "notifications"), {
           recipientId: userData.uid || docId,
           type: "vip_bonus",
-          title: "Welcome to VIP! 🎖️",
-          message: "You've unlocked VIP status + 500 STRZ bonus!\nEnjoy premium features for the next 31 days.",
+          title: "Welcome to Cube VIP! 🎖️",
+          message: "You've unlocked VIP status + 500 STRZ bonus!\nEnjoy elite status",
           read: false,
           createdAt: serverTimestamp()
         });
@@ -1097,7 +1142,7 @@ vipPayBtn.onclick = () => {
 
       } catch (err) {
         console.error("VIP flow error:", err);
-        showPopup("Something went wrong during activation. Contact support if the issue persists.");
+        showPopup("Something went wrong during activation. Contact support.");
         messageEl.textContent = "";
       }
     },
