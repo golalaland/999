@@ -5903,7 +5903,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   const btn = document.getElementById('freeTonightBtn');
   if (!btn) return;
 
-  // Prevent double-click spam
   if (btn.disabled) return;
 
   btn.disabled = true;
@@ -5917,7 +5916,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const uid = auth.currentUser.uid;
     const cost = 750;
 
-    // Quick local check (fast UX)
     const savedEndTime = localStorage.getItem('freeTonightEndTime');
     if (savedEndTime && Number(savedEndTime) > Date.now()) {
       showStarPopup('Already active! Wait for countdown.', 'info');
@@ -5925,38 +5923,37 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       return;
     }
 
-    // 1. Get user profile
     const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) throw new Error("Profile not found – contact support");
+    const highlightsRef = doc(db, "highlightVideos", uid);
+
+    const [userSnap, highlightsSnap] = await Promise.all([
+      getDoc(userRef),
+      getDoc(highlightsRef)
+    ]);
+
+    if (!userSnap.exists()) throw new Error("Profile not found");
 
     const userData = userSnap.data();
     const stars = Number(userData.stars || 0);
 
     if (stars < cost) throw new Error(`Need ${cost} stars (you have ${stars})`);
 
-    // 2. Get highlights
-    const highlightsRef = doc(db, "highlightVideos", uid);
-    const highlightsSnap = await getDoc(highlightsRef);
     if (!highlightsSnap.exists()) throw new Error("No highlights profile found");
 
     const highlightsData = highlightsSnap.data() || {};
     let highlights = Array.isArray(highlightsData.highlights) ? [...highlightsData.highlights] : [];
 
-    if (highlights.length === 0) throw new Error("You have no videos to boost yet");
+    if (highlights.length === 0) throw new Error("No videos to boost");
 
-    // Server-side active check
     if (highlightsData.trendingUntil && highlightsData.trendingUntil.toDate() > new Date()) {
       showStarPopup('Already active! Countdown running.', 'info');
       startCountdown(btn, highlightsData.trendingUntil.toDate().getTime());
       return;
     }
 
-    // 3. Pick random video
     const randomIndex = Math.floor(Math.random() * highlights.length);
     const selected = highlights[randomIndex];
 
-    // 4. Add location tag
     let locationTag = null;
     const location = userData.location || {};
     if (typeof location === "string" && location.trim()) {
@@ -5965,10 +5962,8 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       locationTag = `#${location.city.trim().toLowerCase()}`;
     }
 
-    // 5. Add fruit emoji
     const fruitEmoji = userData.fruitPick || "🍇";
 
-    // 6. Update selected video
     selected.isTrending = true;
     selected.tags = [
       ...(selected.tags || []),
@@ -5979,13 +5974,11 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     selected.trendingUntil = Timestamp.fromMillis(endTime);
 
-    // 7. Atomic batch write
     const batch = writeBatch(db);
     batch.update(userRef, { stars: increment(-cost) });
     batch.update(highlightsRef, { highlights });
     await batch.commit();
 
-    // 8. Start countdown & UI
     localStorage.setItem('freeTonightEndTime', endTime);
     startCountdown(btn, endTime);
 
@@ -6005,7 +5998,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   }
 });
 
-// Countdown timer (unchanged)
+// Countdown (unchanged)
 function startCountdown(btn, endTime) {
   function updateTimer() {
     const now = Date.now();
@@ -6033,7 +6026,7 @@ function startCountdown(btn, endTime) {
   updateTimer();
 }
 
-// Auto-start on load
+// Auto-start
 window.addEventListener('load', () => {
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
   if (savedEndTime && Number(savedEndTime) > Date.now()) {
