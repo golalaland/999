@@ -800,8 +800,8 @@ submitBtn.onclick = async () => {
         if (invSnap.exists()) {
           const inviterData = invSnap.data();
           const currentVIPs = inviterData.vipCount || 0;
-          if (isVIP && currentVIPs >= 5) {
-            showPopup('This host has reached their VIP invite limit (5 max)');
+          if (isVIP && currentVIPs >= 25) {
+            showPopup('This host has reached their VIP invite limit (25 max)');
             submitBtn.classList.remove('loading');
             return;
           }
@@ -992,7 +992,7 @@ vipPayBtn.onclick = () => {
   const handler = PaystackPop.setup({
     key: 'pk_test_9446fa6b81888ffce77cc94294530d761aac4ccd',
     email: email,
-    amount: 19999 * 100,           // ₦19,999 in kobo
+    amount: 99999 * 100,           // ₦99,999 in kobo
     currency: 'NGN',
     ref: 'VIP_' + Date.now(),
     metadata: { type: 'vip_activation' },
@@ -1047,64 +1047,69 @@ vipPayBtn.onclick = () => {
           const userData = userSnap.data();
           const inviterId = userData.invitedBy;
 
-          // Update current user (VIP)
-          await updateDoc(userRef, {
-            isVIP: true,
-            hasPaid: true,
-            vipActivatedAt: serverTimestamp(),
-            vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
-            stars: increment(2500),
-            lastUpdated: serverTimestamp()
-          });
+        // Update current user (VIP)
+try {
+  await updateDoc(userRef, {
+    isVIP: true,
+    hasPaid: true,
+    vipActivatedAt: serverTimestamp(),
+    vipExpiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+    stars: increment(500),
+    lastUpdated: serverTimestamp()
+  });
+} catch (updateErr) {
+  console.error("Failed to update VIP user:", updateErr);
+  // Still continue to rewards/notifications — don't block everything
+}
 
-          // Reward inviter/host (stars + CASH + vipCount)
-          if (inviterId) {
-            const inviterRef = doc(db, "users", inviterId);
-            const cashRewardAmount = 8000; // Or calculate dynamically if needed
+// Reward inviter/host (stars + CASH + vipCount)
+if (inviterId) {
+  try {
+    const inviterRef = doc(db, "users", inviterId);
+    const cashRewardAmount = 2000;
 
-            await updateDoc(inviterRef, {
-              stars: increment(250),
-              cash: increment(cashRewardAmount),          // ← CASH added here
-              cashReward: increment(cashRewardAmount),    // ← Cumulative total
-              lastUpdated: serverTimestamp()
-            });
+    await updateDoc(inviterRef, {
+      stars: increment(250),
+      cash: increment(cashRewardAmount),
+      cashReward: increment(cashRewardAmount),
+      lastUpdated: serverTimestamp()
+    });
 
-            // Cash reward notification to host
-            try {
-              await addDoc(collection(db, "notifications"), {
-                recipientId: inviterId,
-                type: "vip_cash_reward",
-                title: "₦8,000 Cash Reward Earned!",
-                message: `@${userData.chatId || 'Someone'} just paid ₦19,999 to become VIP!\n+250 STRZ + ₦8,000 added to your cash`,
-                vipUserId: userData.uid,
-                vipUserName: userData.chatId,
-                read: false,
-                createdAt: serverTimestamp()
-              });
-            } catch (err) {
-              console.warn("Cash reward notification failed:", err);
-            }
-          }
+    // Cash reward notification to host
+    await addDoc(collection(db, "notifications"), {
+      recipientId: inviterId,
+      type: "vip_cash_reward",
+      title: "₦2,000 Cash Reward Earned!",
+      message: `@${userData.chatId || 'Someone'} just went VIP!\n+250 STRZ + ₦2,000 in rewards added to your balance`,
+      vipUserId: userData.uid,
+      vipUserName: userData.chatId,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    console.warn("Inviter reward/notification failed:", err);
+  }
+}
 
-          // Welcome notification for new VIP
-          try {
-            await addDoc(collection(db, "notifications"), {
-              recipientId: userData.uid,
-              type: "vip_bonus",
-              title: "Welcome to Cube VIP! 🎉",
-              message: "You paid ₦19,999 and received 2,500 STRZ bonus!\nEnjoy your elite status",
-              read: false,
-              createdAt: serverTimestamp()
-            });
-          } catch (err) {
-            console.warn("VIP welcome notification failed:", err);
-          }
+// Welcome notification for new VIP (isolated so it always tries)
+try {
+  await addDoc(collection(db, "notifications"), {
+    recipientId: userData.uid,
+    type: "vip_bonus",
+    title: "Welcome to Cube VIP! 🎉",
+    message: "You activated VIP and received 500 STRZ bonus!\nEnjoy your elite access",
+    read: false,
+    createdAt: serverTimestamp()
+  });
+} catch (err) {
+  console.warn("VIP welcome notification failed:", err);
+}
 
-          // Success redirect
-          setTimeout(() => {
-            window.location.href = "https://visitcube.xyz";
-          }, 1800);
-
+// Success redirect
+setTimeout(() => {
+  window.location.href = "https://visitcube.xyz";
+}, 1800);
+          
         } catch (err) {
           console.error("VIP activation processing failed:", err);
           setTimeout(() => window.location.href = "https://visitcube.xyz", 1800);
