@@ -520,33 +520,31 @@ function showPopup(message, duration = 3500) {
   popup.id = 'toastPopup';
   popup.textContent = message;
 
-  popup.style.cssText = `
-    position: fixed;
-    top: 120px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.92);
-    color: #c3f60c;
-    padding: 0.9rem 2.5rem;
-    border: 1px solid #c3f60c;
-    border-radius: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-shadow: none;
-    box-shadow: none;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    z-index: 9999;
-    opacity: 0;
-    transition: all 0.5s ease;
-    pointer-events: none;
-    min-width: 300px;
-    max-width: 90vw;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `;
+popup.style.cssText = `
+  position: fixed;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.92);
+  color: #c3f60c;
+  padding: 0.9rem 2.5rem;
+  border: 1px solid #c3f60c;
+  border-radius: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: none;
+  box-shadow: none;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.5s ease;
+  pointer-events: none;
+  min-width: 300px;
+  max-width: 90vw;
+  text-align: center;
+  white-space: pre-line;
+`;
 
   document.body.appendChild(popup);
 
@@ -819,7 +817,7 @@ submitBtn.onclick = async () => {
     // === Gatekeeper for Hosts (Females only) ===
     const isHost = gender === 'Female' && !isVIP;
     if (isHost && !hiveName) {
-      showPopup('You require an invitation from an existing host.');
+    showPopup('You require an invitation\nfrom an existing host.');
       submitBtn.classList.remove('loading');
       return;
     }
