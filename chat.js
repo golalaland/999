@@ -6382,6 +6382,7 @@ filtered.forEach(video => {
 });
 
 // ── FILTER BUTTONS ─────────────────────────────────────────────────────
+// ── FILTER BUTTONS ─────────────────────────────────────────────────────
 unlockedBtn.onclick = () => {
   filterMode = filterMode === "unlocked" ? "all" : "unlocked";
   unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -6400,27 +6401,31 @@ trendingBtn.onclick = () => {
     ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
     : "linear-gradient(135deg, #8a2be2, #ff00f2)";
   renderCards();
-};
-  // SEARCH – live, case-insensitive, only username/chatId
-  const searchInput = document.getElementById("highlightSearchInput");
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      const term = e.target.value.trim().toLowerCase();
-      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
-      grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
-        const userEl = card.querySelector("div[style*='color:#00ffea']");
-        let username = userEl?.textContent || "";
-        username = username.replace("@", "").trim().toLowerCase();
-        const matches = !searchTerm || username.includes(searchTerm);
-        card.style.display = matches ? "" : "none";
-      });
-    });
-  }
-  // Initial render
-  renderCards();
-  document.body.appendChild(modal);
-  setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
 }
+
+}  // ← IMPORTANT: this closes renderCards()
+
+// SEARCH – live, case-insensitive, only username/chatId
+const searchInput = document.getElementById("highlightSearchInput");
+if (searchInput) {
+  searchInput.addEventListener("input", (e) => {
+    const term = e.target.value.trim().toLowerCase();
+    const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
+    grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
+      const userEl = card.querySelector("div[style*='color:#00ffea']");
+      let username = userEl?.textContent || "";
+      username = username.replace("@", "").trim().toLowerCase();
+      const matches = !searchTerm || username.includes(searchTerm);
+      card.style.display = matches ? "" : "none";
+    });
+  });
+}
+
+// Initial render
+renderCards();
+document.body.appendChild(modal);
+setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
+}  // ← this already closes showHighlightsModal()
 
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
