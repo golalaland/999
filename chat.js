@@ -6340,68 +6340,47 @@ filtered.forEach(video => {
   info.append(title, user, tagsEl);
   card.appendChild(info);
 
-// ── BADGE ────────────────────────────────────────────────────────────
-const badge = document.createElement("div");
-let badgeText = "";
-let badgeBg = "";
-let shadows = []; // Use array → join later = no more syntax errors with concatenation
+  // ── BADGE ────────────────────────────────────────────────────────────
+  const badge = document.createElement("div");
 
-if (filterMode === "trending" || video.isTrending) {
+  let badgeText = "";
+  let badgeBg = "";
+  let badgeShadow = "";
+
+  if (filterMode === "trending" || video.isTrending) {
   badgeText = "Free Tonight ♡";
-  badgeBg = "linear-gradient(135deg, #ff3366, #ff00f2, #00ffea)"; // hot pink → magenta → cyan
-  shadows = [
-    "0 0 12px rgba(255,51,102,0.8)",
-    "0 0 24px rgba(255,0,242,0.7)",
-    "0 0 36px rgba(0,255,234,0.6)",
-    "inset 0 1px 4px rgba(255,255,255,0.4)",           // cube face bevel
-    "0 0 48px rgba(255,51,102,0.5)"                    // outer halo
-  ];
+  badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900, #d9f600)";   // #c3f60c base + lighter/darker variants for gradient pop
+  badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";                  // matching glow
 } else if (isUnlocked) {
   badgeText = "Unlocked ♡";
-  badgeBg = "linear-gradient(145deg, #00ffea, #00d4ff, #8a2be2)"; // cyan → blue → purple
-  shadows = [
-    "0 0 14px rgba(0,255,234,0.9)",
-    "0 0 28px rgba(0,212,255,0.7)",
-    "0 0 42px rgba(138,43,226,0.6)",
-    "inset 0 1px 5px rgba(255,255,255,0.35)",
-    "0 0 60px rgba(0,255,234,0.45)"
-  ];
+  badgeBg = "rgba(195, 246, 12, 0.5)";                               // semi-transparent version of your color
+  badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";
 } else {
   badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
-  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2, #ff3366)"; // magenta → purple → hot pink
-  shadows = [
-    "0 0 10px rgba(255,0,242,0.8)",
-    "0 0 20px rgba(138,43,226,0.7)",
-    "0 0 32px rgba(255,51,102,0.55)",
-    "inset 0 1px 3px rgba(255,255,255,0.3)",
-    "0 0 44px rgba(255,0,242,0.5)"
-  ];
+  badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900)";             // solid #c3f60c feel with subtle shift
+  badgeShadow = "0 0 14px rgba(195, 246, 12, 0.8)";                  // slightly stronger for contrast
 }
 
 badge.textContent = badgeText;
-
 Object.assign(badge.style, {
   position: "absolute",
   top: "12px",
   right: "12px",
-  padding: "6px 14px",
-  borderRadius: "10px",
-  fontSize: "13px",
-  fontWeight: "800",
+  padding: "6px 12px",
+  borderRadius: "12px",
+  fontSize: "12px",
+  fontWeight: "700",
   color: "#fff",
   background: badgeBg,
-  boxShadow: shadows.join(", "),
-  border: "1px solid rgba(255,255,255,0.25)",
-  textShadow: "0 0 6px rgba(0,0,0,0.8), 0 0 3px #000",
-  backdropFilter: "blur(2px)",           // remove if you notice perf issues on mobile
-  letterSpacing: "0.5px",
-  zIndex: 10
+  boxShadow: badgeShadow,
+  border: "1px solid rgba(255,255,255,0.3)",
+  textShadow: "0 0 4px rgba(0,0,0,0.7)"
+});
+card.appendChild(badge);
+grid.appendChild(card);
 });
 
-card.appendChild(badge);
-// Note: grid.appendChild(card) is likely already done earlier in your loop — 
-// only keep it here if this snippet is standalone. Otherwise remove this line.
-
+// ── FILTER BUTTONS ─────────────────────────────────────────────────────
 // ── FILTER BUTTONS ─────────────────────────────────────────────────────
 unlockedBtn.onclick = () => {
   filterMode = filterMode === "unlocked" ? "all" : "unlocked";
@@ -6421,15 +6400,16 @@ trendingBtn.onclick = () => {
     ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
     : "linear-gradient(135deg, #8a2be2, #ff00f2)";
   renderCards();
-};
+}
 
-// ── SEARCH ──────────────────────────────────────────────────────────────
+}  // ← IMPORTANT: this closes renderCards()
+
+// SEARCH – live, case-insensitive, only username/chatId
 const searchInput = document.getElementById("highlightSearchInput");
 if (searchInput) {
   searchInput.addEventListener("input", (e) => {
     const term = e.target.value.trim().toLowerCase();
     const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
-
     grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
       const userEl = card.querySelector("div[style*='color:#00ffea']");
       let username = userEl?.textContent || "";
@@ -6440,12 +6420,11 @@ if (searchInput) {
   });
 }
 
-// Initial render + modal setup
+// Initial render
 renderCards();
 document.body.appendChild(modal);
-setTimeout(() => {
-  document.getElementById("highlightSearchInput")?.focus();
-}, 300);
+setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
+}  // ← this already closes showHighlightsModal()
 
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
