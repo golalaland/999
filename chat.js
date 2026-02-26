@@ -6340,46 +6340,66 @@ filtered.forEach(video => {
   info.append(title, user, tagsEl);
   card.appendChild(info);
 
-  // ── BADGE ────────────────────────────────────────────────────────────
-  const badge = document.createElement("div");
+ // ── BADGE ────────────────────────────────────────────────────────────
+const badge = document.createElement("div");
+let badgeText = "";
+let badgeBg = "";
+let badgeShadow = "";
+let badgeExtraGlow = ""; // for deeper cube/neon depth
 
-  let badgeText = "";
-  let badgeBg = "";
-  let badgeShadow = "";
+if (filterMode === "trending" || video.isTrending) {
+  badgeText = "Free Tonight ♡";
+  badgeBg = "linear-gradient(135deg, #ff3366, #ff00f2, #00ffea)";   // hot pink → magenta → cyan (vibrant cube energy)
+  badgeShadow = `
+    0 0 12px rgba(255,51,102,0.8),
+    0 0 24px rgba(255,0,242,0.7),
+    0 0 36px rgba(0,255,234,0.6),
+    inset 0 1px 4px rgba(255,255,255,0.4)   /* subtle inner bevel for cube face feel */
+  `;
+  badgeExtraGlow = "0 0 48px rgba(255,51,102,0.5)"; // outer halo for dope pop
+} else if (isUnlocked) {
+  badgeText = "Unlocked ♡";
+  badgeBg = "linear-gradient(145deg, #00ffea, #00d4ff, #8a2be2)";   // cyan → electric blue → purple (holo-unlocked vibe)
+  badgeShadow = `
+    0 0 14px rgba(0,255,234,0.9),
+    0 0 28px rgba(0,212,255,0.7),
+    0 0 42px rgba(138,43,226,0.6),
+    inset 0 1px 5px rgba(255,255,255,0.35)
+  `;
+  badgeExtraGlow = "0 0 60px rgba(0,255,234,0.45)";
+} else {
+  badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
+  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2, #ff3366)";   // magenta → purple → hot pink (premium locked feel)
+  badgeShadow = `
+    0 0 10px rgba(255,0,242,0.8),
+    0 0 20px rgba(138,43,226,0.7),
+    0 0 32px rgba(255,51,102,0.55),
+    inset 0 1px 3px rgba(255,255,255,0.3)
+  `;
+  badgeExtraGlow = "0 0 44px rgba(255,0,242,0.5)";
+}
 
-  if (filterMode === "trending" || video.isTrending) {
-    badgeText = "Free Tonight ♡";
-    badgeBg = "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)";
-    badgeShadow = "0 0 18px rgba(255,51,102,0.9)";
-  } else if (isUnlocked) {
-    badgeText = "Unlocked ♡";
-    badgeBg = "rgba(0,255,234,0.5)";
-    badgeShadow = "0 0 18px rgba(0,255,234,0.9)";
-  } else {
-    badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
-    badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2)";
-    badgeShadow = "0 0 14px rgba(255,0,242,0.7)";
-  }
-
-  badge.textContent = badgeText;
-  Object.assign(badge.style, {
-    position: "absolute",
-    top: "12px",
-    right: "12px",
-    padding: "6px 12px",
-    borderRadius: "12px",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#fff",
-    background: badgeBg,
-    boxShadow: badgeShadow,
-    border: "1px solid rgba(255,255,255,0.3)",
-    textShadow: "0 0 4px rgba(0,0,0,0.7)"
-  });
-
-  card.appendChild(badge);
-  grid.appendChild(card);
+badge.textContent = badgeText;
+Object.assign(badge.style, {
+  position: "absolute",
+  top: "12px",
+  right: "12px",
+  padding: "6px 14px",          // slightly wider for better text fit
+  borderRadius: "10px",         // sharper cube-like corners (was 12px)
+  fontSize: "13px",             // tiny bump for readability + impact
+  fontWeight: "800",            // bolder for neon punch
+  color: "#fff",
+  background: badgeBg,
+  boxShadow: badgeShadow + ", " + badgeExtraGlow,  // combine layers
+  border: "1px solid rgba(255,255,255,0.25)",     // subtle glassy edge
+  textShadow: "0 0 6px rgba(0,0,0,0.8), 0 0 3px #000",  // deeper contrast
+  backdropFilter: "blur(2px)",  // optional: tiny frost for cyber-holo feel (remove if perf issue)
+  letterSpacing: "0.5px",
+  zIndex: 10
 });
+
+card.appendChild(badge);
+grid.appendChild(card);
 
 // ── FILTER BUTTONS ─────────────────────────────────────────────────────
 // ── FILTER BUTTONS ─────────────────────────────────────────────────────
