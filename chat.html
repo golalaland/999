@@ -3381,18 +3381,23 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   transform: translateY(-2px);
 }
 
+.neon-title-container {
+  text-align: center;
+  margin-bottom: 12px;   /* gives nice spacing before sub text */
+}
+
 .neon-title {
   font-size: 17px;
   font-weight: 900;
-  text-align: center;
-  margin-bottom: 8px;
   background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  display: inline-block;   /* better than flex for single line + emoji below */
+  /* remove these if you had them — we don't need flex here anymore */
+  /* display: flex; */
+  /* align-items: center; */
+  /* justify-content: center; */
+  /* gap: 6px; */
 }
 
 .neon-fire {
@@ -3400,6 +3405,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  line-height: 1;          /* tighter spacing under title */
+  margin-top: 4px;         /* small gap between title text and 🔥 */
+  display: block;
 }
 
 .neon-sub {
@@ -4194,23 +4202,21 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
 
-<!-- 🔥 FREE TONIGHT – Tiny Neon Glow Panel -->
+<!-- 🔥 FREE TONIGHT – Tiny Neon Glow Panel (no cost) -->
 <div id="freeTonightCard" class="neon-mini-card">
-  <div class="neon-title">
-    ◑△◐ Free Tonight ◑△◐?<span class="neon-fire">🔥</span>
+  <div class="neon-title-container">
+    <div class="neon-title">◑△◐ Free Tonight ◑△◐?</div>
+    <div class="neon-fire">🔥</div>
   </div>
-  
+
   <div class="neon-sub">
-    If you're available & ready to mingle tonight, we'll boost your clips.
+    If you're available & ready to mingle tonight,<br>
+    we'll promote your clips & the right vibe will find you.
   </div>
 
   <button id="freeTonightBtn" class="neon-btn">
     I'm Free Tonight
   </button>
-
-  <div class="neon-cost">
-    Boosting costs 21 STRZ ⭐️
-  </div>
 
   <div id="freeTonightMessage" class="neon-msg"></div>
 </div>
