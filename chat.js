@@ -6346,19 +6346,18 @@ filtered.forEach(video => {
   let badgeText = "";
   let badgeBg = "";
   let badgeShadow = "";
-
-  if (filterMode === "trending" || video.isTrending) {
+if (filterMode === "trending" || video.isTrending) {
   badgeText = "Free Tonight ♡";
-  badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900, #d9f600)";   // #c3f60c base + lighter/darker variants for gradient pop
-  badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";                  // matching glow
+  badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900, #d9f600)";   // your theme green + subtle variants
+  badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";                  // matching green glow
 } else if (isUnlocked) {
   badgeText = "Unlocked ♡";
-  badgeBg = "rgba(195, 246, 12, 0.5)";                               // semi-transparent version of your color
-  badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";
+  badgeBg = "rgba(0,255,234,0.5)";                                   // original cyan
+  badgeShadow = "0 0 18px rgba(0,255,234,0.9)";                      // original cyan glow
 } else {
   badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
-  badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900)";             // solid #c3f60c feel with subtle shift
-  badgeShadow = "0 0 14px rgba(195, 246, 12, 0.8)";                  // slightly stronger for contrast
+  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2)";             // original magenta-purple
+  badgeShadow = "0 0 14px rgba(255,0,242,0.7)";                      // original magenta glow
 }
 
 badge.textContent = badgeText;
