@@ -6193,7 +6193,10 @@ sortedVisibleTags.forEach(tag => {
     }
     // Render cards
     filtered.forEach(video => {
-      const isUnlocked = unlockedVideos.includes(video.id);
+    const isUnlocked =
+  unlockedVideos.includes(video.id) ||
+  filterMode === "trending" ||
+  video.isTrending === true;
       const card = document.createElement("div");
       Object.assign(card.style, {
         position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
@@ -6215,36 +6218,47 @@ sortedVisibleTags.forEach(tag => {
       videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       if (isUnlocked) {
-        videoEl.src = video.previewClip || video.videoUrl || "";
-        videoEl.load();
-        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
-      } else {
-        const lock = document.createElement("div");
-        lock.innerHTML = `
-          <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
-                      display:flex; align-items:center; justify-content:center;">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
-            </svg>
-          </div>`;
-        vidContainer.appendChild(lock);
-      }
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        if (!isUnlocked) {
-          showUnlockConfirm(video, () => {
-            // Refresh unlockedVideos from localStorage
-            unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-            // Re-render cards (with new random order)
-            renderCards(videos);
-            // Show success notification
-            showStarPopup("Video unlocked! 🎉", "success");
-          });
-          return;
-        }
-        openFullScreenVideo(video.videoUrl || "");
-      };
+       videoEl.src = (filterMode === "trending" || video.isTrending)
+  ? (video.videoUrl || video.previewClip || "")
+  : (isUnlocked ? (video.previewClip || video.videoUrl || "") : "");
+
+videoEl.load();
+
+if (isUnlocked || filterMode === "trending" || video.isTrending) {
+  // Free / unlocked behavior: hover plays muted preview
+  vidContainer.onmouseenter = (e) => {
+    e.stopPropagation();
+    videoEl.play().catch(() => {});
+  };
+  vidContainer.onmouseleave = (e) => {
+    e.stopPropagation();
+    videoEl.pause();
+    videoEl.currentTime = 0;
+  };
+} else {
+  // Locked: show overlay
+  const lock = document.createElement("div");
+  lock.innerHTML = `
+    <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
+                display:flex; align-items:center; justify-content:center;">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
+      </svg>
+    </div>`;
+  vidContainer.appendChild(lock);
+}
+vidContainer.onclick = (e) => {
+  e.stopPropagation();
+  if (!isUnlocked && filterMode !== "trending" && !video.isTrending) {
+    showUnlockConfirm(video, () => {
+      unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+      renderCards(videos);
+      showStarPopup("Video unlocked! 🎉", "success");
+    });
+    return;
+  }
+  openFullScreenVideo(video.videoUrl || "");
+};
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
       // Info overlay
@@ -6315,18 +6329,42 @@ displayedTags.forEach(t => {
 info.append(title, user, tagsEl);
       card.appendChild(info);
       // Badge
-      const badge = document.createElement("div");
-      badge.textContent = isUnlocked ? "Unlocked ♡" : `${video.highlightVideoPrice || "?"} ⭐️`;
-      Object.assign(badge.style, {
-        position: "absolute", top: "12px", right: "12px",
-        padding: "6px 12px", borderRadius: "12px",
-        fontSize: "12px", fontWeight: "700", color: "#fff",
-        background: isUnlocked ? "rgba(0,255,234,0.5)" : "linear-gradient(135deg, #ff00f2, #8a2be2)",
-        boxShadow: isUnlocked ? "0 0 18px rgba(0,255,234,0.9)" : "0 0 14px rgba(255,0,242,0.7)",
-        border: "1px solid rgba(255,255,255,0.3)",
-        textShadow: "0 0 4px rgba(0,0,0,0.7)"
-      });
-      card.appendChild(badge);
+const badge = document.createElement("div");
+
+let badgeText = "";
+let badgeBg = "";
+let badgeShadow = "";
+
+if (filterMode === "trending" || video.isTrending) {
+  badgeText = "Free Tonight ♡";
+  badgeBg = "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)";
+  badgeShadow = "0 0 18px rgba(255,51,102,0.9)";
+} else if (isUnlocked) {
+  badgeText = "Unlocked ♡";
+  badgeBg = "rgba(0,255,234,0.5)";
+  badgeShadow = "0 0 18px rgba(0,255,234,0.9)";
+} else {
+  badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
+  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2)";
+  badgeShadow = "0 0 14px rgba(255,0,242,0.7)";
+}
+
+badge.textContent = badgeText;
+Object.assign(badge.style, {
+  position: "absolute",
+  top: "12px",
+  right: "12px",
+  padding: "6px 12px",
+  borderRadius: "12px",
+  fontSize: "12px",
+  fontWeight: "700",
+  color: "#fff",
+  background: badgeBg,
+  boxShadow: badgeShadow,
+  border: "1px solid rgba(255,255,255,0.3)",
+  textShadow: "0 0 4px rgba(0,0,0,0.7)"
+});
+card.appendChild(badge);
       grid.appendChild(card);
     });
   }
