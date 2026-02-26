@@ -3475,6 +3475,16 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   color: #ff3366;
   border: 1px solid rgba(255,51,102,0.3);
 }
+/* Optional: make it pulse subtly like glowing cube core */
+@keyframes cubePulse {
+  0%, 100% { opacity: 1; box-shadow: /* your base shadows */; }
+  50%      { opacity: 0.92; box-shadow: 0 0 60px rgba(255,51,102,0.7) /* bigger mid-glow */; }
+}
+
+/* Example usage: add to trending badge only */
+.trending-badge {  /* or add className conditionally in JS */
+  animation: cubePulse 4s infinite ease-in-out;
+}
 </style>
 </head>
 <body>
