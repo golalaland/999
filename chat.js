@@ -6340,68 +6340,68 @@ filtered.forEach(video => {
   info.append(title, user, tagsEl);
   card.appendChild(info);
 
- // ── BADGE ────────────────────────────────────────────────────────────
+// ── BADGE ────────────────────────────────────────────────────────────
 const badge = document.createElement("div");
 let badgeText = "";
 let badgeBg = "";
-let badgeShadow = "";
-let badgeExtraGlow = ""; // for deeper cube/neon depth
+let shadows = []; // Use array → join later = no more syntax errors with concatenation
 
 if (filterMode === "trending" || video.isTrending) {
   badgeText = "Free Tonight ♡";
-  badgeBg = "linear-gradient(135deg, #ff3366, #ff00f2, #00ffea)";   // hot pink → magenta → cyan (vibrant cube energy)
-  badgeShadow = `
-    0 0 12px rgba(255,51,102,0.8),
-    0 0 24px rgba(255,0,242,0.7),
-    0 0 36px rgba(0,255,234,0.6),
-    inset 0 1px 4px rgba(255,255,255,0.4)   /* subtle inner bevel for cube face feel */
-  `;
-  badgeExtraGlow = "0 0 48px rgba(255,51,102,0.5)"; // outer halo for dope pop
+  badgeBg = "linear-gradient(135deg, #ff3366, #ff00f2, #00ffea)"; // hot pink → magenta → cyan
+  shadows = [
+    "0 0 12px rgba(255,51,102,0.8)",
+    "0 0 24px rgba(255,0,242,0.7)",
+    "0 0 36px rgba(0,255,234,0.6)",
+    "inset 0 1px 4px rgba(255,255,255,0.4)",           // cube face bevel
+    "0 0 48px rgba(255,51,102,0.5)"                    // outer halo
+  ];
 } else if (isUnlocked) {
   badgeText = "Unlocked ♡";
-  badgeBg = "linear-gradient(145deg, #00ffea, #00d4ff, #8a2be2)";   // cyan → electric blue → purple (holo-unlocked vibe)
-  badgeShadow = `
-    0 0 14px rgba(0,255,234,0.9),
-    0 0 28px rgba(0,212,255,0.7),
-    0 0 42px rgba(138,43,226,0.6),
-    inset 0 1px 5px rgba(255,255,255,0.35)
-  `;
-  badgeExtraGlow = "0 0 60px rgba(0,255,234,0.45)";
+  badgeBg = "linear-gradient(145deg, #00ffea, #00d4ff, #8a2be2)"; // cyan → blue → purple
+  shadows = [
+    "0 0 14px rgba(0,255,234,0.9)",
+    "0 0 28px rgba(0,212,255,0.7)",
+    "0 0 42px rgba(138,43,226,0.6)",
+    "inset 0 1px 5px rgba(255,255,255,0.35)",
+    "0 0 60px rgba(0,255,234,0.45)"
+  ];
 } else {
   badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
-  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2, #ff3366)";   // magenta → purple → hot pink (premium locked feel)
-  badgeShadow = `
-    0 0 10px rgba(255,0,242,0.8),
-    0 0 20px rgba(138,43,226,0.7),
-    0 0 32px rgba(255,51,102,0.55),
-    inset 0 1px 3px rgba(255,255,255,0.3)
-  `;
-  badgeExtraGlow = "0 0 44px rgba(255,0,242,0.5)";
+  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2, #ff3366)"; // magenta → purple → hot pink
+  shadows = [
+    "0 0 10px rgba(255,0,242,0.8)",
+    "0 0 20px rgba(138,43,226,0.7)",
+    "0 0 32px rgba(255,51,102,0.55)",
+    "inset 0 1px 3px rgba(255,255,255,0.3)",
+    "0 0 44px rgba(255,0,242,0.5)"
+  ];
 }
 
 badge.textContent = badgeText;
+
 Object.assign(badge.style, {
   position: "absolute",
   top: "12px",
   right: "12px",
-  padding: "6px 14px",          // slightly wider for better text fit
-  borderRadius: "10px",         // sharper cube-like corners (was 12px)
-  fontSize: "13px",             // tiny bump for readability + impact
-  fontWeight: "800",            // bolder for neon punch
+  padding: "6px 14px",
+  borderRadius: "10px",
+  fontSize: "13px",
+  fontWeight: "800",
   color: "#fff",
   background: badgeBg,
-  boxShadow: badgeShadow + ", " + badgeExtraGlow,  // combine layers
-  border: "1px solid rgba(255,255,255,0.25)",     // subtle glassy edge
-  textShadow: "0 0 6px rgba(0,0,0,0.8), 0 0 3px #000",  // deeper contrast
-  backdropFilter: "blur(2px)",  // optional: tiny frost for cyber-holo feel (remove if perf issue)
+  boxShadow: shadows.join(", "),
+  border: "1px solid rgba(255,255,255,0.25)",
+  textShadow: "0 0 6px rgba(0,0,0,0.8), 0 0 3px #000",
+  backdropFilter: "blur(2px)",           // remove if you notice perf issues on mobile
   letterSpacing: "0.5px",
   zIndex: 10
 });
 
 card.appendChild(badge);
-grid.appendChild(card);
+// Note: grid.appendChild(card) is likely already done earlier in your loop — 
+// only keep it here if this snippet is standalone. Otherwise remove this line.
 
-// ── FILTER BUTTONS ─────────────────────────────────────────────────────
 // ── FILTER BUTTONS ─────────────────────────────────────────────────────
 unlockedBtn.onclick = () => {
   filterMode = filterMode === "unlocked" ? "all" : "unlocked";
@@ -6421,16 +6421,15 @@ trendingBtn.onclick = () => {
     ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
     : "linear-gradient(135deg, #8a2be2, #ff00f2)";
   renderCards();
-}
+};
 
-}  // ← IMPORTANT: this closes renderCards()
-
-// SEARCH – live, case-insensitive, only username/chatId
+// ── SEARCH ──────────────────────────────────────────────────────────────
 const searchInput = document.getElementById("highlightSearchInput");
 if (searchInput) {
   searchInput.addEventListener("input", (e) => {
     const term = e.target.value.trim().toLowerCase();
     const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
+
     grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
       const userEl = card.querySelector("div[style*='color:#00ffea']");
       let username = userEl?.textContent || "";
@@ -6441,11 +6440,12 @@ if (searchInput) {
   });
 }
 
-// Initial render
+// Initial render + modal setup
 renderCards();
 document.body.appendChild(modal);
-setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
-}  // ← this already closes showHighlightsModal()
+setTimeout(() => {
+  document.getElementById("highlightSearchInput")?.focus();
+}, 300);
 
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
