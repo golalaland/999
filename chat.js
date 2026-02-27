@@ -2469,7 +2469,7 @@ function sanitizeKey(email) {
       let intro = `A ${gender}`;
       if (descriptors) intro = `${descriptors} ${gender}`;
 
-      mainText = `${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
+      mainText = `A ${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
       if (!isMale) mainText += ` ${fruit}`;
       mainText += ".";
     }
