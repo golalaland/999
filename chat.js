@@ -2424,7 +2424,6 @@ const isMale = gender === "male";
 const pronoun   = isMale ? "his" : "her";
 const ageGroup  = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
 
-// Fruit & nature & body type – only used conditionally
 const fruit     = user.fruitPick || "🍇";
 const nature    = user.naturePick || "cool";
 const bodyType  = user.bodyTypePick || "";
@@ -2432,17 +2431,16 @@ const bodyType  = user.bodyTypePick || "";
 const city      = user.location || user.city || "Lagos";
 const country   = user.country || "Nigeria";
 
-// Decide if this is a "privileged" male (VIP or host male) → minimal version
+// VIP/Host males get special minimal treatment
 const isPrivilegedMale = isMale && (user.isVIP || user.isHost);
 
-// Build the text
 let detailsText = "";
 
 if (isPrivilegedMale) {
-  // VIP/Host males → very clean, no fruit, no descriptors
-  detailsText = `A ${gender} from ${city}, ${country}. 😎`;
+  // VIP males: gender + age + location + sunglasses (no fruit, no nature, no body type)
+  detailsText = `A ${gender} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
 } else {
-  // Everyone else (females + non-VIP males)
+  // Everyone else
   const descriptorParts = [nature, bodyType].filter(Boolean).join(" ").trim();
 
   let mainPart = `A ${gender}`;
@@ -2452,17 +2450,18 @@ if (isPrivilegedMale) {
 
   detailsText = `${mainPart} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
 
-  // Add fruit at the end only for non-privileged-males (mostly females)
-  if (!isMale || !user.isVIP) {   // or adjust condition if needed
+  // Fruit only for females (or non-VIP males — adjust if needed)
+  if (!isMale) {
     detailsText += ` ${fruit}`;
   }
 
   detailsText += ".";
 }
 
-// Fallback for non-host/VIP users (your original simple version)
+// Simple fallback for regular (non-host, non-VIP) users
 if (!user.isHost && !user.isVIP) {
-  detailsText = `A ${gender} from ${city}, ${country}. ${isMale ? "😎" : "💋"}`;
+  const flair = isMale ? "😎" : "💋";
+  detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
 }
 
 const detailsEl = document.createElement("p");
@@ -2470,7 +2469,7 @@ detailsEl.textContent = detailsText;
 detailsEl.style.cssText = "margin:0 0 10px; font-size:14px; line-height:1.4; color:#ccc;";
 card.appendChild(detailsEl);
 
-// Bio with typewriter effect (unchanged)
+// Bio typewriter (unchanged)
 const bioEl = document.createElement("div");
 bioEl.style.cssText = "margin:12px 0 16px; font-style:italic; font-weight:600; font-size:13px;";
 bioEl.style.color = ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)];
