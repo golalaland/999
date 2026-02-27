@@ -6290,58 +6290,64 @@ filtered.forEach(video => {
   const vidContainer = document.createElement("div");
   vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
-  const videoEl = document.createElement("video");
-  videoEl.muted = true;
-  videoEl.loop = true;
-  videoEl.preload = "metadata";
-  videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+// ── VIDEO ELEMENT SETUP ───────────────────────────────────────────────
+const videoEl = document.createElement("video");
+videoEl.muted = true;
+videoEl.loop = true;
+videoEl.preload = "metadata";
+videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
-  // ── VIDEO SOURCE LOGIC ───────────────────────────────────────────────
-  videoEl.src = (filterMode === "trending" || video.isTrending)
-    ? (video.videoUrl || video.previewClip || "")
-    : (isUnlocked ? (video.previewClip || video.videoUrl || "") : "");
+// Use thumbnail as poster if available (critical for Free Tonight fresh uploads)
+videoEl.poster = video.thumbnailUrl || video.videoUrl || "";
 
-  videoEl.load();
+// ── VIDEO SOURCE LOGIC ────────────────────────────────────────────────
+videoEl.src = (filterMode === "trending" || video.isTrending)
+  ? (video.videoUrl || video.previewClip || "")
+  : (isUnlocked ? (video.previewClip || video.videoUrl || "") : "");
 
-  // ── HOVER PLAY / LOCK OVERLAY ────────────────────────────────────────
-  if (isUnlocked || filterMode === "trending" || video.isTrending) {
-    vidContainer.onmouseenter = (e) => {
-      e.stopPropagation();
-      videoEl.play().catch(() => {});
-    };
-    vidContainer.onmouseleave = (e) => {
-      e.stopPropagation();
-      videoEl.pause();
-      videoEl.currentTime = 0;
-    };
-  } else {
-    const lock = document.createElement("div");
-    lock.innerHTML = `
-      <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
-                  display:flex; align-items:center; justify-content:center;">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
-        </svg>
-      </div>`;
-    vidContainer.appendChild(lock);
-  }
+videoEl.load();
 
-  // ── CLICK HANDLER ────────────────────────────────────────────────────
-  vidContainer.onclick = (e) => {
+// ── HOVER PLAY / LOCK OVERLAY ─────────────────────────────────────────
+if (isUnlocked || filterMode === "trending" || video.isTrending) {
+  // Free / unlocked behavior: hover plays muted preview
+  vidContainer.onmouseenter = (e) => {
     e.stopPropagation();
-    if (!isUnlocked && filterMode !== "trending" && !video.isTrending) {
-      showUnlockConfirm(video, () => {
-        unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-        renderCards(videos);
-        showStarPopup("Video unlocked! 🎉", "success");
-      });
-      return;
-    }
-    openFullScreenVideo(video.videoUrl || "");
+    videoEl.play().catch(() => {});
   };
+  vidContainer.onmouseleave = (e) => {
+    e.stopPropagation();
+    videoEl.pause();
+    videoEl.currentTime = 0;
+  };
+} else {
+  // Locked: show overlay
+  const lock = document.createElement("div");
+  lock.innerHTML = `
+    <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
+                display:flex; align-items:center; justify-content:center;">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
+      </svg>
+    </div>`;
+  vidContainer.appendChild(lock);
+}
 
-  vidContainer.appendChild(videoEl);
-  card.appendChild(vidContainer);
+// ── CLICK HANDLER ─────────────────────────────────────────────────────
+vidContainer.onclick = (e) => {
+  e.stopPropagation();
+  if (!isUnlocked && filterMode !== "trending" && !video.isTrending) {
+    showUnlockConfirm(video, () => {
+      unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+      renderCards(videos);
+      showStarPopup("Video unlocked! 🎉", "success");
+    });
+    return;
+  }
+  openFullScreenVideo(video.videoUrl || "");
+};
+
+vidContainer.appendChild(videoEl);
+card.appendChild(vidContainer);
 
   // ── INFO OVERLAY ─────────────────────────────────────────────────────
   const info = document.createElement("div");
