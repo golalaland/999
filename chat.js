@@ -2420,9 +2420,8 @@ function sanitizeKey(email) {
 // Legendary details
 const gender = (user.gender || "person").toLowerCase();
 const isMale = gender === "male";
-
-const pronoun   = isMale ? "his" : "her";
-const ageGroup  = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
+const pronoun = isMale ? "his" : "her";
+const ageGroup = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
 
 const fruit     = user.fruitPick || "🍇";
 const nature    = user.naturePick || "cool";
@@ -2431,18 +2430,24 @@ const bodyType  = user.bodyTypePick || "";
 const city      = user.location || user.city || "Lagos";
 const country   = user.country || "Nigeria";
 
-// VIP/Host males get special minimal treatment
-const isPrivilegedMale = isMale && (user.isVIP || user.isHost);
+// Adjust VIP condition — using hasPaid as requested (change to user.isVIP if preferred)
+const isVIP     = !!user.hasPaid;           // true only if hasPaid exists and is truthy
+const isPrivilegedMale = isMale && (user.isHost || isVIP);
 
 let detailsText = "";
+let useHTML     = false;  // we'll switch to innerHTML when we need styling
 
 if (isPrivilegedMale) {
-  // VIP males: gender + age + location + sunglasses (no fruit, no nature, no body type)
-  detailsText = `A ${gender} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
-} else {
-  // Everyone else
-  const descriptorParts = [nature, bodyType].filter(Boolean).join(" ").trim();
+  // VIP males: minimal + age + VIP badge + sunglasses
+  const vipBadge = isVIP 
+    ? '<span class="vip-badge">VIP</span>'
+    : '';
 
+  detailsText = `A ${gender} ${vipBadge} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
+  useHTML = isVIP;  // only use HTML if there's actually a badge to style
+} else {
+  // Everyone else (females + non-privileged males)
+  const descriptorParts = [nature, bodyType].filter(Boolean).join(" ").trim();
   let mainPart = `A ${gender}`;
   if (descriptorParts) {
     mainPart = `${descriptorParts} ${gender}`;
@@ -2450,7 +2455,6 @@ if (isPrivilegedMale) {
 
   detailsText = `${mainPart} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
 
-  // Fruit only for females (or non-VIP males — adjust if needed)
   if (!isMale) {
     detailsText += ` ${fruit}`;
   }
@@ -2458,15 +2462,56 @@ if (isPrivilegedMale) {
   detailsText += ".";
 }
 
-// Simple fallback for regular (non-host, non-VIP) users
-if (!user.isHost && !user.isVIP) {
+// Fallback for regular (non-host, non-VIP) users
+if (!user.isHost && !isVIP) {
   const flair = isMale ? "😎" : "💋";
   detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
 }
 
+// ────────────────────────────────────────────────
+// Create element & apply content + styles
 const detailsEl = document.createElement("p");
-detailsEl.textContent = detailsText;
 detailsEl.style.cssText = "margin:0 0 10px; font-size:14px; line-height:1.4; color:#ccc;";
+
+if (useHTML) {
+  detailsEl.innerHTML = detailsText;
+
+  // Inject the shimmer animation style (only once ideally — but safe here)
+  if (!document.getElementById("vip-shimmer-style")) {
+    const style = document.createElement("style");
+    style.id = "vip-shimmer-style";
+    style.textContent = `
+      .vip-badge {
+        font-weight: bold;
+        color: #ffd700;               /* gold */
+        background: linear-gradient(
+          90deg,
+          #ffd700 0%,
+          #ffea80 25%,
+          #ffd700 50%,
+          #ffea80 75%,
+          #ffd700 100%
+        );
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shimmer 3s linear infinite;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.95em;
+        letter-spacing: 0.5px;
+      }
+      @keyframes shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+} else {
+  detailsEl.textContent = detailsText;
+}
+
 card.appendChild(detailsEl);
 
 // Bio typewriter (unchanged)
@@ -2476,7 +2521,6 @@ bioEl.style.color = ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966"
 card.appendChild(bioEl);
 
 typeWriterEffect(bioEl, user.bioPick || "Nothing shared yet...");
-
 // Meet button — centered (only for Hosts) — Only color changed to dark glossy black
 if (user.isHost) {
   const meetBtn = document.createElement("div");
