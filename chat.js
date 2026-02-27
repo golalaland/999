@@ -2419,37 +2419,64 @@ function sanitizeKey(email) {
 
 // Legendary details
 const gender = (user.gender || "person").toLowerCase();
-const pronoun = gender === "male" ? "his" : "her";
-const ageGroup = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-const flair = gender === "male" ? "😎" : "💋";
+const isMale = gender === "male";
 
-const fruit = user.fruitPick || "🍇";
-const nature = user.naturePick || "cool";
-const bodyType = user.bodyTypePick || ""; // NEW
+const pronoun   = isMale ? "his" : "her";
+const ageGroup  = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
 
-const city = user.location || user.city || "Lagos";
-const country = user.country || "Nigeria";
+// Fruit & nature & body type – only used conditionally
+const fruit     = user.fruitPick || "🍇";
+const nature    = user.naturePick || "cool";
+const bodyType  = user.bodyTypePick || "";
 
-// Build descriptor line cleanly
-const descriptorParts = [nature, bodyType].filter(Boolean).join(" ");
+const city      = user.location || user.city || "Lagos";
+const country   = user.country || "Nigeria";
 
-let detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
+// Decide if this is a "privileged" male (VIP or host male) → minimal version
+const isPrivilegedMale = isMale && (user.isVIP || user.isHost);
 
-if (user.isHost || user.isVIP) {
-  detailsText = `${descriptorParts} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${fruit}`;
+// Build the text
+let detailsText = "";
+
+if (isPrivilegedMale) {
+  // VIP/Host males → very clean, no fruit, no descriptors
+  detailsText = `A ${gender} from ${city}, ${country}. 😎`;
+} else {
+  // Everyone else (females + non-VIP males)
+  const descriptorParts = [nature, bodyType].filter(Boolean).join(" ").trim();
+
+  let mainPart = `A ${gender}`;
+  if (descriptorParts) {
+    mainPart = `${descriptorParts} ${gender}`;
+  }
+
+  detailsText = `${mainPart} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
+
+  // Add fruit at the end only for non-privileged-males (mostly females)
+  if (!isMale || !user.isVIP) {   // or adjust condition if needed
+    detailsText += ` ${fruit}`;
+  }
+
+  detailsText += ".";
 }
 
-    const detailsEl = document.createElement("p");
-    detailsEl.textContent = detailsText;
-    detailsEl.style.cssText = "margin:0 0 10px;font-size:14px;line-height:1.4;color:#ccc;";
-    card.appendChild(detailsEl);
+// Fallback for non-host/VIP users (your original simple version)
+if (!user.isHost && !user.isVIP) {
+  detailsText = `A ${gender} from ${city}, ${country}. ${isMale ? "😎" : "💋"}`;
+}
 
-    // Bio with typewriter effect
-    const bioEl = document.createElement("div");
-    bioEl.style.cssText = "margin:12px 0 16px;font-style:italic;font-weight:600;font-size:13px;";
-    bioEl.style.color = ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)];
-    card.appendChild(bioEl);
-    typeWriterEffect(bioEl, user.bioPick || "Nothing shared yet...");
+const detailsEl = document.createElement("p");
+detailsEl.textContent = detailsText;
+detailsEl.style.cssText = "margin:0 0 10px; font-size:14px; line-height:1.4; color:#ccc;";
+card.appendChild(detailsEl);
+
+// Bio with typewriter effect (unchanged)
+const bioEl = document.createElement("div");
+bioEl.style.cssText = "margin:12px 0 16px; font-style:italic; font-weight:600; font-size:13px;";
+bioEl.style.color = ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)];
+card.appendChild(bioEl);
+
+typeWriterEffect(bioEl, user.bioPick || "Nothing shared yet...");
 
 // Meet button — centered (only for Hosts) — Only color changed to dark glossy black
 if (user.isHost) {
