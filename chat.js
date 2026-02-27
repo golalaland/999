@@ -2334,218 +2334,242 @@ function sanitizeKey(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/[@.]/g, "_").trim();
 }
-// ==================== UNIFIED CARD FOR HOSTS & VIPs ====================
-function showUnifiedCard(user) {
-  const card = document.createElement("div");
-  card.id = "socialCard";
-  Object.assign(card.style, {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    background: "linear-gradient(135deg, rgba(20,20,22,0.92), rgba(25,25,27,0.92))",
-    backdropFilter: "blur(12px)",
-    borderRadius: "16px",
-    padding: "16px 20px",
-    color: "#ffffff",
-    width: "260px",
-    maxWidth: "92vw",
-    zIndex: "999999",
-    textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
-    fontFamily: "Poppins, system-ui, sans-serif",
-    opacity: "0",
-    transition: "opacity 0.22s ease, transform 0.22s ease"
-  });
+/* ======================================================
+  SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
+  • Hosts now use exact same compact VIP card style
+  • No video, no gift slider for Hosts
+  • Meet button centered
+  • bioPick + typewriter effect for both
+====================================================== */
+(async function initSocialCardSystem() {
+  const allUsers = [];
+  const usersByChatId = {};
 
-  // Fade in
-  setTimeout(() => {
-    card.style.opacity = "1";
-    card.style.transform = "translate(-50%, -50%) scale(1)";
-  }, 50);
-
-  // Close button
-  const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = "×";
-  Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "8px",
-    right: "12px",
-    fontSize: "20px",
-    fontWeight: "700",
-    cursor: "pointer",
-    color: "#aaa",
-    opacity: "0.7",
-    transition: "opacity 0.15s, color 0.15s"
-  });
-  closeBtn.onmouseenter = () => { closeBtn.style.opacity = "1"; closeBtn.style.color = "#ff4d4d"; };
-  closeBtn.onmouseleave = () => { closeBtn.style.opacity = "0.7"; closeBtn.style.color = "#aaa"; };
-  closeBtn.onclick = () => card.remove();
-  card.appendChild(closeBtn);
-
-  // Username / chatId header
-  const header = document.createElement("h3");
-  header.textContent = user.chatId 
-    ? user.chatId.charAt(0).toUpperCase() + user.chatId.slice(1) 
-    : "Guest";
-  
-  const headerColor = user.isHost ? "#ff6b00" : user.isVIP || user.hasPaid ? "#ff00aa" : "#bbbbbb";
-  header.style.cssText = `
-    margin: 0 0 10px;
-    font-size: 19px;
-    font-weight: 700;
-    background: linear-gradient(90deg, ${headerColor}, #ff55cc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  `;
-  card.appendChild(header);
-
-  // ────────────────────────────────────────────────
-  // Legendary details logic
-  const gender     = (user.gender || "person").toLowerCase();
-  const isMale     = gender === "male";
-  const pronoun    = isMale ? "his" : "her";
-  const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-  const fruit      = user.fruitPick || "🍇";
-  const nature     = user.naturePick || "cool";
-  const bodyType   = user.bodyTypePick || "";
-  const city       = user.location || user.city || "Lagos";
-  const country    = user.country || "Nigeria";
-
-  const isVIP           = !!user.hasPaid;
-  const isPrivilegedMale = isMale && (user.isHost || isVIP);
-
-  // Main text container
-  const detailsWrapper = document.createElement("div");
-  detailsWrapper.style.cssText = `
-    margin: 0 0 12px;
-    font-size: 13.5px;
-    line-height: 1.45;
-    color: #d0d0d0;
-  `;
-
-  let mainText = "";
-
-  if (isPrivilegedMale) {
-    // Privileged males → clean & minimal
-    mainText = `A ${gender} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
-  } else {
-    // Females + regular males
-    const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
-    let intro = `A ${gender}`;
-    if (descriptors) intro = `${descriptors} ${gender}`;
-    
-    mainText = `${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
-    if (!isMale) mainText += ` ${fruit}`;
-    mainText += ".";
-  }
-
-  // Fallback for completely regular users (no host, no VIP)
-  if (!user.isHost && !isVIP) {
-    const flair = isMale ? "😎" : "💋";
-    mainText = `A ${gender} from ${city}, ${country}. ${flair}`;
-  }
-
-  const mainLine = document.createElement("p");
-  mainLine.textContent = mainText;
-  mainLine.style.margin = "0";
-  detailsWrapper.appendChild(mainLine);
-
-  // VIP badge — centered below the main line
-  if (isVIP) {
-    const vipBadge = document.createElement("div");
-    vipBadge.textContent = "VIP";
-    vipBadge.className = "vip-badge";
-    Object.assign(vipBadge.style, {
-      margin: "8px auto 4px",
-      width: "fit-content",
-      padding: "4px 14px",
-      fontSize: "11.5px",
-      fontWeight: "700",
-      letterSpacing: "0.7px",
-      textTransform: "uppercase",
-      color: "#ffffff",
-      background: "linear-gradient(135deg, #b8860b, #ffd700 50%, #b8860b)",
-      backgroundSize: "300% 300%",
-      borderRadius: "20px",
-      boxShadow: "0 2px 10px rgba(255,215,0,0.35)",
-      animation: "vipShimmer 4s ease-in-out infinite"
+  // Load all users
+  try {
+    const snaps = await getDocs(collection(db, "users"));
+    snaps.forEach(doc => {
+      const data = doc.data();
+      data._docId = doc.id;
+      data.chatIdLower = (data.chatId || "").toString().toLowerCase();
+      allUsers.push(data);
+      usersByChatId[data.chatIdLower] = data;
     });
-    detailsWrapper.appendChild(vipBadge);
+    console.log("Social card: loaded", allUsers.length, "users");
+  } catch (err) {
+    console.error("Failed to load users:", err);
   }
 
-  card.appendChild(detailsWrapper);
-
-  // Inject shimmer animation (only once)
-  if (isVIP && !document.getElementById("vip-shimmer-style")) {
-    const style = document.createElement("style");
-    style.id = "vip-shimmer-style";
-    style.textContent = `
-      @keyframes vipShimmer {
-        0%   { background-position: 0% 50%; }
-        50%  { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-    `;
-    document.head.appendChild(style);
+  function showSocialCard(user) {
+    if (!user) return;
+    document.getElementById('socialCard')?.remove();
+    // Both isHost and isVIP (and others) now use the same clean compact card
+    showUnifiedCard(user);
   }
 
-  // Bio with typewriter
-  const bioEl = document.createElement("div");
-  Object.assign(bioEl.style, {
-    margin: "12px 0 8px",
-    fontStyle: "italic",
-    fontWeight: "600",
-    fontSize: "13px",
-    lineHeight: "1.4",
-    color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)]
-  });
-  card.appendChild(bioEl);
+  // ==================== UNIFIED CARD FOR HOSTS & VIPs ====================
+  function showUnifiedCard(user) {
+    const card = document.createElement("div");
+    card.id = "socialCard";
+    Object.assign(card.style, {
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      background: "linear-gradient(135deg, rgba(20,20,22,0.92), rgba(25,25,27,0.92))",
+      backdropFilter: "blur(12px)",
+      borderRadius: "16px",
+      padding: "16px 20px",
+      color: "#ffffff",
+      width: "260px",
+      maxWidth: "92vw",
+      zIndex: "999999",
+      textAlign: "center",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+      fontFamily: "Poppins, system-ui, sans-serif",
+      opacity: "0",
+      transition: "opacity 0.22s ease, transform 0.22s ease"
+    });
 
-  typeWriterEffect(bioEl, user.bioPick || "No bio shared yet...");
-
-// Meet button — centered (only for Hosts) — Only color changed to dark glossy black
-if (user.isHost) {
-  const meetBtn = document.createElement("div");
-  meetBtn.style.cssText = `
-    width:50px;height:50px;border-radius:50%;
-    background:rgba(20,20,25,0.9);
-    display:flex;align-items:center;justify-content:center;
-    margin:20px auto 10px auto; /* Extra top margin for breathing room */
-    cursor:pointer;
-    border:2px solid rgba(255,255,255,0.12);
-    transition:all 0.3s ease;
-    box-shadow:0 0 15px rgba(0,0,0,0.6);
-  `;
-  meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
-
-  meetBtn.onclick = (e) => {
-    e.stopPropagation();
-    if (typeof showMeetModal === 'function') showMeetModal(user);
-  };
-
-  meetBtn.onmouseenter = () => {
-    meetBtn.style.transform = "scale(1.15)";
-    meetBtn.style.background = "rgba(35,35,40,0.95)";
-    meetBtn.style.boxShadow = "0 0 25px rgba(0,0,0,0.8)";
-  };
-
-  meetBtn.onmouseleave = () => {
-    meetBtn.style.transform = "scale(1)";
-    meetBtn.style.background = "rgba(20,20,25,0.9)";
-    meetBtn.style.boxShadow = "0 0 15px rgba(0,0,0,0.6)";
-  };
-
-  card.appendChild(meetBtn);
-}
-  document.body.appendChild(card);
-    
     // Fade in
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       card.style.opacity = "1";
       card.style.transform = "translate(-50%, -50%) scale(1)";
+    }, 50);
+
+    // Close button
+    const closeBtn = document.createElement("div");
+    closeBtn.innerHTML = "×";
+    Object.assign(closeBtn.style, {
+      position: "absolute",
+      top: "8px",
+      right: "12px",
+      fontSize: "20px",
+      fontWeight: "700",
+      cursor: "pointer",
+      color: "#aaa",
+      opacity: "0.7",
+      transition: "opacity 0.15s, color 0.15s"
     });
+    closeBtn.onmouseenter = () => { closeBtn.style.opacity = "1"; closeBtn.style.color = "#ff4d4d"; };
+    closeBtn.onmouseleave = () => { closeBtn.style.opacity = "0.7"; closeBtn.style.color = "#aaa"; };
+    closeBtn.onclick = () => card.remove();
+    card.appendChild(closeBtn);
+
+    // Username / chatId header
+    const header = document.createElement("h3");
+    header.textContent = user.chatId
+      ? user.chatId.charAt(0).toUpperCase() + user.chatId.slice(1)
+      : "Guest";
+
+    const headerColor = user.isHost ? "#ff6b00" : user.isVIP || user.hasPaid ? "#ff00aa" : "#bbbbbb";
+    header.style.cssText = `
+      margin: 0 0 10px;
+      font-size: 19px;
+      font-weight: 700;
+      background: linear-gradient(90deg, ${headerColor}, #ff55cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    `;
+    card.appendChild(header);
+
+    // ────────────────────────────────────────────────
+    // Legendary details logic
+    const gender     = (user.gender || "person").toLowerCase();
+    const isMale     = gender === "male";
+    const pronoun    = isMale ? "his" : "her";
+    const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
+    const fruit      = user.fruitPick || "🍇";
+    const nature     = user.naturePick || "cool";
+    const bodyType   = user.bodyTypePick || "";
+    const city       = user.location || user.city || "Lagos";
+    const country    = user.country || "Nigeria";
+
+    const isVIP           = !!user.hasPaid;
+    const isPrivilegedMale = isMale && (user.isHost || isVIP);
+
+    // Main text container
+    const detailsWrapper = document.createElement("div");
+    detailsWrapper.style.cssText = `
+      margin: 0 0 12px;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: #d0d0d0;
+    `;
+
+    let mainText = "";
+
+    if (isPrivilegedMale) {
+      // Privileged males → clean & minimal
+      mainText = `A ${gender} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
+    } else {
+      // Females + regular males
+      const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
+      let intro = `A ${gender}`;
+      if (descriptors) intro = `${descriptors} ${gender}`;
+
+      mainText = `${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
+      if (!isMale) mainText += ` ${fruit}`;
+      mainText += ".";
+    }
+
+    // Fallback for completely regular users (no host, no VIP)
+    if (!user.isHost && !isVIP) {
+      const flair = isMale ? "😎" : "💋";
+      mainText = `A ${gender} from ${city}, ${country}. ${flair}`;
+    }
+
+    const mainLine = document.createElement("p");
+    mainLine.textContent = mainText;
+    mainLine.style.margin = "0";
+    detailsWrapper.appendChild(mainLine);
+
+    // VIP badge — centered below the main line
+    if (isVIP) {
+      const vipBadge = document.createElement("div");
+      vipBadge.textContent = "VIP";
+      vipBadge.className = "vip-badge";
+      Object.assign(vipBadge.style, {
+        margin: "8px auto 4px",
+        width: "fit-content",
+        padding: "4px 14px",
+        fontSize: "11.5px",
+        fontWeight: "700",
+        letterSpacing: "0.7px",
+        textTransform: "uppercase",
+        color: "#ffffff",
+        background: "linear-gradient(135deg, #b8860b, #ffd700 50%, #b8860b)",
+        backgroundSize: "300% 300%",
+        borderRadius: "20px",
+        boxShadow: "0 2px 10px rgba(255,215,0,0.35)",
+        animation: "vipShimmer 4s ease-in-out infinite"
+      });
+      detailsWrapper.appendChild(vipBadge);
+    }
+
+    card.appendChild(detailsWrapper);
+
+    // Inject shimmer animation (only once)
+    if (isVIP && !document.getElementById("vip-shimmer-style")) {
+      const style = document.createElement("style");
+      style.id = "vip-shimmer-style";
+      style.textContent = `
+        @keyframes vipShimmer {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Bio with typewriter
+    const bioEl = document.createElement("div");
+    Object.assign(bioEl.style, {
+      margin: "12px 0 8px",
+      fontStyle: "italic",
+      fontWeight: "600",
+      fontSize: "13px",
+      lineHeight: "1.4",
+      color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)]
+    });
+    card.appendChild(bioEl);
+
+    typeWriterEffect(bioEl, user.bioPick || "No bio shared yet...");
+
+    // Meet button — centered (only for Hosts)
+    if (user.isHost) {
+      const meetBtn = document.createElement("div");
+      meetBtn.style.cssText = `
+        width:50px;height:50px;border-radius:50%;
+        background:rgba(20,20,25,0.9);
+        display:flex;align-items:center;justify-content:center;
+        margin:20px auto 10px auto;
+        cursor:pointer;
+        border:2px solid rgba(255,255,255,0.12);
+        transition:all 0.3s ease;
+        box-shadow:0 0 15px rgba(0,0,0,0.6);
+      `;
+      meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
+      meetBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof showMeetModal === 'function') showMeetModal(user);
+      };
+      meetBtn.onmouseenter = () => {
+        meetBtn.style.transform = "scale(1.15)";
+        meetBtn.style.background = "rgba(35,35,40,0.95)";
+        meetBtn.style.boxShadow = "0 0 25px rgba(0,0,0,0.8)";
+      };
+      meetBtn.onmouseleave = () => {
+        meetBtn.style.transform = "scale(1)";
+        meetBtn.style.background = "rgba(20,20,25,0.9)";
+        meetBtn.style.boxShadow = "0 0 15px rgba(0,0,0,0.6)";
+      };
+      card.appendChild(meetBtn);
+    }
+
+    document.body.appendChild(card);
 
     // Close on outside click
     const closeOut = (e) => {
@@ -2586,19 +2610,19 @@ if (user.isHost) {
   window.typeWriterEffect = typeWriterEffect;
 })();
 
+// ────────────────────────────────────────────────
+// sendStarsToUser function (unchanged — placed outside IIFE)
 async function sendStarsToUser(targetUser, amt) {
   if (amt < 100 || !currentUser?.uid) {
     showGoldAlert("Invalid gift", 4000);
     return;
   }
-
   const sanitize = (str) => str?.toLowerCase().replace(/[.@/\\]/g, '_');
   const senderId = sanitize(currentUser.email);
   if (!senderId) {
     showGoldAlert("Your profile error", 4000);
     return;
   }
-
   let receiverId = null;
   if (targetUser._docId) {
     receiverId = targetUser._docId;
@@ -2609,7 +2633,6 @@ async function sendStarsToUser(targetUser, amt) {
   } else if (targetUser.uid) {
     receiverId = targetUser.uid;
   }
-
   if (!receiverId) {
     showGoldAlert("User not found", 4000);
     return;
@@ -2618,18 +2641,15 @@ async function sendStarsToUser(targetUser, amt) {
     showGoldAlert("Can't gift yourself", 4000);
     return;
   }
-
   const fromRef = doc(db, "users", senderId);
   const toRef = doc(db, "users", receiverId);
-
   try {
-    // 1. Star transfer — 100% identical to your old working code
+    // 1. Star transfer
     await runTransaction(db, async (tx) => {
       const senderSnap = await tx.get(fromRef);
       const receiverSnap = await tx.get(toRef);
       if (!senderSnap.exists()) throw "Profile missing";
       if ((senderSnap.data().stars || 0) < amt) throw "Not enough stars";
-
       if (!receiverSnap.exists()) {
         tx.set(toRef, {
           chatId: targetUser.chatId || "User",
@@ -2637,12 +2657,10 @@ async function sendStarsToUser(targetUser, amt) {
           stars: 0
         }, { merge: true });
       }
-
       tx.update(fromRef, { stars: increment(-amt), starsGifted: increment(amt) });
       tx.update(toRef, { stars: increment(amt) });
     });
-
-    // 2. YOUR NOTIFICATION — EXACT SAME AS BEFORE (this is what makes the badge pop)
+    // 2. Notification
     await addDoc(collection(db, "notifications"), {
       recipientId: receiverId,
       title: "Star Gift!",
@@ -2652,17 +2670,12 @@ async function sendStarsToUser(targetUser, amt) {
       amount: amt,
       createdAt: serverTimestamp()
     });
-
-    // 3. Last gift tracker — same as before
+    // 3. Last gift tracker
     await updateDoc(toRef, {
       lastGift: { from: currentUser.chatId, amt, at: Date.now() }
     });
-
-    // 4. On-screen alert — same as before
+    // 4. On-screen alert
     showGoldAlert(`You sent ${amt} stars to ${targetUser.chatId}!`, 4000);
-
-    // BANNER CODE IS GONE — THAT'S IT. NOTHING ELSE CHANGED.
-
   } catch (err) {
     console.error("Gift failed:", err);
     showGoldAlert("Failed — try again", 4000);
