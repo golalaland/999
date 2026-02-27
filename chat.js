@@ -2505,9 +2505,6 @@ function showUnifiedCard(user) {
 
   typeWriterEffect(bioEl, user.bioPick || "No bio shared yet...");
 
-  // Finally append card to body
-  document.body.appendChild(card);
-}
 // Meet button — centered (only for Hosts) — Only color changed to dark glossy black
 if (user.isHost) {
   const meetBtn = document.createElement("div");
