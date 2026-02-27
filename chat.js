@@ -3901,6 +3901,7 @@ function updateLoadMoreButton() {
 
   hostListEl.appendChild(loadMoreBtn);
 }
+
 /* ---------- Load Host (Faster Video Loading) ---------- */
 async function loadHost(idx) {
   const host = hosts[idx];
@@ -3995,72 +3996,31 @@ usernameEl.addEventListener('pointerup', () => {
 });
   
 const gender = (host.gender || "person").toLowerCase();
-const isMale = gender === "male";
+const pronoun = gender === "male" ? "his" : "her";
+const ageGroup = !host.age ? "20s" : host.age >= 30 ? "30s" : "20s";
+const flair = gender === "male" ? "😎" : "💋";
 
-// ────────────────────────────────────────────────
-// Basic values
-const pronoun   = isMale ? "his" : "her";
-const ageGroup  = !host.age ? "20s" : host.age >= 30 ? "30s" : "20s";
+const fruit = host.fruitPick || "🍇";
+const nature = host.naturePick || "cool";
+const bodyType = host.bodyTypePick || ""; // ← THIS is all you add
 
-// Fruit → only females, placed at the end
-const fruit     = isMale ? "" : (host.fruitPick || "🍇");
+const city = host.location || "Lagos";
+const country = host.country || "Nigeria";
+detailsEl.innerHTML = `A ${fruit} ${nature} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
 
-// Nature descriptor → only females, at the beginning
-const nature    = isMale ? "" : (host.naturePick || "cool");
-
-// Body type (shown for everyone when present)
-const bodyType  = host.bodyTypePick || "";
-
-// Location fallback
-const city      = host.location || "Lagos";
-const country   = host.country || "Nigeria";
-
-// ────────────────────────────────────────────────
-// Build the intro sentence
-let intro = "A";
-
-if (!isMale) {
-  // Females get nature descriptor
-  if (nature.trim()) {
-    intro += ` ${nature}`;
-  }
-}
-
-intro += ` ${gender}`;
-
-if (bodyType.trim()) {
-  intro += ` ${bodyType}`;
-}
-
-intro += ` in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
-
-// Females get fruit emoji at the very end
-if (fruit) {
-  intro += ` ${fruit}`;
-}
-
-intro += ".";
-
-detailsEl.innerHTML = intro;
-
-// ────────────────────────────────────────────────
-// Typewriter bio (unchanged)
+// Typewriter bio
 if (host.bioPick) {
-  const bioText = host.bioPick.length > 160 
-    ? host.bioPick.slice(0, 160) + "…" 
-    : host.bioPick;
+  const bioText = host.bioPick.length > 160 ? host.bioPick.slice(0, 160) + "…" : host.bioPick;
 
+  // Create a container for bio
   const bioEl = document.createElement("div");
-  bioEl.style.marginTop    = "6px";
-  bioEl.style.fontWeight   = "600";
-  bioEl.style.fontSize     = "0.95em";
-  bioEl.style.whiteSpace   = "pre-wrap";
+  bioEl.style.marginTop = "6px";
+  bioEl.style.fontWeight = "600";  // little bold
+  bioEl.style.fontSize = "0.95em";
+  bioEl.style.whiteSpace = "pre-wrap"; // keep formatting
 
-  // Random bright color for bio text
-  const brightColors = [
-    "#FF3B3B", "#FF9500", "#FFEA00", 
-    "#00FFAB", "#00D1FF", "#FF00FF", "#FF69B4"
-  ];
+  // Pick a random bright color
+  const brightColors = ["#FF3B3B", "#FF9500", "#FFEA00", "#00FFAB", "#00D1FF", "#FF00FF", "#FF69B4"];
   bioEl.style.color = brightColors[Math.floor(Math.random() * brightColors.length)];
 
   detailsEl.appendChild(bioEl);
@@ -4071,7 +4031,7 @@ if (host.bioPick) {
     if (index < bioText.length) {
       bioEl.textContent += bioText[index];
       index++;
-      setTimeout(typeWriter, 40);
+      setTimeout(typeWriter, 40); // typing speed (ms)
     }
   }
   typeWriter();
