@@ -3901,7 +3901,6 @@ function updateLoadMoreButton() {
 
   hostListEl.appendChild(loadMoreBtn);
 }
-
 /* ---------- Load Host (Faster Video Loading) ---------- */
 async function loadHost(idx) {
   const host = hosts[idx];
