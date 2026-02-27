@@ -2334,193 +2334,180 @@ function sanitizeKey(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/[@.]/g, "_").trim();
 }
-/* ======================================================
-  SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
-  • Hosts now use exact same compact VIP card style
-  • No video, no gift slider for Hosts
-  • Meet button centered
-  • bioPick + typewriter effect for both
-====================================================== */
-(async function initSocialCardSystem() {
-  const allUsers = [];
-  const usersByChatId = {};
+// ==================== UNIFIED CARD FOR HOSTS & VIPs ====================
+function showUnifiedCard(user) {
+  const card = document.createElement("div");
+  card.id = "socialCard";
+  Object.assign(card.style, {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    background: "linear-gradient(135deg, rgba(20,20,22,0.92), rgba(25,25,27,0.92))",
+    backdropFilter: "blur(12px)",
+    borderRadius: "16px",
+    padding: "16px 20px",
+    color: "#ffffff",
+    width: "260px",
+    maxWidth: "92vw",
+    zIndex: "999999",
+    textAlign: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+    fontFamily: "Poppins, system-ui, sans-serif",
+    opacity: "0",
+    transition: "opacity 0.22s ease, transform 0.22s ease"
+  });
 
-  // Load all users
-  try {
-    const snaps = await getDocs(collection(db, "users"));
-    snaps.forEach(doc => {
-      const data = doc.data();
-      data._docId = doc.id;
-      data.chatIdLower = (data.chatId || "").toString().toLowerCase();
-      allUsers.push(data);
-      usersByChatId[data.chatIdLower] = data;
-    });
-    console.log("Social card: loaded", allUsers.length, "users");
-  } catch (err) {
-    console.error("Failed to load users:", err);
+  // Fade in
+  setTimeout(() => {
+    card.style.opacity = "1";
+    card.style.transform = "translate(-50%, -50%) scale(1)";
+  }, 50);
+
+  // Close button
+  const closeBtn = document.createElement("div");
+  closeBtn.innerHTML = "×";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "8px",
+    right: "12px",
+    fontSize: "20px",
+    fontWeight: "700",
+    cursor: "pointer",
+    color: "#aaa",
+    opacity: "0.7",
+    transition: "opacity 0.15s, color 0.15s"
+  });
+  closeBtn.onmouseenter = () => { closeBtn.style.opacity = "1"; closeBtn.style.color = "#ff4d4d"; };
+  closeBtn.onmouseleave = () => { closeBtn.style.opacity = "0.7"; closeBtn.style.color = "#aaa"; };
+  closeBtn.onclick = () => card.remove();
+  card.appendChild(closeBtn);
+
+  // Username / chatId header
+  const header = document.createElement("h3");
+  header.textContent = user.chatId 
+    ? user.chatId.charAt(0).toUpperCase() + user.chatId.slice(1) 
+    : "Guest";
+  
+  const headerColor = user.isHost ? "#ff6b00" : user.isVIP || user.hasPaid ? "#ff00aa" : "#bbbbbb";
+  header.style.cssText = `
+    margin: 0 0 10px;
+    font-size: 19px;
+    font-weight: 700;
+    background: linear-gradient(90deg, ${headerColor}, #ff55cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  `;
+  card.appendChild(header);
+
+  // ────────────────────────────────────────────────
+  // Legendary details logic
+  const gender     = (user.gender || "person").toLowerCase();
+  const isMale     = gender === "male";
+  const pronoun    = isMale ? "his" : "her";
+  const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
+  const fruit      = user.fruitPick || "🍇";
+  const nature     = user.naturePick || "cool";
+  const bodyType   = user.bodyTypePick || "";
+  const city       = user.location || user.city || "Lagos";
+  const country    = user.country || "Nigeria";
+
+  const isVIP           = !!user.hasPaid;
+  const isPrivilegedMale = isMale && (user.isHost || isVIP);
+
+  // Main text container
+  const detailsWrapper = document.createElement("div");
+  detailsWrapper.style.cssText = `
+    margin: 0 0 12px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: #d0d0d0;
+  `;
+
+  let mainText = "";
+
+  if (isPrivilegedMale) {
+    // Privileged males → clean & minimal
+    mainText = `A ${gender} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
+  } else {
+    // Females + regular males
+    const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
+    let intro = `A ${gender}`;
+    if (descriptors) intro = `${descriptors} ${gender}`;
+    
+    mainText = `${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
+    if (!isMale) mainText += ` ${fruit}`;
+    mainText += ".";
   }
 
-  function showSocialCard(user) {
-    if (!user) return;
-    document.getElementById('socialCard')?.remove();
-
-    // Both isHost and isVIP (and others) now use the same clean compact card
-    showUnifiedCard(user);
+  // Fallback for completely regular users (no host, no VIP)
+  if (!user.isHost && !isVIP) {
+    const flair = isMale ? "😎" : "💋";
+    mainText = `A ${gender} from ${city}, ${country}. ${flair}`;
   }
 
-  // ==================== UNIFIED CARD FOR HOSTS & VIPs ====================
-  function showUnifiedCard(user) {
-    const card = document.createElement("div");
-    card.id = "socialCard";
+  const mainLine = document.createElement("p");
+  mainLine.textContent = mainText;
+  mainLine.style.margin = "0";
+  detailsWrapper.appendChild(mainLine);
 
-    Object.assign(card.style, {
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      background: "linear-gradient(135deg, rgba(20,20,22,0.9), rgba(25,25,27,0.9))",
-      backdropFilter: "blur(10px)",
-      borderRadius: "14px",
-      padding: "12px 16px",
-      color: "#fff",
-      width: "230px",
-      maxWidth: "90%",
-      zIndex: "999999",
-      textAlign: "center",
-      boxShadow: "0 6px 24px rgba(0,0,0,0.5)",
-      fontFamily: "Poppins, sans-serif",
-      opacity: "0",
-      transition: "opacity .18s ease, transform .18s ease"
-    });
-
-    // Close X
-    const closeBtn = document.createElement("div");
-    closeBtn.innerHTML = "×";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "6px",
-      right: "10px",
-      fontSize: "16px",
+  // VIP badge — centered below the main line
+  if (isVIP) {
+    const vipBadge = document.createElement("div");
+    vipBadge.textContent = "VIP";
+    vipBadge.className = "vip-badge";
+    Object.assign(vipBadge.style, {
+      margin: "8px auto 4px",
+      width: "fit-content",
+      padding: "4px 14px",
+      fontSize: "11.5px",
       fontWeight: "700",
-      cursor: "pointer",
-      opacity: "0.6"
+      letterSpacing: "0.7px",
+      textTransform: "uppercase",
+      color: "#ffffff",
+      background: "linear-gradient(135deg, #b8860b, #ffd700 50%, #b8860b)",
+      backgroundSize: "300% 300%",
+      borderRadius: "20px",
+      boxShadow: "0 2px 10px rgba(255,215,0,0.35)",
+      animation: "vipShimmer 4s ease-in-out infinite"
     });
-    closeBtn.onmouseenter = () => closeBtn.style.opacity = "1";
-    closeBtn.onmouseleave = () => closeBtn.style.opacity = "0.6";
-    closeBtn.onclick = () => card.remove();
-    card.appendChild(closeBtn);
-
-    // Header @chatId
-    const header = document.createElement("h3");
-    header.textContent = user.chatId ? user.chatId.charAt(0).toUpperCase() + user.chatId.slice(1) : "Unknown";
-    const headerColor = user.isHost ? "#ff6600" : user.isVIP ? "#ff0099" : "#cccccc";
-    header.style.cssText = `margin:0 0 8px;font-size:18px;font-weight:700;background:linear-gradient(90deg,${headerColor},#ff33cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;`;
-    card.appendChild(header);
-
-// Legendary details
-const gender = (user.gender || "person").toLowerCase();
-const isMale = gender === "male";
-const pronoun = isMale ? "his" : "her";
-const ageGroup = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-
-const fruit     = user.fruitPick || "🍇";
-const nature    = user.naturePick || "cool";
-const bodyType  = user.bodyTypePick || "";
-
-const city      = user.location || user.city || "Lagos";
-const country   = user.country || "Nigeria";
-
-// Adjust VIP condition — using hasPaid as requested (change to user.isVIP if preferred)
-const isVIP     = !!user.hasPaid;           // true only if hasPaid exists and is truthy
-const isPrivilegedMale = isMale && (user.isHost || isVIP);
-
-let detailsText = "";
-let useHTML     = false;  // we'll switch to innerHTML when we need styling
-
-if (isPrivilegedMale) {
-  // VIP males: minimal + age + VIP badge + sunglasses
-  const vipBadge = isVIP 
-    ? '<span class="vip-badge">VIP</span>'
-    : '';
-
-  detailsText = `A ${gender} ${vipBadge} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
-  useHTML = isVIP;  // only use HTML if there's actually a badge to style
-} else {
-  // Everyone else (females + non-privileged males)
-  const descriptorParts = [nature, bodyType].filter(Boolean).join(" ").trim();
-  let mainPart = `A ${gender}`;
-  if (descriptorParts) {
-    mainPart = `${descriptorParts} ${gender}`;
+    detailsWrapper.appendChild(vipBadge);
   }
 
-  detailsText = `${mainPart} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
+  card.appendChild(detailsWrapper);
 
-  if (!isMale) {
-    detailsText += ` ${fruit}`;
-  }
-
-  detailsText += ".";
-}
-
-// Fallback for regular (non-host, non-VIP) users
-if (!user.isHost && !isVIP) {
-  const flair = isMale ? "😎" : "💋";
-  detailsText = `A ${gender} from ${city}, ${country}. ${flair}`;
-}
-
-// ────────────────────────────────────────────────
-// Create element & apply content + styles
-const detailsEl = document.createElement("p");
-detailsEl.style.cssText = "margin:0 0 10px; font-size:14px; line-height:1.4; color:#ccc;";
-
-if (useHTML) {
-  detailsEl.innerHTML = detailsText;
-
-  // Inject the shimmer animation style (only once ideally — but safe here)
-  if (!document.getElementById("vip-shimmer-style")) {
+  // Inject shimmer animation (only once)
+  if (isVIP && !document.getElementById("vip-shimmer-style")) {
     const style = document.createElement("style");
     style.id = "vip-shimmer-style";
     style.textContent = `
-      .vip-badge {
-        font-weight: bold;
-        color: #ffd700;               /* gold */
-        background: linear-gradient(
-          90deg,
-          #ffd700 0%,
-          #ffea80 25%,
-          #ffd700 50%,
-          #ffea80 75%,
-          #ffd700 100%
-        );
-        background-size: 200% 100%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: shimmer 3s linear infinite;
-        padding: 1px 6px;
-        border-radius: 4px;
-        font-size: 0.95em;
-        letter-spacing: 0.5px;
-      }
-      @keyframes shimmer {
-        0%   { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+      @keyframes vipShimmer {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
       }
     `;
     document.head.appendChild(style);
   }
-} else {
-  detailsEl.textContent = detailsText;
+
+  // Bio with typewriter
+  const bioEl = document.createElement("div");
+  Object.assign(bioEl.style, {
+    margin: "12px 0 8px",
+    fontStyle: "italic",
+    fontWeight: "600",
+    fontSize: "13px",
+    lineHeight: "1.4",
+    color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)]
+  });
+  card.appendChild(bioEl);
+
+  typeWriterEffect(bioEl, user.bioPick || "No bio shared yet...");
+
+  // Finally append card to body
+  document.body.appendChild(card);
 }
-
-card.appendChild(detailsEl);
-
-// Bio typewriter (unchanged)
-const bioEl = document.createElement("div");
-bioEl.style.cssText = "margin:12px 0 16px; font-style:italic; font-weight:600; font-size:13px;";
-bioEl.style.color = ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)];
-card.appendChild(bioEl);
-
-typeWriterEffect(bioEl, user.bioPick || "Nothing shared yet...");
 // Meet button — centered (only for Hosts) — Only color changed to dark glossy black
 if (user.isHost) {
   const meetBtn = document.createElement("div");
