@@ -6055,6 +6055,7 @@ function showHighlightsModal(videos) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
+
   // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
@@ -6075,6 +6076,7 @@ function showHighlightsModal(videos) {
     </div>
   `;
   modal.appendChild(intro);
+
   // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -6102,15 +6104,18 @@ function showHighlightsModal(videos) {
     setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
+
   // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
+
   // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
+
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
@@ -6119,6 +6124,7 @@ function showHighlightsModal(videos) {
     border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
+
   const trendingBtn = document.createElement("button");
   trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
   Object.assign(trendingBtn.style, {
@@ -6136,8 +6142,10 @@ function showHighlightsModal(videos) {
     alignItems: "center",
     gap: "4px"
   });
+
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
+
   // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
@@ -6147,6 +6155,7 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
+
   // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
@@ -6155,18 +6164,22 @@ function showHighlightsModal(videos) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
+
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
+
   function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
+
     let visibleVideos = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
       return true;
     });
+
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const isFreeTonightMode = filterMode === "trending";
@@ -6181,6 +6194,7 @@ function showHighlightsModal(videos) {
         }
       });
     }
+
     const visibleTags = new Set();
     const isFreeTonightMode = filterMode === "trending";
     visibleVideos.forEach(v => {
@@ -6201,7 +6215,9 @@ function showHighlightsModal(videos) {
         });
       }
     });
+
     const sortedVisibleTags = [...visibleTags].sort();
+
     sortedVisibleTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
@@ -6224,11 +6240,13 @@ function showHighlightsModal(videos) {
       };
       tagContainer.appendChild(btn);
     });
+
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (filterMode === "trending") return v.isTrending === true;
       return true;
     });
+
     if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
         const isFreeTonightMode = filterMode === "trending";
@@ -6243,7 +6261,9 @@ function showHighlightsModal(videos) {
         }
       });
     }
+
     filtered = filtered.sort(() => Math.random() - 0.5);
+
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = isFreeTonightMode ? "No one's on free tonight right now" : "No highlights match your filters";
@@ -6251,11 +6271,13 @@ function showHighlightsModal(videos) {
       grid.appendChild(empty);
       return;
     }
+
     filtered.forEach(video => {
       const isUnlocked =
         unlockedVideos.includes(video.id) ||
         filterMode === "trending" ||
         video.isTrending === true;
+
       const card = document.createElement("div");
       Object.assign(card.style, {
         position: "relative",
@@ -6276,28 +6298,35 @@ function showHighlightsModal(videos) {
         card.style.transform = "scale(1)";
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
+
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+
       if (video.thumbnailUrl) {
         vidContainer.style.backgroundImage = `url(${video.thumbnailUrl})`;
         vidContainer.style.backgroundSize = "cover";
         vidContainer.style.backgroundPosition = "center";
         vidContainer.style.backgroundRepeat = "no-repeat";
       }
+
       const videoEl = document.createElement("video");
       videoEl.muted = true;
       videoEl.loop = true;
       videoEl.preload = (filterMode === "trending" || video.isTrending) ? "auto" : "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       videoEl.poster = video.thumbnailUrl || video.videoUrl || "";
+
       videoEl.src = (filterMode === "trending" || video.isTrending)
         ? (video.videoUrl || video.previewClip || "")
         : (isUnlocked ? (video.previewClip || video.videoUrl || "") : "");
+
       videoEl.load();
+
       videoEl.addEventListener('loadeddata', () => {
         vidContainer.style.backgroundImage = '';
         vidContainer.style.background = '#000';
       }, { once: true });
+
       if (isUnlocked || filterMode === "trending" || video.isTrending) {
         vidContainer.onmouseenter = (e) => {
           e.stopPropagation();
@@ -6319,178 +6348,165 @@ function showHighlightsModal(videos) {
           </div>`;
         vidContainer.appendChild(lock);
       }
+
+      // CLICK HANDLER
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        if (!isUnlocked && filterMode !== "trending" && !video.isTrending) {
+          showUnlockConfirm(video, () => {
+            unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+            renderCards(videos);
+            showStarPopup("Video unlocked! 🎉", "success");
+          });
+          return;
+        }
+        openFullScreenVideo(video.videoUrl || "");
+      };
+
+      vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
+
+      // INFO OVERLAY
+      const info = document.createElement("div");
+      info.style.cssText = `
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
+      `;
+
+      const title = document.createElement("div");
+      title.textContent = video.title || "Cute moment";
+      title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
+
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) {
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(userSnap => {
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              }
+            })
+            .catch(err => console.error("Failed to load user:", err));
+        }
+      };
+
+      // TAGS
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
+      const displayedTags = (video.tags || []).filter(tag => {
+        if (!tag || typeof tag !== "string") return false;
+        const lowerTag = tag.trim().toLowerCase();
+        const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+        return !isLocation || isFreeTonightMode;
+      });
+
+      displayedTags.forEach(t => {
+        const span = document.createElement("span");
+        span.textContent = `#${t.trim()}`;
+        const lowerT = t.trim().toLowerCase();
+        const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
+        span.style.cssText = `
+          font-size:11px;
+          padding:2px 8px;
+          border-radius:10px;
+          background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
+          color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
+          border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
+        `;
+        tagsEl.appendChild(span);
+      });
+
+      info.append(title, user, tagsEl);
+      card.appendChild(info);
+
+      // BADGE
+      const badge = document.createElement("div");
+      let badgeText = "";
+      let badgeBg = "";
+      let badgeShadow = "";
+
+      if (filterMode === "trending" || video.isTrending) {
+        badgeText = "Free Tonight ♡";
+        badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900, #d9f600)";
+        badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";
+      } else if (isUnlocked) {
+        badgeText = "Unlocked ♡";
+        badgeBg = "rgba(0,255,234,0.5)";
+        badgeShadow = "0 0 18px rgba(0,255,234,0.9)";
+      } else {
+        badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
+        badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2)";
+        badgeShadow = "0 0 14px rgba(255,0,242,0.7)";
+      }
+
+      badge.textContent = badgeText;
+      Object.assign(badge.style, {
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        padding: "6px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#fff",
+        background: badgeBg,
+        boxShadow: badgeShadow,
+        border: "1px solid rgba(255,255,255,0.3)",
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+      });
+      card.appendChild(badge);
+
       grid.appendChild(card);
     });
   }
-  renderCards();
-  document.body.appendChild(modal);
-}
 
-// ── CLICK HANDLER ─────────────────────────────────────────────────────
-vidContainer.onclick = (e) => {
-  e.stopPropagation();
-  if (!isUnlocked && filterMode !== "trending" && !video.isTrending) {
-    showUnlockConfirm(video, () => {
-      unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-      renderCards(videos);
-      showStarPopup("Video unlocked! 🎉", "success");
-    });
-    return;
-  }
-  openFullScreenVideo(video.videoUrl || "");
-};
-
-vidContainer.appendChild(videoEl);
-card.appendChild(vidContainer);
-   
-  // ── INFO OVERLAY ─────────────────────────────────────────────────────
-  const info = document.createElement("div");
-  info.style.cssText = `
-    position:absolute; bottom:0; left:0; right:0;
-    background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-    padding:60px 12px 12px;
-  `;
-
-  const title = document.createElement("div");
-  title.textContent = video.title || "Cute moment";
-  title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
-
-  const user = document.createElement("div");
-  user.textContent = `@${video.uploaderName || "cutie"}`;
-  user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
-
-  user.onclick = (e) => {
-    e.stopPropagation();
-    if (video.uploaderId) {
-      getDoc(doc(db, "users", video.uploaderId))
-        .then(userSnap => {
-          if (userSnap.exists()) {
-            showSocialCard(userSnap.data());
-          }
-        })
-        .catch(err => console.error("Failed to load user:", err));
-    }
+  // FILTER BUTTONS
+  unlockedBtn.onclick = () => {
+    filterMode = filterMode === "unlocked" ? "all" : "unlocked";
+    unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
+    unlockedBtn.style.background = filterMode === "unlocked"
+      ? "linear-gradient(135deg, #ff00f2, #00ffea)"
+      : "linear-gradient(135deg, #240046, #3c0b5e)";
+    renderCards();
   };
 
-  // ── TAGS ─────────────────────────────────────────────────────────────
-  const tagsEl = document.createElement("div");
-  tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+  trendingBtn.onclick = () => {
+    filterMode = filterMode === "trending" ? "all" : "trending";
+    trendingBtn.innerHTML = filterMode === "trending"
+      ? "Show All Videos"
+      : 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
+    trendingBtn.style.background = filterMode === "trending"
+      ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
+      : "linear-gradient(135deg, #8a2be2, #ff00f2)";
+    renderCards();
+  };
 
-  const isFreeTonightMode = filterMode === "trending";
-
-  const displayedTags = (video.tags || []).filter(tag => {
-    if (!tag || typeof tag !== "string") return false;
-    const lowerTag = tag.trim().toLowerCase();
-    const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-    return !isLocation || isFreeTonightMode;
-  });
-
-  displayedTags.forEach(t => {
-    const span = document.createElement("span");
-    span.textContent = `#${t.trim()}`;
-
-    const lowerT = t.trim().toLowerCase();
-    const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
-
-    span.style.cssText = `
-      font-size:11px;
-      padding:2px 8px;
-      border-radius:10px;
-      background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
-      color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
-      border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
-    `;
-
-    tagsEl.appendChild(span);
-  });
-
-  info.append(title, user, tagsEl);
-  card.appendChild(info);
-
-  // ── BADGE ────────────────────────────────────────────────────────────
-  const badge = document.createElement("div");
-
-  let badgeText = "";
-  let badgeBg = "";
-  let badgeShadow = "";
-if (filterMode === "trending" || video.isTrending) {
-  badgeText = "Free Tonight ♡";
-  badgeBg = "linear-gradient(135deg, #c3f60c, #a0d900, #d9f600)";   // your theme green + subtle variants
-  badgeShadow = "0 0 18px rgba(195, 246, 12, 0.9)";                  // matching green glow
-} else if (isUnlocked) {
-  badgeText = "Unlocked ♡";
-  badgeBg = "rgba(0,255,234,0.5)";                                   // original cyan
-  badgeShadow = "0 0 18px rgba(0,255,234,0.9)";                      // original cyan glow
-} else {
-  badgeText = `${video.highlightVideoPrice || "?"} ⭐️`;
-  badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2)";             // original magenta-purple
-  badgeShadow = "0 0 14px rgba(255,0,242,0.7)";                      // original magenta glow
-}
-
-badge.textContent = badgeText;
-Object.assign(badge.style, {
-  position: "absolute",
-  top: "12px",
-  right: "12px",
-  padding: "6px 12px",
-  borderRadius: "12px",
-  fontSize: "12px",
-  fontWeight: "700",
-  color: "#fff",
-  background: badgeBg,
-  boxShadow: badgeShadow,
-  border: "1px solid rgba(255,255,255,0.3)",
-  textShadow: "0 0 4px rgba(0,0,0,0.7)"
-});
-card.appendChild(badge);
-grid.appendChild(card);
-});
-
-// ── FILTER BUTTONS ─────────────────────────────────────────────────────
-unlockedBtn.onclick = () => {
-  filterMode = filterMode === "unlocked" ? "all" : "unlocked";
-  unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
-  unlockedBtn.style.background = filterMode === "unlocked"
-    ? "linear-gradient(135deg, #ff00f2, #00ffea)"
-    : "linear-gradient(135deg, #240046, #3c0b5e)";
-  renderCards();
-};
-
-trendingBtn.onclick = () => {
-  filterMode = filterMode === "trending" ? "all" : "trending";
-  trendingBtn.innerHTML = filterMode === "trending"
-    ? "Show All Videos"
-    : 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
-  trendingBtn.style.background = filterMode === "trending"
-    ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
-    : "linear-gradient(135deg, #8a2be2, #ff00f2)";
-  renderCards();
-}
-
-}  // ← IMPORTANT: this closes renderCards()
-
-// SEARCH – live, case-insensitive, only username/chatId
-const searchInput = document.getElementById("highlightSearchInput");
-if (searchInput) {
-  searchInput.addEventListener("input", (e) => {
-    const term = e.target.value.trim().toLowerCase();
-    const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
-    grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
-      const userEl = card.querySelector("div[style*='color:#00ffea']");
-      let username = userEl?.textContent || "";
-      username = username.replace("@", "").trim().toLowerCase();
-      const matches = !searchTerm || username.includes(searchTerm);
-      card.style.display = matches ? "" : "none";
+  // SEARCH – live, case-insensitive, only username/chatId
+  const searchInput = document.getElementById("highlightSearchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const term = e.target.value.trim().toLowerCase();
+      const searchTerm = term.startsWith("@") ? term.slice(1).trim() : term;
+      grid.querySelectorAll("div[style*='aspectRatio']").forEach(card => {
+        const userEl = card.querySelector("div[style*='color:#00ffea']");
+        let username = userEl?.textContent || "";
+        username = username.replace("@", "").trim().toLowerCase();
+        const matches = !searchTerm || username.includes(searchTerm);
+        card.style.display = matches ? "" : "none";
+      });
     });
-  });
-}
+  }
 
-// Initial render
-renderCards();
-document.body.appendChild(modal);
-setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
-}  // ← this already closes showHighlightsModal()
+  // Initial render
+  renderCards();
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
+}
 
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
