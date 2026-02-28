@@ -6055,6 +6055,7 @@ function showHighlightsModal(videos) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
+
   // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
@@ -6075,6 +6076,7 @@ function showHighlightsModal(videos) {
     </div>
   `;
   modal.appendChild(intro);
+
   // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -6102,15 +6104,17 @@ function showHighlightsModal(videos) {
     setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
+
   // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-  // Main filter buttons
+
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
+
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
@@ -6119,6 +6123,7 @@ function showHighlightsModal(videos) {
     border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
+
   const trendingBtn = document.createElement("button");
   trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
   Object.assign(trendingBtn.style, {
@@ -6136,9 +6141,10 @@ function showHighlightsModal(videos) {
     alignItems: "center",
     gap: "4px"
   });
+
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
-  // TAG FILTER BUTTONS
+
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -6147,7 +6153,7 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
-  // GRID
+
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
@@ -6155,7 +6161,7 @@ function showHighlightsModal(videos) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
-  // State
+
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
@@ -6166,14 +6172,12 @@ function showHighlightsModal(videos) {
 
     const isFreeTonightMode = filterMode === "trending";
 
-    // 1. Base visible videos
     let visibleVideos = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (isFreeTonightMode) return v.isTrending === true;
       return true;
     });
 
-    // 2. Apply tag filters (mode-specific matching)
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         if (isFreeTonightMode) {
@@ -6188,19 +6192,14 @@ function showHighlightsModal(videos) {
       });
     }
 
-    // 3. Collect tags for buttons — completely separate per mode
     const visibleTags = new Set();
-
     visibleVideos.forEach(v => {
       if (isFreeTonightMode) {
-        // Only location + fruitPick in Free Tonight
         const loc = (v.user && v.user.location || v.location || "").trim();
         if (loc) visibleTags.add(loc);
-
         const fruit = (v.user && v.user.fruitPick || "").trim();
         if (fruit) visibleTags.add(fruit);
       } else {
-        // Normal modes: only video.tags
         (v.tags || []).forEach(t => {
           if (t && typeof t === "string" && t.trim()) {
             visibleTags.add(t.trim());
@@ -6211,7 +6210,6 @@ function showHighlightsModal(videos) {
 
     const sortedVisibleTags = [...visibleTags].sort();
 
-    // 4. Build tag buttons
     sortedVisibleTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = tag.includes("🍇") || tag.includes("🍓") || tag.includes("🍒") ? tag : `#${tag}`;
@@ -6235,7 +6233,6 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
-    // 5. Final filtered list for cards
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       if (isFreeTonightMode) return v.isTrending === true;
@@ -6358,7 +6355,6 @@ function showHighlightsModal(videos) {
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // INFO OVERLAY
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -6386,7 +6382,6 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // TAGS OVERLAY ON CARD (only normal tags in non-Free Tonight modes)
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
@@ -6411,7 +6406,6 @@ function showHighlightsModal(videos) {
       info.append(title, user, tagsEl);
       card.appendChild(info);
 
-      // BADGE
       const badge = document.createElement("div");
       let badgeText = "";
       let badgeBg = "";
@@ -6452,7 +6446,6 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // FILTER BUTTONS
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -6471,13 +6464,9 @@ function showHighlightsModal(videos) {
       ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderCards();
-  }
+  };
 
-  renderCards();
-  document.body.appendChild(modal);
-}
-
-  // SEARCH – live, case-insensitive, only username/chatId
+  // SEARCH
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -6493,7 +6482,6 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Initial render
   renderCards();
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById("highlightSearchInput")?.focus(), 300);
