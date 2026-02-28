@@ -6044,28 +6044,17 @@ highlightsBtn.onclick = async () => {
 /* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
-
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
+    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    zIndex: "999999",
-    overflowY: "auto",
-    padding: "20px 12px",
-    boxSizing: "border-box",
+    display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "flex-start",
+    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-
   // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
@@ -6086,7 +6075,6 @@ function showHighlightsModal(videos) {
     </div>
   `;
   modal.appendChild(intro);
-
   // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -6114,33 +6102,23 @@ function showHighlightsModal(videos) {
     setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
-
   // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-
   // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
-
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
-    padding: "8px 16px",
-    borderRadius: "30px",
-    fontSize: "13px",
-    fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)",
-    color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)",
-    cursor: "pointer",
-    transition: "all 0.3s",
-    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-
   const trendingBtn = document.createElement("button");
   trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
   Object.assign(trendingBtn.style, {
@@ -6158,11 +6136,9 @@ function showHighlightsModal(videos) {
     alignItems: "center",
     gap: "4px"
   });
-
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
-
-  // TAG FILTER BUTTONS CONTAINER
+  // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -6171,7 +6147,6 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
-
   // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
@@ -6180,138 +6155,107 @@ function showHighlightsModal(videos) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
-
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
   let activeTags = new Set();
-
   function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
-
-    const isFreeTonightMode = filterMode === "trending";
-
-    // 1. Get base visible videos
     let visibleVideos = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-      if (isFreeTonightMode)     return v.isTrending === true;
+      if (filterMode === "trending") return v.isTrending === true;
       return true;
     });
-
-    // 2. Apply current tag filters
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
+        const isFreeTonightMode = filterMode === "trending";
         if (isFreeTonightMode) {
-          // Free Tonight: match location + fruitPick
-          const loc   = (v.user?.location || v.location || "").trim().toLowerCase();
-          const fruit = (v.user?.fruitPick || "").trim().toLowerCase();
+          const loc = (v.user && v.user.location || v.location || "").trim().toLowerCase();
+          const fruit = (v.user && v.user.fruitPick || "").trim().toLowerCase();
           const values = [loc, fruit].filter(Boolean);
-          return [...activeTags].every(t => values.some(val => val.includes(t.toLowerCase())));
+          return [...activeTags].every(tag => values.some(val => val.includes(tag.toLowerCase())));
         } else {
-          // Normal modes: match v.tags
           const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-          return [...activeTags].every(t => videoTags.includes(t));
+          return [...activeTags].every(tag => videoTags.includes(tag));
         }
       });
     }
-
-    // 3. Collect tags for buttons (mode-dependent)
     const visibleTags = new Set();
-
+    const isFreeTonightMode = filterMode === "trending";
     visibleVideos.forEach(v => {
       if (isFreeTonightMode) {
-        // Only location + fruitPick in Free Tonight
-        if (v.user?.location || v.location) {
-          const loc = (v.user?.location || v.location || "").trim();
+        if (v.user && v.user.location || v.location) {
+          const loc = (v.user && v.user.location || v.location || "").trim();
           if (loc) visibleTags.add(loc);
         }
-        if (v.user?.fruitPick) {
+        if (v.user && v.user.fruitPick) {
           const fruit = (v.user.fruitPick || "").trim();
           if (fruit) visibleTags.add(fruit);
         }
       } else {
-        // Normal mode: all video tags
         (v.tags || []).forEach(t => {
           if (t && typeof t === "string" && t.trim()) {
-            visibleTags.add(t.trim());
+            visibleTags.add(t.trim().toLowerCase());
           }
         });
       }
     });
-
-    const sortedTags = [...visibleTags].sort();
-
-    // 4. Build tag buttons
-    sortedTags.forEach(tag => {
+    const sortedVisibleTags = [...visibleTags].sort();
+    sortedVisibleTags.forEach(tag => {
       const btn = document.createElement("button");
-      btn.textContent = tag.includes("🍇") || tag.includes("🍓") || tag.includes("🍒") ? tag : `#${tag}`;
+      btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
-
-      const isActive = activeTags.has(tag);
       Object.assign(btn.style, {
         padding: "6px 14px",
         borderRadius: "24px",
         fontSize: "12px",
         fontWeight: "600",
-        background: isActive ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
-        color: isActive ? "#fff" : "#ff6ab6",
+        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
         border: "1px solid rgba(255,46,120,0.6)",
         cursor: "pointer",
         transition: "all 0.25s"
       });
-
       btn.onclick = () => {
         if (activeTags.has(tag)) activeTags.delete(tag);
         else activeTags.add(tag);
         renderCards(videosToRender);
       };
-
       tagContainer.appendChild(btn);
     });
-
-    // 5. Final filtered list for rendering
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-      if (isFreeTonightMode)     return v.isTrending === true;
+      if (filterMode === "trending") return v.isTrending === true;
       return true;
     });
-
     if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
+        const isFreeTonightMode = filterMode === "trending";
         if (isFreeTonightMode) {
-          const loc   = (v.user?.location || v.location || "").trim().toLowerCase();
-          const fruit = (v.user?.fruitPick || "").trim().toLowerCase();
+          const loc = (v.user && v.user.location || v.location || "").trim().toLowerCase();
+          const fruit = (v.user && v.user.fruitPick || "").trim().toLowerCase();
           const values = [loc, fruit].filter(Boolean);
-          return [...activeTags].every(t => values.some(val => val.toLowerCase().includes(t.toLowerCase())));
+          return [...activeTags].every(tag => values.some(val => val.includes(tag.toLowerCase())));
         } else {
           const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-          return [...activeTags].every(t => videoTags.includes(t));
+          return [...activeTags].every(tag => videoTags.includes(tag));
         }
       });
     }
-
-    // Shuffle for random order
     filtered = filtered.sort(() => Math.random() - 0.5);
-
-    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = isFreeTonightMode
-        ? "No cuties free tonight right now 🍇"
-        : "No highlights match your filters";
+      empty.textContent = isFreeTonightMode ? "No one's on free tonight right now" : "No highlights match your filters";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
       grid.appendChild(empty);
       return;
     }
-
-    // Render cards
     filtered.forEach(video => {
       const isUnlocked =
         unlockedVideos.includes(video.id) ||
-        isFreeTonightMode ||
+        filterMode === "trending" ||
         video.isTrending === true;
-
       const card = document.createElement("div");
       Object.assign(card.style, {
         position: "relative",
@@ -6324,7 +6268,6 @@ function showHighlightsModal(videos) {
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
-
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -6333,41 +6276,35 @@ function showHighlightsModal(videos) {
         card.style.transform = "scale(1)";
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
-
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-
-      // Early poster fallback
       if (video.thumbnailUrl) {
         vidContainer.style.backgroundImage = `url(${video.thumbnailUrl})`;
         vidContainer.style.backgroundSize = "cover";
         vidContainer.style.backgroundPosition = "center";
         vidContainer.style.backgroundRepeat = "no-repeat";
       }
-
       const videoEl = document.createElement("video");
       videoEl.muted = true;
       videoEl.loop = true;
-      videoEl.preload = (isFreeTonightMode || video.isTrending) ? "auto" : "metadata";
+      videoEl.preload = (filterMode === "trending" || video.isTrending) ? "auto" : "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       videoEl.poster = video.thumbnailUrl || video.videoUrl || "";
-
-      videoEl.src = (isFreeTonightMode || video.isTrending)
+      videoEl.src = (filterMode === "trending" || video.isTrending)
         ? (video.videoUrl || video.previewClip || "")
         : (isUnlocked ? (video.previewClip || video.videoUrl || "") : "");
-
       videoEl.load();
-
       videoEl.addEventListener('loadeddata', () => {
         vidContainer.style.backgroundImage = '';
         vidContainer.style.background = '#000';
       }, { once: true });
-
-      vidContainer.appendChild(videoEl);
-
-      if (isUnlocked || isFreeTonightMode || video.isTrending) {
-        vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
-        vidContainer.onmouseleave = () => {
+      if (isUnlocked || filterMode === "trending" || video.isTrending) {
+        vidContainer.onmouseenter = (e) => {
+          e.stopPropagation();
+          videoEl.play().catch(() => {});
+        };
+        vidContainer.onmouseleave = (e) => {
+          e.stopPropagation();
           videoEl.pause();
           videoEl.currentTime = 0;
         };
@@ -6382,15 +6319,11 @@ function showHighlightsModal(videos) {
           </div>`;
         vidContainer.appendChild(lock);
       }
-
       card.appendChild(vidContainer);
       grid.appendChild(card);
     });
   }
-
-  // Initial render
   renderCards();
-
   document.body.appendChild(modal);
 }
 
