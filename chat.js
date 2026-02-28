@@ -2462,7 +2462,7 @@ function sanitizeKey(email) {
 
     if (isPrivilegedMale) {
       // Privileged males → clean & minimal
-      mainText = `A ${gender} in ${pronoun} ${ageGroup}, from ${city}, ${country}. 😎`;
+      mainText = `A ${gender} in ${pronoun} ${ageGroup} currently in ${city}, ${country}.😎`;
     } else {
       // Females + regular males
       const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
