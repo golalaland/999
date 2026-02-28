@@ -6055,7 +6055,6 @@ function showHighlightsModal(videos) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-
   // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
@@ -6076,7 +6075,6 @@ function showHighlightsModal(videos) {
     </div>
   `;
   modal.appendChild(intro);
-
   // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -6104,18 +6102,15 @@ function showHighlightsModal(videos) {
     setTimeout(() => modal.remove(), 280);
   };
   intro.firstElementChild.appendChild(closeBtn);
-
   // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-
   // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
-
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
@@ -6124,7 +6119,6 @@ function showHighlightsModal(videos) {
     border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
     transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-
   const trendingBtn = document.createElement("button");
   trendingBtn.innerHTML = 'Free Tonight <span style="background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">🔥</span>';
   Object.assign(trendingBtn.style, {
@@ -6142,10 +6136,8 @@ function showHighlightsModal(videos) {
     alignItems: "center",
     gap: "4px"
   });
-
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
-
   // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
@@ -6155,7 +6147,6 @@ function showHighlightsModal(videos) {
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
-
   // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
@@ -6164,7 +6155,6 @@ function showHighlightsModal(videos) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
-
   // State
   let unlockedVideos = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
   let filterMode = "all";
@@ -6174,20 +6164,23 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
+    const isFreeTonightMode = filterMode === "trending";
+
+    // 1. Base visible videos
     let visibleVideos = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-      if (filterMode === "trending") return v.isTrending === true;
+      if (isFreeTonightMode) return v.isTrending === true;
       return true;
     });
 
+    // 2. Apply tag filters (mode-specific matching)
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
-        const isFreeTonightMode = filterMode === "trending";
         if (isFreeTonightMode) {
           const loc = (v.user && v.user.location || v.location || "").trim().toLowerCase();
           const fruit = (v.user && v.user.fruitPick || "").trim().toLowerCase();
           const values = [loc, fruit].filter(Boolean);
-          return [...activeTags].every(tag => values.some(val => val.includes(tag.toLowerCase())));
+          return [...activeTags].every(tag => values.some(val => val.toLowerCase().includes(tag.toLowerCase())));
         } else {
           const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
           return [...activeTags].every(tag => videoTags.includes(tag));
@@ -6195,22 +6188,22 @@ function showHighlightsModal(videos) {
       });
     }
 
+    // 3. Collect tags for buttons — completely separate per mode
     const visibleTags = new Set();
-    const isFreeTonightMode = filterMode === "trending";
+
     visibleVideos.forEach(v => {
       if (isFreeTonightMode) {
-        if (v.user && v.user.location || v.location) {
-          const loc = (v.user && v.user.location || v.location || "").trim();
-          if (loc) visibleTags.add(loc);
-        }
-        if (v.user && v.user.fruitPick) {
-          const fruit = (v.user.fruitPick || "").trim();
-          if (fruit) visibleTags.add(fruit);
-        }
+        // Only location + fruitPick in Free Tonight
+        const loc = (v.user && v.user.location || v.location || "").trim();
+        if (loc) visibleTags.add(loc);
+
+        const fruit = (v.user && v.user.fruitPick || "").trim();
+        if (fruit) visibleTags.add(fruit);
       } else {
+        // Normal modes: only video.tags
         (v.tags || []).forEach(t => {
           if (t && typeof t === "string" && t.trim()) {
-            visibleTags.add(t.trim().toLowerCase());
+            visibleTags.add(t.trim());
           }
         });
       }
@@ -6218,9 +6211,10 @@ function showHighlightsModal(videos) {
 
     const sortedVisibleTags = [...visibleTags].sort();
 
+    // 4. Build tag buttons
     sortedVisibleTags.forEach(tag => {
       const btn = document.createElement("button");
-      btn.textContent = `#${tag}`;
+      btn.textContent = tag.includes("🍇") || tag.includes("🍓") || tag.includes("🍒") ? tag : `#${tag}`;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
         padding: "6px 14px",
@@ -6241,20 +6235,20 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
+    // 5. Final filtered list for cards
     let filtered = videosToRender.filter(v => {
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
-      if (filterMode === "trending") return v.isTrending === true;
+      if (isFreeTonightMode) return v.isTrending === true;
       return true;
     });
 
     if (activeTags.size > 0) {
       filtered = filtered.filter(v => {
-        const isFreeTonightMode = filterMode === "trending";
         if (isFreeTonightMode) {
           const loc = (v.user && v.user.location || v.location || "").trim().toLowerCase();
           const fruit = (v.user && v.user.fruitPick || "").trim().toLowerCase();
           const values = [loc, fruit].filter(Boolean);
-          return [...activeTags].every(tag => values.some(val => val.includes(tag.toLowerCase())));
+          return [...activeTags].every(tag => values.some(val => val.toLowerCase().includes(tag.toLowerCase())));
         } else {
           const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
           return [...activeTags].every(tag => videoTags.includes(tag));
@@ -6273,10 +6267,9 @@ function showHighlightsModal(videos) {
     }
 
     filtered.forEach(video => {
-      const isUnlocked =
-        unlockedVideos.includes(video.id) ||
-        filterMode === "trending" ||
-        video.isTrending === true;
+      const isUnlocked = unlockedVideos.includes(video.id) ||
+                         filterMode === "trending" ||
+                         video.isTrending === true;
 
       const card = document.createElement("div");
       Object.assign(card.style, {
@@ -6349,7 +6342,6 @@ function showHighlightsModal(videos) {
         vidContainer.appendChild(lock);
       }
 
-      // CLICK HANDLER
       vidContainer.onclick = (e) => {
         e.stopPropagation();
         if (!isUnlocked && filterMode !== "trending" && !video.isTrending) {
@@ -6394,32 +6386,29 @@ function showHighlightsModal(videos) {
         }
       };
 
-// ── TAGS ─────────────────────────────────────────────────────────────
-const tagsEl = document.createElement("div");
-tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+      // TAGS OVERLAY ON CARD (only normal tags in non-Free Tonight modes)
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-const isFreeTonightMode = filterMode === "trending";
+      if (!isFreeTonightMode) {
+        (video.tags || []).forEach(t => {
+          if (t && typeof t === "string" && t.trim()) {
+            const span = document.createElement("span");
+            span.textContent = `#${t.trim()}`;
+            span.style.cssText = `
+              font-size:11px;
+              padding:2px 8px;
+              border-radius:10px;
+              background: rgba(255,46,120,0.22);
+              color: #ff4d8a;
+              border: 1px solid rgba(255,46,120,0.6);
+            `;
+            tagsEl.appendChild(span);
+          }
+        });
+      }
 
-// Only show location + fruitPick tags in Free Tonight mode
-const displayedTags = isFreeTonightMode
-  ? []
-  : (video.tags || []).filter(tag => tag && typeof tag === "string" && tag.trim());
-
-displayedTags.forEach(t => {
-  const span = document.createElement("span");
-  span.textContent = `#${t.trim()}`;
-  span.style.cssText = `
-    font-size:11px;
-    padding:2px 8px;
-    border-radius:10px;
-    background: rgba(255,46,120,0.22);
-    color: #ff4d8a;
-    border: 1px solid rgba(255,46,120,0.6);
-  `;
-  tagsEl.appendChild(span);
-});
-
-info.append(title, user, tagsEl);
+      info.append(title, user, tagsEl);
       card.appendChild(info);
 
       // BADGE
@@ -6482,7 +6471,11 @@ info.append(title, user, tagsEl);
       ? "linear-gradient(135deg, #00ffea, #8a2be2, #ff00f2)"
       : "linear-gradient(135deg, #8a2be2, #ff00f2)";
     renderCards();
-  };
+  }
+
+  renderCards();
+  document.body.appendChild(modal);
+}
 
   // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
