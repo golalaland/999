@@ -6394,34 +6394,32 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // TAGS
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+// ── TAGS ─────────────────────────────────────────────────────────────
+const tagsEl = document.createElement("div");
+tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      const displayedTags = (video.tags || []).filter(tag => {
-        if (!tag || typeof tag !== "string") return false;
-        const lowerTag = tag.trim().toLowerCase();
-        const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-        return !isLocation || isFreeTonightMode;
-      });
+const isFreeTonightMode = filterMode === "trending";
 
-      displayedTags.forEach(t => {
-        const span = document.createElement("span");
-        span.textContent = `#${t.trim()}`;
-        const lowerT = t.trim().toLowerCase();
-        const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
-        span.style.cssText = `
-          font-size:11px;
-          padding:2px 8px;
-          border-radius:10px;
-          background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
-          color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
-          border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
-        `;
-        tagsEl.appendChild(span);
-      });
+// Only show location + fruitPick tags in Free Tonight mode
+const displayedTags = isFreeTonightMode
+  ? []
+  : (video.tags || []).filter(tag => tag && typeof tag === "string" && tag.trim());
 
-      info.append(title, user, tagsEl);
+displayedTags.forEach(t => {
+  const span = document.createElement("span");
+  span.textContent = `#${t.trim()}`;
+  span.style.cssText = `
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:10px;
+    background: rgba(255,46,120,0.22);
+    color: #ff4d8a;
+    border: 1px solid rgba(255,46,120,0.6);
+  `;
+  tagsEl.appendChild(span);
+});
+
+info.append(title, user, tagsEl);
       card.appendChild(info);
 
       // BADGE
