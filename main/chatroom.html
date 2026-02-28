@@ -1,0 +1,4803 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ＣＵＢＥ</title>
+<link rel="icon" href="data:," />
+<style>
+:root {
+  --bg:           #000;
+  --card:         #111;
+  --muted:        #88a066;
+  --accent:       #c3f60c;
+  --glass:        rgba(255,255,255,0.03);
+  --pulse-color:  #c3f60c;
+  --buzz-color:   #ddff55;
+
+  /* SUBTLE GLOW LEVELS */
+  --glow-1:       rgba(195, 246, 12, 0.08);  /* softer */
+  --glow-2:       rgba(195, 246, 12, 0.18);  /* medium-soft */
+  --glow-3:       rgba(195, 246, 12, 0.28);  /* controlled */
+  --glow-max:     rgba(195, 246, 12, 0.5);   /* no more full neon */
+}
+
+#videoWrapper .nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+  position: absolute;
+  bottom: 6px; /* overlay near bottom of video */
+  width: 100%;
+  pointer-events: auto;
+}
+
+#videoWrapper .nav-buttons button {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,20,147,0.2);
+  background: rgba(30,30,30,0.7);
+  color: var(--accent);
+  cursor: pointer;
+}
+#videoWrapper .nav-buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255,20,147,0.3);
+}
+#videoWrapper {
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+
+  /* NEW: make sticky */
+  position: sticky;
+  top: 0;
+  z-index: 50; /* make sure it’s above messages but below popups like stars */
+}
+
+/* Video container inside wrapper */
+#videoContainer {
+  width: 100%;
+  height: 100%;       /* fill the wrapper */
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 10;
+}
+#prev { left: 5px; }
+#next { right: 5px; }
+  /* Minimal, almost invisible Prev/Next buttons */
+  #prevBtn, #nextBtn {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.05); /* very subtle */
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    opacity: 0;               /* invisible by default */
+    transition: opacity 0.3s ease;
+  }
+
+  #prevBtn:hover, #nextBtn:hover,
+  #prevBtn.active, #nextBtn.active {
+    opacity: 0.8;             /* appear on hover or when active */
+    cursor: pointer;
+  }
+
+  #prevBtn { left: 10px; }
+  #nextBtn { right: 10px; }
+  
+  .arrow {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.arrow.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+  
+/* overall layout */
+html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#fff;background:var(--bg);}
+#appWrapper{width:100%;height:100%;display:flex;justify-content:center;}
+.app{display:flex;flex-direction:column;height:100%;gap:10px;padding:10px;box-sizing:border-box;width:100%;max-width:480px;}
+.brand{font-weight:700;font-size:24px;color:var(--accent);text-align:center;}
+.room-desc{font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px;}
+#greeting{font-size:13px;text-align:center;font-weight:600;margin-bottom:6px;color:var(--accent);}
+#helloText{font-size:21px;font-weight:900;text-align:center;margin:6px 0;color:#fff;transition:color .2s ease;}
+#center{flex:1;display:flex;flex-direction:column;gap:6px;}
+
+/* Sticky video wrapper */
+#videoPlayerWrapper {
+  position: fixed;
+  top: 10px; /* distance from top */
+  right: 10px; /* or left: 50%; transform: translateX(-50%) for center */
+  width: 320px;
+  height: 180px;
+  z-index: 999;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: #111;
+}
+#videoPlayer {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* or contain if you prefer full visibility */
+}
+
+#guestMsg{font-size:16px;font-weight:700;margin:4px 0;color:var(--accent);text-align:center;}
+
+/* Chat container */
+#messages {
+  flex: 1 1 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  background: #000;
+  border-radius: 8px;
+  box-sizing: border-box;
+  position: relative;
+  min-height: 300px;
+}
+
+/* Invisible spacer when chat is empty */
+#messages:empty::after {
+  content: "";
+  flex: 1 1 auto;
+  min-height: 400px;
+}
+
+/* Placeholder text */
+#messages:empty::before {
+  content: "No one’s messaged yet — be the first!";
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+  width: 80%;
+  color: #000; /* black on startup */
+  z-index: 0;
+}
+
+/* Gray placeholder after login */
+#messages.active:empty::before {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Message bubbles */
+.msg {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--glass);
+  max-width: 100%;
+  display: block;
+  text-align: left;
+}
+
+/* Your own messages */
+.msg.me { 
+  background: rgba(255, 20, 147, 0.06);
+}
+
+/* Username */
+.msg .meta {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  margin-right: 4px;
+  display: inline;
+  color: inherit;
+}
+
+/* Message body */
+.msg .content {
+  font-size: 13px;
+  color: #fff;
+  display: inline;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Bottom-right "New" button */
+.scroll-to-bottom-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 82px; /* above your 70px margin */
+  width: 44px; height: 44px;
+  background: #9147ff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Center arrow */
+.center-scroll-arrow {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px; height: 48px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.center-scroll-arrow.show {
+  opacity: 1;
+  pointer-events: auto;
+  animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-6px); }
+}
+/* 🔥 Send Area - Compact base */
+/* 🔥 SEND AREA — COMPACT MOBILE VERSION (2026) */
+.send-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card, #111);
+  padding: 8px 10px;              /* reduced padding */
+  border-radius: 999px;
+  width: 100%;
+  max-width: 460px;               /* slightly narrower */
+  margin: 0 auto;
+  box-sizing: border-box;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  min-height: 44px;               /* noticeably shorter */
+  transition: 
+    padding 0.3s ease,
+    border-radius 0.3s ease,
+    min-height 0.3s ease;
+}
+
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* Textarea – smaller base size */
+#messageInput {
+  width: 100%;
+  min-height: 38px;               /* smaller default */
+  max-height: 110px;              /* less room to grow */
+  padding: 10px 14px;             /* tighter padding */
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background-color: #0e0e0e;
+  color: #fff;
+  font-size: 15px;                /* slightly smaller text */
+  line-height: 1.35;
+  outline: none;
+  resize: none;
+  overflow-y: hidden;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+#messageInput::placeholder {
+  color: var(--muted, #aaa);
+  opacity: 0.65;
+}
+
+/* Focus glow – kept sexy but softer */
+#messageInput:focus {
+  border-color: var(--accent, #FF1493);
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.13);
+}
+
+/* EXPANDED STATE – still grows, but more controlled */
+.send-area.expanded {
+  border-radius: 24px;
+  padding: 12px 14px;
+  min-height: 70px;
+  align-items: flex-start;
+}
+
+.send-area.expanded .input-wrapper {
+  align-items: flex-start;
+}
+
+.send-area.expanded #messageInput {
+  border-radius: 20px;
+  min-height: 64px;
+  overflow-y: auto;
+}
+
+/* BUZZ BUTTON – smaller & tighter */
+.buzz-btn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #1d1d1d;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;                /* smaller text */
+  border: 1px solid rgba(255,20,147,0.16);
+  align-self: center;
+  transition: all 0.25s ease;
+}
+
+.send-area.expanded .buzz-btn {
+  align-self: flex-end;
+  margin-bottom: 4px;
+}
+
+.buzz-btn:hover {
+  animation: buzzPulse 1.4s infinite;
+  transform: translateY(-1px);
+}
+
+/* SEND BUTTON – more compact */
+.send-btn {
+  padding: 8px 18px;
+  background: var(--accent, #FF1493);
+  color: #000;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  align-self: center;
+  transition: all 0.25s ease;
+}
+
+.send-area.expanded .send-btn {
+  align-self: flex-end;
+  margin-bottom: 4px;
+}
+
+.send-btn:hover {
+  background: #ff33a1;
+  transform: scale(1.04);
+}
+
+.send-btn:active {
+  transform: scale(0.97);
+}
+
+/* Pulse animation (kept but slightly faster) */
+@keyframes buzzPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,20,147,0.18); }
+  70%  { box-shadow: 0 0 0 10px rgba(255,20,147,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,20,147,0); }
+}
+
+#postLoginLoader {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  flex-direction: column;
+}
+
+#loadingBarWrapper {
+  width: 80%;
+  max-width: 300px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+#loadingBar {
+  width: 0%;
+  height: 100%;
+  background: #c3f60c; /* CUBE THEME */
+  border-radius: 4px;
+  animation: loadingAnim 2.5s linear forwards;
+}
+
+/* 🔥 Glass bar with neon accent glow under input */
+.glass-bar {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  margin-top: 6px; /* sits just under input */
+  z-index: 5;      /* stays beneath input */
+  
+  /* 🔥 Neon underglow */
+  box-shadow: 0 0 12px rgba(255, 20, 147, 0.25),
+              0 0 24px rgba(255, 20, 147, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+.buzz-content {
+  display: inline-block;
+  position: relative;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  font-family: 'Arial', sans-serif;
+  color: #000;
+  background: rgba(135, 206, 235, 0.2);
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 2px 0;
+  transition: text-shadow 0.3s ease-in-out;
+}
+@keyframes buzzTextPulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.02); }
+}
+@keyframes buzzFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+@keyframes buzzParticles {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(40px, -60px) rotate(360deg); }
+}
+@keyframes stickerPop {
+  0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120%) rotate(720deg); opacity: 0; }
+}
+@keyframes stickerFlash {
+  0% { opacity: 0.8; } 100% { opacity: 0; }
+}
+@keyframes stickerAnnounce {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+.screen-shake { animation: screenShake 0.5s ease-in-out !important; }
+@keyframes screenShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+.room-subtitle {
+  opacity: 1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(0);
+}
+
+.room-subtitle.hidden {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none; /* optional: avoids ghost clicks */
+}
+
+
+/* profile glass bar */
+.profile{display:none;flex-direction:column;gap:8px;margin-top:10px;}
+.profile-card{background:var(--glass);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;}
+.profile-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.profile-left{display:flex;flex-direction:column;gap:2px;}
+.profile-name{font-weight:800;}
+.profile-label{color: var(--accent);font-weight: 800;font-size: 10px;}
+.profile-value{color: #fff;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;font-weight: 400;font-size: 11px;}
+.profile-value span,.profile-value .icon{margin-left:2px;}
+.profile-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;}
+.smalla-btn{padding:4px 10px;border-radius:8px;background: var(--accent);border: 0;color: #000;cursor: pointer;font-weight:700;font-size:12px;text-decoration: none;transition: transform .15s, box-shadow .15s;}
+.smalla-btn:hover{transform: translateY(-2px);box-shadow: 0 4px 10px rgba(255,20,147,0.3);}
+.star-popup {
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  background: var(--card);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.05);
+  display: none; /* hidden by default */
+  z-index: 10000; /* very high to stay above modals */
+  color: var(--accent);
+  font-size: 13px;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none; /* optional: so it doesn't block clicks below */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+#starPopup {
+  z-index: 10000 !important; /* ensure it's above everything */
+}
+.onlineCount{font-size:11px;color:var(--muted);}
+#authBox{display:flex;justify-content:center;margin:12px 0;}
+.room-subtitle {
+  font-size: 12px;              /* same as #helloText */
+  font-weight: 600;             /* slightly lighter than HELLO */
+  text-align: center;
+  margin-top: 4px;
+  font-family: 'Montserrat', sans-serif; /* Montserrat font */
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  opacity: 0.85;
+  transition: color 0.2s ease;
+}
+
+.room-subtitle:hover {
+  color: #fff;                  /* subtle hover effect */
+}
+
+.gift-alert {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: linear-gradient(90deg,#ff6a00,#ff4081);
+  color: #fff;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0;
+  z-index: 99999;
+  transition: all 0.4s ease;
+  font-size: 1rem;
+}
+.gift-alert {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: linear-gradient(90deg,#ff6a00,#ff4081);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0;
+  z-index: 99999;
+  transition: all 0.4s ease;
+  font-size: 1rem;
+
+  /* 🟢 One-liner behavior */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 90%; /* optional for small screens */
+}
+
+.gift-alert.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.floating-star {
+  position: fixed;
+  animation: floatUp 2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes floatUp {
+  from { transform: translateY(0) scale(1); opacity: 1; }
+  to { transform: translateY(-100px) scale(1.5); opacity: 0; }
+}
+.modal {
+  display:none; 
+  position:fixed; 
+  inset:0; 
+  background:rgba(0,0,0,.7); 
+  justify-content:center; 
+  align-items:center; 
+  z-index:9999; 
+}
+.modal-content {
+  background:#111; 
+  color:#fff; 
+  padding:20px; 
+  border-radius:10px; 
+  text-align:center; 
+  width:280px;
+  box-shadow:0 0 10px rgba(255,255,255,0.2);
+}
+.modal-content input {
+  width:80%; 
+  margin:12px auto; 
+  padding:8px; 
+  border-radius:6px; 
+  border:none; 
+  text-align:center;
+}
+.modal-content button {
+  background:#ff4081; 
+  color:#fff; 
+  border:none; 
+  padding:8px 14px; 
+  border-radius:6px; 
+  cursor:pointer;
+}
+.modal {
+  z-index: 3000 !important;
+}
+.pulse-highlight {
+  animation: glowPulse 0.7s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 10px var(--pulse-color), 0 0 20px var(--pulse-color), 0 0 30px var(--pulse-color); }
+  50% { box-shadow: 0 0 15px var(--pulse-color), 0 0 25px var(--pulse-color), 0 0 35px var(--pulse-color); }
+  100% { box-shadow: 0 0 10px var(--pulse-color), 0 0 20px var(--pulse-color), 0 0 30px var(--pulse-color); }
+}
+/* 💫 Gift Stars Animation Layer */
+#giftStars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999; /* ensure it's above everything */
+}
+/* ---------- Auth Inputs ---------- */
+/* ---------- Auth Inputs ---------- */
+#authBox { display: flex; justify-content: center; margin-top: 12px; }
+#emailAuthWrapper { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center;  /* ← KEEP THIS—it's your anchor */
+  gap: 10px; 
+  width: 100%; 
+}
+#emailAuthWrapper input.auth-input { 
+  width: 90%; 
+  max-width: 320px; 
+  padding: 12px 16px; 
+  border-radius: 999px; 
+  border: 1px solid rgba(255,255,255,0.08); 
+  background-color: #0e0e0e; 
+  color: #fff; 
+  font-size: 16px; 
+  outline: none; 
+  transition: all 0.2s ease-in-out; 
+  margin: 0 auto;  /* ← ADD THIS for explicit input centering */
+}
+#emailAuthWrapper input.auth-input:focus { 
+  border-color: var(--accent); 
+  box-shadow: 0 0 12px rgba(255,20,147,0.15); 
+}
+/* ---------- CUBE GREEN GOOGLE BUTTON ---------- */
+.google-btn { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  padding: 12px 20px; 
+  border-radius: 999px; 
+  background: linear-gradient(135deg, #c3f60c, #a0d00a); 
+  color: #000; 
+  font-weight: 600; 
+  font-size: 14px; 
+  border: none; 
+  cursor: pointer; 
+  box-shadow: 0 4px 10px rgba(195,246,12,0.25), 0 0 8px rgba(195,246,12,0.1); 
+  transition: transform .2s, box-shadow .2s; 
+  width: auto; 
+  justify-content: center; 
+  margin: 0 auto;  /* ← ADD THIS—centers auto-width buttons perfectly */
+}
+.google-btn:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 6px 14px rgba(195,246,12,0.35), 0 0 0 12px rgba(195,246,12,0.25); 
+}
+.google-btn img { 
+  width: 18px; 
+  height: 18px; 
+  background: #fff; 
+  border-radius: 4px; 
+  padding: 2px; 
+}
+/* Mobile – exactly like your original */
+@media (max-width: 420px) { 
+  .google-btn { 
+    width: 90%; 
+    max-width: 320px; 
+  } 
+}
+
+/* ──────── MANUAL GLOW CONTROL (just change the number below) ──────── */
+.google-btn.glow-1   { box-shadow: 0 4px 10px rgba(195,246,12,0.25), 0 0  8px rgba(195,246,12,0.10); } /* 1% glow   ← current */
+.google-btn.glow-2   { box-shadow: 0 4px 10px rgba(195,246,12,0.30), 0 0 16px rgba(195,246,12,0.25); } /* 2% glow */
+.google-btn.glow-5   { box-shadow: 0 4px 10px rgba(195,246,12,0.40), 0 0 30px rgba(195,246,12,0.60); } /* 5% glow */
+.google-btn.glow-max { box-shadow: 0 6px 20px rgba(195,246,12,0.60), 0 0 50px rgba(195,246,12,1); }   /* nuclear */
+.video-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.video-controls.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.video-controls button {
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.video-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.08);
+}
+
+.video-controls svg {
+  pointer-events: none;
+}
+/* ====== Featured Hosts Styles — Cube Theme (Crisp & Sexy) ====== */
+.featured-btn {
+  background: linear-gradient(90deg, rgba(195,246,12,0.85), rgba(232,255,106,0.85));
+  color: #000;                         /* dark text for contrast */
+  border: none;
+  border-radius: 25px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: block;
+  margin: 20px auto;
+  box-shadow: 0 0 6px rgba(195,246,12,0.3);  /* subtle glow */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.featured-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(195,246,12,0.5); /* soft pop on hover */
+}
+
+/* 🌟 Featured Hosts Modal (Centered) */
+.featured-modal {
+  display: none;                       /* hidden by default */
+  position: fixed;
+  inset: 0;                             /* full screen */
+  z-index: 10000;
+  background: rgba(0,0,0,0.85);        /* dark and moody */
+  backdrop-filter: blur(10px);          /* soft blur behind modal */
+
+  display: flex;                        /* center modal content */
+  justify-content: center;              /* horizontal centering */
+  align-items: center;                  /* vertical centering */
+  padding: 20px;                        /* spacing from edges */
+  overflow-y: auto;                     /* scroll if content is tall */
+  border-radius: 12px;                  /* slight rounding */
+}
+/* Optional: Modal inner content — Cube edgy glow */
+.featured-modal .modal-content {
+  background: rgba(0,0,0,0.9);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 12px rgba(195, 246, 12, 0.5);
+  max-width: 400px;
+  width: 100%;
+  color: #c3f60c;
+  text-align: center;
+  font-weight: 500;
+  font-family: 'Arial', sans-serif;
+}
+
+/* 🔲 Compact modal card */
+.featured-modal-content {
+  position: relative;
+  background: #111;
+  border-radius: 18px;
+  width: 82%; /* smaller screen-inside-screen look */
+  max-width: 320px; /* tighter fit for mobile */
+  color: #fff;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalPop 0.25s ease-out;
+  transform: translateY(0);
+}
+
+/* ❌ Close button */
+.featured-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.9;
+  z-index: 10;
+}
+.featured-close:hover {
+  opacity: 1;
+}
+
+/* 🎥 Video area (smaller height for compactness) */
+.featured-host-video-container {
+  width: 100%;
+  aspect-ratio: 9 / 14; /* slightly shorter than portrait */
+  background: #000;
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
+}
+.featured-host-video-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  object-fit: cover;
+}
+
+/* 👤 Info and actions section */
+.featured-host-footer {
+  padding: 10px 14px;
+  background: #1a1a1a;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Username + Details */
+.featured-host-username {
+  font-weight: 600;
+  font-size: 1.05em;
+}
+.featured-host-details {
+  font-size: 0.85em;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+/* 🎁 Gift Slider Section — Cube Theme */
+.gift-slider-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 10px rgba(195, 246, 12, 0.05);
+}
+
+/* Cube Gradient Slider */
+#giftSlider {
+  flex: 1;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
+}
+
+#giftSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #c3f60c;
+  border: 2px solid #fff;
+  transition: 0.2s ease;
+  box-shadow: 0 0 8px rgba(195, 246, 12, 0.7);
+}
+
+#giftSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(195, 246, 12, 0.9);
+}
+
+/* Cube Gradient Gift Button */
+.featured-gift-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #c3f60c, #e6ff66);
+  border: none;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+  box-shadow: 0 0 10px rgba(195, 246, 12, 0.35);
+}
+
+.featured-gift-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 14px rgba(195, 246, 12, 0.55);
+}
+
+.featured-gift-btn:active {
+  transform: scale(0.97);
+  background: linear-gradient(135deg, #a8d50a, #d8ff55);
+}
+
+/* Gift amount styling */
+#giftAmount, #giftAmount + span {
+  vertical-align: middle;
+  line-height: 1;
+}
+
+#giftAmount + span {
+  transform: translateY(0);
+}
+
+
+/* 🖼 Avatar list */
+.featured-host-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+}
+.featured-host-list img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.25s, transform 0.25s;
+}
+.featured-host-list img.active {
+  border: 2px solid #ff4da6;
+  transform: scale(1.05);
+}
+
+/* Bottom nav buttons */
+.featured-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 14px 14px;
+  font-size: 0.85rem;
+}
+.featured-nav-buttons a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Animation */
+@keyframes modalPop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* PULSING ONLINE COUNT DOT + GLOW – COPY-PASTE THIS */
+#onlineWrapper::before {
+  content: '●';
+  color: #ff1493;
+  font-size: 12px;
+  animation: pulseDot 2s infinite ease-in-out;
+  margin-right: 6px;
+  text-shadow: 0 0 12px #ff1493;
+}
+
+@keyframes pulseDot {
+  0%, 100% { 
+    opacity: 0.7; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.4); 
+    text-shadow: 0 0 20px #ff69b4;
+  }
+}
+  
+.featured-host-video-container {
+  position: relative;
+  overflow: hidden;
+}
+/* hint at bottom center, fades smoothly */
+.video-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 18px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.25s ease;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.video-hint.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+  
+/* ensure container allows pointer gestures without zooming */
+#featuredHostVideo {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -ms-touch-action: manipulation;
+}
+
+.gift-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+  
+/* ---------- Video Wrapper ---------- */
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 800px; /* adjust as needed */
+    margin: 0 auto;
+}
+
+.video-wrapper video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+/* ---------- Controls Under Video ---------- */
+#videoUnderControls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px; /* reduced from 8px */
+    margin-top: 6px; /* reduced from 12px */
+}
+
+#helloText,
+.room-desc,
+#videoUnderControls {
+    margin: 2px 0;  /* reduce space between elements */
+    padding: 0;      /* remove extra padding if any */
+}
+
+#onlineWrapper {
+    font-size: 14px;
+    color: #fff;     /* white text for visibility */
+    gap: 2px;        /* reduce gap between icon, count, and text */
+}
+
+#openHostsBtn {
+    margin-top: 2px; /* bring the button closer to the online count */
+}
+#hostSettingsBtn:hover {
+  transform: translateY(-2px) rotate(10deg);
+  box-shadow: 0 4px 10px rgba(255,20,147,0.3);
+}
+
+/* Optional sticky under video */
+.video-wrapper.sticky + #helloText,
+.video-wrapper.sticky + #helloText + .room-desc,
+.video-wrapper.sticky + #helloText + .room-desc + #videoUnderControls {
+    position: sticky;
+    top: 8px; /* adjust spacing from top */
+    z-index: 10;
+}
+
+#hostModal .modal-body {
+  background: var(--modal-bg, #111);
+  color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  margin: 10% auto;
+}
+
+#hostModal input {
+  display: block;
+  width: 100%;
+  margin: 6px 0 12px;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+}
+/* Tab Header */
+.tab-header {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+/* Tab Buttons */
+.tab-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: none;
+  padding: 6px 4px; /* slightly smaller padding */
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px; /* smaller text */
+  text-align: center;
+}
+
+.tab-btn.active {
+  background: linear-gradient(90deg, #ff0099, #ff6600);
+}
+
+/* General tab content styling */
+.tab-content label {
+  display: inline-block;      /* keeps label inline-friendly */
+  width: 100px;               /* fixed width for alignment */
+  margin-right: 8px;
+  vertical-align: top;        /* aligns with input top */
+  font-size: 13px;
+  color: #fff;
+}
+
+/* Inputs & textareas */
+.tab-content input,
+.tab-content textarea {
+  display: inline-block;      /* allows horizontal alignment with label */
+  width: calc(100% - 120px);  /* accounts for label width + gap */
+  max-width: 250px;
+  margin-bottom: 8px;
+  padding: 6px;
+  border-radius: 4px;
+  border: none;
+  font-size: 13px;
+  vertical-align: top;        /* ensures alignment with label */
+  resize: vertical;           /* allows bio to expand vertically */
+}
+
+/* Divider spacing */
+.tab-content .divider {
+  margin: 12px 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+#postLoginLoader {
+  transition: opacity 0.4s ease;
+}
+#postLoginLoader[style*="display: none"] {
+  opacity: 0;
+}
+  
+/* ===== Notifications Tab ===== */
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.notifications-header h3 {
+  font-size: 15px;
+  color: #fff;
+  margin: 0;
+}
+
+.mark-read-btn {
+  font-size: 11px;
+  background: rgba(195, 246, 12, 0.1);  /* subtle Cube glow */
+  color: #c3f60c;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 0 4px rgba(195, 246, 12, 0.3);
+}
+
+.mark-read-btn:hover {
+  background: rgba(195, 246, 12, 0.2);
+  box-shadow: 0 0 8px rgba(195, 246, 12, 0.5);
+  transform: scale(1.05);
+}
+
+.mark-read-btn:active {
+  background: rgba(195, 246, 12, 0.25);
+  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
+  transform: scale(0.97);
+}
+
+/* ===== CUBE THEME NOTIFICATIONS ===== */
+.notifications-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column-reverse; /* newest at bottom */
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+}
+
+/* Each notification */
+.notification-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #eee;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 0 6px rgba(195, 246, 12, 0.25);
+  overflow-wrap: break-word;
+}
+
+/* Unread / new notifications */
+.notification-item.unread,
+.notification-item.new {
+  background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+  color: #000;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(195, 246, 12, 0.6);
+  animation: fadePulse 0.8s ease-in-out infinite alternate;
+}
+
+/* Hover effect for all notifications */
+.notification-item:hover {
+  background: rgba(195, 246, 12, 0.15);
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(195, 246, 12, 0.55);
+}
+
+/* Notification icon */
+.notification-icon {
+  font-size: 18px;
+  color: #c3f60c;
+  flex-shrink: 0;
+}
+
+/* Notification title */
+.notif-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+/* Notification message */
+.notif-message {
+  white-space: pre-wrap; /* preserves line breaks */
+  word-break: break-word;
+}
+
+/* Notification time */
+.notif-time {
+  font-size: 10px;
+  color: #bbb;
+  margin-top: 2px;
+}
+
+/* Mark as read button inside notification */
+.mark-read {
+  background: #c3f60c;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  margin-top: 4px;
+  align-self: flex-end;
+  transition: all 0.2s ease;
+}
+
+.mark-read:hover {
+  opacity: 0.8;
+}
+
+/* ===== Animations ===== */
+@keyframes fadePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* ==== Upload Labels ==== */
+.upload-label {
+  display: block;
+  font-weight: 600;
+  margin-top: 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* ==== File Inputs ==== */
+.upload-input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #121212;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ==== Photo Preview Circle ==== */
+.photo-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px dashed #ff66b2;
+  background: #1c1c1c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px auto;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.photo-preview:hover {
+  border-color: #ff0099;
+  transform: scale(1.05);
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#photoPlaceholder {
+  font-size: 28px;
+  color: #999;
+}
+
+/* ==== Save Button ==== */
+.small-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff0099, #ff6600);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.small-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+}
+  
+/* ==== BUTTON THEME — CUBE VERSION ==== */
+.themed-btn {
+  background: linear-gradient(135deg, #c3f60c, #e8ff6a); /* Cube gradient */
+  border: none;
+  color: #000; /* dark text for contrast */
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(195, 246, 12, 0.3);
+}
+
+.themed-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(195, 246, 12, 0.55);
+}
+
+.themed-btn:active {
+  transform: scale(0.97);
+  background: linear-gradient(135deg, #a8d50a, #d8ff55);
+  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
+}
+
+/* ==== FILE UPLOAD LABEL — CUBE VERSION ==== */
+.upload-input + label {
+  display: inline-block;
+  margin-top: 8px;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #c3f60c, #e6ff66);
+  color: #000;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 6px rgba(195, 246, 12, 0.3);
+}
+
+.upload-input + label:hover {
+  background: linear-gradient(90deg, #a8d50a, #d8ff55);
+  box-shadow: 0 0 10px rgba(195, 246, 12, 0.5);
+}
+
+.upload-input + label:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
+}
+/* chat scroller */
+  #scrollArrow {
+    position: fixed; /* float above chat messages anywhere on screen */
+    bottom: 40px; /* distance from bottom of viewport */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    color: #ff4500;
+    font-size: 2.2rem;
+    padding: 12px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    z-index: 999; /* above everything */
+  }
+
+  #scrollArrow.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #scrollArrow:hover {
+    transform: translate(-50%, -5px);
+  }
+  
+/* ---------- Media Tab Inputs & Labels ---------- */
+#mediaTab input,
+#mediaTab textarea,
+#mediaTab select {
+  width: 96%;             /* fill container */
+  max-width: 96%;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  border: none;
+  box-sizing: border-box;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+/* Fade placeholder style */
+#mediaTab input::placeholder,
+#mediaTab textarea::placeholder,
+#mediaTab select option[disabled] {
+  color: rgba(255,255,255,0.5);
+  opacity: 1; /* ensure visible in Firefox */
+}
+
+/* When typing, placeholder fades slightly */
+#mediaTab input:focus::placeholder,
+#mediaTab textarea:focus::placeholder {
+  color: rgba(255,255,255,0.3);
+  transition: color 0.3s ease;
+}
+
+/* ---------- Labels ---------- */
+#mediaTab label {
+  font-weight: bold;
+  font-size: 13px;        /* smaller to fit nicely */
+  display: block;
+  margin-bottom: 4px;
+  white-space: normal;     /* allow wrapping instead of truncation */
+  line-height: 1.2;
+}
+
+/* ---------- Section Headers ---------- */
+#mediaTab h4 {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #fff;
+}
+
+/* ---------- Custom Selects ---------- */
+#mediaTab select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: linear-gradient(90deg, #ff0099, #ff6600);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 28px 6px 6px; /* right padding for arrow */
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><polygon points="0,0 10,0 5,5" fill="white"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px;
+}
+
+#mediaTab select:focus {
+  color: #fff;
+  outline: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><polygon points="0,5 10,5 5,0" fill="white"/></svg>');
+}
+
+/* ---------- Photo Preview ---------- */
+#mediaTab .photo-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+#mediaTab .photo-preview img {
+  max-width: 100%;
+  max-height: 150px;
+  border-radius: 4px;
+}
+
+#mediaTab .photo-preview span {
+  font-size: 40px;
+  color: rgba(255,255,255,0.3);
+}
+/* ---------- Soft Placeholder Effect ---------- */
+#mediaTab input,
+#mediaTab textarea,
+#mediaTab select {
+  color: rgba(255,255,255,0.7);   /* faded color for “inactive” state */
+  transition: color 0.3s ease;
+}
+
+#mediaTab input:focus,
+#mediaTab textarea:focus,
+#mediaTab select:focus {
+  color: #fff;  /* full color when typing */
+}
+#saveInfo {
+  display: block !important;
+  margin: 18px auto !important;
+  padding: 7px 18px !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+}
+.username-blink {
+  animation: blinkName 0.4s ease-in-out;
+}
+
+@keyframes blinkName {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(255, 255, 0, 0.4); border-radius: 4px; }
+}
+/* Baller Alert Wrapper */
+#ballerAlert {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ffcc00, #ff33cc);
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  color: #000;
+  font-size: 16px;
+  text-align: center;
+  z-index: 999999;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Glow pulse */
+.baller-glow {
+  animation: pulseGlow 2s ease-in-out;
+}
+
+/* Confetti pieces */
+.baller-confetti {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0.9;
+  animation: floatConfetti 3s ease-in-out forwards;
+}
+
+@keyframes floatConfetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(60px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes pulseGlow {
+  0%,100% { box-shadow: 0 0 12px rgba(255,255,255,0.2); }
+  50% { box-shadow: 0 0 24px rgba(255,255,255,0.8); }
+}
+/* ---------- Chat Tap Modal ---------- */
+.tap-modal {
+  position: absolute;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+.tap-modal button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 2px 6px;
+}
+
+.tap-modal button:hover {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+#sessionBar {
+  display: flex;
+  justify-content: space-around; /* keeps buttons spaced nicely */
+  gap: 8px;                      /* adds consistent spacing */
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+#sessionModal {
+  position: fixed;
+  bottom: -100%;
+  left: 0; right: 0;
+  height: 65%;
+  background: rgba(15,15,15,0.95);
+  color: #fff;
+  border-radius: 20px 20px 0 0;
+  transition: bottom 0.4s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+#sessionModal.active { bottom: 0; }
+
+.sessionTabs button {
+  background: none; border: none;
+  color: #aaa; padding: 10px 16px;
+  font-weight: 700; cursor: pointer;
+}
+.sessionTabs button.active { color: #fff; border-bottom: 2px solid #ff33cc; }
+
+.ballerTabs button.active { color: #fff; border-bottom: 2px solid #ffcc00; }
+
+.baller-card {
+  display: flex; align-items: center;
+  padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.baller-card img { width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; }
+
+/* Unified compact session buttons — now with maximum drip */
+.session-btn {
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+  box-shadow: 
+    0 0 8px rgba(255, 255, 255, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  transition: all 0.25s ease;
+  margin: 0 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.session-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(100, 255, 255, 0.08),
+    rgba(255, 100, 255, 0.08),
+    rgba(100, 100, 255, 0.08));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.session-btn:hover {
+  transform: scale(1.05);
+  background: #1a1a1a;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.4),
+    0 0 30px rgba(255, 0, 255, 0.25);
+}
+
+.session-btn:hover::before {
+  opacity: 1;
+}
+
+/* Unified compact session buttons — now with maximum drip */
+.session-btn {
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+  box-shadow: 
+    0 0 8px rgba(255, 255, 255, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  transition: all 0.25s ease;
+  margin: 0 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.session-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(100, 255, 255, 0.08),
+    rgba(255, 100, 255, 0.08),
+    rgba(100, 100, 255, 0.08));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.session-btn:hover {
+  transform: scale(1.05);
+  background: #1a1a1a;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.4),
+    0 0 30px rgba(255, 0, 255, 0.25);
+}
+
+.session-btn:hover::before {
+  opacity: 1;
+}
+
+/* STAR HOSTS = GOD TIER ENERGY */
+.star-hosts-btn {
+  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+  background-size: 200% 200%;
+  animation: starPulse 4s ease infinite;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    0 0 15px rgba(138, 43, 226, 0.6),
+    0 0 30px rgba(0, 255, 234, 0.5);
+}
+
+.star-hosts-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 25px rgba(138, 43, 226, 0.9),
+    0 0 50px rgba(0, 255, 234, 0.8);
+  animation-duration: 1.5s;
+}
+
+@keyframes starPulse {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Tiny inline spinner — no size change, no text flicker */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  opacity: 0;
+  transition: opacity 0.2s;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.btn-spinner.visible {
+  opacity: 1;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+  .tiny-glass-logout {
+    background: rgba(255, 255, 255, 0.07);
+    color: #ff3366;
+    border: 1px solid #ff3366;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 4px 9px;           /* super small padding */
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 12.5px;          /* tiny but still readable */
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1;
+  }
+
+  .tiny-glass-logout:hover {
+    background: rgba(255, 51, 102, 0.15);
+    box-shadow: 0 3px 12px rgba(255, 51, 102, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .tiny-glass-logout:active {
+    background: rgba(255, 51, 102, 0.22);
+    transform: translateY(0);
+  }
+  #uploadHighlightBtn.uploading .btn-text {
+  opacity: 0;
+}
+
+@keyframes pulse {
+  0%,100% { transform:scale(1); }
+  50% { transform:scale(1.28); }
+}
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50% { opacity:0.4; }
+}
+.brand {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0 4px 0; /* tighter spacing */
+  padding: 0;
+}
+
+.brand-logo {
+  width: 110px;       /* reduced size */
+  height: auto;
+  display: block;
+  object-fit: contain;
+  margin: 4px 0 0 0;
+}
+#startupFooter {
+  text-align: center;
+  padding: 12px 0;
+  color: rgba(255, 255, 255, 0.6);
+  background: #111;
+  font-size: 14px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 50;
+  transition: opacity 0.3s ease;
+}
+#startupFooter.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+  .tag-btn {
+    padding:8px 16px;
+    background:#111;
+    border:1px solid #333;
+    border-radius:20px;
+    color:#ccc;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.25s;
+  }
+  .tag-btn:hover {
+    background:#222;
+    border-color:#ff2e78;
+    color:#ff2e78;
+  }
+  .tag-btn.selected {
+    background:linear-gradient(135deg,#ff2e78,#ff5e2e);
+    color:#fff;
+    border-color:#ff2e78;
+    box-shadow:0 0 12px rgba(255,46,120,0.4);
+  }
+  .host-only {
+  display: none;
+}
+.tab-btn.host-only {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+  
+/* LIVE MODAL - Semi-transparent bleed for chat visibility */
+.live-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75); /* Dark but transparent — chat visible underneath */
+  backdrop-filter: blur(8px); /* Soft blur for premium feel */
+  overflow-y: auto;
+}
+.live-modal.open {
+  display: block;
+}
+
+/* Modal Content - Slim, no extra bulk */
+.live-modal-content {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 60px 12px 80px;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* Close Button - Clean */
+.live-close {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  font-size: 48px;
+  font-weight: 200;
+  color: #fff;
+  opacity: 0.8;
+  cursor: pointer;
+  z-index: 30;
+  transition: all 0.3s ease;
+}
+.live-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Tabs - Compact */
+.live-content-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+  margin-bottom: 10px;
+}
+.live-content-tabs::-webkit-scrollbar { display: none; }
+
+.live-tab-btn {
+  flex: 0 0 auto;
+  min-width: 90px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+}
+.live-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.live-tab-btn.active {
+  background: #c3f60c;
+  color: #000;
+  border-color: #c3f60c;
+  box-shadow: 0 0 12px rgba(195, 246, 12, 0.5);
+}
+
+/* Tab Contents */
+.live-tab-content {
+  display: none;
+}
+.live-tab-content.active {
+  display: block;
+}
+
+/* Live Player - Full bleed, landscape on mobile */
+#livePlayerContainer {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+#livePlayerContainer mux-player {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+/* Placeholder */
+.player-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #666;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* Mobile - True YouTube landscape */
+@media (max-width: 768px) {
+  .live-modal-content {
+    padding: 60px 0 40px;
+    gap: 0;
+  }
+  #livePlayerContainer {
+    border-radius: 0;
+    height: calc(100vw * 9 / 16);
+  }
+}
+/* Upcoming Posters - Clean Instagram Style */
+.upcoming-posters {
+  width: 100%;
+  padding: 30px 0;
+}
+
+.poster-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  padding: 0 20px 40px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.poster-grid::-webkit-scrollbar { display: none; }
+
+.poster-card {
+  flex: 0 0 320px; /* fixed width for consistency */
+  background: #111;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.poster-image {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* Perfect Instagram square */
+  overflow: hidden;
+}
+.poster-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fills square perfectly */
+  display: block;
+}
+
+.poster-info {
+  padding: 18px;
+  color: #fff;
+}
+.poster-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.3px;
+}
+.poster-time {
+  font-size: 14px;
+  color: #ff3366;
+  font-weight: 600;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+.poster-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ccc;
+  margin: 0;
+}
+
+/* Mobile - full-width cards, stacked feel */
+@media (max-width: 768px) {
+  .poster-grid {
+    gap: 16px;
+    padding: 0 16px 40px;
+  }
+  .poster-card {
+    flex: 0 0 85vw; /* nearly full width on phone */
+    max-width: 380px;
+  }
+  .poster-title {
+    font-size: 19px;
+  }
+  .poster-desc {
+    font-size: 14.5px;
+  }
+}
+
+/* Mobile - stack vertically for better reading */
+@media (max-width: 768px) {
+  .poster-grid {
+    flex-direction: column;
+    gap: 30px;
+    padding: 0 16px 40px;
+    overflow-x: hidden;
+  }
+  .poster-card {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .poster-image {
+    height: 500px;
+  }
+  .poster-title {
+    font-size: 24px;
+  }
+  .poster-desc {
+    font-size: 16px;
+  }
+}
+  
+/* Extra tight on small phones */
+@media (max-width: 480px) {
+  .live-tab-btn {
+    min-width: 85px;
+    padding: 7px 12px;
+    font-size: 14px;
+  }
+  .live-content-tabs {
+    gap: 6px;
+    padding: 0 6px;
+  }
+}
+
+/* Reels Gallery Tab - Pro TikTok/YouTube style grid */
+#reelsGallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.reel-item {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.25s ease;
+}
+
+.reel-item:hover,
+.reel-item:active {
+  transform: scale(1.02); /* Very subtle lift — feels responsive but not aggressive */
+}
+
+.reel-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Center play icon */
+.play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Bottom overlay with gradient */
+.reel-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.92) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 16px 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.reel-item:hover .reel-overlay,
+.reel-item:active .reel-overlay {
+  opacity: 1;
+}
+
+.reel-item:hover .play-icon {
+  opacity: 0.6;
+}
+
+/* Text info — left-aligned, clean hierarchy */
+.reel-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Views row — bold, top priority */
+.reel-views {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0.98;
+}
+
+.views-icon-svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Title — strong, aligned with views */
+.reel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0.98;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Description — subtle caption, 2-line clamp */
+.reel-description {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  max-width: 95%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+/* Desktop enhancements */
+@media (min-width: 768px) {
+  #reelsGallery {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 0 16px;
+  }
+
+  .reel-overlay {
+    padding: 20px 18px;
+  }
+
+  .reel-views {
+    font-size: 9px;
+    gap: 7px;
+  }
+
+  .views-icon-svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .reel-title {
+    font-size: 16px;
+  }
+
+  .reel-description {
+    font-size: 14.5px;
+    -webkit-line-clamp: 3; /* Allow 3 lines on larger screens */
+    max-width: 90%;
+  }
+
+  .reel-description.expanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  display: block;
+  text-overflow: unset;
+}
+
+
+  .reel-item:hover,
+  .reel-item:active {
+    transform: scale(1.03);
+  }
+}
+
+@media (min-width: 1024px) {
+  #reelsGallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.google-block { 
+  width: 100%;  /* ← Matches wrapper width */
+  text-align: center;  /* ← Centers text + inline elements */
+  margin-top: 0;  /* ← No extra space—ties directly to VIP button */
+}
+.forgot-link { 
+  display: block;  /* ← Key: Makes it block-level for full-width centering */
+  margin-top: 8px; 
+  font-size: 13px; 
+  color: #c3f60c; 
+  opacity: 0.75; 
+  text-decoration: none; 
+  width: fit-content;  /* ← Keeps it compact like buttons */
+  margin-left: auto; 
+  margin-right: auto; 
+}
+.forgot-link:hover { 
+  opacity: 1; 
+  text-decoration: underline; 
+}
+
+/* ====================================
+   PRIVATE MESSAGE FEATURE - FULL REWRITE
+   ==================================== */
+
+/* Floating Button - Cute Envelope */
+.private-msg-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 50%;
+  border: 3px solid #c3f60c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(195,246,12,0.4);
+  transition: all 0.3s ease;
+}
+.private-msg-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 35px rgba(195,246,12,0.6);
+}
+.envelope-icon {
+  width: 34px;
+  height: 34px;
+}
+
+/* Modal Overlay - Semi-transparent, livestream visible underneath */
+.private-msg-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0,0,0,0.5); /* Light dark overlay — player visible */
+  backdrop-filter: blur(8px); /* Soft blur for depth */
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.private-msg-modal.open {
+  display: flex;
+}
+
+/* Modal Card - Small, Cute, Centered */
+.private-msg-content {
+  width: 100%;
+  max-width: 360px;
+  max-height: 90vh;
+  background: linear-gradient(135deg, #111, #1a1a1a);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  border: 1px solid rgba(195,246,12,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: popIn 0.35s ease;
+  text-align: center; /* Centers all text */
+}
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Header - Centered emoji only */
+.private-msg-header {
+  display: flex;
+  justify-content: center;     /* Centers the emoji horizontally */
+  align-items: center;         /* Vertical centering */
+  position: relative;          /* Needed for absolute positioning of close button */
+  margin-bottom: 20px;
+  padding: 10px 0;
+  flex-shrink: 0;
+}
+
+/* Remove any old h3 styles - no longer needed */
+.private-msg-header img {
+  display: block;
+  width: 40px;                 /* Matches your HTML size - adjust if needed */
+  height: 40px;
+}
+
+/* Close button - top right */
+.private-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 27px;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.private-close:hover {
+  opacity: 1;
+}
+
+/* Note - Centered with all the info */
+.private-note {
+  text-align: center;
+  font-size: 14px;             /* Slightly larger for better readability */
+  color: #ff69b4;
+  margin: 0 0 24px 0;
+  font-weight: 600;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+/* Input - Compact */
+#privateMsgInput {
+  flex: 1;
+  min-height: 100px;
+  max-height: 200px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 16px;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+#privateMsgInput::placeholder {
+  color: #888;
+}
+#privateMsgInput:focus {
+  border-color: #c3f60c;
+  box-shadow: 0 0 15px rgba(195,246,12,0.3);
+}
+
+/* Send Button */
+.private-send-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #c3f60c, #a8d50a);
+  color: #000;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(195,246,12,0.4);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.private-send-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(195,246,12,0.6);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .private-msg-content {
+    max-height: 85vh;
+    padding: 24px 20px;
+  }
+}
+/* Private Message Reader - Cute & Host-Only */
+.private-msg-reader {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto 40px;
+  background: rgba(17, 17, 17, 0.8);
+  border-radius: 24px;
+  border: 1px solid rgba(195, 246, 12, 0.2);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  display: none; /* hidden by default */
+}
+
+.private-reader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(195,246,12,0.2), rgba(195,246,12,0.1));
+  border-bottom: 1px solid rgba(195,246,12,0.3);
+}
+.private-reader-header h3 {
+  font-size: 19px;
+  color: #c3f60c;
+  margin: 0;
+  font-weight: 700;
+}
+.msg-count {
+  background: #c3f60c;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 50px;
+}
+
+/* Messages List */
+.private-messages-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px;
+}
+.private-message-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  border-left: 4px solid #c3f60c;
+  animation: fadeIn 0.4s ease;
+}
+.private-message-item .msg-time {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+.private-message-item .msg-text {
+  font-size: 16px;
+  color: #fff;
+  line-height: 1.5;
+}
+.no-messages {
+  text-align: center;
+  color: #888;
+  font-size: 15px;
+  padding: 60px 20px;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .private-msg-reader {
+    margin: 16px 12px 40px;
+    border-radius: 20px;
+  }
+  .private-messages-list {
+    max-height: 300px;
+  }
+}
+/* ========== ADMIN POLL SECTION ========== */
+#polls {
+  display: none;
+  background: linear-gradient(180deg, #0f0f0f, #0a0a0a);
+  padding: 28px 24px;
+  border-radius: 20px;
+  border: 1px solid #242424;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Title area */
+.poll-admin-title {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.poll-admin-title h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #c3f60c, #d9ff4d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.admin-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+}
+
+/* Inputs – unified style */
+.poll-input,
+.poll-option-input,
+.poll-meta-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #161616;
+  color: #ffffff;
+  border: 1px solid #2a2a2a;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.poll-input:focus,
+.poll-option-input:focus,
+.poll-meta-input:focus {
+  outline: none;
+  border-color: #c3f60c;
+  box-shadow: 0 0 0 3px rgba(195, 246, 12, 0.15);
+  background: #141414;
+}
+
+.poll-input::placeholder,
+.poll-option-input::placeholder,
+.poll-meta-input::placeholder {
+  color: #666;
+}
+
+/* Options grid – better spacing */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+/* Meta row with labels */
+.poll-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meta-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+}
+
+/* Create button – more premium */
+.create-btn {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 20px;
+  background: linear-gradient(90deg, #c3f60c, #d9ff4d);
+  color: #0b0b0b;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(195, 246, 12, 0.4);
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(195, 246, 12, 0.5);
+  filter: brightness(1.08);
+}
+
+.create-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(195, 246, 12, 0.3);
+}
+
+/* Preview box */
+.preview-box {
+  margin-top: 28px;
+  padding: 18px;
+  background: #121212;
+  border-radius: 16px;
+  border: 1px solid #242424;
+  color: #bbb;
+  font-size: 14px;
+  min-height: 80px;
+}
+
+.preview-placeholder {
+  margin: 0;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
+/* CONFETTI ON TOP OF EVERYTHING */
+.confetti-canvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  pointer-events: none !important;
+  z-index: 99999 !important; /* Higher than modal */
+}
+/* ========== MODAL OVERLAY ========== */
+#pollModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  align-items: flex-start;      /* Start from top on mobile */
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px 0;              /* Safe space top/bottom */
+  overflow-y: auto;             /* Scroll whole modal if needed */
+}
+
+/* ========== MODAL CARD ========== */
+.poll-modal-card {
+  background: linear-gradient(180deg, #121212, #0d0d0d);
+  color: var(--text-main);
+  padding: 28px 24px;
+  border-radius: 22px;
+  max-width: 400px;
+  width: 92%;
+  max-height: 90vh;             /* Never taller than screen */
+  overflow-y: auto;             /* Internal scroll if content overflows */
+  text-align: center;
+  border: 1px solid #262626;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;                    /* Clean space between intro and poll body */
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========== INTRO / CONTEXT – OUTSIDE POLL BODY (SPACIOUS & WELCOMING) ========== */
+.poll-intro {
+  text-align: center;
+}
+
+.poll-intro h3 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.poll-intro p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ========== POLL BODY – COMPACT DARK CONTAINER (ONLY POLL CONTENT) ========== */
+.poll-body {
+  background: #0f0f0f;
+  border: 1px solid #242424;
+  border-radius: 18px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Question */
+.poll-body #pollQuestion {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+/* Options */
+.poll-body #pollOptions {
+  width: 100%;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Timer */
+.poll-body #pollTimer {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Results */
+.poll-body #pollResult {
+  width: 100%;
+  margin-bottom: 0;
+  display: none;
+}
+
+.poll-body #pollResult > p:first-child {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.poll-body #yourChoice {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.poll-body #resultBars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+/* ========== POLL OPTION BUTTONS ========== */
+.poll-option-btn {
+  width: 100%;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, #1b1b1b, #141414);
+  color: var(--text-main);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.poll-option-btn:hover {
+  background: linear-gradient(180deg, #222, #181818);
+  border-color: #333;
+  transform: translateY(-1px);
+}
+
+.poll-option-btn:active {
+  transform: translateY(0);
+}
+
+.poll-option-btn.selected {
+  border-color: var(--accent);
+  color: #0b0b0b;
+  background: linear-gradient(180deg, #d9ff4d, var(--accent));
+}
+
+/* ========== RESULT BARS – NOW GOLD ========== */
+.result-bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.result-bar-label strong {
+  font-weight: 600;
+  color: inherit; /* no special color needed – header already highlights your vote */
+}
+
+/* Gold result bar (premium & on-brand) */
+.result-bar {
+  height: 26px;                     /* slightly taller for presence */
+  background: #171717;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #242424;
+  position: relative;
+}
+
+.result-bar-fill {
+  height: 100%;
+  width: 0; /* starts at 0, animated via inline style */
+  background: linear-gradient(
+    90deg,
+    #f9ca24 0%,
+    #ffd700 30%,
+    #ffea00 50%,
+    #f7931e 80%,
+    #d4af37 100%
+  );
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(0.22, 0.61, 0.36, 1);
+  
+  /* Subtle moving shine for extra luxury */
+  overflow: hidden;
+}
+
+.result-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent
+  );
+  animation: shimmer 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ========== CAROUSEL / AD SPACE ========== */
+.poll-body #pollCarousel {
+  width: 100%;
+  height: 140px;
+  margin: 0;
+  background: repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 10px, #181818 10px, #181818 20px);
+  border-radius: 14px;
+  border: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-size: 13px;
+}
+
+/* ========== CLOSE BUTTON ========== */
+.poll-body #closePollBtn {
+  padding: 12px 34px;
+  background: #151515;
+  color: var(--text-main);
+  border: 1px solid #2f2f2f;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.poll-body #closePollBtn:hover {
+  background: #1d1d1d;
+}
+
+.poll-body #closePollBtn:active {
+  transform: translateY(1px);
+}
+
+/* Mobile fine-tuning */
+@media (max-height: 600px) {
+  .poll-modal-card {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+  .poll-body {
+    padding: 18px 16px;
+  }
+}
+/* ----- BUY TICKETS SHIMMER EFFECT ----- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Buy Tickets Section */
+.buy-tickets-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 18px 0 40px;
+  gap: 10px;
+}
+.poll-reward-line {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.poll-reward-line strong {
+  font-weight: 700;                    /* ensures bold */
+  color: var(--text-main);
+}
+
+.reward-amount {
+  font-weight: 800;
+  font-size: 16.5px;
+  background: linear-gradient(90deg, #ffd700, #ffea00, #f9ca24, #f7931e, #ffd700);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+  letter-spacing: -0.01em;
+}
+
+.poll-timer-line {
+  font-size: 14.5px;
+}
+
+.poll-timer-line strong {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Buy Tickets Button – SUPER SMALL & DOPE */
+.buy-tickets-btn {
+  display: inline-block;
+  padding: 8px 20px;                       /* really small now */
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent) 40%,
+    #d9ff4d 50%,                           /* bright shimmer highlight */
+    var(--accent) 60%,
+    var(--accent) 100%
+  );
+  background-size: 200% 100%;
+  background-position: -200% 0;
+  color: #0b0b0b;
+  font-size: 14px;                         /* smaller text */
+  font-weight: 700;
+  text-decoration: none;                   /* no underline */
+  border-radius: 14px;                     /* proportionally smaller radius */
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.14s ease, filter 0.2s ease;
+  animation: shimmer 3s linear infinite;
+  line-height: 1;                          /* tighter vertical spacing */
+}
+
+.buy-tickets-btn:hover {
+  text-decoration: none;                   /* double ensure no underline */
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+  animation-play-state: paused;
+}
+
+.buy-tickets-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.94);
+}
+
+/* Extra subtle shine overlay */
+.buy-tickets-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 100%
+  );
+  animation: shimmer 3.2s linear infinite;
+  pointer-events: none;
+}
+
+/* Note under button */
+.buy-tickets-note {
+  font-size: 13px;
+  color: #aaa;
+  margin: 0;
+  text-align: center;
+}
+
+.buy-tickets-note a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.buy-tickets-note a:hover {
+  text-decoration: underline;
+}
+/* ========== POLL SECTION HEADER – PIM PED EDITION ========== */
+.poll-section-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 20px;
+  text-align: center;
+  position: relative;
+}
+
+/* Eyebrow – subtle glow + upscale feel */
+.poll-section-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(90deg, #777, #aaa, #777);
+  -webkit-background-clip: text;
+  background-clip: text;
+  opacity: 0.9;
+  position: relative;
+}
+
+/* Optional: tiny animated underline flair */
+.poll-section-eyebrow::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateX(-50%);
+  opacity: 0.6;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Main title – gold gradient + subtle shimmer */
+.poll-section-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, #d4af37, #ffd700, #ffea00, #f9ca24, #d4af37);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 5s linear infinite;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.15); /* soft gold aura */
+}
+
+/* Shimmer animation (reuse from reward/button) */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Subtle pulse on the eyebrow line */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.buzz-username {
+  font-weight: 900;
+  font-size: inherit;      /* 🔑 SAME SIZE AS BUZZ TEXT */
+  letter-spacing: 0.6px;
+  margin-right: 6px;
+}
+#fruitDots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+  transition: background 0.3s;
+}
+
+#fruitDots .dot.active {
+  background: #c3f60c;
+  box-shadow: 0 0 12px rgba(195,246,12,0.6);
+}
+/* NORMAL MESSAGES — LIGHT, SMALL, AIRY & MODERN */
+.msg .content {
+  font-weight: 400;              /* Light and natural */
+  font-size: 11px;             /* Small but perfectly readable */
+  line-height: 1.55;             /* Comfortable breathing room */
+  color: #e0e0e0;                /* Soft off-white, not harsh #fff */
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  display: block;
+  margin: 0;
+  opacity: 0.95;
+}
+
+/* Optional: Slightly dimmer for even more "light" feel */
+.msg .content {
+  color: #d0d0d0;
+}
+/* 🔥 REPLY CANCEL "×" — SMALL, GREY BACKDROP + NEON */
+.reply-cancel-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);     /* Soft grey backdrop */
+  color: var(--accent, #FF1493);           /* Your neon theme color */
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 8px;
+  margin-bottom: 2px; /* Aligns nicely with input */
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.reply-cancel-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.1);
+}
+
+.reply-cancel-btn:active {
+  transform: scale(0.95);
+}
+#progressContainer {
+  margin: 14px auto 0;
+  width: 80%;
+  max-width: 340px;          /* matches your dashed upload area */
+  height: 8px;               /* slightly thicker = more visible */
+  ...
+}
+.neon-mini-card {
+  background: #0a0012;
+  border: 2px solid #ff00f2;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 
+    0 0 12px rgba(255, 0, 242, 0.6),
+    inset 0 0 10px rgba(0, 255, 234, 0.15);
+  max-width: 260px;
+  margin: 16px auto;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+}
+
+.neon-mini-card:hover {
+  box-shadow: 
+    0 0 24px rgba(255, 0, 242, 0.9),
+    inset 0 0 16px rgba(0, 255, 234, 0.25);
+  transform: translateY(-2px);
+}
+
+.neon-title-container {
+  text-align: center;
+  margin-bottom: 12px;   /* gives nice spacing before sub text */
+}
+
+.neon-title {
+  font-size: 17px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;   /* better than flex for single line + emoji below */
+  /* remove these if you had them — we don't need flex here anymore */
+  /* display: flex; */
+  /* align-items: center; */
+  /* justify-content: center; */
+  /* gap: 6px; */
+}
+
+.neon-fire {
+  font-size: 22px;
+  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;          /* tighter spacing under title */
+  margin-top: 4px;         /* small gap between title text and 🔥 */
+  display: block;
+}
+
+.neon-sub {
+  font-size: 11px;
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.neon-btn {
+  width: 100%;
+  max-width: 180px; /* shorter button */
+  margin: 0 auto;
+  display: block;
+  padding: 10px;
+  background: linear-gradient(90deg, #ff2e78, #ff5e2e);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255,46,120,0.4);
+  transition: all 0.3s ease;
+}
+
+.neon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255,46,120,0.6);
+}
+
+.neon-btn:disabled {
+  background: #444;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+.neon-cost {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: #ff4fd8;
+  font-weight: 600;
+}
+
+.neon-msg {
+  margin-top: 10px;
+  font-size: 11.5px;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 10px;
+  min-height: 18px;
+}
+
+.neon-msg.success {
+  background: rgba(0,255,234,0.12);
+  color: #00ffea;
+  border: 1px solid rgba(0,255,234,0.3);
+}
+
+.neon-msg.error {
+  background: rgba(255,51,102,0.12);
+  color: #ff3366;
+  border: 1px solid rgba(255,51,102,0.3);
+}
+/* Optional: make it pulse subtly like glowing cube core */
+@keyframes cubePulse {
+  0%, 100% { opacity: 1; box-shadow: /* your base shadows */; }
+  50%      { opacity: 0.92; box-shadow: 0 0 60px rgba(255,51,102,0.7) /* bigger mid-glow */; }
+}
+
+/* Example usage: add to trending badge only */
+.trending-badge {  /* or add className conditionally in JS */
+  animation: cubePulse 4s infinite ease-in-out;
+}
+</style>
+</head>
+<body>
+
+<div class="star-popup" id="starPopup">
+  <div id="starText">You've just earned +1 STRZ! ⭐</div>
+</div>
+
+
+  <!-- Loading Overlay (hidden by default) -->
+<div id="postLoginLoader" style="display:none;">
+  <div id="loadingBarWrapper">
+    <div id="loadingBar"></div>
+  </div>
+</div>
+
+<audio id="buzz-sound" src="/assets/sci-fi-sound-effect-designed-circuits-hum-10-200831.mp3" preload="auto"></audio>
+<div id="appWrapper">
+  <div class="app">
+    <div class="brand">
+  <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962" 
+       alt="ＣＵＢＥ" 
+       class="brand-logo">
+</div>
+
+    <div id="greeting"></div>
+    <div id="center">
+    <div class="video-container" style="position: relative; width: 100%; max-width: 600px; margin: auto;">
+<div id="videoWrapper">
+  <video id="videoPlayer" muted playsinline></video>
+  <button class="arrow" id="prev">&#10094;</button>
+  <button class="arrow" id="next">&#10095;</button>
+</div>
+<!-- Hello text -->
+   <div id="helloText" aria-live="polite">HELLO</div>
+      <div class="room-desc">Chat. Own your vibe.
+
+<!-- Controls under the video -->
+<div id="videoUnderControls">
+    <div id="onlineWrapper" style="display:flex; justify-content:center; align-items:center; gap:4px; font-family:sans-serif; font-weight:500; font-size:14px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span id="onlineCount">…</span>
+        <span>people are interacting in chatrooms</span>
+    </div>
+<!-- Buttons (keep aligned) -->
+<div id="sessionBar">
+  <button class="session-btn" id="topBallersBtn">Win $STRZ</button>
+  <button id="highlightsBtn" class="session-btn star-hosts-btn">❤︎ Cuties ❤︎</button>
+  <button class="session-btn" id="openHostsBtn">Liveshows</button>
+</div>
+
+<!-- Live Stream Modal - Full Clean Structure (No Bleeding) -->
+<div id="liveModal" class="live-modal">
+  <div class="live-modal-content">
+    <span class="live-close" id="closeModal">&times;</span>
+
+    <!-- Tabs -->
+    <div class="live-content-tabs">
+      <button class="live-tab-btn active" data-content="live">Livestreams</button>
+      <button class="live-tab-btn" data-content="upcoming">Upcoming</button>
+      <button class="live-tab-btn" data-content="reels">Reels</button>
+    </div>
+
+    <!-- Live Tab (Livestreams) - Player + Private Message Feature + Reader -->
+    <div id="live" class="live-tab-content active">
+      <!-- Player -->
+      <div id="livePlayerWrapper" class="live-player-wrapper">
+        <div id="livePlayerContainer" class="live-player">
+          <p class="player-placeholder">Live Player Loading...</p>
+        </div>
+      </div>
+
+      <!-- Optional Hint Text -->
+      <div id="liveChatMessages" class="live-chat-messages">
+        <p style="text-align:center; color:#888; padding:60px 20px; font-size:15px;">
+          Private messages are sent directly to the host 💌
+        </p>
+      </div>
+
+      <!-- Private Message Reader (host only) -->
+      <div id="privateMsgReader" class="private-msg-reader">
+        <div class="private-reader-header">
+          <h3>Live Private Messages 💌</h3>
+          <span id="privateMsgCount" class="msg-count">0</span>
+        </div>
+        <div id="privateMessagesList" class="private-messages-list">
+          <p class="no-messages">No private messages yet... waiting for secrets ✨</p>
+        </div>
+      </div>
+
+      <!-- Floating Private Message Button -->
+      <button id="privateMsgBtn" class="private-msg-btn" title="Send private message to host">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
+        </svg>
+      </button>
+
+ <!-- Private Message Modal - Small & Cute -->
+<div id="privateMsgModal" class="private-msg-modal">
+  <div class="private-msg-content">
+    <div class="private-msg-header">
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/Love%20Letter.webp" 
+           alt="Love Letter" 
+           width="40" 
+           height="40">
+      <span class="private-close">&times;</span>
+    </div>
+    <p class="private-note">Only the host will see this · Costs 100 STRZ</p>
+    <textarea id="privateMsgInput" placeholder="Type your message..."></textarea>
+    <button id="privateSendBtn" class="private-send-btn">Send Message</button>
+  </div>
+</div>
+</div>      
+
+    <!-- Upcoming Tab -->
+    <div id="upcoming" class="live-tab-content">
+      <div id="upcomingPosters" class="upcoming-posters">
+        <div class="poster-grid">
+          <div class="poster-card">
+            <div class="poster-image">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
+            </div>
+            <div class="poster-info">
+              <h3 class="poster-title">Chill Vibes</h3>
+              <p class="poster-time">Tonight @ 10PM EST</p>
+              <p class="poster-desc">Late night lo-fi beats, deep talks, and good energy. Pull up and unwind.</p>
+            </div>
+          </div>
+          <div class="poster-card">
+            <div class="poster-image">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
+            </div>
+            <div class="poster-info">
+              <h3 class="poster-title">Late Night Talk</h3>
+              <p class="poster-time">Tomorrow @ 1AM EST</p>
+              <p class="poster-desc">Real conversations, no filter. Stories, laughs, and truth bombs.</p>
+            </div>
+          </div>
+          <div class="poster-card">
+            <div class="poster-image">
+              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
+            </div>
+            <div class="poster-info">
+              <h3 class="poster-title">Exclusive Drop</h3>
+              <p class="poster-time">Friday @ 9PM EST</p>
+              <p class="poster-desc">Special guest, new music reveal, and giveaways. You don't wanna miss this.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reels Tab -->
+    <div id="reels" class="live-tab-content">
+      <div id="reelsGallery">
+        <p style="text-align:center; padding-top:40%; color:#666;">Reels Loading...</p>
+      </div>
+    </div>
+
+  </div> <!-- End of .live-modal-content -->
+</div> <!-- End of #liveModal -->
+
+  
+    <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
+</div>
+
+ <div id="guestMsg"></div>
+<div id="authBox">
+
+
+<!-- VIP Access Login Wrapper -->
+<div id="emailAuthWrapper">
+  <!-- Email Number Input -->
+  <input type="email" id="emailInput" placeholder="Enter your Email" class="auth-input">
+  <!-- Password Input -->
+  <input type="password" id="passwordInput" placeholder="Enter your password" class="auth-input">
+  <!-- VIP Access Button (unchanged) -->
+  <button id="whitelistLoginBtn" class="google-btn">
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VIP__128_x_128_px.svg?v=1761812907" alt="VIP Ticket">
+    Sign in with $STRZ
+  </button>
+  <!-- Google + Forgot (tied together only) -->
+  <div class="google-block">
+    <button id="googleSignInBtn" class="google-btn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+      Sign in with Google
+    </button>
+    <a href="https://auth.cube.xixi.live/0fe4a760-df02-4801-badd-889b8caf3643" class="forgot-link">Forgot password?</a>
+  </div>
+</div>
+
+</div>
+<!-- Chat ID Modal -->
+<div id="chatIDModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:200;">
+  <div style="background:var(--card);padding:20px;border-radius:12px;max-width:320px;width:90%;text-align:center;">
+    <h3 style="margin-bottom:12px;color:var(--accent);">Choose your Chat ID</h3>
+    <input id="chatIDInput" type="text" placeholder="Your chat ID" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);margin-bottom:12px;font-size:16px;color:#fff;background:#111;outline:none;" />
+    <button id="chatIDConfirmBtn" class="small-btn" style="width:100%;padding:10px;">Confirm</button>
+  </div>
+</div>
+
+<div id="messages"></div>
+
+
+
+<div class="send-area" id="sendArea" style="display:none;">
+  <div class="input-wrapper">
+    <textarea 
+      id="messageInput" 
+      placeholder="Type your message..." 
+      autocomplete="off"
+      rows="1"
+    ></textarea>
+  </div>
+  <button id="buzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
+  <button id="sendBtn" class="send-btn">Send</button>
+</div>
+    </div>
+<div class="profile" id="profileBox">
+  <div class="profile-card">
+    <div class="profile-top">
+      <div class="profile-left">
+        <div id="profileName" class="profile-name">GUEST 0000</div>
+        <div>
+          <span class="profile-label">STARS COLLECTED:</span>
+          <span class="profile-value"><span id="starCount">0</span>⭐️</span>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+       <!-- Host button with detailed gear SVG -->
+<div id="hostSettingsWrapper" style="text-align:center; margin-top:0; display:none; display:inline-block;">
+    <button id="hostSettingsBtn" class="smalla-btn">
+        <svg width="14" height="14" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" style="vertical-align:middle;">
+            <path fill="#AEADB3" d="M511.958,308.445L512,206.866l-65.964-7.24c-3.594-12.098-8.326-23.82-14.167-35.04l42.197-52.529 l-71.815-71.846L350.485,81.76c-11.116-6.039-22.754-10.98-34.789-14.783l-7.313-66.957H206.793l-7.209,65.975 c-11.983,3.552-23.611,8.243-34.727,14.02l-52.477-42.27l-71.94,71.721l41.486,51.829c-6.059,11.105-11.022,22.744-14.825,34.758 l-66.967,7.24L0,304.872l65.964,7.292c3.573,12.108,8.295,23.83,14.135,35.051L37.85,399.713l71.752,71.909l51.808-41.507 c11.116,6.049,22.744,11.001,34.769,14.814l7.261,66.967l52.581,0.042l49.008,0.042l7.261-65.964 c12.098-3.583,23.83-8.316,35.04-14.156l52.518,42.228l71.877-71.783l-41.528-51.787c6.039-11.116,10.991-22.754,14.793-34.779 L511.958,308.445z M256.021,347.706c-50.659,0-91.727-41.068-91.727-91.727s41.068-91.727,91.727-91.727 s91.727,41.068,91.727,91.727S306.68,347.706,256.021,347.706z"></path>
+            <path fill="#8B8892" d="M444.991,315.738c-3.803,12.025-8.755,23.663-14.793,34.779l41.528,51.787l-71.877,71.783 l-52.518-42.228c-11.21,5.84-22.942,10.573-35.04,14.156l-7.261,65.964l-49.008-0.042V347.706c50.659,0,91.727-41.068,91.727-91.727 s-41.068-91.727-91.727-91.727V0.021h52.362l7.313,66.957c12.035,3.803,23.674,8.744,34.789,14.783l51.766-41.549l71.815,71.846 l-42.197,52.529c5.84,11.22,10.573,22.942,14.167,35.04l65.964,7.24l-0.042,101.579L444.991,315.738z"></path>
+        </svg>
+    </button>
+</div>
+
+    <a id="tipBtn" class="smalla-btn" href="#" target="_blank" style="display:none;">
+    <svg width="14" height="14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" style="vertical-align:middle;">
+        <path fill="#99AAB5" d="M16 9h4v17h-4z"></path>
+        <path fill="#DA2F47" d="M10 24.5A1.5 1.5 0 0 1 8.5 26h-3a1.5 1.5 0 0 1 0-3h3a1.5 1.5 0 0 1 1.5 1.5z"></path>
+        <path fill="#31373D" d="M34 33a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h28a2 2 0 0 1 2 2v6z"></path>
+        <path fill="#31373D" d="M10 34.5A1.5 1.5 0 0 1 8.5 36h-3a1.5 1.5 0 1 1 0-3h3a1.5 1.5 0 0 1 1.5 1.5zm22 0a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1 0-3h3a1.5 1.5 0 0 1 1.5 1.5z"></path>
+        <circle fill="#DA2F47" cx="18" cy="7" r="5"></circle>
+        <path fill="#31373D" d="M25 26a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2v-1c0-1.104 3.896-6 5-6h4c1.104 0 5 4.896 5 6v1z"></path>
+        <path fill="#66757F" d="M33 28a1 1 0 0 1-1 1H4a1 1 0 1 1 0-2h28a1 1 0 0 1 1 1z"></path>
+    </svg>
+</a>
+      </div>
+    </div> <!-- end profile-top -->
+
+    <div class="profile-cash">
+      <span class="profile-label">CASH EARNED:</span>
+      <span class="profile-value">₦<span id="cashCount">0</span></span>
+    </div>
+
+<!-- ULTRA-COMPACT GLASS LOGOUT (text + icon) -->
+<div id="logoutWrapper" style="text-align:center; margin-top:12px;">
+  <button id="hostLogoutBtn" class="tiny-glass-logout">
+    <span>Log Out</span>
+    <svg viewBox="0 -0.5 25 25" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.75 9.874C11.75 10.2882 12.0858 10.624 12.5 10.624C12.9142 10.624 13.25 10.2882 13.25 9.874H11.75ZM13.25 4C13.25 3.58579 12.9142 3.25 12.5 3.25C12.0858 3.25 11.75 3.58579 11.75 4H13.25ZM9.81082 6.66156C10.1878 6.48991 10.3542 6.04515 10.1826 5.66818C10.0109 5.29121 9.56615 5.12478 9.18918 5.29644L9.81082 6.66156ZM5.5 12.16L4.7499 12.1561L4.75005 12.1687L5.5 12.16ZM12.5 19L12.5086 18.25C12.5029 18.25 12.4971 18.25 12.4914 18.25L12.5 19ZM19.5 12.16L20.2501 12.1687L20.25 12.1561L19.5 12.16ZM15.8108 5.29644C15.4338 5.12478 14.9891 5.29121 14.8174 5.66818C14.6458 6.04515 14.8122 6.48991 15.1892 6.66156L15.8108 5.29644ZM13.25 9.874V4H11.75V9.874H13.25ZM9.18918 5.29644C6.49843 6.52171 4.7655 9.19951 4.75001 12.1561L6.24999 12.1639C6.26242 9.79237 7.65246 7.6444 9.81082 6.66156L9.18918 5.29644ZM4.75005 12.1687C4.79935 16.4046 8.27278 19.7986 12.5086 19.75L12.4914 18.25C9.08384 18.2892 6.28961 15.5588 6.24995 12.1513L4.75005 12.1687ZM12.4914 19.75C16.7272 19.7986 20.2007 16.4046 20.2499 12.1687L18.7501 12.1513C18.7104 15.5588 15.9162 18.2892 12.5086 18.25L12.4914 19.75ZM20.25 12.1561C20.2345 9.19951 18.5016 6.52171 15.8108 5.29644L15.1892 6.66156C17.3475 7.6444 18.7376 9.79237 18.75 12.1639L20.25 12.1561Z" fill="#ff3366"/>
+    </svg>
+  </button>
+</div>
+
+
+<!-- USER POLL MODAL (Win $STRZ) -->
+<div id="pollModal">
+  <div class="poll-modal-card">
+
+    <!-- INTRO / CONTEXT (INSIDE MODAL, OUTSIDE POLL) -->
+    <div class="poll-intro">
+      <h3>JOIN THE CONVO</h3>
+      <p>
+        Speak your mind, see how others feel,
+        and jump into the conversation.
+        take your stance & earn STRZ. 
+      </p>
+    </div>
+
+    <!-- POLL CONTAINER (SHRUNK) -->
+    <div class="poll-body">
+
+      <!-- Question -->
+      <h2 id="pollQuestion"></h2>
+
+      <!-- Options -->
+      <div id="pollOptions"
+        style="margin-bottom:22px; display:flex; flex-direction:column; gap:12px;">
+      </div>
+
+      <!-- Timer -->
+      <p id="pollTimer"></p>
+
+      <!-- Results -->
+      <div id="pollResult" style="display:none; margin-bottom:22px;">
+        <p style="font-size:15px; color:#aaa;">You voted for</p>
+        <p id="yourChoice"></p>
+        <div id="resultBars"
+          style="display:flex; flex-direction:column; gap:16px;"></div>
+      </div>
+
+      <!-- Carousel / Ads -->
+      <div id="pollCarousel">
+        Carousel / Ad Space
+      </div>
+
+      <!-- Close -->
+      <button id="closePollBtn">Close</button>
+
+    </div>
+  </div>
+</div>
+
+   
+<!-- 🟣 HOST MODAL -->
+<div id="hostModal" class="modal">
+  <div class="modal-body">
+    <span class="close">&times;</span>
+    <h3 id="hostPanelTitle">Loading...</h3>
+
+   <!-- 🧭 TAB HEADER -->
+<div class="tab-header" style="display:flex; gap:12px; padding:12px; border-bottom:1px solid #333;">
+  <button class="tab-btn" data-tab="mediaTab">Profile</button>
+
+  <!-- HOST ONLY -->
+  <button class="tab-btn host-only" data-tab="infoTab">Tools</button>
+
+  <button id="notificationsTabBtn" class="tab-btn" data-tab="notificationsTab" style="position:relative;">
+    Notifications
+    <span id="notif-badge" style="
+      position:absolute; top:-8px; right:-10px;
+      background:#ff006e; color:#fff; font-size:10px; font-weight:900;
+      width:20px; height:20px; border-radius:50%;
+      display:none; align-items:center; justify-content:center;
+      box-shadow:0 0 16px #ff006e88;
+      animation:pulse 2s infinite;
+    ">0</span>
+  </button>
+</div>
+
+    
+<!-- NOTIFICATIONS TAB -->
+<div id="notificationsTab" class="tab-content" style="display:none; max-height:400px; overflow-y:auto;">
+  <div style="padding:8px 12px 4px; text-align:right;">
+  <button id="markAllRead" style="
+  font-size:11px; padding:6px 12px; border:none; border-radius:8px;
+  font-weight:700; transition:all 0.3s; cursor:pointer;
+  background:#333; color:#999;
+">Clear all</button>
+  </div>
+  <div id="notificationsList" style="padding:0 8px;">
+    <!-- Items will appear here -->
+  </div>
+</div>
+    
+<!-- 🎥 MEDIA TAB -->
+<div id="mediaTab" class="tab-content active" style="max-height:500px; overflow-y:auto; padding:16px 8px 16px 16px; box-sizing:border-box;">
+
+  <!-- Profile Section -->
+  <h4 style="text-align:center; margin-bottom:10px;">Profile 👤</h4>
+  <label>Name</label>
+  <input type="text" id="fullName" placeholder="Enter your full name">
+  
+  <label>Location</label>
+  <input type="text" id="location" placeholder="Enter your location">
+  
+  <label>City</label>
+  <input type="text" id="city" placeholder="Enter your city">
+  
+  <label>Short Bio</label>
+  <textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
+<!-- Inside your Media Tab — Host-Only Fields (Nature & Body Type) -->
+<div id="hostOnlyFields" style="display:none;">
+
+  <!-- Nature Pick -->
+  <label>Nature Pick</label>
+  <select id="naturePick">
+    <option value="" disabled selected>What describes you?</option>
+    <option value="Hot">Hot</option>
+    <option value="Sexy">Sexy</option>
+    <option value="Beautiful">Beautiful</option>
+    <option value="Charming">Charming</option>
+    <option value="Sweet">Sweet</option>
+    <option value="Cool">Cool</option>
+  </select>
+
+  <!-- Body Type Pick -->
+  <label>Body Type</label>
+  <select id="bodyTypePick">
+    <option value="" disabled selected>Choose your body type</option>
+    <option value="Slim">Slim</option>
+    <option value="Slim Thick">Slim thick</option>
+    <option value="Curvy">Curvy</option>
+    <option value="Chubby">Chubby</option>
+    <option value="Thick">Thick</option>
+    <option value="Athletic">Athletic</option>
+    <option value="Petite">Petite</option>
+    <option value="Plus Size">Plus Size</option>
+  </select>
+
+  <label>Vibe Pick</label>
+  <select id="fruitPick">
+    <option value="" disabled selected>Choose your vibe</option>
+    <option value="🍇">🍇 Casual Hangout & Friendships</option>
+    <option value="🍑">🍑 Thrills & Paid Meetups</option>
+    <option value="🍒">🍒 Passionate Romance & Dates</option>
+    <option value="🍓">🍓 Love Adventures</option>
+  </select>
+</div>
+  
+  <!-- FRUIT GUIDE BUTTON — AVAILABLE TO EVERYONE (inside Media tab) -->
+  <div style="margin:32px 0 20px; text-align:center;">
+    <button id="openFruitGuide" style="
+      padding:14px 36px;
+      background:linear-gradient(135deg,#1a1a1a,#0f0f0f);
+      color:#c3f60c;
+      border:1px solid #333;
+      border-radius:20px;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 24px rgba(195,246,12,0.15);
+      transition:all 0.3s ease;
+    "
+    onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
+    onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
+     🍒Read 🍇the Fruit🍑 Guide🍓
+    </button>
+  </div>
+
+  <!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
+<div class="buy-tickets-section" style="
+  text-align: center;
+  padding: 20px 0;
+  color: #ccc;
+  font-size: 13px;
+">
+  <p class="buy-tickets-note" style="margin: 0;">
+    Want to book an experience? 
+    <a href="https://t.me/unlockye" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       style="
+         color:    #c3f60c;
+         text-decoration: underline;
+         font-weight: 600;
+         transition: color 0.3s;
+       "
+       onmouseover="this.style.color='   #c3f60c'"
+       onmouseout="this.style.color='   #c3f60c'">
+      Click here
+    </a>
+  </p>
+</div>
+
+  <hr class="divider" style="margin:20px 0;">
+
+  <label>Bank Name</label>
+<select id="bankName">
+  <option value="" disabled selected>Select your bank</option>
+</select>
+
+  <label>Bank Number</label>
+  <input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
+    oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
+
+  <hr class="divider" style="margin:20px 0;">
+
+  <!-- Socials Section -->
+  <h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
+  <label>WhatsApp</label>
+  <input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
+  
+  <label>Telegram</label>
+  <input type="text" id="telegram" placeholder="@username">
+  
+  <label>TikTok</label>
+  <input type="text" id="tiktok" placeholder="@username">
+  
+  <label>Instagram</label>
+  <input type="text" id="instagram" placeholder="@username">
+
+  <!-- ORIGINAL SAVE BUTTON SIZE -->
+  <button id="saveInfo" class="small-btn" style="margin-top:10px;">Save</button>
+</div>
+    
+<!-- FRUIT GUIDE MODAL – SWIPEABLE CARDS (ONE PER VIEW) -->
+<div id="fruitGuideModal" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.94);
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+">
+  <div style="
+    background: linear-gradient(180deg, #121212, #0a0a0a);
+    border-radius: 24px;
+    width: 92%;
+    max-width: 380px;
+    height: 78vh;
+    max-height: 580px;
+    border: 1px solid #262626;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+  ">
+    <!-- Title Section – Smaller, Perfectly Centered & Balanced -->
+    <div style="padding: 20px 24px 10px; text-align:center;">
+      <h2 style="
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0 0 10px;
+        background: linear-gradient(90deg, #c3f60c, #d9ff4d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+      ">
+        Fruit Guide
+      </h2>
+      <p style="
+        color:#aaa;
+        font-size: 13.5px;
+        margin: 0 0 8px;
+        line-height: 1.5;
+      ">
+        Understand the vibe behind each fruit, so you know exactly what she’s open to.
+      </p>
+      <p style="
+        color:#888;
+        font-size: 12px;
+        margin: 0;
+        line-height: 1.4;
+        font-weight: 500;
+      ">
+        Swipe to see each vibe →
+      </p>
+    </div>
+
+    <!-- Swipeable Carousel Container -->
+    <div id="fruitCarousel" style="
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    ">
+      <div id="fruitSlides" style="
+        display: flex;
+        width: 400%;
+        height: 100%;
+        transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+      ">
+        <!-- Fruit 1: Grapes -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #9c72ff; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍇</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Grapes · Casual & Friends
+            </strong>
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
+              She's here for light, fun chats and friendships. No pressure, just good vibes, laughs, and easy connection.
+            </p>
+          </div>
+        </div>
+        <!-- Fruit 2: Peach -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff6b9d; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍑</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Peach · Thrills & Generosity
+            </strong>
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
+              She's open to exciting experiences where you spoil her. Think paid dates, thoughtful gifts, and consensual fun.
+            </p>
+          </div>
+        </div>
+        <!-- Fruit 3: Cherries -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff4757; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍒</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Cherries · Passion & Romance
+            </strong>
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
+              She's all about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
+            </p>
+          </div>
+        </div>
+        <!-- Fruit 4: Strawberry -->
+        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
+          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff9f43; height:100%; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍓</div>
+            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
+              Strawberry · Love & Relationships
+            </strong>
+            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
+              She's ready for deeper emotions, commitment, and building something real. Perfect for love adventures and long-term vibes.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dots Indicator -->
+    <div style="padding: 16px 24px; text-align:center;">
+      <div id="fruitDots" style="display:inline-flex; gap:10px;">
+        <span class="dot active" data-slide="0"></span>
+        <span class="dot" data-slide="1"></span>
+        <span class="dot" data-slide="2"></span>
+        <span class="dot" data-slide="3"></span>
+      </div>
+    </div>
+
+    <!-- Bottom Close Button -->
+    <div style="padding: 0 24px 28px; text-align:center;">
+      <button id="closeFruitGuideBottom" style="
+        padding:12px 40px;
+        background:#151515;
+        color:#c3f60c;
+        border:1px solid #333;
+        border-radius:18px;
+        font-size:15px;
+        font-weight:700;
+        cursor:pointer;
+      ">
+        Got it!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 📝 INFO TAB -->
+<div id="infoTab" class="tab-content"
+     style="max-height:500px; overflow-y:auto; padding:16px 8px 8px; display:none; font-family: system-ui, sans-serif; box-sizing:border-box;">
+  
+<!-- 📱 Number Verification Bar -->
+<div id="verifyNumberBar" style="margin-bottom:24px;">
+  <h4 style="
+    text-align:center;
+    margin-bottom:12px;
+    font-weight:700;
+    font-size:22px;
+    background:linear-gradient(90deg,#c3f60c,#e8ff6a);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Clean space between text and icon */
+  ">
+    VERIFY NUMBER
+    <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Magnifying%20Glass%20Tilted%20Right.webp" 
+         alt="Search" 
+         width="36" 
+         height="36">
+  </h4>
+  <div style="
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 340px;
+    margin: 0 auto;
+    height: 36px;
+    border-radius: 999px;
+    box-shadow: 0 1px 6px rgba(195,246,12,0.25);
+    border: 1px solid rgba(195,246,12,0.3);
+    overflow: hidden;
+    background: rgba(0,0,0,0.85);
+  ">
+    <input
+      type="text"
+      id="verifyNumberInput"
+      placeholder="Enter phone number to verify"
+      style="
+        flex: 1;
+        height: 100%;
+        padding: 0 14px;
+        font-size: 13.5px;
+        border: none;
+        outline: none;
+        color: #eee;
+        background: transparent;
+      "
+    />
+    <button
+      id="verifyNumberBtn"
+      style="
+        flex-shrink: 0;
+        width: 90px;
+        height: 100%;
+        border: none;
+        background: linear-gradient(90deg,#c3f60c,#e8ff6a);
+        color: #000;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      ">
+      Check
+    </button>
+  </div>
+  <p style="
+    margin:10px 0 0;
+    font-size:12.5px;
+    color:#bbb;
+    text-align:center;
+  ">
+    Your safety is our priority. This helps you verify that numbers here belong to real, verified users.
+  </p>
+</div>
+
+
+
+
+<!-- 🔥 FREE TONIGHT – Tiny Neon Glow Panel (no cost) -->
+<div id="freeTonightCard" class="neon-mini-card">
+  <div class="neon-title-container">
+    <div class="neon-title">◑△◐ Free Tonight ◑△◐?</div>
+  </div>
+
+  <div class="neon-sub">
+    If you're available & ready to mingle tonight,<br>
+    we'll promote your clips & the right vibe will find you.
+  </div>
+
+  <button id="freeTonightBtn" class="neon-btn">
+    I'm Free Tonight
+  </button>
+
+  <div id="freeTonightMessage" class="neon-msg"></div>
+</div>
+  
+<!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
+<div style="margin: 24px 0;">
+  <h4 style="
+    text-align: center;
+    margin-bottom: 16px;
+    font-weight: 700;
+    font-size: 18px;
+    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  ">
+    REVENUE DASHBOARD
+  </h4>
+
+  <!-- One Unified Cute Card -->
+  <div style="
+    background: #000000;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(195, 246, 12, 0.35);
+    border-radius: 20px;
+    padding: 20px 16px;
+    max-width: 340px;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5),
+                0 0 12px rgba(195, 246, 12, 0.12);
+  ">
+    <!-- Cash Balance (top, prominent) -->
+    <div style="
+      font-size: 11px;
+      color: #bbbbbb;
+      margin-bottom: 4px;
+      text-align: center;
+    ">
+      CASH BALANCE
+    </div>
+    <div style="
+      font-size: 22px;
+      font-weight: 900;
+      color: #c3f60c;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    ">
+      ₦<span id="infoCashBalance">0</span>
+    </div>
+
+
+    <!-- Withdraw Section (flows naturally below balance) -->
+    <p style="
+      color: #cccccc;
+      margin: 0 0 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-align: center;
+    ">
+      WITHDRAW CASH TO BANK
+    </p>
+
+    <p style="
+      color: #aaaaaa;
+      margin: -6px 0 16px;
+      font-size: 11.5px;
+      text-align: center;
+      line-height: 1.4;
+    ">
+      Fill bank details in profile before withdrawal request<br>Minimum Amount: ₦5,000
+    </p>
+
+    <input
+      type="number"
+      id="withdrawAmount"
+      placeholder="Enter amount"
+      style="
+        width: 100%;
+        max-width: 260px;
+        padding: 11px;
+        border-radius: 12px;
+        background: #1a1a1a;
+        color: #fff;
+        border: 1px solid #444;
+        font-size: 15px;
+        text-align: center;
+        box-sizing: border-box;
+        margin: 0 auto 16px;
+        display: block;
+      "
+    />
+
+    <div style="
+      color: #c3f60c;
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      margin: 12px 0 20px;
+    ">
+      → ₦<span id="withdrawPreview">0</span>
+    </div>
+
+    <button id="withdrawCashBtn" style="
+      width: 100%;
+      max-width: 260px;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+      color: #000;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      margin: 0 auto;
+      display: block;
+      box-shadow: 0 4px 12px rgba(195,246,12,0.25);
+    ">
+      WITHDRAW NOW
+    </button>
+  </div>
+</div>
+  
+
+   <!-- 🎉 INVITE FRIENDS SECTION -->
+<div style="margin: 24px 0 16px;">
+  <h4 style="
+    text-align: center;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 18px;                    /* was 22px */
+    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  ">
+    HOST & GET REWARDED
+    <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; vertical-align: -4px; margin-left: 6px; fill: #c3f60c;">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+  </h4>
+
+  <p style="
+    text-align: center;
+    font-size: 13px;                    /* was 14px */
+    color: #ccc;
+    max-width: 340px;
+    margin: 0 auto 16px;
+    line-height: 1.45;
+  ">
+    Share your INVITE link and grow your influence.<br>
+   Get <strong>100 STRZ</strong> for each new host that joins you on cube & <strong>500 STRZ</strong> for each VIP invite!
+  </p>
+
+  <div style="display: flex; justify-content: center;">
+    <button id="inviteFriendsToolBtn" style="
+      padding: 10px 28px;               /* was 12px 32px */
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #c3f60c, #a0d00a);
+      color: #000;
+      font-size: 14px;                  /* was 16px */
+      font-weight: 700;                 /* slightly lighter than 800 */
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(195,246,12,0.45);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 200px;                 /* was 220px */
+      justify-content: center;
+    ">
+      <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #000;">
+        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+      </svg>
+      INVITE FRIENDS
+    </button>
+  </div>
+</div>
+
+
+  
+<!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
+<div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
+  <div style="text-align:center; margin-bottom:28px;">
+    <h2 style="
+      margin:0; font-size:28px; font-weight:900; letter-spacing:-1px;
+      background:linear-gradient(90deg,#ff2e78,#ff8c2e,#ff2e78);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-size:200% auto; animation:gradient 4s linear infinite;
+    ">
+      UPLOAD CLIPS
+    </h2>
+    <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
+      Upload premium clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
+    </p>
+  </div>
+
+  <!-- Main Card -->
+  <div style="
+    background:rgba(12,12,14,0.75); backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:24px;
+    padding:32px 28px; box-shadow:0 20px 40px rgba(0,0,0,0.5),
+                               inset 0 1px 0 rgba(255,255,255,0.05);
+    position:relative; overflow:hidden;
+  ">
+    <div style="position:absolute; inset:0; pointer-events:none;
+                 background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
+                 opacity:0.6;"></div>
+  
+    <div style="position:relative; z-index:2;">
+      <!-- Video Upload -->
+      <div style="margin-bottom:32px; text-align:center;">
+        <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
+          Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
+        </div>
+        <label for="highlightUploadInput" style="
+          display:block; padding:32px 24px;
+          background:#111111; border:2px dashed #444;
+          border-radius:16px; cursor:pointer; transition:all 0.3s ease;
+          color:#888; font-size:15px; font-weight:500;
+          margin:0 auto; max-width:340px;
+        "
+        onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
+        onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
+          <div id="uploadPlaceholder">
+            <div style="margin-bottom:8px; font-size:36px;">↑</div>
+            Click or drag video here
+            <div style="margin-top:8px; font-size:13px; color:#666;">
+              MP4 • max 50MB
+            </div>
+          </div>
+          <div id="videoPreviewContainer" style="display:none; text-align:center;">
+            <video id="videoPreview" controls muted style="
+              width:100%;
+              max-height:220px;
+              border-radius:12px;
+              background:#000;
+              object-fit:contain;
+            "></video>
+            <div id="fileSizeInfo" style="
+              margin-top:12px;
+              font-size:13px;
+              color:#888;
+            "></div>
+          </div>
+          <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
+        </label>
+      </div>
+
+      <!-- Title -->
+      <div style="margin-bottom:20px;">
+        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+          Title <span style="color:#ff4444;">*</span>
+        </label>
+        <input type="text" id="highlightTitleInput" placeholder="e.g. Crazy 1v5 clutch in ranked"
+               style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#fff; font-size:15px;"
+               onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+               onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
+      </div>
+
+      <!-- Description -->
+      <div style="margin-bottom:24px;">
+        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
+          Description <span style="color:#666; font-size:13px;">(optional)</span>
+        </label>
+        <textarea id="highlightDescInput" placeholder="What's the story behind this moment?"
+                  style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px; resize:vertical;"
+                  onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
+                  onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
+      </div>
+
+      <!-- Price -->
+      <div style="margin-bottom:28px; text-align:center;">
+        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">Unlock Price</div>
+        <div style="display:inline-flex; align-items:center; gap:10px; background:#0a0a0a; padding:12px 20px; border-radius:16px; border:1px solid #333;">
+          <input type="tel" id="highlightPriceInput" value="50" min="10" maxlength="5"
+                 style="width:80px; background:transparent; border:none; outline:none; color:#00ff9d; font-size:28px; font-weight:800; text-align:center;"
+                 onfocus="this.parentNode.style.borderColor='#00ff9d'; this.parentNode.style.boxShadow='0 0 0 3px rgba(0,255,157,0.2)'"
+                 onblur="this.parentNode.style.borderColor='#333'; this.parentNode.style.boxShadow='none'">
+          <span style="font-size:26px; font-weight:800; color:#888;">STRZ</span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div style="margin:28px 0; text-align:center;">
+        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
+          Tags <span style="color:#666; font-weight:500;">(optional)</span>
+        </div>
+        <div id="tagSelector" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:360px; margin:0 auto;">
+          <div class="tag-btn" data-tag="hot">Hot</div>
+          <div class="tag-btn" data-tag="cute">Cute</div>
+          <div class="tag-btn" data-tag="dance">Dance</div>
+          <div class="tag-btn" data-tag="body">Body</div>
+          <div class="tag-btn" data-tag="sexy">Sexy</div>
+          <div class="tag-btn" data-tag="twerk">Twerk</div>
+          <div class="tag-btn" data-tag="tease">Tease</div>
+          <div class="tag-btn" data-tag="selfie">Selfie</div>
+          <div class="tag-btn" data-tag="beauty">Beauty</div>
+          <div class="tag-btn" data-tag="vibes">Vibes</div>
+        </div>
+      </div>
+
+      <!-- Upload Button + Progress Bar + Status -->
+      <div style="text-align:center; margin-top:32px;">
+        <button id="uploadHighlightBtn" style="
+          padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
+          color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
+          cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
+          transition:all 0.3s ease; position:relative; z-index:2;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
+          Upload
+        </button>
+
+       <div id="progressContainer" style="
+  margin:14px auto 0; 
+  width:80%; 
+  max-width:340px; 
+  height:8px;
+  background:rgba(255,255,255,0.08); 
+  border-radius:4px; 
+  overflow:hidden;
+  opacity:0; 
+  transition:opacity 0.4s ease;
+">
+  <div id="progressBar" style="
+    width:0%; 
+    height:100%; 
+    background:linear-gradient(90deg, #ff2e78, #ff8c2e);
+    border-radius:4px; 
+    transition:width 0.3s ease-out;
+  "></div>
+</div>
+      </div>
+
+      <div id="highlightUploadStatus" style="
+        margin-top:12px; text-align:center; font-size:14px; font-weight:600;
+        min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;
+      "></div>
+
+    </div>
+  </div>
+</div>
+
+  
+<!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
+<div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
+  <h2 style="
+    text-align:center;
+    font-size:28px;
+    font-weight:900;
+    background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin:0 0 20px;
+    letter-spacing:1px;
+  ">
+    MY CLIPS LIST
+  </h2>
+  <p style="text-align:center; color:#aaa; font-size:14px; margin:-10px 0 30px;">
+    Your uploaded highlights · Delete anytime · Earn from your clips
+  </p>
+
+  <div id="myClipsGrid" style="
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:18px;
+    padding:10px;
+  ">
+    <!-- CLIPS WILL BE INJECTED HERE BY JS -->
+  </div>
+
+  <div id="noClipsMessage" style="
+    text-align:center;
+    padding:60px 20px;
+    color:#666;
+    font-size:16px;
+    display:none;
+  ">
+    <div style="font-size:60px; margin-bottom:20px;">.____.</div>
+    You haven't uploaded any clips yet.<br>
+    <span style="color:#ffcc00">Upload to start earning $STRZ!</span>
+  </div>
+
+
+      <!-- POLL SECTION – ADMIN ONLY (Header + Form attached as one unit) -->
+<div id="polls" class="section" style="margin:40px auto; max-width:900px;">
+
+  <!-- Integrated Header – attached directly to the content below -->
+  <div style="text-align:center; padding:0 0 24px 0;">
+    <span style="
+      display:block;
+      color:#00ff9d;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:3px;
+      text-transform:uppercase;
+      margin-bottom:8px;
+      opacity:0.9;
+    ">ADMIN CONTROL</span>
+    
+    <h2 style="
+      font-size:32px;
+      font-weight:900;
+      background:linear-gradient(90deg, #00ffea, #ff00c8, #ffea00);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin:0 0 12px 0;
+      letter-spacing:1.5px;
+      text-shadow:0 2px 10px rgba(0,255,234,0.3);
+    ">
+      POLL
+    </h2>
+    
+    <p style="
+      color:#aaa;
+      font-size:15px;
+      margin:0;
+      font-weight:500;
+    ">
+      Create daily community polls & reward winners with $STRZ
+    </p>
+  </div>
+
+  <!-- Poll Creation Box – directly follows the header with no extra gap -->
+  <div class="poll-creation-box" style="
+    background:#111;
+    border-radius:16px;
+    border:1px solid #222;
+    padding:24px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  ">
+    <!-- Question -->
+    <div style="margin-bottom:24px;">
+      <label for="poll-question" style="
+        display:block;
+        color:#ccc;
+        font-size:14px;
+        font-weight:600;
+        margin-bottom:8px;
+      ">Poll Question</label>
+      <input
+        id="poll-question"
+        class="poll-input"
+        placeholder="Who has the cutest vibe today?"
+        maxlength="120"
+        style="width:100%;"
+      />
+    </div>
+
+    <!-- Options -->
+    <div style="margin-bottom:24px;">
+      <label style="
+        display:block;
+        color:#ccc;
+        font-size:14px;
+        font-weight:600;
+        margin-bottom:8px;
+      ">Options</label>
+      <div id="poll-options-container" class="options-grid" style="display:grid; grid-template-columns:1fr; gap:12px;">
+        <input class="poll-option-input" placeholder="Option 1 (required)" maxlength="60" required />
+        <input class="poll-option-input" placeholder="Option 2 (required)" maxlength="60" required />
+        <input class="poll-option-input" placeholder="Option 3 (optional)" maxlength="60" />
+        <input class="poll-option-input" placeholder="Option 4 (optional)" maxlength="60" />
+      </div>
+    </div>
+
+    <!-- Reward + Duration -->
+    <div class="poll-meta-row" style="display:flex; flex-wrap:wrap; gap:16px;">
+      <div class="meta-field" style="flex:1; min-width:140px;">
+        <label for="poll-reward" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
+          Reward ($STRZ)
+        </label>
+        <input
+          id="poll-reward"
+          type="number"
+          min="10"
+          max="1000"
+          value="50"
+          class="poll-meta-input"
+          style="width:100%;"
+        />
+      </div>
+      <div class="meta-field" style="flex:1; min-width:140px;">
+        <label for="poll-duration" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
+          Duration (hours)
+        </label>
+        <input
+          id="poll-duration"
+          type="number"
+          min="1"
+          max="168"
+          value="24"
+          class="poll-meta-input"
+          style="width:100%;"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Button -->
+  <div style="text-align:center; margin:24px 0;">
+    <button id="create-new-poll" class="create-btn">
+      Create Poll
+    </button>
+  </div>
+
+  <!-- Preview Area -->
+  <div id="current-poll-admin" class="preview-box">
+    <p class="preview-placeholder">Preview will appear here after creation</p>
+  </div>
+</div>
+</div>
+
+  
+  
+  
+      <!-- Messages / Additional Info -->
+      <div id="hostMessagesContainer" style="padding:6px 0;">
+        <!-- Messages or host-specific info will be dynamically loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<div class="star-popup" id="starPopup">
+  <div id="starText">You've just earned +1 STRZ! ⭐</div>
+</div>
+
+
+<!-- 🌟 Featured Hosts Modal (move here, at page root) -->
+<div id="featuredHostsModal" class="featured-modal">
+  <div class="featured-modal-content">
+
+    <span class="featured-close">&times;</span>
+
+    <!-- 🎥 Video + Info -->
+    <div id="featuredHostVideo" class="featured-host-video-container"></div>
+    <div class="video-shimmer"></div>
+
+    <div class="featured-host-footer">
+      <div>
+        <div id="featuredHostUsername" class="featured-host-username"></div>
+        <div id="featuredHostDetails" class="featured-host-details"></div>
+      </div>
+
+      <div class="gift-slider-container">
+        <input type="range" id="giftSlider" min="1" max="999" value="1">
+        <span id="giftDisplay">
+          <span id="giftAmount">1</span>
+          <span class="star-emoji">⭐</span>
+        </span>
+        <button id="featuredGiftBtn" class="featured-gift-btn">GIFT</button>
+      </div>
+
+      <div id="featuredHostList" class="featured-host-list"></div>
+
+      <div class="featured-nav-buttons">
+        <a href="#" id="prevHost" class="featured-nav-link">Previous</a>
+        <a href="#" id="nextHost" class="featured-nav-link">Next</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+<!-- Gift Alert -->
+<div id="giftAlert" class="gift-alert"></div>
+<script type="module" src="chat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
+</body>
+  </html>
