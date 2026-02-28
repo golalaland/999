@@ -2434,95 +2434,94 @@ function sanitizeKey(email) {
     `;
     card.appendChild(header);
 
-    // ────────────────────────────────────────────────
-    // Legendary details logic
-    const gender     = (user.gender || "person").toLowerCase();
-    const isMale     = gender === "male";
-    const pronoun    = isMale ? "his" : "her";
-    const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-    const fruit      = user.fruitPick || "🍇";
-    const nature     = user.naturePick || "cool";
-    const bodyType   = user.bodyTypePick || "";
-    const city       = user.location || user.city || "Lagos";
-    const country    = user.country || "Nigeria";
+// Legendary details logic
+const gender     = (user.gender || "person").toLowerCase();
+const isMale     = gender === "male";
+const pronoun    = isMale ? "his" : "her";
+const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
+const fruit      = user.fruitPick || "🍇";
+const nature     = user.naturePick || "cool";
+const bodyType   = user.bodyTypePick || "";
+const city       = user.location || user.city || "Lagos";
+const country    = user.country || "Nigeria";
 
-    const isVIP           = !!user.hasPaid;
-    const isPrivilegedMale = isMale && (user.isHost || isVIP);
+// VIP status is controlled ONLY by hasPaid
+const isVIP           = !!user.hasPaid;               // true → show badge
+const isPrivilegedMale = isMale && (user.isHost || isVIP);
 
-    // Main text container
-    const detailsWrapper = document.createElement("div");
-    detailsWrapper.style.cssText = `
-      margin: 0 0 12px;
-      font-size: 13.5px;
-      line-height: 1.45;
-      color: #d0d0d0;
-    `;
+const detailsWrapper = document.createElement("div");
+detailsWrapper.style.cssText = `
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #d0d0d0;
+`;
 
-    let mainText = "";
+let mainText = "";
 
-    if (isPrivilegedMale) {
-      // Privileged males → clean & minimal
-      mainText = `A ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
-    } else {
-      // Females + regular males
-      const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
-      let intro = `A ${gender}`;
-      if (descriptors) intro = `${descriptors} ${gender}`;
+if (isPrivilegedMale) {
+  // Privileged males (host or VIP) — very clean
+  mainText = `A ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}.`;
+} else {
+  // Everyone else
+  const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
+  let intro = `A ${gender}`;
+  if (descriptors) intro = `${descriptors} ${gender}`;
 
-      mainText = `A ${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
-      if (!isMale) mainText += ` ${fruit}`;
-      mainText += ".";
+  mainText = `${intro} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
+  if (!isMale) mainText += ` ${fruit}`;
+  mainText += ".";
+}
+
+// Only apply old-school flair to truly regular users
+if (!user.isHost && !isVIP) {
+  const flair = isMale ? " 😎" : " 💋";
+  mainText = `A ${gender} from ${city}, ${country}${flair}.`;
+}
+
+const mainLine = document.createElement("p");
+mainLine.textContent = mainText;
+mainLine.style.margin = "0";
+detailsWrapper.appendChild(mainLine);
+
+// VIP badge only when hasPaid is true
+if (isVIP) {
+  const vipBadge = document.createElement("div");
+  vipBadge.textContent = "VIP";
+  vipBadge.className = "vip-badge";
+  Object.assign(vipBadge.style, {
+    margin: "8px auto 4px",
+    width: "fit-content",
+    padding: "4px 14px",
+    fontSize: "11.5px",
+    fontWeight: "700",
+    letterSpacing: "0.7px",
+    textTransform: "uppercase",
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #b8860b, #ffd700 50%, #b8860b)",
+    backgroundSize: "300% 300%",
+    borderRadius: "20px",
+    boxShadow: "0 2px 10px rgba(255,215,0,0.35)",
+    animation: "vipShimmer 4s ease-in-out infinite"
+  });
+  detailsWrapper.appendChild(vipBadge);
+}
+
+card.appendChild(detailsWrapper);
+
+// Shimmer keyframes (only inject once)
+if (isVIP && !document.getElementById("vip-shimmer-style")) {
+  const style = document.createElement("style");
+  style.id = "vip-shimmer-style";
+  style.textContent = `
+    @keyframes vipShimmer {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-
-    // Fallback for completely regular users (no host, no VIP)
-    if (!user.isHost && !isVIP) {
-      const flair = isMale ? "😎" : "💋";
-      mainText = `A ${gender} from ${city}, ${country}. ${flair}`;
-    }
-
-    const mainLine = document.createElement("p");
-    mainLine.textContent = mainText;
-    mainLine.style.margin = "0";
-    detailsWrapper.appendChild(mainLine);
-
-    // VIP badge — centered below the main line
-    if (isVIP) {
-      const vipBadge = document.createElement("div");
-      vipBadge.textContent = "VIP";
-      vipBadge.className = "vip-badge";
-      Object.assign(vipBadge.style, {
-        margin: "8px auto 4px",
-        width: "fit-content",
-        padding: "4px 14px",
-        fontSize: "11.5px",
-        fontWeight: "700",
-        letterSpacing: "0.7px",
-        textTransform: "uppercase",
-        color: "#ffffff",
-        background: "linear-gradient(135deg, #b8860b, #ffd700 50%, #b8860b)",
-        backgroundSize: "300% 300%",
-        borderRadius: "20px",
-        boxShadow: "0 2px 10px rgba(255,215,0,0.35)",
-        animation: "vipShimmer 4s ease-in-out infinite"
-      });
-      detailsWrapper.appendChild(vipBadge);
-    }
-
-    card.appendChild(detailsWrapper);
-
-    // Inject shimmer animation (only once)
-    if (isVIP && !document.getElementById("vip-shimmer-style")) {
-      const style = document.createElement("style");
-      style.id = "vip-shimmer-style";
-      style.textContent = `
-        @keyframes vipShimmer {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
+  `;
+  document.head.appendChild(style);
+}
 
     // Bio with typewriter
     const bioEl = document.createElement("div");
