@@ -2462,7 +2462,7 @@ function sanitizeKey(email) {
 
     if (isPrivilegedMale) {
       // Privileged males → clean & minimal
-      mainText = `A ${gender} in ${pronoun} ${ageGroup} currently in ${city}, ${country}.😎`;
+      mainText = `A ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}`;
     } else {
       // Females + regular males
       const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
@@ -6287,17 +6287,25 @@ filtered.forEach(video => {
     card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
   };
 
-  const vidContainer = document.createElement("div");
-  vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+const vidContainer = document.createElement("div");
+vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+
+// ── EARLY POSTER FALLBACK (shows instantly while video loads)
+if (video.thumbnailUrl) {
+  vidContainer.style.backgroundImage = `url(${video.thumbnailUrl})`;
+  vidContainer.style.backgroundSize = "cover";
+  vidContainer.style.backgroundPosition = "center";
+  vidContainer.style.backgroundRepeat = "no-repeat";
+}
 
 // ── VIDEO ELEMENT SETUP ───────────────────────────────────────────────
 const videoEl = document.createElement("video");
 videoEl.muted = true;
 videoEl.loop = true;
-videoEl.preload = "metadata";
+videoEl.preload = (filterMode === "trending" || video.isTrending) ? "auto" : "metadata";
 videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
 
-// Use thumbnail as poster if available (critical for Free Tonight fresh uploads)
+// Set poster anyway (backup + for when background is removed)
 videoEl.poster = video.thumbnailUrl || video.videoUrl || "";
 
 // ── VIDEO SOURCE LOGIC ────────────────────────────────────────────────
@@ -6307,9 +6315,14 @@ videoEl.src = (filterMode === "trending" || video.isTrending)
 
 videoEl.load();
 
+// Remove background fallback once video actually has usable data
+videoEl.addEventListener('loadeddata', () => {
+  vidContainer.style.backgroundImage = '';   // clean up
+  vidContainer.style.background = '#000';    // restore solid bg if needed
+}, { once: true });
+
 // ── HOVER PLAY / LOCK OVERLAY ─────────────────────────────────────────
 if (isUnlocked || filterMode === "trending" || video.isTrending) {
-  // Free / unlocked behavior: hover plays muted preview
   vidContainer.onmouseenter = (e) => {
     e.stopPropagation();
     videoEl.play().catch(() => {});
@@ -6320,11 +6333,10 @@ if (isUnlocked || filterMode === "trending" || video.isTrending) {
     videoEl.currentTime = 0;
   };
 } else {
-  // Locked: show overlay
   const lock = document.createElement("div");
   lock.innerHTML = `
     <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
-                display:flex; align-items:center; justify-content:center;">
+                display:flex; align-items:center; justify-content:center; z-index:2;">
       <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
         <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
       </svg>
@@ -6348,7 +6360,7 @@ vidContainer.onclick = (e) => {
 
 vidContainer.appendChild(videoEl);
 card.appendChild(vidContainer);
-
+   
   // ── INFO OVERLAY ─────────────────────────────────────────────────────
   const info = document.createElement("div");
   info.style.cssText = `
@@ -6452,7 +6464,6 @@ card.appendChild(badge);
 grid.appendChild(card);
 });
 
-// ── FILTER BUTTONS ─────────────────────────────────────────────────────
 // ── FILTER BUTTONS ─────────────────────────────────────────────────────
 unlockedBtn.onclick = () => {
   filterMode = filterMode === "unlocked" ? "all" : "unlocked";
