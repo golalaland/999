@@ -6182,7 +6182,6 @@ function showHighlightsModal(videos) {
       return true;
     });
 
-    // Apply active tag filters
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
@@ -6190,7 +6189,6 @@ function showHighlightsModal(videos) {
       });
     }
 
-    // Collect tags from visible videos
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6208,11 +6206,14 @@ function showHighlightsModal(videos) {
 
     const isFreeTonightMode = filterMode === "trending";
 
-    // Build tag buttons — show ALL tags (including location) in Free Tonight
+    // Build tag buttons — only location tags + fruitPick in Free Tonight
     sortedVisibleTags.forEach(tag => {
       const lowerTag = tag.toLowerCase();
-      const isLocationTag = locationKeywords.some(kw => lowerTag.includes(kw));
-      if (isLocationTag && !isFreeTonightMode) return;
+      const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+
+      if (isFreeTonightMode && !isLocation) return; // hide non-location in Free Tonight
+      if (!isFreeTonightMode && isLocation) return; // hide location outside Free Tonight
+
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
@@ -6238,7 +6239,7 @@ function showHighlightsModal(videos) {
     // ── MAIN VIDEO FILTER ─────────────────────────────────────────────────
     let filtered = videosToRender.filter(v => {
       if (filterMode === "trending") return v.isTrending === true;
-      if (v.isTrending === true) return false; // hide trending videos from All & Unlocked
+      if (v.isTrending === true) return false;
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       return true;
     });
@@ -6250,10 +6251,8 @@ function showHighlightsModal(videos) {
       });
     }
 
-    // Shuffle for random order
     filtered = filtered.sort(() => Math.random() - 0.5);
 
-    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = filterMode === "trending"
@@ -6352,39 +6351,64 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // ── TAGS (all shown in Free Tonight, including location) ───────────────
+      // ── TAGS LOGIC ────────────────────────────────────────────────────────
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
       const isFreeTonightMode = filterMode === "trending";
 
-      const displayedTags = (video.tags || []).filter(tag => {
+      // 1. Location tags (always shown in Free Tonight)
+      const locationTags = (video.tags || []).filter(tag => {
         if (!tag || typeof tag !== "string") return false;
-        const lowerTag = tag.trim().toLowerCase();
-        const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-        return isFreeTonightMode || !isLocation;
+        const lower = tag.trim().toLowerCase();
+        return locationKeywords.some(kw => lower.includes(kw));
       });
 
-      displayedTags.forEach(t => {
+      // 2. fruitPick tag (only in Free Tonight)
+      let fruitTag = null;
+      if (isFreeTonightMode && video.uploader && video.uploader.fruitPick) {
+        fruitTag = video.uploader.fruitPick.trim();
+      }
+
+      // Render location tags
+      locationTags.forEach(t => {
         const span = document.createElement("span");
         span.textContent = `#${t.trim()}`;
         const lowerT = t.trim().toLowerCase();
-        const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
+        const isLoc = locationKeywords.some(kw => lowerT.includes(kw));
         span.style.cssText = `
           font-size:11px;
           padding:2px 8px;
           border-radius:10px;
-          background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
-          color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
-          border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
+          background: rgba(0,255,234,0.3);
+          color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
         `;
         tagsEl.appendChild(span);
       });
 
+      // Render fruitPick as cute emoji tag (only in Free Tonight)
+      if (fruitTag) {
+        const fruitSpan = document.createElement("span");
+        fruitSpan.textContent = fruitTag; // e.g. 🍒
+        fruitSpan.style.cssText = `
+          font-size:16px;
+          line-height:1;
+          padding:4px 10px;
+          border-radius:50%;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(4px);
+          color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        `;
+        tagsEl.appendChild(fruitSpan);
+      }
+
       info.append(title, user, tagsEl);
       card.appendChild(info);
 
-      // ── BADGE (fixed & working version with Free Tonight support) ────────
+      // ── BADGE ─────────────────────────────────────────────────────────────
       const badge = document.createElement("div");
       let badgeText = "";
       let badgeBg = "";
@@ -6446,7 +6470,7 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH – live, case-insensitive, only username/chatId
+  // SEARCH
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
