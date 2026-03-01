@@ -6356,38 +6356,58 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // ── TAGS (all shown in Free Tonight, including location) ───────────────
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+    // ── TAGS (all shown in Free Tonight, including location) ───────────────
+const tagsEl = document.createElement("div");
+tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+const isFreeTonightMode = filterMode === "trending";
 
-      const isFreeTonightMode = filterMode === "trending";
+// Location tags — shown in Free Tonight
+const locationTags = (video.tags || []).filter(tag => {
+  if (!tag || typeof tag !== "string") return false;
+  const lowerTag = tag.trim().toLowerCase();
+  const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+  return isFreeTonightMode && isLocation; // only location in Free Tonight
+});
 
-      const displayedTags = (video.tags || []).filter(tag => {
-        if (!tag || typeof tag !== "string") return false;
-        const lowerTag = tag.trim().toLowerCase();
-        const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-        return isFreeTonightMode || !isLocation;
-      });
+locationTags.forEach(t => {
+  const span = document.createElement("span");
+  span.textContent = `#${t.trim()}`;
+  span.style.cssText = `
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:10px;
+    background: rgba(0,255,234,0.3);
+    color: #00ffea;
+    border: 1px solid rgba(0,255,234,0.6);
+  `;
+  tagsEl.appendChild(span);
+});
 
-      displayedTags.forEach(t => {
-        const span = document.createElement("span");
-        span.textContent = `#${t.trim()}`;
-        const lowerT = t.trim().toLowerCase();
-        const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
-        span.style.cssText = `
-          font-size:11px;
-          padding:2px 8px;
-          border-radius:10px;
-          background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
-          color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
-          border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
-        `;
-        tagsEl.appendChild(span);
-      });
+// fruitPick emoji tag — only in Free Tonight
+if (isFreeTonightMode && video.uploader?.fruitPick) {
+  const fruitSpan = document.createElement("span");
+  fruitSpan.textContent = video.uploader.fruitPick.trim(); // 🍒, 🍓, etc.
+  fruitSpan.style.cssText = `
+    font-size:18px;
+    line-height:1;
+    padding:6px 12px;
+    border-radius:50%;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+  `;
+  tagsEl.appendChild(fruitSpan);
+}
 
-      info.append(title, user, tagsEl);
-      card.appendChild(info);
-
+info.append(title, user, tagsEl);
+card.appendChild(info);
       // ── BADGE (fixed & working version with Free Tonight support) ────────
       const badge = document.createElement("div");
       let badgeText = "";
