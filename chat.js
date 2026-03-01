@@ -6045,26 +6045,18 @@ showHighlightsModal(allClips);
 };
 
 /* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
+/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
+    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    zIndex: "999999",
-    overflowY: "auto",
-    padding: "20px 12px",
-    boxSizing: "border-box",
+    display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "flex-start",
+    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
 
@@ -6108,8 +6100,8 @@ function showHighlightsModal(videos) {
     transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
-  closeBtn.onmouseenter = () => (closeBtn.style.transform = "rotate(90deg) scale(1.2)");
-  closeBtn.onmouseleave = () => (closeBtn.style.transform = "rotate(0deg) scale(1)");
+  closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+  closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
   closeBtn.onclick = (e) => {
     e.stopPropagation();
     closeBtn.style.transform = "rotate(180deg) scale(1.35)";
@@ -6124,22 +6116,17 @@ function showHighlightsModal(videos) {
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
+  // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
 
   const unlockedBtn = document.createElement("button");
   unlockedBtn.textContent = "Show Unlocked";
   Object.assign(unlockedBtn.style, {
-    padding: "8px 16px",
-    borderRadius: "30px",
-    fontSize: "13px",
-    fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)",
-    color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)",
-    cursor: "pointer",
-    transition: "all 0.3s",
-    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
+    padding: "8px 16px", borderRadius: "30px", fontSize: "13px", fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer",
+    transition: "all 0.3s", boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
 
   const trendingBtn = document.createElement("button");
@@ -6163,6 +6150,7 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
+  // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -6172,6 +6160,7 @@ function showHighlightsModal(videos) {
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
+  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
@@ -6192,11 +6181,12 @@ function showHighlightsModal(videos) {
     // ── VISIBLE VIDEOS FOR TAG BUTTONS ─────────────────────────────────────
     let visibleVideos = videosToRender.filter(v => {
       if (filterMode === "trending") return v.isTrending === true;
-      if (v.isTrending === true) return false;
+      if (v.isTrending === true) return false; // hide trending from All & Unlocked
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       return true;
     });
 
+    // Apply active tag filters
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
@@ -6204,6 +6194,7 @@ function showHighlightsModal(videos) {
       });
     }
 
+    // Collect tags from visible videos
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6212,7 +6203,6 @@ function showHighlightsModal(videos) {
         }
       });
     });
-
     const sortedVisibleTags = [...visibleTags].sort();
 
     const locationKeywords = [
@@ -6222,13 +6212,11 @@ function showHighlightsModal(videos) {
 
     const isFreeTonightMode = filterMode === "trending";
 
-    // Build tag filter buttons — only location tags in Free Tonight
+    // Build tag buttons — show ALL tags (including location) in Free Tonight
     sortedVisibleTags.forEach(tag => {
       const lowerTag = tag.toLowerCase();
-      const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-      if (isFreeTonightMode && !isLocation) return;
-      if (!isFreeTonightMode && isLocation) return;
-
+      const isLocationTag = locationKeywords.some(kw => lowerTag.includes(kw));
+      if (isLocationTag && !isFreeTonightMode) return;
       const btn = document.createElement("button");
       btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
@@ -6254,7 +6242,7 @@ function showHighlightsModal(videos) {
     // ── MAIN VIDEO FILTER ─────────────────────────────────────────────────
     let filtered = videosToRender.filter(v => {
       if (filterMode === "trending") return v.isTrending === true;
-      if (v.isTrending === true) return false;
+      if (v.isTrending === true) return false; // hide trending videos from All & Unlocked
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       return true;
     });
@@ -6266,8 +6254,10 @@ function showHighlightsModal(videos) {
       });
     }
 
+    // Shuffle for random order
     filtered = filtered.sort(() => Math.random() - 0.5);
 
+    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = filterMode === "trending"
@@ -6283,13 +6273,8 @@ function showHighlightsModal(videos) {
       const isUnlocked = unlockedVideos.includes(video.id);
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative",
-        aspectRatio: "9/16",
-        borderRadius: "16px",
-        overflow: "hidden",
-        background: "#0f0a1a",
-        cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
@@ -6305,44 +6290,20 @@ function showHighlightsModal(videos) {
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
-      // ── INSTANT THUMBNAIL (fixes slow/no thumbnail issue) ───────────────
-      if (video.thumbnail) {
-        vidContainer.style.backgroundImage = `url(${video.thumbnail})`;
-        vidContainer.style.backgroundSize = "cover";
-        vidContainer.style.backgroundPosition = "center";
-        vidContainer.style.backgroundRepeat = "no-repeat";
-      }
-
       const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = filterMode === "trending" ? "auto" : "metadata";
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      videoEl.poster = video.thumbnail || video.videoUrl || "";
 
       if (isUnlocked || filterMode === "trending" || video.isTrending) {
         videoEl.src = video.previewClip || video.videoUrl || "";
         videoEl.load();
-
-        // Remove background fallback once video data is ready
-        videoEl.addEventListener('loadeddata', () => {
-          vidContainer.style.backgroundImage = "";
-        }, { once: true });
-
-        vidContainer.onmouseenter = (e) => {
-          e.stopPropagation();
-          videoEl.play().catch(() => {});
-        };
-        vidContainer.onmouseleave = (e) => {
-          e.stopPropagation();
-          videoEl.pause();
-          videoEl.currentTime = 0;
-        };
+        vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+        vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       } else {
         const lock = document.createElement("div");
         lock.innerHTML = `
           <div style="position:absolute; inset:0; background:rgba(10,5,30,0.85);
-                      display:flex; align-items:center; justify-content:center; z-index:2;">
+                      display:flex; align-items:center; justify-content:center;">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C9.2 2 7 4.2 7 7V11H6C4.9 11 4 11.9 4 13V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V13C20 11.9 19.1 11 18 11H17V7C17 4.2 14.8 2 12 2ZM12 4C13.7 4 15 5.3 15 7V11H9V7C9 5.3 10.3 4 12 4Z" fill="#ff00f2"/>
             </svg>
@@ -6395,67 +6356,39 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // ── TAGS ON CARD (only location + fruitPick in Free Tonight) ────────
+      // ── TAGS (all shown in Free Tonight, including location) ───────────────
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
       const isFreeTonightMode = filterMode === "trending";
 
-      // Location tags
-      const locationTags = (video.tags || []).filter(tag => {
+      const displayedTags = (video.tags || []).filter(tag => {
         if (!tag || typeof tag !== "string") return false;
-        const lower = tag.trim().toLowerCase();
-        return locationKeywords.some(kw => lower.includes(kw));
+        const lowerTag = tag.trim().toLowerCase();
+        const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+        return isFreeTonightMode || !isLocation;
       });
 
-      // fruitPick from pre-loaded uploader data
-      let fruitTag = null;
-      if (isFreeTonightMode && video.uploader?.fruitPick) {
-        fruitTag = video.uploader.fruitPick.trim();
-      }
-
-      // Render location tags
-      locationTags.forEach(t => {
+      displayedTags.forEach(t => {
         const span = document.createElement("span");
         span.textContent = `#${t.trim()}`;
+        const lowerT = t.trim().toLowerCase();
+        const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
         span.style.cssText = `
           font-size:11px;
           padding:2px 8px;
           border-radius:10px;
-          background: rgba(0,255,234,0.3);
-          color: #00ffea;
-          border: 1px solid rgba(0,255,234,0.6);
+          background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
+          color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
+          border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
         `;
         tagsEl.appendChild(span);
       });
 
-      // Render fruit emoji tag (only in Free Tonight)
-      if (fruitTag) {
-        const fruitSpan = document.createElement("span");
-        fruitSpan.textContent = fruitTag;
-        fruitSpan.style.cssText = `
-          font-size:18px;
-          line-height:1;
-          padding:6px 12px;
-          border-radius:50%;
-          background: rgba(255, 255, 255, 0.18);
-          backdrop-filter: blur(6px);
-          color: #fff;
-          border: 1px solid rgba(255,255,255,0.35);
-          box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 40px;
-          min-height: 40px;
-        `;
-        tagsEl.appendChild(fruitSpan);
-      }
-
       info.append(title, user, tagsEl);
       card.appendChild(info);
 
-      // ── BADGE ─────────────────────────────────────────────────────────────
+      // ── BADGE (fixed & working version with Free Tonight support) ────────
       const badge = document.createElement("div");
       let badgeText = "";
       let badgeBg = "";
@@ -6517,7 +6450,7 @@ function showHighlightsModal(videos) {
     renderCards();
   };
 
-  // SEARCH
+  // SEARCH – live, case-insensitive, only username/chatId
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
