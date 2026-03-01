@@ -6431,7 +6431,7 @@ Object.assign(badge.style, {
 
 card.appendChild(badge);
 grid.appendChild(card);
-    }
+       
 
   // Filter buttons
   unlockedBtn.onclick = () => {
