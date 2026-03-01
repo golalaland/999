@@ -6001,39 +6001,42 @@ highlightsBtn.onclick = async () => {
             return;
         }
 
-        const allClips = [];
+   const allClips = [];
+snap.forEach(userDoc => {
+  const userData = userDoc.data();
+  const clips = userData.highlights || [];
+  clips.forEach(clip => {
+    allClips.push({
+      id: clip.id,
+      highlightVideo: clip.videoUrl || "",
+      highlightVideoPrice: clip.highlightVideoPrice || 0,
+      title: clip.title || "Untitled",
+      uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+      uploaderId: userData.uploaderId || userDoc.id,
+      uploaderEmail: userData.uploaderEmail || "unknown",
+      description: clip.description || "",
+      thumbnail: clip.thumbnailUrl || "",
+      createdAt: clip.uploadedAt || null,
+      unlockedBy: clip.unlockedBy || [],
+      previewClip: clip.previewClip || "",
+      videoUrl: clip.videoUrl || "",
+      isTrending: clip.isTrending || false,
+      tags: clip.tags || [],
 
-        snap.forEach(userDoc => {
-            const userData = userDoc.data();
-            const clips = userData.highlights || [];
+      // ── NEW: Pre-load fruitPick from the user document ─────────────────
+      uploader: {
+        fruitPick: userData.fruitPick || null   // ← this line makes it available
+      }
+    });
+  });
+});
 
-            clips.forEach(clip => {
-                allClips.push({
-                    id: clip.id,
-                    highlightVideo: clip.videoUrl || "",
-                    highlightVideoPrice: clip.highlightVideoPrice || 0,
-                    title: clip.title || "Untitled",
-                    uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-                    uploaderId: userData.uploaderId || userDoc.id,
-                    uploaderEmail: userData.uploaderEmail || "unknown",
-                    description: clip.description || "",
-                    thumbnail: clip.thumbnailUrl || "",
-                    createdAt: clip.uploadedAt || null,
-                    unlockedBy: clip.unlockedBy || [],
-                    previewClip: clip.previewClip || "",
-                    videoUrl: clip.videoUrl || "",
-                    isTrending: clip.isTrending || false,
-                    tags: clip.tags || []
-                });
-            });
-        });
+if (allClips.length === 0) {
+  showGoldAlert("No clips available yet");
+  return;
+}
 
-        if (allClips.length === 0) {
-            showGoldAlert("No clips available yet");
-            return;
-        }
-
-        showHighlightsModal(allClips);  // ← pass array, as your modal originally expects
+showHighlightsModal(allClips);
 
     } catch (err) {
         console.error("Error fetching clips:", err);
@@ -6351,62 +6354,67 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // ── TAGS LOGIC ────────────────────────────────────────────────────────
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+   // ── TAGS LOGIC ────────────────────────────────────────────────────────
+const tagsEl = document.createElement("div");
+tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      const isFreeTonightMode = filterMode === "trending";
+const isFreeTonightMode = filterMode === "trending";
 
-      // 1. Location tags (always shown in Free Tonight)
-      const locationTags = (video.tags || []).filter(tag => {
-        if (!tag || typeof tag !== "string") return false;
-        const lower = tag.trim().toLowerCase();
-        return locationKeywords.some(kw => lower.includes(kw));
-      });
+// 1. Location tags — always shown in Free Tonight
+const locationTags = (video.tags || []).filter(tag => {
+  if (!tag || typeof tag !== "string") return false;
+  const lower = tag.trim().toLowerCase();
+  return locationKeywords.some(kw => lower.includes(kw));
+});
 
-      // 2. fruitPick tag (only in Free Tonight)
-      let fruitTag = null;
-      if (isFreeTonightMode && video.uploader && video.uploader.fruitPick) {
-        fruitTag = video.uploader.fruitPick.trim();
-      }
+// 2. fruitPick tag — only in Free Tonight, from pre-loaded user data
+let fruitTag = null;
+if (isFreeTonightMode && video.uploader?.fruitPick) {
+  fruitTag = video.uploader.fruitPick.trim(); // e.g. "🍒"
+}
 
-      // Render location tags
-      locationTags.forEach(t => {
-        const span = document.createElement("span");
-        span.textContent = `#${t.trim()}`;
-        const lowerT = t.trim().toLowerCase();
-        const isLoc = locationKeywords.some(kw => lowerT.includes(kw));
-        span.style.cssText = `
-          font-size:11px;
-          padding:2px 8px;
-          border-radius:10px;
-          background: rgba(0,255,234,0.3);
-          color: #00ffea;
-          border: 1px solid rgba(0,255,234,0.6);
-        `;
-        tagsEl.appendChild(span);
-      });
+// Render location tags
+locationTags.forEach(t => {
+  const span = document.createElement("span");
+  span.textContent = `#${t.trim()}`;
+  const lowerT = t.trim().toLowerCase();
+  const isLoc = locationKeywords.some(kw => lowerT.includes(kw));
+  span.style.cssText = `
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:10px;
+    background: rgba(0,255,234,0.3);
+    color: #00ffea;
+    border: 1px solid rgba(0,255,234,0.6);
+  `;
+  tagsEl.appendChild(span);
+});
 
-      // Render fruitPick as cute emoji tag (only in Free Tonight)
-      if (fruitTag) {
-        const fruitSpan = document.createElement("span");
-        fruitSpan.textContent = fruitTag; // e.g. 🍒
-        fruitSpan.style.cssText = `
-          font-size:16px;
-          line-height:1;
-          padding:4px 10px;
-          border-radius:50%;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(4px);
-          color: #fff;
-          border: 1px solid rgba(255,255,255,0.3);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        `;
-        tagsEl.appendChild(fruitSpan);
-      }
+// Render fruitPick as cute emoji tag (only in Free Tonight)
+if (fruitTag) {
+  const fruitSpan = document.createElement("span");
+  fruitSpan.textContent = fruitTag;
+  fruitSpan.style.cssText = `
+    font-size:18px;
+    line-height:1;
+    padding:6px 12px;
+    border-radius:50%;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+  `;
+  tagsEl.appendChild(fruitSpan);
+}
 
-      info.append(title, user, tagsEl);
-      card.appendChild(info);
+info.append(title, user, tagsEl);
+card.appendChild(info);
 
       // ── BADGE ─────────────────────────────────────────────────────────────
       const badge = document.createElement("div");
