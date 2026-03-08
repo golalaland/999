@@ -5950,67 +5950,61 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-
 /* Highlights Button – shows ALL clips from ALL users */
 highlightsBtn.onclick = async () => {
-    try {
-        if (!currentUser?.uid) {
-            showGoldAlert("Please log in to view cuties");
-            return;
-        }
-
-        const colRef = collection(db, "highlightVideos");
-        const snap = await getDocs(colRef);
-
-        if (snap.empty) {
-            showGoldAlert("No clips uploaded yet");
-            return;
-        }
-
-   const allClips = [];
-snap.forEach(userDoc => {
-  const userData = userDoc.data();
-  const clips = userData.highlights || [];
-  clips.forEach(clip => {
-    allClips.push({
-      id: clip.id,
-      highlightVideo: clip.videoUrl || "",
-      highlightVideoPrice: clip.highlightVideoPrice || 0,
-      title: clip.title || "Untitled",
-      uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-      uploaderId: userData.uploaderId || userDoc.id,
-      uploaderEmail: userData.uploaderEmail || "unknown",
-      description: clip.description || "",
-      thumbnail: clip.thumbnailUrl || "",
-      createdAt: clip.uploadedAt || null,
-      unlockedBy: clip.unlockedBy || [],
-      previewClip: clip.previewClip || "",
-      videoUrl: clip.videoUrl || "",
-      isTrending: clip.isTrending || false,
-      tags: clip.tags || [],
-
-      // ── NEW: Pre-load fruitPick from the user document ─────────────────
-      uploader: {
-        fruitPick: userData.fruitPick || null   // ← this line makes it available
-      }
-    });
-  });
-});
-
-if (allClips.length === 0) {
-  showGoldAlert("No clips available yet");
-  return;
-}
-
-showHighlightsModal(allClips);
-
-    } catch (err) {
-        console.error("Error fetching clips:", err);
-        showGoldAlert("Error fetching clips — please try again.");
+  try {
+    if (!currentUser?.uid) {
+      showGoldAlert("Please log in to view cuties");
+      return;
     }
+    const colRef = collection(db, "highlightVideos");
+    const snap = await getDocs(colRef);
+    if (snap.empty) {
+      showGoldAlert("No clips uploaded yet");
+      return;
+    }
+
+    const allClips = [];
+    snap.forEach(userDoc => {
+      const userData = userDoc.data();
+      const clips = userData.highlights || [];
+      clips.forEach(clip => {
+        allClips.push({
+          id: clip.id,
+          highlightVideo: clip.videoUrl || "",
+          highlightVideoPrice: clip.highlightVideoPrice || 0,
+          title: clip.title || "Untitled",
+          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+          uploaderId: userData.uploaderId || userDoc.id,
+          uploaderEmail: userData.uploaderEmail || "unknown",
+          description: clip.description || "",
+          thumbnail: clip.thumbnailUrl || "",
+          createdAt: clip.uploadedAt || null,
+          unlockedBy: clip.unlockedBy || [],
+          previewClip: clip.previewClip || "",
+          videoUrl: clip.videoUrl || "",
+          isTrending: clip.isTrending || false,
+          tags: clip.tags || [],
+          // Pre-load fruitPick (already present — kept for fruit tag)
+          uploader: {
+            fruitPick: userData.fruitPick || null
+          }
+        });
+      });
+    });
+
+    if (allClips.length === 0) {
+      showGoldAlert("No clips available yet");
+      return;
+    }
+
+    showHighlightsModal(allClips);
+  } catch (err) {
+    console.error("Error fetching clips:", err);
+    showGoldAlert("Error fetching clips — please try again.");
+  }
 };
 
-/* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 /* ---------- Highlights Modal – Cuties Morphine Edition (RANDOM ORDER FIXED) ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
@@ -6026,7 +6020,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER
+  // HEADER (unchanged)
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -6047,7 +6041,7 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(intro);
 
-  // CLOSE BUTTON
+  // CLOSE BUTTON (unchanged)
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
@@ -6075,14 +6069,13 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS
+  // CONTROLS (unchanged)
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Main filter buttons
   const mainButtons = document.createElement("div");
   mainButtons.style.cssText = "display:flex; gap:12px; flex-wrap:wrap; justify-content:center;";
 
@@ -6116,7 +6109,6 @@ function showHighlightsModal(videos) {
   mainButtons.append(unlockedBtn, trendingBtn);
   controls.appendChild(mainButtons);
 
-  // TAG FILTER BUTTONS
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
@@ -6126,7 +6118,6 @@ function showHighlightsModal(videos) {
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
-  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
@@ -6140,6 +6131,29 @@ function showHighlightsModal(videos) {
   let filterMode = "all";
   let activeTags = new Set();
 
+  // Small spinner style (added once)
+  const spinnerStyle = document.createElement("style");
+  spinnerStyle.textContent = `
+    .profile-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(0,255,234,0.3);
+      border-top: 3px solid #00ffea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(spinnerStyle);
+
   function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
@@ -6147,12 +6161,11 @@ function showHighlightsModal(videos) {
     // ── VISIBLE VIDEOS FOR TAG BUTTONS ─────────────────────────────────────
     let visibleVideos = videosToRender.filter(v => {
       if (filterMode === "trending") return v.isTrending === true;
-      if (v.isTrending === true) return false; // hide trending from All & Unlocked
+      if (v.isTrending === true) return false;
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       return true;
     });
 
-    // Apply active tag filters
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
@@ -6160,7 +6173,6 @@ function showHighlightsModal(videos) {
       });
     }
 
-    // Collect tags from visible videos
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6208,7 +6220,7 @@ function showHighlightsModal(videos) {
     // ── MAIN VIDEO FILTER ─────────────────────────────────────────────────
     let filtered = videosToRender.filter(v => {
       if (filterMode === "trending") return v.isTrending === true;
-      if (v.isTrending === true) return false; // hide trending videos from All & Unlocked
+      if (v.isTrending === true) return false;
       if (filterMode === "unlocked") return unlockedVideos.includes(v.id);
       return true;
     });
@@ -6220,10 +6232,8 @@ function showHighlightsModal(videos) {
       });
     }
 
-    // Shuffle for random order
     filtered = filtered.sort(() => Math.random() - 0.5);
 
-    // Empty state
     if (filtered.length === 0) {
       const empty = document.createElement("div");
       empty.textContent = filterMode === "trending"
@@ -6242,8 +6252,23 @@ function showHighlightsModal(videos) {
         position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
         background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        border: "1px solid rgba(138,43,226,0.4)"
+        border: "1px solid rgba(138,43,226,0.4)",
+        opacity: 0, // start hidden for lazy load
+        transform: "translateY(20px)"
       });
+
+      // Fade in when visible
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            card.style.opacity = "1";
+            card.style.transform = "translateY(0)";
+            observer.unobserve(card);
+          }
+        });
+      }, { threshold: 0.1 });
+      observer.observe(card);
+
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -6301,85 +6326,69 @@ function showHighlightsModal(videos) {
         padding:60px 12px 12px;
       `;
 
-      const title = document.createElement("div");
-      title.textContent = video.title || "Cute moment";
-      title.style.cssText = "font-weight:700; font-size:14px; color:#e0b0ff; margin-bottom:4px;";
-
+      // USERNAME ONLY in Free Tonight (title removed)
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:12px; color:#00ffea; font-weight:600; cursor:pointer;";
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; margin-bottom:6px;";
 
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
+          // Show small spinner while loading profile
+          const spinner = document.createElement("div");
+          spinner.className = "profile-spinner";
+          user.appendChild(spinner);
+
           getDoc(doc(db, "users", video.uploaderId))
             .then(userSnap => {
+              spinner.remove();
               if (userSnap.exists()) {
                 showSocialCard(userSnap.data());
+              } else {
+                showStarPopup("User profile not found", "error");
               }
             })
-            .catch(err => console.error("Failed to load user:", err));
+            .catch(err => {
+              spinner.remove();
+              console.error("Failed to load user:", err);
+              showStarPopup("Failed to load profile", "error");
+            });
         }
       };
 
-    // ── TAGS (all shown in Free Tonight, including location) ───────────────
-const tagsEl = document.createElement("div");
-tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
-const isFreeTonightMode = filterMode === "trending";
+      // ── TAGS (all shown in Free Tonight, including location) ───────────────
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+      const isFreeTonightMode = filterMode === "trending";
+      const displayedTags = (video.tags || []).filter(tag => {
+        if (!tag || typeof tag !== "string") return false;
+        const lowerTag = tag.trim().toLowerCase();
+        const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
+        return isFreeTonightMode || !isLocation;
+      });
+      displayedTags.forEach(t => {
+        const span = document.createElement("span");
+        span.textContent = `#${t.trim()}`;
+        const lowerT = t.trim().toLowerCase();
+        const isLocationTag = locationKeywords.some(kw => lowerT.includes(kw));
+        span.style.cssText = `
+          font-size:11px;
+          padding:2px 8px;
+          border-radius:10px;
+          background: ${isLocationTag ? "rgba(0,255,234,0.3)" : "rgba(255,46,120,0.22)"};
+          color: ${isLocationTag ? "#00ffea" : "#ff4d8a"};
+          border: 1px solid ${isLocationTag ? "rgba(0,255,234,0.6)" : "rgba(255,46,120,0.6)"};
+        `;
+        tagsEl.appendChild(span);
+      });
+      info.append(user, tagsEl); // ← only user, no title in Free Tonight
+      card.appendChild(info);
 
-// Location tags — shown in Free Tonight
-const locationTags = (video.tags || []).filter(tag => {
-  if (!tag || typeof tag !== "string") return false;
-  const lowerTag = tag.trim().toLowerCase();
-  const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-  return isFreeTonightMode && isLocation; // only location in Free Tonight
-});
-
-locationTags.forEach(t => {
-  const span = document.createElement("span");
-  span.textContent = `#${t.trim()}`;
-  span.style.cssText = `
-    font-size:11px;
-    padding:2px 8px;
-    border-radius:10px;
-    background: rgba(0,255,234,0.3);
-    color: #00ffea;
-    border: 1px solid rgba(0,255,234,0.6);
-  `;
-  tagsEl.appendChild(span);
-});
-
-// fruitPick emoji tag — only in Free Tonight
-if (isFreeTonightMode && video.uploader?.fruitPick) {
-  const fruitSpan = document.createElement("span");
-  fruitSpan.textContent = video.uploader.fruitPick.trim(); // 🍒, 🍓, etc.
-  fruitSpan.style.cssText = `
-    font-size:18px;
-    line-height:1;
-    padding:6px 12px;
-    border-radius:50%;
-    background: rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.35);
-    box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    min-height: 40px;
-  `;
-  tagsEl.appendChild(fruitSpan);
-}
-
-info.append(title, user, tagsEl);
-card.appendChild(info);
-      // ── BADGE (fixed & working version with Free Tonight support) ────────
+      // ── BADGE ─────────────────────────────────────────────────────────────
       const badge = document.createElement("div");
       let badgeText = "";
       let badgeBg = "";
       let badgeShadow = "";
-
       if (filterMode === "trending" || video.isTrending) {
         badgeText = "Free Tonight ♡";
         badgeBg = "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)";
@@ -6393,7 +6402,6 @@ card.appendChild(info);
         badgeBg = "linear-gradient(135deg, #ff00f2, #8a2be2)";
         badgeShadow = "0 0 14px rgba(255,0,242,0.7)";
       }
-
       badge.textContent = badgeText;
       Object.assign(badge.style, {
         position: "absolute",
@@ -6409,13 +6417,12 @@ card.appendChild(info);
         border: "1px solid rgba(255,255,255,0.3)",
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
-
       card.appendChild(badge);
       grid.appendChild(card);
     });
   }
 
-  // Filter buttons
+  // Filter buttons (unchanged)
   unlockedBtn.onclick = () => {
     filterMode = filterMode === "unlocked" ? "all" : "unlocked";
     unlockedBtn.textContent = filterMode === "unlocked" ? "All Videos" : "Show Unlocked";
@@ -6436,7 +6443,7 @@ card.appendChild(info);
     renderCards();
   };
 
-  // SEARCH – live, case-insensitive, only username/chatId
+  // SEARCH (unchanged)
   const searchInput = document.getElementById("highlightSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
