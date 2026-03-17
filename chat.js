@@ -6135,147 +6135,156 @@ function showHighlightsModal(videos) {
       return;
     }
 
-    // ── RENDER CARDS ──────────────────────────────────────────────────────
-    filtered.forEach(video => {
-      const card = document.createElement("div");
-      Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        border: "1px solid rgba(138,43,226,0.4)"
-      });
-      card.onmouseenter = () => {
-        card.style.transform = "scale(1.03)";
-        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-      };
-      card.onmouseleave = () => {
-        card.style.transform = "scale(1)";
-        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-      };
+   filtered.forEach(video => {
+  const card = document.createElement("div");
+  Object.assign(card.style, {
+    position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+    background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+    transition: "transform 0.25s ease, box-shadow 0.25s ease",
+    border: "1px solid rgba(138,43,226,0.4)"
+  });
+  card.onmouseenter = () => {
+    card.style.transform = "scale(1.03)";
+    card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
+  };
+  card.onmouseleave = () => {
+    card.style.transform = "scale(1)";
+    card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+  };
 
-      const vidContainer = document.createElement("div");
-      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+  const vidContainer = document.createElement("div");
+  vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
-      const videoEl = document.createElement("video");
-      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
-      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      videoEl.src = video.previewClip || video.videoUrl || "";
-      videoEl.load();
-      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
+  const videoEl = document.createElement("video");
+  videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+  videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+  videoEl.src = video.previewClip || video.videoUrl || "";
+  videoEl.load();
+  vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+  vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
 
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        openFullScreenVideo(video.videoUrl || "");
-      };
+  vidContainer.onclick = (e) => {
+    e.stopPropagation();
+    openFullScreenVideo(video.videoUrl || "");
+  };
 
-      vidContainer.appendChild(videoEl);
-      card.appendChild(vidContainer);
+  vidContainer.appendChild(videoEl);
+  card.appendChild(vidContainer);
 
-      // Info overlay
-      const info = document.createElement("div");
-      info.style.cssText = `
-        position:absolute; bottom:0; left:0; right:0;
-        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-        padding:60px 12px 12px;
-      `;
+  // ── Info overlay ───────────────────────────────────────────────────────
+  const info = document.createElement("div");
+  info.style.cssText = `
+    position:absolute; bottom:0; left:0; right:0;
+    background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+    padding:60px 12px 12px;
+  `;
 
-     // Clickable username (already good)
-const user = document.createElement("div");
-user.textContent = `@${video.uploaderName || "cutie"}`;
-user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
-user.onclick = (e) => {
-  e.stopPropagation();
-  if (video.uploaderId) {
-    getDoc(doc(db, "users", video.uploaderId))
-      .then(userSnap => {
-        if (userSnap.exists()) showSocialCard(userSnap.data());
-      })
-      .catch(err => console.error("Failed to load user:", err));
+  // Clickable username
+  const user = document.createElement("div");
+  user.textContent = `@${video.uploaderName || "cutie"}`;
+  user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
+  user.onclick = (e) => {
+    e.stopPropagation();
+    if (video.uploaderId) {
+      getDoc(doc(db, "users", video.uploaderId))
+        .then(userSnap => {
+          if (userSnap.exists()) {
+            showSocialCard(userSnap.data());
+          }
+        })
+        .catch(err => console.error("Failed to load user:", err));
+    }
+  };
+
+  // One-liner – learned directly from your social card logic
+  const genderRaw = (video.gender || "person").toLowerCase().trim();
+  const isMale = genderRaw === "male";
+  const pronoun = isMale ? "his" : "her";
+  const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+
+  const oneLiner = document.createElement("div");
+  oneLiner.textContent = `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+  oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+
+  // FruitPick – small glowing emoji on extreme right
+  let fruitEl = null;
+  if (video.fruitPick) {
+    fruitEl = document.createElement("div");
+    fruitEl.textContent = video.fruitPick.trim();
+    fruitEl.style.cssText = `
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      font-size: 20px;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 0 12px rgba(255,255,255,0.5), 0 0 24px rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      min-height: 36px;
+      z-index: 2;
+    `;
   }
-};
 
-// Inclusive one-liner
-const genderRaw = (video.gender || "person").toLowerCase().trim();
-let displayGender = genderRaw;
-let pronoun = "their";
+  // Tags (location + city only)
+  const tagsEl = document.createElement("div");
+  tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-if (genderRaw === "male" || genderRaw === "man") {
-  displayGender = "man";
-  pronoun = "his";
-} else if (genderRaw === "female" || genderRaw === "woman") {
-  displayGender = "woman";
-  pronoun = "her";
-} else if (genderRaw === "non-binary" || genderRaw === "enby" || genderRaw === "nb") {
-  displayGender = "non-binary person";
-} else {
-  displayGender = "person";
-}
+  if (video.location) {
+    const span = document.createElement("span");
+    span.textContent = `#${video.location.trim()}`;
+    span.style.cssText = `
+      font-size:11px; padding:2px 8px; border-radius:10px;
+      background: rgba(0,255,234,0.3); color: #00ffea;
+      border: 1px solid rgba(0,255,234,0.6);
+    `;
+    tagsEl.appendChild(span);
+  }
 
-const ageGroup = !video.age ? "20s" : 
-                 video.age < 18 ? "young" :
-                 video.age >= 30 ? "30s+" : "20s";
+  if (video.city) {
+    const span = document.createElement("span");
+    span.textContent = `#${video.city.trim()}`;
+    span.style.cssText = `
+      font-size:11px; padding:2px 8px; border-radius:10px;
+      background: rgba(0,255,234,0.3); color: #00ffea;
+      border: 1px solid rgba(0,255,234,0.6);
+    `;
+    tagsEl.appendChild(span);
+  }
 
-const oneLiner = document.createElement("div");
-oneLiner.textContent = `A ${displayGender} in ${pronoun} ${ageGroup}`;
-oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+  info.append(user, oneLiner, tagsEl);
+  card.appendChild(info);
 
-// Append
-info.append(user, oneLiner);
-       
-      // FruitPick – small, glowing, extreme right
-      let fruitEl = null;
-      if (video.fruitPick) {
-        fruitEl = document.createElement("div");
-        fruitEl.textContent = video.fruitPick.trim();
-        fruitEl.style.cssText = `
-          position: absolute;
-          bottom: 12px;
-          right: 12px;
-          font-size: 20px;
-          line-height: 1;
-          padding: 4px 8px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.12);
-          backdrop-filter: blur(6px);
-          color: #fff;
-          border: 1px solid rgba(255,255,255,0.3);
-          box-shadow: 0 0 12px rgba(255,255,255,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 36px;
-          min-height: 36px;
-        `;
-      }
+  if (fruitEl) card.appendChild(fruitEl);
 
-      info.appendChild(user);
-      info.appendChild(oneLiner);
-      card.appendChild(info);
+  // BADGE – shift left if fruitPick is present
+  const badge = document.createElement("div");
+  badge.textContent = "Free Tonight ♡";
+  Object.assign(badge.style, {
+    position: "absolute",
+    top: "12px",
+    right: fruitEl ? "60px" : "12px", // make space for fruit emoji
+    padding: "6px 12px",
+    borderRadius: "12px",
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#fff",
+    background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+    boxShadow: "0 0 18px rgba(255,51,102,0.9)",
+    border: "1px solid rgba(255,255,255,0.3)",
+    textShadow: "0 0 4px rgba(0,0,0,0.7)"
+  });
+  card.appendChild(badge);
 
-      if (fruitEl) card.appendChild(fruitEl);
-
-      // BADGE
-      const badge = document.createElement("div");
-      badge.textContent = "Free Tonight ♡";
-      Object.assign(badge.style, {
-        position: "absolute",
-        top: "12px",
-        right: fruitEl ? "60px" : "12px", // shift left if fruitPick is present
-        padding: "6px 12px",
-        borderRadius: "12px",
-        fontSize: "12px",
-        fontWeight: "700",
-        color: "#fff",
-        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-        boxShadow: "0 0 18px rgba(255,51,102,0.9)",
-        border: "1px solid rgba(255,255,255,0.3)",
-        textShadow: "0 0 4px rgba(0,0,0,0.7)"
-      });
-      card.appendChild(badge);
-
-      grid.appendChild(card);
-    });
+  grid.appendChild(card);
+});
   }
 
   // Initial render
