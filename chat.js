@@ -5923,53 +5923,68 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
+/* Highlights Button – opens Free Tonight (only active trending videos) */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
       showGoldAlert("Please log in to view Free Tonight");
       return;
     }
+
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
     if (snap.empty) {
       showGoldAlert("No clips in Free Tonight yet");
       return;
     }
+
     const allClips = [];
-    snap.forEach(userDoc => {
-      const userData = userDoc.data();  // ← defined here
-      const clips = userData.highlights || [];
+
+    // We'll fetch user profiles in batches or individually
+    for (const userDoc of snap.docs) {
+      const highlightsData = userDoc.data();
+      const clips = highlightsData.highlights || [];
+
+      // Get the uploader's profile from users collection
+      const uploaderId = highlightsData.uploaderId || userDoc.id;
+      const userRef = doc(db, "users", uploaderId);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() : {};
+
+      console.log("Fetched user profile for:", uploaderId,
+                  "fruitPick:", userData.fruitPick,
+                  "gender:", userData.gender,
+                  "age:", userData.age);
+
       clips.forEach(clip => {
-        if (clip.isTrending !== true) return; // only trending videos
+        if (clip.isTrending !== true) return;
+
+        const now = Date.now();
+        if (clip.trendingUntil && clip.trendingUntil < now) return; // expired
 
         allClips.push({
           id: clip.id,
           videoUrl: clip.videoUrl || "",
           previewClip: clip.previewClip || "",
           thumbnail: clip.thumbnailUrl || "",
-          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-          uploaderId: userData.uploaderId || userDoc.id,
+          uploaderName: userData.uploaderName || userData.chatId || highlightsData.uploaderName || "Anonymous",
+          uploaderId: uploaderId,
           isTrending: true,
           tags: clip.tags || [],
-          location: userData.location || "",
+          location: userData.location || userData.city || "",
           city: userData.city || "",
-          fruitPick: userData.fruitPick || null,  // ← real value from DB
+          fruitPick: userData.fruitPick || null,
           gender: userData.gender || "person",
           age: userData.age || null
         });
-
-        // ← Debug log INSIDE the loop — now userData exists
-        console.log("Pushed clip for:", userData.chatId || userData.uploaderName,
-                    "fruitPick from DB:", userData.fruitPick,
-                    "gender:", userData.gender,
-                    "age:", userData.age);
       });
-    });
+    }
 
     if (allClips.length === 0) {
       showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
       return;
     }
+
     showHighlightsModal(allClips);
   } catch (err) {
     console.error("Error fetching Free Tonight clips:", err);
