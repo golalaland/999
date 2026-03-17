@@ -6002,7 +6002,7 @@ function showHighlightsModal(videos) {
         <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
                      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
                      font-weight:800; font-size:22px; letter-spacing:0.4px;">
-          Free Tonight 🔥
+       ◑△◐
         </span>
       </div>
       <p style="margin:0 0 4px;">Live & free clips right now</p>
@@ -6135,7 +6135,9 @@ function showHighlightsModal(videos) {
       return;
     }
 
-   filtered.forEach(video => {
+filtered.forEach(video => {
+  console.log("Card for:", video.uploaderName, "fruitPick:", video.fruitPick); // ← debug
+
   const card = document.createElement("div");
   Object.assign(card.style, {
     position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
@@ -6171,7 +6173,7 @@ function showHighlightsModal(videos) {
   vidContainer.appendChild(videoEl);
   card.appendChild(vidContainer);
 
-  // ── Info overlay ───────────────────────────────────────────────────────
+  // Info overlay
   const info = document.createElement("div");
   info.style.cssText = `
     position:absolute; bottom:0; left:0; right:0;
@@ -6179,7 +6181,6 @@ function showHighlightsModal(videos) {
     padding:60px 12px 12px;
   `;
 
-  // Clickable username
   const user = document.createElement("div");
   user.textContent = `@${video.uploaderName || "cutie"}`;
   user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
@@ -6196,7 +6197,6 @@ function showHighlightsModal(videos) {
     }
   };
 
-  // One-liner – learned directly from your social card logic
   const genderRaw = (video.gender || "person").toLowerCase().trim();
   const isMale = genderRaw === "male";
   const pronoun = isMale ? "his" : "her";
@@ -6206,34 +6206,6 @@ function showHighlightsModal(videos) {
   oneLiner.textContent = `A ${genderRaw} in ${pronoun} ${ageGroup}`;
   oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-  // FruitPick – small glowing emoji on extreme right
-  let fruitEl = null;
-  if (video.fruitPick) {
-    fruitEl = document.createElement("div");
-    fruitEl.textContent = video.fruitPick.trim();
-    fruitEl.style.cssText = `
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
-      font-size: 20px;
-      line-height: 1;
-      padding: 4px 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(6px);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.3);
-      box-shadow: 0 0 12px rgba(255,255,255,0.5), 0 0 24px rgba(255,255,255,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 36px;
-      min-height: 36px;
-      z-index: 2;
-    `;
-  }
-
-  // Tags (location + city only)
   const tagsEl = document.createElement("div");
   tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
@@ -6262,15 +6234,41 @@ function showHighlightsModal(videos) {
   info.append(user, oneLiner, tagsEl);
   card.appendChild(info);
 
+  // FruitPick emoji – extreme right, glowing
+  let fruitEl = null;
+  if (video.fruitPick) {
+    fruitEl = document.createElement("div");
+    fruitEl.textContent = video.fruitPick.trim();
+    fruitEl.style.cssText = `
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 22px;
+      line-height: 1;
+      padding: 6px 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.4);
+      box-shadow: 0 0 16px rgba(255,255,255,0.6), 0 0 32px rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      min-height: 40px;
+      z-index: 3;
+    `;
+  }
+
   if (fruitEl) card.appendChild(fruitEl);
 
-  // BADGE – shift left if fruitPick is present
   const badge = document.createElement("div");
   badge.textContent = "Free Tonight ♡";
   Object.assign(badge.style, {
     position: "absolute",
     top: "12px",
-    right: fruitEl ? "60px" : "12px", // make space for fruit emoji
+    right: fruitEl ? "60px" : "12px",
     padding: "6px 12px",
     borderRadius: "12px",
     fontSize: "12px",
