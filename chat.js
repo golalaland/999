@@ -6252,50 +6252,49 @@ filtered.forEach(video => {
   card.appendChild(info);
 
   // FruitPick emoji – extreme right, glowing
-  let fruitEl = null;
-  if (video.fruitPick) {
-    fruitEl = document.createElement("div");
-    fruitEl.textContent = video.fruitPick.trim();
-    fruitEl.style.cssText = `
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      font-size: 22px;
-      line-height: 1;
-      padding: 6px 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(8px);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.4);
-      box-shadow: 0 0 16px rgba(255,255,255,0.6), 0 0 32px rgba(255,255,255,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 40px;
-      min-height: 40px;
-      z-index: 3;
-    `;
-  }
-
+let fruitEl = null;
+if (video.fruitPick) {
+  fruitEl = document.createElement("div");
+  fruitEl.textContent = video.fruitPick.trim();
+  fruitEl.style.cssText = `
+    position: absolute;
+    bottom: 8px;
+    right: 8px;                // extreme right edge
+    font-size: 14px;           // real small size
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;               // tiny circle
+    height: 24px;
+    z-index: 3;
+  `;
+}
   if (fruitEl) card.appendChild(fruitEl);
 
-  const badge = document.createElement("div");
-  badge.textContent = "Free Tonight ♡";
-  Object.assign(badge.style, {
-    position: "absolute",
-    top: "12px",
-    right: fruitEl ? "60px" : "12px",
-    padding: "6px 12px",
-    borderRadius: "12px",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#fff",
-    background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-    boxShadow: "0 0 18px rgba(255,51,102,0.9)",
-    border: "1px solid rgba(255,255,255,0.3)",
-    textShadow: "0 0 4px rgba(0,0,0,0.7)"
-  });
+const badge = document.createElement("div");
+badge.textContent = "Free Tonight ♡";
+Object.assign(badge.style, {
+  position: "absolute",
+  top: "12px",
+  right: fruitEl ? "44px" : "12px",  // ← shift left for fruit emoji
+  padding: "6px 12px",
+  borderRadius: "12px",
+  fontSize: "12px",
+  fontWeight: "700",
+  color: "#fff",
+  background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+  boxShadow: "0 0 18px rgba(255,51,102,0.9)",
+  border: "1px solid rgba(255,255,255,0.3)",
+  textShadow: "0 0 4px rgba(0,0,0,0.7)"
+});
   card.appendChild(badge);
 
   grid.appendChild(card);
