@@ -5975,7 +5975,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Free Tonight Modal – All trending videos free/public ---------- */
+/* ---------- Free Tonight Modal – Only trending videos ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
@@ -6005,8 +6005,8 @@ function showHighlightsModal(videos) {
           Free Tonight 🔥
         </span>
       </div>
-      <p style="margin:0 0 4px;">All clips are free & live now</p>
-      <p style="margin:0;">Filter by location, city or fruitPick</p>
+      <p style="margin:0 0 4px;">Live & free clips right now</p>
+      <p style="margin:0;">Filter by location, city or vibe</p>
     </div>
   `;
   modal.appendChild(intro);
@@ -6039,7 +6039,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — only tag filters
+  // CONTROLS — tag filters only
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6070,8 +6070,7 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    // ── VISIBLE VIDEOS FOR TAG BUTTONS ─────────────────────────────────────
-    let visibleVideos = videosToRender.filter(v => v.isTrending === true);
+    let visibleVideos = videosToRender;
 
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
@@ -6096,26 +6095,25 @@ function showHighlightsModal(videos) {
     });
     const sortedVisibleTags = [...visibleTags].sort();
 
-    // Build tag buttons — location, city, fruitPick
     sortedVisibleTags.forEach(tag => {
       const lowerTag = tag.toLowerCase();
-      const isFruit = ["🍒", "🍓", "🍉", "🍍", "🍑", "🍊", "🍇"].includes(tag);
+      const isFruit = ["🍇", "🍑", "🍒", "🍓"].includes(tag);
 
       const btn = document.createElement("button");
       btn.textContent = isFruit ? tag : `#${tag}`;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
-        padding: isFruit ? "6px 10px" : "6px 14px",
+        padding: isFruit ? "8px 12px" : "6px 14px",
         borderRadius: isFruit ? "50%" : "24px",
-        fontSize: isFruit ? "18px" : "12px",
-        fontWeight: "600",
+        fontSize: isFruit ? "20px" : "12px",
+        lineHeight: isFruit ? "1" : "normal",
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : (isFruit ? "rgba(255,255,255,0.15)" : "rgba(255,46,120,0.2)"),
         color: activeTags.has(tag) ? "#fff" : (isFruit ? "#fff" : "#ff6ab6"),
         border: isFruit ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,46,120,0.6)",
         cursor: "pointer",
         transition: "all 0.25s",
-        minWidth: isFruit ? "40px" : "auto",
-        minHeight: isFruit ? "40px" : "auto",
+        minWidth: isFruit ? "44px" : "auto",
+        minHeight: isFruit ? "44px" : "auto",
         display: "flex",
         alignItems: "center",
         justifyContent: "center"
@@ -6128,7 +6126,6 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
-    // Shuffle for random order
     const filtered = visibleVideos.sort(() => Math.random() - 0.5);
 
     if (filtered.length === 0) {
@@ -6139,7 +6136,6 @@ function showHighlightsModal(videos) {
       return;
     }
 
-    // ── RENDER CARDS ──────────────────────────────────────────────────────
     filtered.forEach(video => {
       const card = document.createElement("div");
       Object.assign(card.style, {
@@ -6176,7 +6172,7 @@ function showHighlightsModal(videos) {
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // Info overlay — only username + one-liner
+      // Info overlay
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -6188,7 +6184,6 @@ function showHighlightsModal(videos) {
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
 
-      // One-liner under username
       const gender = (video.gender || "person").toLowerCase();
       const isMale = gender === "male";
       const pronoun = isMale ? "his" : "her";
@@ -6199,7 +6194,7 @@ function showHighlightsModal(videos) {
 
       info.append(user, oneLiner);
 
-      // Tags (location/city/fruitPick)
+      // Tags
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
@@ -6242,7 +6237,7 @@ function showHighlightsModal(videos) {
       info.appendChild(tagsEl);
       card.appendChild(info);
 
-      // BADGE — always Free Tonight ♡
+      // BADGE
       const badge = document.createElement("div");
       badge.textContent = "Free Tonight ♡";
       Object.assign(badge.style, {
@@ -6264,7 +6259,6 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Initial render
   renderCards(videos);
   document.body.appendChild(modal);
   setTimeout(() => {
@@ -6456,131 +6450,119 @@ async function unlockVideo(video) {
     }
 }
 async function loadMyClips() {
-    const grid = document.getElementById("myClipsGrid");
-    const noMsg = document.getElementById("noClipsMessage");
+  const grid = document.getElementById("myClipsGrid");
+  const noMsg = document.getElementById("noClipsMessage");
+  if (!grid || !currentUser?.uid) return;
 
-    if (!grid || !currentUser?.uid) return;
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading your Free Tonight clips...</div>`;
 
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading clips...</div>`;
+  try {
+    const docRef = doc(db, "highlightVideos", currentUser.uid);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
+      grid.innerHTML = "";
+      if (noMsg) noMsg.style.display = "block";
+      return;
+    }
 
-    try {
-        const docRef = doc(db, "highlightVideos", currentUser.uid);
-        const docSnap = await getDoc(docRef);
+    if (noMsg) noMsg.style.display = "none";
+    grid.innerHTML = "";
 
-        if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
-            grid.innerHTML = "";
-            if (noMsg) noMsg.style.display = "block";
-            return;
-        }
+    const highlights = docSnap.data().highlights || [];
+    highlights.sort((a, b) => {
+      const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+      const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+      return timeB - timeA;
+    });
 
-        if (noMsg) noMsg.style.display = "none";
-        grid.innerHTML = "";
+    highlights.forEach(v => {
+      const videoSrc = v.videoUrl || "";
+      const thumbnailSrc = v.thumbnailUrl || "";
+      const views = v.views || 0;
+      const trendingDays = v.trendingUntil ? Math.ceil((v.trendingUntil - Date.now()) / (86400000)) : 0;
+      const trendingText = trendingDays > 0 ? `${trendingDays} day${trendingDays > 1 ? 's' : ''} active` : "Not trending";
 
-        const highlights = docSnap.data().highlights || [];
-        highlights.sort((a, b) => {
-            const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-            const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
-            return timeB - timeA;
-        });
+      const card = document.createElement("div");
+      card.style.cssText = `
+        background:#111;
+        border-radius:16px;
+        overflow:hidden;
+        box-shadow:0 10px 30px rgba(0,0,0,0.6);
+        border:1px solid #333;
+        display:flex;
+        flex-direction:column;
+        height:220px;
+        transition:transform 0.2s;
+      `;
 
-        highlights.forEach(v => {
-            const videoSrc = v.videoUrl || "";
-            const thumbnailSrc = v.thumbnailUrl || ""; // used as poster
-            const price = Number(v.highlightVideoPrice) || 0;
-            const unlocks = v.unlockedBy?.length || 0;
-            const earnings = price * unlocks;
+      card.innerHTML = `
+        <div style="display:flex;height:100%;background:#0d0d0d;">
+          <!-- Left: Video preview -->
+          <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+            <video
+              src="${videoSrc}"
+              muted loop playsinline
+              poster="${thumbnailSrc}"
+              style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 220%;
+                height: 220%;
+                object-fit: cover;
+                object-position: center;
+                transform: translate(-50%, -50%) scale(0.52);
+                filter: brightness(0.96);
+              ">
+            </video>
+            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
+            <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+              ▶ CLIP
+            </div>
+          </div>
 
-            const card = document.createElement("div");
-            card.style.cssText = `
-                background:#111;
-                border-radius:16px;
-                overflow:hidden;
-                box-shadow:0 10px 30px rgba(0,0,0,0.6);
-                border:1px solid #333;
-                display:flex;
-                flex-direction:column;
-                height:220px;
-                transition:transform 0.2s;
-            `;
+          <!-- Right side – Free Tonight stats -->
+          <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+            <div style="flex-grow:1;">
+              <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
+                ${v.title || "Free Tonight Clip"}
+              </div>
+              <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                ID: ${v.id.slice(-8)}
+              </div>
+            </div>
 
-            card.innerHTML = `
-                <div style="display:flex;height:100%;background:#0d0d0d;">
-                    <!-- Left: Video preview – exact original zoom style -->
-                    <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-                        <video 
-                            src="${videoSrc}"
-                            muted loop playsinline
-                            poster="${thumbnailSrc}"
-                            style="
-                                position: absolute;
-                                top: 50%;
-                                left: 50%;
-                                width: 220%;
-                                height: 220%;
-                                object-fit: cover;
-                                object-position: center;
-                                transform: translate(-50%, -50%) scale(0.52);
-                                filter: brightness(0.96);
-                            ">
-                        </video>
-                        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
-                        <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
-                            ▶ CLIP
-                        </div>
-                    </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
+                <div style="color:#00ffea;font-weight:900;font-size:13px;">${views}</div>
+              </div>
+              <div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Trending</div>
+                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${trendingText}</div>
+              </div>
+            </div>
 
-                    <!-- Right side (unchanged) -->
-                    <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
-                        <div style="flex-grow:1;">
-                            <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
-                                ${v.title || "Untitled Drop"}
-                            </div>
-                            ${v.description ? `
-                                <div style="color:#aaa;font-size:11px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;opacity:0.9;">
-                                    ${v.description}
-                                </div>
-                            ` : ''}
-                            <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                                ID: ${v.id.slice(-8)}
-                            </div>
-                        </div>
-
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
-                            <div>
-                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Price</div>
-                                <div style="color:#00ff9d;font-weight:900;font-size:12px;">${price} STRZ</div>
-                            </div>
-                            <div>
-                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Unlocks</div>
-                                <div style="color:#00ffea;font-weight:900;font-size:13px;">${unlocks}x</div>
-                            </div>
-                            <div>
-                                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Revenue</div>
-                                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${earnings} ⭐</div>
-                            </div>
-                        </div>
-
-                        <button class="delete-clip-btn"
-                                data-id="${v.id}"
-                                data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
-                                style="
-                                  position:absolute;bottom:12px;right:12px;
-                                  background:linear-gradient(90deg,#ff0099,#ff6600);
-                                  border:none;color:#fff;
-                                  padding:8px 14px;border-radius:10px;
-                                  font-size:10px;font-weight:800;letter-spacing:0.6px;
-                                  cursor:pointer;opacity:0.92;
-                                  box-shadow:0 2px 12px rgba(255,0,100,0.4);
-                                  transition:all .25s ease;
-                                "
-                                onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
-                                onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
-                            DELETE
-                        </button>
-                    </div>
-                </div>
-            `;
-
+            <button class="delete-clip-btn"
+                    data-id="${v.id}"
+                    data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
+                    style="
+                      position:absolute;bottom:12px;right:12px;
+                      background:linear-gradient(90deg,#ff0099,#ff6600);
+                      border:none;color:#fff;
+                      padding:8px 14px;border-radius:10px;
+                      font-size:10px;font-weight:800;letter-spacing:0.6px;
+                      cursor:pointer;opacity:0.92;
+                      box-shadow:0 2px 12px rgba(255,0,100,0.4);
+                      transition:all .25s ease;
+                    "
+                    onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
+                    onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
+              DELETE
+            </button>
+          </div>
+        </div>
+      `;
             // Hover play – same as original
             const videos = card.querySelectorAll("video");
             card.addEventListener("mouseenter", () => {
@@ -7442,7 +7424,7 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Client-side Free Tonight with Live 24h Countdown
+// Client-side Free Tonight Toggle + FruitPick Picker
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
@@ -7453,146 +7435,123 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
-  // Check if already active
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
   if (savedEndTime && Number(savedEndTime) > Date.now()) {
-    showStarPopup('Already active! Wait for countdown to finish.', 'info');
+    showStarPopup('Already active! Wait for countdown.', 'info');
     startCountdown(btn, Number(savedEndTime));
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Boosting... ✨';
+  // Show fruit picker modal
+  const fruitModal = document.createElement("div");
+  fruitModal.style.cssText = `
+    position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000000;
+    display:flex; align-items:center; justify-content:center;
+  `;
+  fruitModal.innerHTML = `
+    <div style="background:#111; padding:32px; border-radius:24px; text-align:center; max-width:420px; border:1px solid #444;">
+      <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose your vibe for Free Tonight</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-bottom:24px;">
+        <button class="fruit-btn" data-fruit="🍇" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍇</button>
+        <button class="fruit-btn" data-fruit="🍑" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍑</button>
+        <button class="fruit-btn" data-fruit="🍒" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍒</button>
+        <button class="fruit-btn" data-fruit="🍓" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍓</button>
+      </div>
+      <button id="confirmFruit" disabled style="padding:12px 40px; background:#444; color:#888; border:none; border-radius:50px; font-weight:700; cursor:not-allowed;">Confirm Vibe</button>
+    </div>
+  `;
+  document.body.appendChild(fruitModal);
 
-  try {
-    const rawUid = auth.currentUser.uid;
-    const cost = 21;
+  let selectedFruit = null;
+  fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
+    btn.onclick = () => {
+      fruitModal.querySelectorAll('.fruit-btn').forEach(b => b.style.borderColor = '#666');
+      btn.style.borderColor = '#ff2e78';
+      selectedFruit = btn.dataset.fruit;
+      fruitModal.querySelector('#confirmFruit').disabled = false;
+      fruitModal.querySelector('#confirmFruit').style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+      fruitModal.querySelector('#confirmFruit').style.color = '#fff';
+      fruitModal.querySelector('#confirmFruit').style.cursor = 'pointer';
+    };
+  });
 
-    // 1. Find user doc
-    const usersQuery = query(
-      collection(db, "users"),
-      where("uid", "==", rawUid),
-      limit(1)
-    );
-    const userSnap = await getDocs(usersQuery);
+  fruitModal.querySelector('#confirmFruit').onclick = async () => {
+    if (!selectedFruit) return;
+    fruitModal.remove();
 
-    if (userSnap.empty) throw new Error("Profile not found – contact support");
+    btn.disabled = true;
+    btn.textContent = 'Activating... ✨';
 
-    const userDoc = userSnap.docs[0];
-    const userData = userDoc.data();
-    const sanitizedId = userDoc.id;
+    try {
+      const rawUid = auth.currentUser.uid;
+      const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
+      const userSnap = await getDocs(usersQuery);
+      if (userSnap.empty) throw new Error("Profile not found");
+      const userDoc = userSnap.docs[0];
+      const sanitizedId = userDoc.id;
 
-    // 2. Check stars
-    const stars = Number(userData.stars || 0);
-    if (stars < cost) throw new Error(`Need ${cost} stars (you have ${stars})`);
+      // Save fruitPick
+      await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
 
-    // 3. Get highlights
-    const highlightsRef = doc(db, "highlightVideos", sanitizedId);
-    const highlightsSnap = await getDoc(highlightsRef);
+      // Activate trending
+      const highlightsRef = doc(db, "highlightVideos", sanitizedId);
+      const highlightsSnap = await getDoc(highlightsRef);
+      if (!highlightsSnap.exists()) throw new Error("No highlights found");
+      const highlightsData = highlightsSnap.data() || {};
+      const highlights = [...(highlightsData.highlights || [])];
 
-    if (!highlightsSnap.exists()) throw new Error("No highlights profile found");
+      if (highlights.length === 0) throw new Error("Upload some clips first!");
 
-    const highlightsData = highlightsSnap.data() || {};
-    const highlights = Array.isArray(highlightsData.highlights)
-      ? [...highlightsData.highlights]
-      : [];
+      const endTime = Date.now() + 24 * 60 * 60 * 1000;
+      highlights.forEach(h => {
+        h.isTrending = true;
+        h.trendingUntil = endTime;
+      });
 
-    if (highlights.length === 0) throw new Error("You have no videos to boost yet");
+      await updateDoc(highlightsRef, { highlights });
 
-    // 4. Pick random video
-    const randomIndex = Math.floor(Math.random() * highlights.length);
-    const selected = highlights[randomIndex];
+      localStorage.setItem('freeTonightEndTime', endTime);
+      startCountdown(btn, endTime);
+      showStarPopup(`Free Tonight activated! Vibe set to ${selectedFruit} 🔥`, 'success');
 
-    // 5. Add location tag
-    let addedTag = null;
-    const location = userData.location || {};
-    let locTag = null;
-
-    if (typeof location === "string" && location.trim()) {
-      locTag = location.trim().toLowerCase();
-    } else if (location.city && location.city.trim()) {
-      locTag = location.city.trim().toLowerCase();
-    } else if (userData.country && userData.country.trim()) {
-      locTag = userData.country.trim().toLowerCase();
+      if (typeof loadMyClips === 'function') loadMyClips();
+    } catch (err) {
+      let msg = err.message || 'Failed to activate';
+      if (msg.includes("No clips")) msg = "Upload some clips first!";
+      showStarPopup(msg, 'error');
+      console.error('Free Tonight failed:', err);
+    } finally {
+      btn.disabled = false;
     }
-
-    if (locTag && !selected.tags?.includes(locTag)) {
-      selected.tags = [...(selected.tags || []), locTag];
-      addedTag = locTag;
-    }
-
-    // 6. Activate trending
-    selected.isTrending = true;
-    const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    selected.trendingUntil = Timestamp.fromMillis(endTime);
-
-    // 7. Save to Firestore
-    await updateDoc(userDoc.ref, { stars: increment(-cost) });
-    await updateDoc(highlightsRef, { highlights });
-
-    // 8. Save end time locally & start countdown
-    localStorage.setItem('freeTonightEndTime', endTime);
-    startCountdown(btn, endTime);
-
-    showStarPopup(
-      `Free Tonight activated! 🔥`,
-      'success'
-    );
-
-    if (typeof loadMyClips === 'function') loadMyClips();
-
-  } catch (err) {
-    let msg = err.message || 'Failed to activate — try again';
-    if (msg.includes("Need")) msg = `Not enough stars! ${msg}`;
-    if (msg.includes("profile not found")) msg = "Your profile is missing – contact support";
-    if (msg.includes("No videos")) msg = "Upload some clips first!";
-    showStarPopup(msg, 'error');
-    console.error('Free Tonight failed:', err);
-  } finally {
-    btn.disabled = false;
-    // Don't reset text here — countdown handler will manage it
-  }
+  };
 });
 
-// ───────────────────────────────────────────────
-// Live Countdown Timer
-// ───────────────────────────────────────────────
+// Countdown function (unchanged)
 function startCountdown(btn, endTime) {
   function updateTimer() {
     const now = Date.now();
     const remaining = endTime - now;
-
     if (remaining <= 0) {
       btn.disabled = false;
-      btn.textContent = 'Activate Free Tonight';
-      btn.classList.remove('timer-active');
+      btn.textContent = "I'm Free Tonight";
       localStorage.removeItem('freeTonightEndTime');
-      document.getElementById('freeTonightStatus').textContent = 'Ready';
       return;
     }
-
     const hours = Math.floor(remaining / 3600000);
     const minutes = Math.floor((remaining % 3600000) / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
-
     btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
-    btn.classList.add('timer-active');
-
     setTimeout(updateTimer, 1000);
   }
-
-  updateTimer(); // start immediately
+  updateTimer();
 }
 
-// Auto-start countdown on page load if active
+// Auto-start countdown on load
 window.addEventListener('load', () => {
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
   if (savedEndTime && Number(savedEndTime) > Date.now()) {
     const btn = document.getElementById('freeTonightBtn');
-    if (btn) {
-      btn.disabled = true;
-      startCountdown(btn, Number(savedEndTime));
-    }
+    if (btn) startCountdown(btn, Number(savedEndTime));
   }
 });
 
