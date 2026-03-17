@@ -7595,6 +7595,40 @@ window.addEventListener('load', () => {
     }
   }
 });
+
+// Enable upload button only when checkbox is ticked
+document.getElementById('itsMeCheckbox')?.addEventListener('change', (e) => {
+  const btn = document.getElementById('uploadHighlightBtn');
+  if (e.target.checked) {
+    btn.disabled = false;
+    btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.style.background = '#444';
+    btn.style.color = '#888';
+    btn.style.cursor = 'not-allowed';
+  }
+});
+
+// Video preview on select
+document.getElementById('highlightUploadInput')?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const placeholder = document.getElementById('uploadPlaceholder');
+  const previewCont = document.getElementById('videoPreviewContainer');
+  const videoEl = document.getElementById('videoPreview');
+  const sizeInfo = document.getElementById('fileSizeInfo');
+  if (!videoEl || !previewCont || !placeholder) return;
+  placeholder.style.display = 'none';
+  previewCont.style.display = 'block';
+  videoEl.src = URL.createObjectURL(file);
+  videoEl.load();
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+  if (sizeInfo) sizeInfo.textContent = `${sizeMB} MB`;
+  videoEl.onloadeddata = () => videoEl.currentTime = 0;
+});
 /*********************************
  * INIT
  *********************************/
