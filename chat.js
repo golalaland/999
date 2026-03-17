@@ -6019,7 +6019,7 @@ function showHighlightsModal(videos) {
         <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
                      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
                      font-weight:800; font-size:22px; letter-spacing:0.4px;">
-       ◑△◐
+          ◑△◐ Free Tonight 🔥
         </span>
       </div>
       <p style="margin:0 0 4px;">Live & free clips right now</p>
@@ -6056,7 +6056,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — only tag filters (location + city)
+  // CONTROLS — tag filters only (location + city)
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6116,11 +6116,10 @@ function showHighlightsModal(videos) {
     });
     const sortedVisibleTags = [...visibleTags].sort();
 
-    // Build tag buttons — location & city only
+    // Build tag buttons — location & city only (no # symbol)
     sortedVisibleTags.forEach(tag => {
-      const lowerTag = tag.toLowerCase();
       const btn = document.createElement("button");
-      btn.textContent = `#${tag}`;
+      btn.textContent = tag; // ← no # anymore
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
         padding: "6px 14px",
@@ -6152,153 +6151,149 @@ function showHighlightsModal(videos) {
       return;
     }
 
-filtered.forEach(video => {
-  console.log("Card for:", video.uploaderName, "fruitPick:", video.fruitPick); // ← debug
+    filtered.forEach(video => {
+      const card = document.createElement("div");
+      Object.assign(card.style, {
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        border: "1px solid rgba(138,43,226,0.4)"
+      });
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.03)";
+        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
+      };
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1)";
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+      };
 
-  const card = document.createElement("div");
-  Object.assign(card.style, {
-    position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-    background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-    transition: "transform 0.25s ease, box-shadow 0.25s ease",
-    border: "1px solid rgba(138,43,226,0.4)"
-  });
-  card.onmouseenter = () => {
-    card.style.transform = "scale(1.03)";
-    card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-  };
-  card.onmouseleave = () => {
-    card.style.transform = "scale(1)";
-    card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-  };
+      const vidContainer = document.createElement("div");
+      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
-  const vidContainer = document.createElement("div");
-  vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+      const videoEl = document.createElement("video");
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+      videoEl.src = video.previewClip || video.videoUrl || "";
+      videoEl.load();
+      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
 
-  const videoEl = document.createElement("video");
-  videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
-  videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-  videoEl.src = video.previewClip || video.videoUrl || "";
-  videoEl.load();
-  vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-  vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        openFullScreenVideo(video.videoUrl || "");
+      };
 
-  vidContainer.onclick = (e) => {
-    e.stopPropagation();
-    openFullScreenVideo(video.videoUrl || "");
-  };
+      vidContainer.appendChild(videoEl);
+      card.appendChild(vidContainer);
 
-  vidContainer.appendChild(videoEl);
-  card.appendChild(vidContainer);
+      // ── Info overlay ───────────────────────────────────────────────────────
+      const info = document.createElement("div");
+      info.style.cssText = `
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
+      `;
 
-  // Info overlay
-  const info = document.createElement("div");
-  info.style.cssText = `
-    position:absolute; bottom:0; left:0; right:0;
-    background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-    padding:60px 12px 12px;
-  `;
+      // Clickable username
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) {
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(userSnap => {
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              }
+            })
+            .catch(err => console.error("Failed to load user:", err));
+        }
+      };
 
-  const user = document.createElement("div");
-  user.textContent = `@${video.uploaderName || "cutie"}`;
-  user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
-  user.onclick = (e) => {
-    e.stopPropagation();
-    if (video.uploaderId) {
-      getDoc(doc(db, "users", video.uploaderId))
-        .then(userSnap => {
-          if (userSnap.exists()) {
-            showSocialCard(userSnap.data());
-          }
-        })
-        .catch(err => console.error("Failed to load user:", err));
-    }
-  };
+      // One-liner: A {naturePick} {gender} in her {ageGroup}
+      const naturePick = video.naturePick || "";
+      const genderRaw = (video.gender || "person").toLowerCase().trim();
+      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
 
-  const genderRaw = (video.gender || "person").toLowerCase().trim();
-  const isMale = genderRaw === "male";
-  const pronoun = isMale ? "his" : "her";
-  const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+      const oneLinerText = naturePick 
+        ? `A ${naturePick} ${genderRaw} in her ${ageGroup}`
+        : `A ${genderRaw} in her ${ageGroup}`;
 
-  const oneLiner = document.createElement("div");
-  oneLiner.textContent = `A ${genderRaw} in ${pronoun} ${ageGroup}`;
-  oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+      const oneLiner = document.createElement("div");
+      oneLiner.textContent = oneLinerText;
+      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-  const tagsEl = document.createElement("div");
-  tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+      // Tags — location & city only, no # symbol
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-  if (video.location) {
-    const span = document.createElement("span");
-    span.textContent = `#${video.location.trim()}`;
-    span.style.cssText = `
-      font-size:11px; padding:2px 8px; border-radius:10px;
-      background: rgba(0,255,234,0.3); color: #00ffea;
-      border: 1px solid rgba(0,255,234,0.6);
-    `;
-    tagsEl.appendChild(span);
-  }
+      if (video.location) {
+        const span = document.createElement("span");
+        span.textContent = video.location.trim(); // ← no #
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
+        tagsEl.appendChild(span);
+      }
 
-  if (video.city) {
-    const span = document.createElement("span");
-    span.textContent = `#${video.city.trim()}`;
-    span.style.cssText = `
-      font-size:11px; padding:2px 8px; border-radius:10px;
-      background: rgba(0,255,234,0.3); color: #00ffea;
-      border: 1px solid rgba(0,255,234,0.6);
-    `;
-    tagsEl.appendChild(span);
-  }
+      if (video.city) {
+        const span = document.createElement("span");
+        span.textContent = video.city.trim(); // ← no #
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
+        tagsEl.appendChild(span);
+      }
 
-  info.append(user, oneLiner, tagsEl);
-  card.appendChild(info);
+      info.append(user, oneLiner, tagsEl);
+      card.appendChild(info);
 
-  // FruitPick emoji – extreme right, glowing
-let fruitEl = null;
-if (video.fruitPick) {
-  fruitEl = document.createElement("div");
-  fruitEl.textContent = video.fruitPick.trim();
-  fruitEl.style.cssText = `
-    position: absolute;
-    bottom: 8px;
-    right: 8px;                // extreme right edge
-    font-size: 14px;           // real small size
-    line-height: 1;
-    padding: 2px 4px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-    box-shadow: 0 0 8px rgba(255,255,255,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;               // tiny circle
-    height: 24px;
-    z-index: 3;
-  `;
-}
-  if (fruitEl) card.appendChild(fruitEl);
+      // FruitPick — tiny, standalone emoji, extreme right, no background
+      let fruitEl = null;
+      if (video.fruitPick) {
+        fruitEl = document.createElement("div");
+        fruitEl.textContent = video.fruitPick.trim();
+        fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 10px;
+          right: 10px;                // extreme right edge
+          font-size: 16px;            // small & subtle
+          line-height: 1;
+          color: #fff;
+          text-shadow: 0 0 6px rgba(255,255,255,0.7);
+          z-index: 3;
+        `;
+      }
 
-const badge = document.createElement("div");
-badge.textContent = "Free Tonight ♡";
-Object.assign(badge.style, {
-  position: "absolute",
-  top: "12px",
-  right: fruitEl ? "44px" : "12px",  // ← shift left for fruit emoji
-  padding: "6px 12px",
-  borderRadius: "12px",
-  fontSize: "12px",
-  fontWeight: "700",
-  color: "#fff",
-  background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-  boxShadow: "0 0 18px rgba(255,51,102,0.9)",
-  border: "1px solid rgba(255,255,255,0.3)",
-  textShadow: "0 0 4px rgba(0,0,0,0.7)"
-});
-  card.appendChild(badge);
+      if (fruitEl) card.appendChild(fruitEl);
 
-  grid.appendChild(card);
-});
+      // BADGE — back to original placement (top-right corner)
+      const badge = document.createElement("div");
+      badge.textContent = "Free Tonight ♡";
+      Object.assign(badge.style, {
+        position: "absolute",
+        top: "12px",
+        right: "12px",                // ← restored original position
+        padding: "6px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#fff",
+        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)",
+        border: "1px solid rgba(255,255,255,0.3)",
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+      });
+      card.appendChild(badge);
+
+      grid.appendChild(card);
+    });
   }
 
   // Initial render
