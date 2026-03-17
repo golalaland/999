@@ -5975,7 +5975,7 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ---------- Free Tonight Modal – Only trending videos ---------- */
+/* ---------- Free Tonight Modal – Only active trending videos ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
@@ -6006,7 +6006,7 @@ function showHighlightsModal(videos) {
         </span>
       </div>
       <p style="margin:0 0 4px;">Live & free clips right now</p>
-      <p style="margin:0;">Filter by location, city or vibe</p>
+      <p style="margin:0;">Filter by location or city</p>
     </div>
   `;
   modal.appendChild(intro);
@@ -6039,7 +6039,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — tag filters only
+  // CONTROLS — only tag filters (location + city)
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6070,18 +6070,23 @@ function showHighlightsModal(videos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    let visibleVideos = videosToRender;
+    // Filter to only active trending videos
+    let visibleVideos = videosToRender.filter(v => {
+      const now = Date.now();
+      return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+    });
 
+    // Apply tag filters (location + city only)
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
         if (v.location) videoTags.push(v.location.trim().toLowerCase());
         if (v.city) videoTags.push(v.city.trim().toLowerCase());
-        if (v.fruitPick) videoTags.push(v.fruitPick.trim());
         return [...activeTags].every(tag => videoTags.includes(tag.trim().toLowerCase()));
       });
     }
 
+    // Collect visible tags for buttons
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6091,32 +6096,25 @@ function showHighlightsModal(videos) {
       });
       if (v.location) visibleTags.add(v.location.trim().toLowerCase());
       if (v.city) visibleTags.add(v.city.trim().toLowerCase());
-      if (v.fruitPick) visibleTags.add(v.fruitPick.trim());
     });
     const sortedVisibleTags = [...visibleTags].sort();
 
+    // Build tag buttons — location & city only
     sortedVisibleTags.forEach(tag => {
       const lowerTag = tag.toLowerCase();
-      const isFruit = ["🍇", "🍑", "🍒", "🍓"].includes(tag);
-
       const btn = document.createElement("button");
-      btn.textContent = isFruit ? tag : `#${tag}`;
+      btn.textContent = `#${tag}`;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
-        padding: isFruit ? "8px 12px" : "6px 14px",
-        borderRadius: isFruit ? "50%" : "24px",
-        fontSize: isFruit ? "20px" : "12px",
-        lineHeight: isFruit ? "1" : "normal",
-        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : (isFruit ? "rgba(255,255,255,0.15)" : "rgba(255,46,120,0.2)"),
-        color: activeTags.has(tag) ? "#fff" : (isFruit ? "#fff" : "#ff6ab6"),
-        border: isFruit ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,46,120,0.6)",
+        padding: "6px 14px",
+        borderRadius: "24px",
+        fontSize: "12px",
+        fontWeight: "600",
+        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+        border: "1px solid rgba(255,46,120,0.6)",
         cursor: "pointer",
-        transition: "all 0.25s",
-        minWidth: isFruit ? "44px" : "auto",
-        minHeight: isFruit ? "44px" : "auto",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
+        transition: "all 0.25s"
       });
       btn.onclick = () => {
         if (activeTags.has(tag)) activeTags.delete(tag);
@@ -6126,6 +6124,7 @@ function showHighlightsModal(videos) {
       tagContainer.appendChild(btn);
     });
 
+    // Shuffle for random order
     const filtered = visibleVideos.sort(() => Math.random() - 0.5);
 
     if (filtered.length === 0) {
@@ -6136,6 +6135,7 @@ function showHighlightsModal(videos) {
       return;
     }
 
+    // ── RENDER CARDS ──────────────────────────────────────────────────────
     filtered.forEach(video => {
       const card = document.createElement("div");
       Object.assign(card.style, {
@@ -6180,62 +6180,80 @@ function showHighlightsModal(videos) {
         padding:60px 12px 12px;
       `;
 
-      const user = document.createElement("div");
-      user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
+     // Clickable username (already good)
+const user = document.createElement("div");
+user.textContent = `@${video.uploaderName || "cutie"}`;
+user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
+user.onclick = (e) => {
+  e.stopPropagation();
+  if (video.uploaderId) {
+    getDoc(doc(db, "users", video.uploaderId))
+      .then(userSnap => {
+        if (userSnap.exists()) showSocialCard(userSnap.data());
+      })
+      .catch(err => console.error("Failed to load user:", err));
+  }
+};
 
-      const gender = (video.gender || "person").toLowerCase();
-      const isMale = gender === "male";
-      const pronoun = isMale ? "his" : "her";
-      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
-      const oneLiner = document.createElement("div");
-      oneLiner.textContent = `A ${gender} in ${pronoun} ${ageGroup}`;
-      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+// Inclusive one-liner
+const genderRaw = (video.gender || "person").toLowerCase().trim();
+let displayGender = genderRaw;
+let pronoun = "their";
 
-      info.append(user, oneLiner);
+if (genderRaw === "male" || genderRaw === "man") {
+  displayGender = "man";
+  pronoun = "his";
+} else if (genderRaw === "female" || genderRaw === "woman") {
+  displayGender = "woman";
+  pronoun = "her";
+} else if (genderRaw === "non-binary" || genderRaw === "enby" || genderRaw === "nb") {
+  displayGender = "non-binary person";
+} else {
+  displayGender = "person";
+}
 
-      // Tags
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+const ageGroup = !video.age ? "20s" : 
+                 video.age < 18 ? "young" :
+                 video.age >= 30 ? "30s+" : "20s";
 
-      if (video.location) {
-        const span = document.createElement("span");
-        span.textContent = `#${video.location.trim()}`;
-        span.style.cssText = `
-          font-size:11px; padding:2px 8px; border-radius:10px;
-          background: rgba(0,255,234,0.3); color: #00ffea;
-          border: 1px solid rgba(0,255,234,0.6);
-        `;
-        tagsEl.appendChild(span);
-      }
+const oneLiner = document.createElement("div");
+oneLiner.textContent = `A ${displayGender} in ${pronoun} ${ageGroup}`;
+oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-      if (video.city) {
-        const span = document.createElement("span");
-        span.textContent = `#${video.city.trim()}`;
-        span.style.cssText = `
-          font-size:11px; padding:2px 8px; border-radius:10px;
-          background: rgba(0,255,234,0.3); color: #00ffea;
-          border: 1px solid rgba(0,255,234,0.6);
-        `;
-        tagsEl.appendChild(span);
-      }
-
+// Append
+info.append(user, oneLiner);
+       
+      // FruitPick – small, glowing, extreme right
+      let fruitEl = null;
       if (video.fruitPick) {
-        const fruitSpan = document.createElement("span");
-        fruitSpan.textContent = video.fruitPick.trim();
-        fruitSpan.style.cssText = `
-          font-size:18px; line-height:1; padding:6px 12px; border-radius:50%;
-          background: rgba(255,255,255,0.18); backdrop-filter: blur(6px);
-          color: #fff; border: 1px solid rgba(255,255,255,0.35);
-          box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-          display: inline-flex; align-items:center; justify-content:center;
-          min-width:40px; min-height:40px;
+        fruitEl = document.createElement("div");
+        fruitEl.textContent = video.fruitPick.trim();
+        fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          font-size: 20px;
+          line-height: 1;
+          padding: 4px 8px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.12);
+          backdrop-filter: blur(6px);
+          color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          box-shadow: 0 0 12px rgba(255,255,255,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 36px;
+          min-height: 36px;
         `;
-        tagsEl.appendChild(fruitSpan);
       }
 
-      info.appendChild(tagsEl);
+      info.appendChild(user);
+      info.appendChild(oneLiner);
       card.appendChild(info);
+
+      if (fruitEl) card.appendChild(fruitEl);
 
       // BADGE
       const badge = document.createElement("div");
@@ -6243,7 +6261,7 @@ function showHighlightsModal(videos) {
       Object.assign(badge.style, {
         position: "absolute",
         top: "12px",
-        right: "12px",
+        right: fruitEl ? "60px" : "12px", // shift left if fruitPick is present
         padding: "6px 12px",
         borderRadius: "12px",
         fontSize: "12px",
@@ -6255,10 +6273,12 @@ function showHighlightsModal(videos) {
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
+
       grid.appendChild(card);
     });
   }
 
+  // Initial render
   renderCards(videos);
   document.body.appendChild(modal);
   setTimeout(() => {
