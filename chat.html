@@ -4233,7 +4233,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
   
-<!-- HIGHLIGHTS ($ELL CONTENT) — FILE UPLOAD ONLY VERSION -->
+<!-- FREE TONIGHT UPLOAD — VIDEO ONLY + "IT'S ME" CHECKBOX -->
 <div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
   <div style="text-align:center; margin-bottom:28px;">
     <h2 style="
@@ -4242,10 +4242,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       background-size:200% auto; animation:gradient 4s linear infinite;
     ">
-      UPLOAD CLIPS
+      GO LIVE ON FREE TONIGHT
     </h2>
     <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
-      Upload premium clips • Earn <span style="color:#00ff9d; font-weight:700;">STRZ</span> on unlock
+      Upload your video • It goes live instantly for everyone
     </p>
   </div>
 
@@ -4260,12 +4260,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     <div style="position:absolute; inset:0; pointer-events:none;
                  background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
                  opacity:0.6;"></div>
-  
+
     <div style="position:relative; z-index:2;">
       <!-- Video Upload -->
       <div style="margin-bottom:32px; text-align:center;">
         <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
-          Upload Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
+          Upload Your Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
         </div>
         <label for="highlightUploadInput" style="
           display:block; padding:32px 24px;
@@ -4301,92 +4301,48 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </label>
       </div>
 
-      <!-- Title -->
-      <div style="margin-bottom:20px;">
-        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
-          Title <span style="color:#ff4444;">*</span>
+      <!-- "It's me in this video" Checkbox -->
+      <div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
+        <label style="display:inline-flex; align-items:center; gap:12px; cursor:pointer;">
+          <input type="checkbox" id="itsMeCheckbox" style="width:20px; height:20px; accent-color:#ff2e78;">
+          It's me in this video
         </label>
-        <input type="text" id="highlightTitleInput" placeholder="e.g. Crazy 1v5 clutch in ranked"
-               style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#fff; font-size:15px;"
-               onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
-               onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'">
       </div>
 
-      <!-- Description -->
-      <div style="margin-bottom:24px;">
-        <label style="display:block; color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:10px;">
-          Description <span style="color:#666; font-size:13px;">(optional)</span>
-        </label>
-        <textarea id="highlightDescInput" placeholder="What's the story behind this moment?"
-                  style="width:100%; padding:14px 16px; background:#0a0a0a; border:1px solid #333; border-radius:12px; color:#ddd; font-size:14.5px; min-height:90px; resize:vertical;"
-                  onfocus="this.style.borderColor='#ff2e78'; this.style.background='#111'"
-                  onblur="this.style.borderColor='#333'; this.style.background='#0a0a0a'"></textarea>
-      </div>
-
-      <!-- Price -->
-      <div style="margin-bottom:28px; text-align:center;">
-        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">Unlock Price</div>
-        <div style="display:inline-flex; align-items:center; gap:10px; background:#0a0a0a; padding:12px 20px; border-radius:16px; border:1px solid #333;">
-          <input type="tel" id="highlightPriceInput" value="50" min="10" maxlength="5"
-                 style="width:80px; background:transparent; border:none; outline:none; color:#00ff9d; font-size:28px; font-weight:800; text-align:center;"
-                 onfocus="this.parentNode.style.borderColor='#00ff9d'; this.parentNode.style.boxShadow='0 0 0 3px rgba(0,255,157,0.2)'"
-                 onblur="this.parentNode.style.borderColor='#333'; this.parentNode.style.boxShadow='none'">
-          <span style="font-size:26px; font-weight:800; color:#888;">STRZ</span>
-        </div>
-      </div>
-
-      <!-- Tags -->
-      <div style="margin:28px 0; text-align:center;">
-        <div style="color:#e0e0e0; font-size:14px; font-weight:600; margin-bottom:12px;">
-          Tags <span style="color:#666; font-weight:500;">(optional)</span>
-        </div>
-        <div id="tagSelector" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:360px; margin:0 auto;">
-          <div class="tag-btn" data-tag="hot">Hot</div>
-          <div class="tag-btn" data-tag="cute">Cute</div>
-          <div class="tag-btn" data-tag="dance">Dance</div>
-          <div class="tag-btn" data-tag="body">Body</div>
-          <div class="tag-btn" data-tag="sexy">Sexy</div>
-          <div class="tag-btn" data-tag="twerk">Twerk</div>
-          <div class="tag-btn" data-tag="tease">Tease</div>
-          <div class="tag-btn" data-tag="selfie">Selfie</div>
-          <div class="tag-btn" data-tag="beauty">Beauty</div>
-          <div class="tag-btn" data-tag="vibes">Vibes</div>
-        </div>
-      </div>
-
-      <!-- Upload Button + Progress Bar + Status -->
+      <!-- Upload Button + Progress -->
       <div style="text-align:center; margin-top:32px;">
-        <button id="uploadHighlightBtn" style="
-          padding:14px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e);
-          color:#fff; border:none; border-radius:50px; font-weight:700; font-size:16px;
-          cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,46,120,0.3);
+        <button id="uploadHighlightBtn" disabled style="
+          padding:14px 40px; background:#444;
+          color:#888; border:none; border-radius:50px; font-weight:700; font-size:16px;
+          cursor:not-allowed; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(0,0,0,0.3);
           transition:all 0.3s ease; position:relative; z-index:2;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(255,46,120,0.45)'"
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(255,46,120,0.3)'">
-          Upload
+        ">
+          Go Live on Free Tonight
         </button>
 
-       <div id="progressContainer" style="
-  margin:14px auto 0; 
-  width:80%; 
-  max-width:340px; 
-  height:8px;
-  background:rgba(255,255,255,0.08); 
-  border-radius:4px; 
-  overflow:hidden;
-  opacity:0; 
-  transition:opacity 0.4s ease;
-">
-  <div id="progressBar" style="
-    width:0%; 
-    height:100%; 
-    background:linear-gradient(90deg, #ff2e78, #ff8c2e);
-    border-radius:4px; 
-    transition:width 0.3s ease-out;
-  "></div>
-</div>
+        <div id="progressContainer" style="
+          margin:14px auto 0;
+          width:80%;
+          max-width:340px;
+          height:8px;
+          background:rgba(255,255,255,0.08);
+          border-radius:4px;
+          overflow:hidden;
+          opacity:0;
+          transition:opacity 0.4s ease;
+        ">
+          <div id="progressBar" style="
+            width:0%;
+            height:100%;
+            background:linear-gradient(90deg, #ff2e78, #ff8c2e);
+            border-radius:4px;
+            transition:width 0.3s ease-out;
+          "></div>
+        </div>
       </div>
-
+    </div>
+  </div>
+</div>
       <div id="highlightUploadStatus" style="
         margin-top:12px; text-align:center; font-size:14px; font-weight:600;
         min-height:24px; color:#00ff9d; opacity:0; transition:opacity 0.4s;
