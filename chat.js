@@ -5956,12 +5956,17 @@ highlightsBtn.onclick = async () => {
           tags: clip.tags || [],
           location: userData.location || "",
           city: userData.city || "",
-          fruitPick: userData.fruitPick || null,
+    fruitPick: userData.fruitPick || (userData.chatId === "HD" ? "🍒" : null),
           gender: userData.gender || "person",
           age: userData.age || null // for age group in card
         });
       });
     });
+
+     console.log("Pushed clip for:", userData.chatId || userData.uploaderName, 
+            "fruitPick from DB:", userData.fruitPick,
+            "gender:", userData.gender,
+            "age:", userData.age);
 
     if (allClips.length === 0) {
       showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
