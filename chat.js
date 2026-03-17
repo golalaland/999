@@ -5923,17 +5923,18 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* Highlights Button – shows ALL clips from ALL users */
+/* Highlights Button – opens Free Tonight (only trending videos) */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
-      showGoldAlert("Please log in to view cuties");
+      showGoldAlert("Please log in to view Free Tonight");
       return;
     }
+
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
     if (snap.empty) {
-      showGoldAlert("No clips uploaded yet");
+      showGoldAlert("No clips in Free Tonight yet");
       return;
     }
 
@@ -5942,43 +5943,39 @@ highlightsBtn.onclick = async () => {
       const userData = userDoc.data();
       const clips = userData.highlights || [];
       clips.forEach(clip => {
+        if (clip.isTrending !== true) return; // only trending videos
+
         allClips.push({
           id: clip.id,
-          highlightVideo: clip.videoUrl || "",
-          highlightVideoPrice: clip.highlightVideoPrice || 0,
-          title: clip.title || "Untitled",
+          videoUrl: clip.videoUrl || "",
+          previewClip: clip.previewClip || "",
+          thumbnail: clip.thumbnailUrl || "",
           uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
           uploaderId: userData.uploaderId || userDoc.id,
-          uploaderEmail: userData.uploaderEmail || "unknown",
-          description: clip.description || "",
-          thumbnail: clip.thumbnailUrl || "",
-          createdAt: clip.uploadedAt || null,
-          unlockedBy: clip.unlockedBy || [],
-          previewClip: clip.previewClip || "",
-          videoUrl: clip.videoUrl || "",
-          isTrending: clip.isTrending || false,
+          isTrending: true,
           tags: clip.tags || [],
-          // Pre-load fruitPick (already present — kept for fruit tag)
-          uploader: {
-            fruitPick: userData.fruitPick || null
-          }
+          location: userData.location || "",
+          city: userData.city || "",
+          fruitPick: userData.fruitPick || null,
+          gender: userData.gender || "person",
+          age: userData.age || null // for age group in card
         });
       });
     });
 
     if (allClips.length === 0) {
-      showGoldAlert("No clips available yet");
+      showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
       return;
     }
 
     showHighlightsModal(allClips);
   } catch (err) {
-    console.error("Error fetching clips:", err);
-    showGoldAlert("Error fetching clips — please try again.");
+    console.error("Error fetching Free Tonight clips:", err);
+    showGoldAlert("Error loading Free Tonight — try again.");
   }
 };
 
-/* ---------- Free Tonight Modal – All clips free/public ---------- */
+/* ---------- Free Tonight Modal – All trending videos free/public ---------- */
 function showHighlightsModal(videos) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
@@ -6008,7 +6005,7 @@ function showHighlightsModal(videos) {
           Free Tonight 🔥
         </span>
       </div>
-      <p style="margin:0 0 4px;">All clips are free & public</p>
+      <p style="margin:0 0 4px;">All clips are free & live now</p>
       <p style="margin:0;">Filter by location, city or fruitPick</p>
     </div>
   `;
@@ -6042,7 +6039,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — only tag filters (no unlocked/trending switch)
+  // CONTROLS — only tag filters
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6074,7 +6071,7 @@ function showHighlightsModal(videos) {
     tagContainer.innerHTML = "";
 
     // ── VISIBLE VIDEOS FOR TAG BUTTONS ─────────────────────────────────────
-    let visibleVideos = videosToRender; // all are free/public
+    let visibleVideos = videosToRender.filter(v => v.isTrending === true);
 
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
@@ -6099,16 +6096,9 @@ function showHighlightsModal(videos) {
     });
     const sortedVisibleTags = [...visibleTags].sort();
 
-    const locationKeywords = [
-      "nigeria", "lagos", "abuja", "oyo", "kano", "rivers", "enugu",
-      "ghana", "accra", "naija", "lekki", "ikeja", "portharcourt", "ibadan"
-    ];
-
     // Build tag buttons — location, city, fruitPick
     sortedVisibleTags.forEach(tag => {
       const lowerTag = tag.toLowerCase();
-      const isLocation = locationKeywords.some(kw => lowerTag.includes(kw));
-      const isCity = ["lagos", "abuja", "accra", "portharcourt", "ibadan", "lekki", "ikeja"].some(c => lowerTag.includes(c));
       const isFruit = ["🍒", "🍓", "🍉", "🍍", "🍑", "🍊", "🍇"].includes(tag);
 
       const btn = document.createElement("button");
@@ -6143,7 +6133,7 @@ function showHighlightsModal(videos) {
 
     if (filtered.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = "No clips match your filters — check back soon! 🔥";
+      empty.textContent = "No one's on Free Tonight right now... check back soon! 🔥";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
       grid.appendChild(empty);
       return;
@@ -6186,7 +6176,7 @@ function showHighlightsModal(videos) {
       vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // Info overlay — only username
+      // Info overlay — only username + one-liner
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -6197,24 +6187,22 @@ function showHighlightsModal(videos) {
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
-      user.onclick = (e) => {
-        e.stopPropagation();
-        if (video.uploaderId) {
-          getDoc(doc(db, "users", video.uploaderId))
-            .then(userSnap => {
-              if (userSnap.exists()) {
-                showSocialCard(userSnap.data());
-              }
-            })
-            .catch(err => console.error("Failed to load user:", err));
-        }
-      };
+
+      // One-liner under username
+      const gender = (video.gender || "person").toLowerCase();
+      const isMale = gender === "male";
+      const pronoun = isMale ? "his" : "her";
+      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+      const oneLiner = document.createElement("div");
+      oneLiner.textContent = `A ${gender} in ${pronoun} ${ageGroup}`;
+      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+
+      info.append(user, oneLiner);
 
       // Tags (location/city/fruitPick)
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      // Show location, city, fruitPick
       if (video.location) {
         const span = document.createElement("span");
         span.textContent = `#${video.location.trim()}`;
@@ -6251,7 +6239,6 @@ function showHighlightsModal(videos) {
         tagsEl.appendChild(fruitSpan);
       }
 
-      info.appendChild(user);
       info.appendChild(tagsEl);
       card.appendChild(info);
 
@@ -6277,7 +6264,7 @@ function showHighlightsModal(videos) {
     });
   }
 
-  // Initial render (only Free Tonight)
+  // Initial render
   renderCards(videos);
   document.body.appendChild(modal);
   setTimeout(() => {
