@@ -5923,24 +5923,21 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* Highlights Button – opens Free Tonight (only trending videos) */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
       showGoldAlert("Please log in to view Free Tonight");
       return;
     }
-
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
     if (snap.empty) {
       showGoldAlert("No clips in Free Tonight yet");
       return;
     }
-
     const allClips = [];
     snap.forEach(userDoc => {
-      const userData = userDoc.data();
+      const userData = userDoc.data();  // ← defined here
       const clips = userData.highlights || [];
       clips.forEach(clip => {
         if (clip.isTrending !== true) return; // only trending videos
@@ -5956,23 +5953,23 @@ highlightsBtn.onclick = async () => {
           tags: clip.tags || [],
           location: userData.location || "",
           city: userData.city || "",
-    fruitPick: userData.fruitPick || (userData.chatId === "HD" ? "🍒" : null),
+          fruitPick: userData.fruitPick || null,  // ← real value from DB
           gender: userData.gender || "person",
-          age: userData.age || null // for age group in card
+          age: userData.age || null
         });
+
+        // ← Debug log INSIDE the loop — now userData exists
+        console.log("Pushed clip for:", userData.chatId || userData.uploaderName,
+                    "fruitPick from DB:", userData.fruitPick,
+                    "gender:", userData.gender,
+                    "age:", userData.age);
       });
     });
-
-     console.log("Pushed clip for:", userData.chatId || userData.uploaderName, 
-            "fruitPick from DB:", userData.fruitPick,
-            "gender:", userData.gender,
-            "age:", userData.age);
 
     if (allClips.length === 0) {
       showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
       return;
     }
-
     showHighlightsModal(allClips);
   } catch (err) {
     console.error("Error fetching Free Tonight clips:", err);
