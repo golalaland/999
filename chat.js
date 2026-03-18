@@ -6027,7 +6027,7 @@ function showHighlightsModal(videos) {
         <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
-        Tap tags to filter by location or city.
+        Tap tags or location to find your vibe.
       </p>
     </div>
   `;
@@ -6061,12 +6061,30 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — tag filters only (location + city inside modal)
+  // CONTROLS — Enter Location button + other tags
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
+
+  // Enter Location Button
+  const locationBtn = document.createElement("button");
+  locationBtn.textContent = "Enter Location";
+  Object.assign(locationBtn.style, {
+    padding: "10px 24px",
+    borderRadius: "30px",
+    fontSize: "14px",
+    fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)",
+    color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)",
+    cursor: "pointer",
+    transition: "all 0.3s",
+    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
+  });
+  locationBtn.onclick = () => openLocationModal();
+  controls.appendChild(locationBtn);
 
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
@@ -6087,6 +6105,60 @@ function showHighlightsModal(videos) {
 
   // State
   let activeTags = new Set();
+
+  // Mini modal for location tags
+  function openLocationModal() {
+    const locModal = document.createElement("div");
+    locModal.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px);
+      z-index:1000000; display:flex; align-items:center; justify-content:center;
+    `;
+
+    const inner = document.createElement("div");
+    inner.style.cssText = `
+      background:rgba(15,10,26,0.95); border:1px solid rgba(138,43,226,0.5);
+      border-radius:20px; padding:32px; max-width:420px; width:90%;
+      box-shadow:0 0 40px rgba(138,43,226,0.6); text-align:center;
+    `;
+
+    inner.innerHTML = `
+      <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
+      <div id="locTags" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:24px;"></div>
+      <button id="goLoc" style="padding:12px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e); color:#fff; border:none; border-radius:50px; font-weight:700; cursor:pointer;">
+        Go
+      </button>
+    `;
+
+    locModal.appendChild(inner);
+    document.body.appendChild(locModal);
+
+    // Populate location tags in mini modal
+    const locTagsContainer = inner.querySelector("#locTags");
+    const allLocs = new Set();
+    videos.forEach(v => {
+      if (v.location) allLocs.add(v.location.trim());
+      if (v.city) allLocs.add(v.city.trim());
+    });
+
+    [...allLocs].sort().forEach(loc => {
+      const btn = document.createElement("button");
+      btn.textContent = loc;
+      btn.style.cssText = `
+        padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600;
+        background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3);
+        cursor:pointer; transition:all 0.2s;
+      `;
+      btn.onclick = () => {
+        activeTags.clear();
+        activeTags.add(loc.toLowerCase());
+        renderCards(videos);
+        locModal.remove();
+      };
+      locTagsContainer.appendChild(btn);
+    });
+
+    inner.querySelector("#goLoc").onclick = () => locModal.remove();
+  }
 
   function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
@@ -6120,7 +6192,7 @@ function showHighlightsModal(videos) {
 
     sortedVisibleTags.forEach(tag => {
       const btn = document.createElement("button");
-      btn.textContent = tag; // no #
+      btn.textContent = tag;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
         padding: "6px 14px",
@@ -6173,7 +6245,7 @@ function showHighlightsModal(videos) {
 
       const videoEl = document.createElement("video");
       videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
-      videoEl.loading = "lazy"; // caching boost
+      videoEl.loading = "lazy";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       videoEl.src = video.previewClip || video.videoUrl || "";
       videoEl.load();
@@ -6202,7 +6274,6 @@ function showHighlightsModal(videos) {
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
-          // Your original spinner restored
           const spinner = document.createElement("div");
           spinner.className = "profile-spinner";
           user.appendChild(spinner);
@@ -6224,13 +6295,16 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // One-liner: A {naturePick} {gender} in her {ageGroup}
+      // One-liner: A {naturePick} {gender} in {pronouns} {Age}
       const naturePick = video.naturePick || "";
       const genderRaw = (video.gender || "person").toLowerCase().trim();
-      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+      const age = video.age || "20s";
+      const isMale = genderRaw === "male";
+      const pronoun = isMale ? "his" : "her"; // fallback "her" as per your request
+
       const oneLinerText = naturePick 
-        ? `A ${naturePick} ${genderRaw} in her ${ageGroup}`
-        : `A ${genderRaw} in her ${ageGroup}`;
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${age}`
+        : `A ${genderRaw} in ${pronoun} ${age}`;
 
       const oneLiner = document.createElement("div");
       oneLiner.textContent = oneLinerText;
@@ -6265,7 +6339,7 @@ function showHighlightsModal(videos) {
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
 
-      // FruitPick — tiny standalone emoji, extreme right, reduced glow
+      // FruitPick — tiny standalone emoji, extreme right, soft glow
       let fruitEl = null;
       if (video.fruitPick) {
         fruitEl = document.createElement("div");
@@ -6277,7 +6351,7 @@ function showHighlightsModal(videos) {
           font-size: 16px;
           line-height: 1;
           color: #fff;
-          text-shadow: 0 0 3px rgba(255,255,255,0.5); /* reduced glow */
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
           z-index: 3;
         `;
       }
