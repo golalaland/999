@@ -6027,7 +6027,7 @@ function showHighlightsModal(videos) {
         <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
-        Filter by location or city to find your vibe.
+        Tap tags to filter by location or city.
       </p>
     </div>
   `;
@@ -6061,30 +6061,12 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — Enter Location button + tag filters
+  // CONTROLS — tag filters only (location + city inside modal)
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
-
-  // Enter Location Button
-  const locationBtn = document.createElement("button");
-  locationBtn.textContent = "Enter Location";
-  Object.assign(locationBtn.style, {
-    padding: "10px 24px",
-    borderRadius: "30px",
-    fontSize: "14px",
-    fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)",
-    color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)",
-    cursor: "pointer",
-    transition: "all 0.3s",
-    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
-  });
-  locationBtn.onclick = () => openLocationModal();
-  controls.appendChild(locationBtn);
 
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
@@ -6105,49 +6087,6 @@ function showHighlightsModal(videos) {
 
   // State
   let activeTags = new Set();
-
-  // Location Modal
-  function openLocationModal() {
-    const locModal = document.createElement("div");
-    locModal.style.cssText = `
-      position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px);
-      z-index:1000000; display:flex; align-items:center; justify-content:center;
-    `;
-
-    const inner = document.createElement("div");
-    inner.style.cssText = `
-      background:rgba(15,10,26,0.95); border:1px solid rgba(138,43,226,0.5);
-      border-radius:20px; padding:32px; max-width:420px; width:90%;
-      box-shadow:0 0 40px rgba(138,43,226,0.6); text-align:center;
-    `;
-
-    inner.innerHTML = `
-      <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Filter by Location</h3>
-      <input type="text" id="locSearch" placeholder="e.g. Lagos, Abuja, Lekki..."
-             style="width:100%; padding:14px; background:#0a0a0a; border:1px solid #444; border-radius:12px; color:#fff; font-size:15px; margin-bottom:20px;">
-      <button id="goLoc" style="padding:12px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e); color:#fff; border:none; border-radius:50px; font-weight:700; cursor:pointer;">
-        Go
-      </button>
-    `;
-
-    locModal.appendChild(inner);
-    document.body.appendChild(locModal);
-
-    const input = inner.querySelector("#locSearch");
-    const goBtn = inner.querySelector("#goLoc");
-
-    goBtn.onclick = () => {
-      const term = input.value.trim().toLowerCase();
-      if (term) {
-        activeTags.clear();
-        activeTags.add(term);
-        renderCards(videos);
-      }
-      locModal.remove();
-    };
-
-    input.focus();
-  }
 
   function renderCards(videosToRender = videos) {
     grid.innerHTML = "";
@@ -6234,7 +6173,7 @@ function showHighlightsModal(videos) {
 
       const videoEl = document.createElement("video");
       videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
-      videoEl.loading = "lazy"; // ← thumbnail caching boost
+      videoEl.loading = "lazy"; // caching boost
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       videoEl.src = video.previewClip || video.videoUrl || "";
       videoEl.load();
@@ -6263,14 +6202,9 @@ function showHighlightsModal(videos) {
       user.onclick = (e) => {
         e.stopPropagation();
         if (video.uploaderId) {
-          // Restore spinner
+          // Your original spinner restored
           const spinner = document.createElement("div");
           spinner.className = "profile-spinner";
-          spinner.style.cssText = `
-            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-            width:20px; height:20px; border:3px solid rgba(0,255,234,0.3);
-            border-top:3px solid #00ffea; border-radius:50%; animation:spin 1s linear infinite;
-          `;
           user.appendChild(spinner);
 
           getDoc(doc(db, "users", video.uploaderId))
@@ -6278,11 +6212,14 @@ function showHighlightsModal(videos) {
               spinner.remove();
               if (userSnap.exists()) {
                 showSocialCard(userSnap.data());
+              } else {
+                showStarPopup("User profile not found", "error");
               }
             })
             .catch(err => {
               spinner.remove();
               console.error("Failed to load user:", err);
+              showStarPopup("Failed to load profile", "error");
             });
         }
       };
@@ -6340,14 +6277,14 @@ function showHighlightsModal(videos) {
           font-size: 16px;
           line-height: 1;
           color: #fff;
-          text-shadow: 0 0 4px rgba(255,255,255,0.5); /* reduced glow */
+          text-shadow: 0 0 3px rgba(255,255,255,0.5); /* reduced glow */
           z-index: 3;
         `;
       }
 
       if (fruitEl) card.appendChild(fruitEl);
 
-      // BADGE — original top-right placement
+      // BADGE — original top-right
       const badge = document.createElement("div");
       badge.textContent = "Free Tonight ♡";
       Object.assign(badge.style, {
