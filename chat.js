@@ -6061,7 +6061,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — Enter Location button + other tags (no location here)
+  // CONTROLS — Enter Location button + non-location tags only
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6106,7 +6106,7 @@ function showHighlightsModal(videos) {
   // State
   let activeTags = new Set();
 
-  // Mini modal for location tags
+  // Mini modal for location tags (multi-select, apply on "Go")
   function openLocationModal() {
     const locModal = document.createElement("div");
     locModal.style.cssText = `
@@ -6170,9 +6170,7 @@ function showHighlightsModal(videos) {
           activeTags.add(btn.dataset.loc);
         }
       });
-      if (activeTags.size > 0) {
-        renderCards(videos);
-      }
+      renderCards(videos);
       locModal.remove();
     };
 
@@ -6203,7 +6201,7 @@ function showHighlightsModal(videos) {
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim()) {
+        if (t && typeof t === "string" && t.trim() && !v.location && !v.city) { // exclude location/city from main tags
           visibleTags.add(t.trim().toLowerCase());
         }
       });
@@ -6315,7 +6313,7 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // One-liner: A {naturePick} {gender} in {pronouns} {AgeGroup}
+      // One-liner: A {naturePick} {gender} in {pronoun} {AgeGroup}
       const naturePick = video.naturePick || "";
       const genderRaw = (video.gender || "person").toLowerCase().trim();
       const isMale = genderRaw === "male";
@@ -6330,10 +6328,33 @@ function showHighlightsModal(videos) {
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-      // Tags — only non-location tags here (location in modal)
+      // Tags — location & city layered on video, no #, only in overlay
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
+      if (video.location) {
+        const span = document.createElement("span");
+        span.textContent = video.location.trim();
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
+        tagsEl.appendChild(span);
+      }
+
+      if (video.city) {
+        const span = document.createElement("span");
+        span.textContent = video.city.trim();
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
+        tagsEl.appendChild(span);
+      }
+
+      // Other tags
       (video.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           const span = document.createElement("span");
