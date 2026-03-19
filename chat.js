@@ -6027,7 +6027,7 @@ function showHighlightsModal(videos) {
         <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
-        Tap tags or location to find your vibe.
+        Tap "Enter Location" or other tags to filter.
       </p>
     </div>
   `;
@@ -6061,7 +6061,7 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — Enter Location button + other tags
+  // CONTROLS — Enter Location button + other tags (no location here)
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
@@ -6122,8 +6122,8 @@ function showHighlightsModal(videos) {
     `;
 
     inner.innerHTML = `
-      <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
-      <div id="locTags" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:24px;"></div>
+      <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location(s)</h3>
+      <div id="locTags" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:24px; max-height:300px; overflow-y:auto;"></div>
       <button id="goLoc" style="padding:12px 40px; background:linear-gradient(90deg,#ff2e78,#ff5e2e); color:#fff; border:none; border-radius:50px; font-weight:700; cursor:pointer;">
         Go
       </button>
@@ -6132,7 +6132,7 @@ function showHighlightsModal(videos) {
     locModal.appendChild(inner);
     document.body.appendChild(locModal);
 
-    // Populate location tags in mini modal
+    // Populate location tags (multi-select)
     const locTagsContainer = inner.querySelector("#locTags");
     const allLocs = new Set();
     videos.forEach(v => {
@@ -6143,21 +6143,43 @@ function showHighlightsModal(videos) {
     [...allLocs].sort().forEach(loc => {
       const btn = document.createElement("button");
       btn.textContent = loc;
+      btn.dataset.loc = loc.toLowerCase();
       btn.style.cssText = `
         padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600;
         background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3);
         cursor:pointer; transition:all 0.2s;
       `;
       btn.onclick = () => {
-        activeTags.clear();
-        activeTags.add(loc.toLowerCase());
-        renderCards(videos);
-        locModal.remove();
+        if (btn.style.background.includes("0.1")) {
+          btn.style.background = "linear-gradient(135deg, #ff2e78, #ff5e9e)";
+          btn.style.color = "#fff";
+          btn.style.borderColor = "#ff2e78";
+        } else {
+          btn.style.background = "rgba(255,255,255,0.1)";
+          btn.style.color = "#fff";
+          btn.style.borderColor = "rgba(255,255,255,0.3)";
+        }
       };
       locTagsContainer.appendChild(btn);
     });
 
-    inner.querySelector("#goLoc").onclick = () => locModal.remove();
+    inner.querySelector("#goLoc").onclick = () => {
+      activeTags.clear();
+      locTagsContainer.querySelectorAll("button").forEach(btn => {
+        if (btn.style.background.includes("ff2e78")) {
+          activeTags.add(btn.dataset.loc);
+        }
+      });
+      if (activeTags.size > 0) {
+        renderCards(videos);
+      }
+      locModal.remove();
+    };
+
+    // Close on outside click
+    locModal.onclick = (e) => {
+      if (e.target === locModal) locModal.remove();
+    };
   }
 
   function renderCards(videosToRender = videos) {
@@ -6185,8 +6207,6 @@ function showHighlightsModal(videos) {
           visibleTags.add(t.trim().toLowerCase());
         }
       });
-      if (v.location) visibleTags.add(v.location.trim().toLowerCase());
-      if (v.city) visibleTags.add(v.city.trim().toLowerCase());
     });
     const sortedVisibleTags = [...visibleTags].sort();
 
@@ -6295,46 +6315,37 @@ function showHighlightsModal(videos) {
         }
       };
 
-      // One-liner: A {naturePick} {gender} in {pronouns} {Age}
+      // One-liner: A {naturePick} {gender} in {pronouns} {AgeGroup}
       const naturePick = video.naturePick || "";
       const genderRaw = (video.gender || "person").toLowerCase().trim();
-      const age = video.age || "20s";
       const isMale = genderRaw === "male";
-      const pronoun = isMale ? "his" : "her"; // fallback "her" as per your request
+      const pronoun = isMale ? "his" : "her";
+      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
 
       const oneLinerText = naturePick 
-        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${age}`
-        : `A ${genderRaw} in ${pronoun} ${age}`;
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
       const oneLiner = document.createElement("div");
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-      // Tags — location & city only, no #
+      // Tags — only non-location tags here (location in modal)
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      if (video.location) {
-        const span = document.createElement("span");
-        span.textContent = video.location.trim();
-        span.style.cssText = `
-          font-size:11px; padding:2px 8px; border-radius:10px;
-          background: rgba(0,255,234,0.3); color: #00ffea;
-          border: 1px solid rgba(0,255,234,0.6);
-        `;
-        tagsEl.appendChild(span);
-      }
-
-      if (video.city) {
-        const span = document.createElement("span");
-        span.textContent = video.city.trim();
-        span.style.cssText = `
-          font-size:11px; padding:2px 8px; border-radius:10px;
-          background: rgba(0,255,234,0.3); color: #00ffea;
-          border: 1px solid rgba(0,255,234,0.6);
-        `;
-        tagsEl.appendChild(span);
-      }
+      (video.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim()) {
+          const span = document.createElement("span");
+          span.textContent = t.trim();
+          span.style.cssText = `
+            font-size:11px; padding:2px 8px; border-radius:10px;
+            background: rgba(255,46,120,0.22); color: #ff4d8a;
+            border: 1px solid rgba(255,46,120,0.6);
+          `;
+          tagsEl.appendChild(span);
+        }
+      });
 
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
