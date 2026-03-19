@@ -6041,7 +6041,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         </span>
       </div>
       <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-        Real moments, real vibes — no paywalls, no waiting. 
+        Real moments, real vibes — no paywalls, no waiting.
         <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
@@ -6100,7 +6100,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     transition: "all 0.3s",
     boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-  locationBtn.onclick = () => openLocationModal(videos);  // ← pass videos here
+  locationBtn.onclick = () => openLocationModal(initialVideos); // ← pass initialVideos here
   controls.appendChild(locationBtn);
 
   const tagContainer = document.createElement("div");
@@ -6120,10 +6120,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   `;
   modal.appendChild(grid);
 
-
-   
-
-  // Loading indicator for more pages
+  // Load more trigger
   const loadMoreDiv = document.createElement("div");
   loadMoreDiv.id = "loadMoreTrigger";
   loadMoreDiv.style.cssText = "height:200px; width:100%; text-align:center; padding:40px; color:#888;";
@@ -6136,14 +6133,14 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   let isLoadingMore = false;
   let hasMore = true;
 
-  // Infinite scroll observer
+  // Infinite scroll
   const observer = new IntersectionObserver(async (entries) => {
     if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
       isLoadingMore = true;
       loadMoreDiv.innerHTML = "Loading more...";
       const loaded = await loadMoreFn();
       if (loaded) {
-        renderCards(allVideos); // re-render with new clips
+        renderCards(allVideos);
       } else {
         hasMore = false;
         loadMoreDiv.innerHTML = "No more clips";
@@ -6154,8 +6151,8 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
 
   observer.observe(loadMoreDiv);
 
-// Mini modal for location tags (multi-select, apply on "Go")
-  function openLocationModal(videos) {  // ← accept videos parameter
+  // Mini modal for location tags (multi-select, apply on "Go")
+  function openLocationModal(videos) { // ← now receives the full list
     const locModal = document.createElement("div");
     locModal.style.cssText = `
       position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px);
@@ -6180,10 +6177,10 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     locModal.appendChild(inner);
     document.body.appendChild(locModal);
 
-    // Populate location tags (multi-select)
+    // Populate locations from the passed videos list
     const locTagsContainer = inner.querySelector("#locTags");
     const allLocs = new Set();
-    videos.forEach(v => {  // ← now videos is defined
+    videos.forEach(v => {
       if (v.location) allLocs.add(v.location.trim());
       if (v.city) allLocs.add(v.city.trim());
     });
@@ -6218,7 +6215,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
           activeTags.add(btn.dataset.loc);
         }
       });
-      renderCards(videos);
+      renderCards(allVideos);
       locModal.remove();
     };
 
@@ -6226,6 +6223,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       if (e.target === locModal) locModal.remove();
     };
   }
+
   function renderCards(videosToRender = allVideos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
@@ -6244,7 +6242,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       });
     }
 
-    // Only show non-location tags in main filter bar
+    // Only non-location tags in main bar
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
@@ -6463,7 +6461,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     grid.appendChild(loadMoreDiv);
   }
 
-  // Initial render with first batch
+  // Initial render
   renderCards(allVideos);
   document.body.appendChild(modal);
   setTimeout(() => {
