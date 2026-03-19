@@ -6100,7 +6100,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     transition: "all 0.3s",
     boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-  locationBtn.onclick = () => openLocationModal();
+  locationBtn.onclick = () => openLocationModal(videos);  // ← pass videos here
   controls.appendChild(locationBtn);
 
   const tagContainer = document.createElement("div");
@@ -6119,6 +6119,9 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
+
+
+   
 
   // Loading indicator for more pages
   const loadMoreDiv = document.createElement("div");
@@ -6151,8 +6154,8 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
 
   observer.observe(loadMoreDiv);
 
-  // Mini modal for location tags (multi-select, apply on "Go")
-  function openLocationModal() {
+// Mini modal for location tags (multi-select, apply on "Go")
+  function openLocationModal(videos) {  // ← accept videos parameter
     const locModal = document.createElement("div");
     locModal.style.cssText = `
       position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px);
@@ -6177,9 +6180,10 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     locModal.appendChild(inner);
     document.body.appendChild(locModal);
 
+    // Populate location tags (multi-select)
     const locTagsContainer = inner.querySelector("#locTags");
     const allLocs = new Set();
-    videos.forEach(v => {
+    videos.forEach(v => {  // ← now videos is defined
       if (v.location) allLocs.add(v.location.trim());
       if (v.city) allLocs.add(v.city.trim());
     });
@@ -6214,7 +6218,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
           activeTags.add(btn.dataset.loc);
         }
       });
-      renderCards(allVideos);
+      renderCards(videos);
       locModal.remove();
     };
 
@@ -6222,7 +6226,6 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       if (e.target === locModal) locModal.remove();
     };
   }
-
   function renderCards(videosToRender = allVideos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
