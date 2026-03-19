@@ -5940,7 +5940,6 @@ highlightsBtn.onclick = async () => {
 
     const allClips = [];
 
-    // We'll fetch user profiles in batches or individually
     for (const userDoc of snap.docs) {
       const highlightsData = userDoc.data();
       const clips = highlightsData.highlights || [];
@@ -5953,6 +5952,7 @@ highlightsBtn.onclick = async () => {
 
       console.log("Fetched user profile for:", uploaderId,
                   "fruitPick:", userData.fruitPick,
+                  "naturePick:", userData.naturePick,
                   "gender:", userData.gender,
                   "age:", userData.age);
 
@@ -5974,6 +5974,8 @@ highlightsBtn.onclick = async () => {
           location: userData.location || userData.city || "",
           city: userData.city || "",
           fruitPick: userData.fruitPick || null,
+          // ── Added this line ───────────────────────────────────────────────
+          naturePick: userData.naturePick || "",   // ← pulls "cool", "wild", etc.
           gender: userData.gender || "person",
           age: userData.age || null
         });
