@@ -5923,7 +5923,7 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* Highlights Button – opens Free Tonight (only active trending videos) */
+/* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
@@ -5938,56 +5938,72 @@ highlightsBtn.onclick = async () => {
       return;
     }
 
+    const allUploaderIds = [];
+    const highlightsByUploader = {};
+
+    snap.forEach(userDoc => {
+      const data = userDoc.data();
+      const uploaderId = data.uploaderId || userDoc.id;
+      allUploaderIds.push(uploaderId);
+      highlightsByUploader[uploaderId] = data.highlights || [];
+    });
+
+    // Fetch user profiles in batches (25 at a time to save reads)
+    const PAGE_SIZE = 25;
     const allClips = [];
+    let currentPage = 0;
 
-    for (const userDoc of snap.docs) {
-      const highlightsData = userDoc.data();
-      const clips = highlightsData.highlights || [];
+    async function loadPage() {
+      const start = currentPage * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageIds = allUploaderIds.slice(start, end);
 
-      // Get the uploader's profile from users collection
-      const uploaderId = highlightsData.uploaderId || userDoc.id;
-      const userRef = doc(db, "users", uploaderId);
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.exists() ? userSnap.data() : {};
+      if (pageIds.length === 0) return false;
 
-      console.log("Fetched user profile for:", uploaderId,
-                  "fruitPick:", userData.fruitPick,
-                  "naturePick:", userData.naturePick,
-                  "gender:", userData.gender,
-                  "age:", userData.age);
+      const userPromises = pageIds.map(id => getDoc(doc(db, "users", id)));
+      const userSnaps = await Promise.all(userPromises);
 
-      clips.forEach(clip => {
-        if (clip.isTrending !== true) return;
+      userSnaps.forEach((userSnap, index) => {
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        const clips = highlightsByUploader[pageIds[index]] || [];
 
-        const now = Date.now();
-        if (clip.trendingUntil && clip.trendingUntil < now) return; // expired
+        clips.forEach(clip => {
+          if (clip.isTrending !== true) return;
+          const now = Date.now();
+          if (clip.trendingUntil && clip.trendingUntil < now) return;
 
-        allClips.push({
-          id: clip.id,
-          videoUrl: clip.videoUrl || "",
-          previewClip: clip.previewClip || "",
-          thumbnail: clip.thumbnailUrl || "",
-          uploaderName: userData.uploaderName || userData.chatId || highlightsData.uploaderName || "Anonymous",
-          uploaderId: uploaderId,
-          isTrending: true,
-          tags: clip.tags || [],
-          location: userData.location || userData.city || "",
-          city: userData.city || "",
-          fruitPick: userData.fruitPick || null,
-          // ── Added this line ───────────────────────────────────────────────
-          naturePick: userData.naturePick || "",   // ← pulls "cool", "wild", etc.
-          gender: userData.gender || "person",
-          age: userData.age || null
+          allClips.push({
+            id: clip.id,
+            videoUrl: clip.videoUrl || "",
+            previewClip: clip.previewClip || "",
+            thumbnail: clip.thumbnailUrl || "",
+            uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+            uploaderId: pageIds[index],
+            isTrending: true,
+            tags: clip.tags || [],
+            location: userData.location || userData.city || "",
+            city: userData.city || "",
+            fruitPick: userData.fruitPick || null,
+            naturePick: userData.naturePick || "",
+            gender: userData.gender || "person",
+            age: userData.age || null
+          });
         });
       });
+
+      currentPage++;
+      return true;
     }
+
+    // Load first page
+    await loadPage();
 
     if (allClips.length === 0) {
       showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
       return;
     }
 
-    showHighlightsModal(allClips);
+    showHighlightsModal(allClips, loadPage);
   } catch (err) {
     console.error("Error fetching Free Tonight clips:", err);
     showGoldAlert("Error loading Free Tonight — try again.");
@@ -5995,7 +6011,7 @@ highlightsBtn.onclick = async () => {
 };
 
 /* ---------- Free Tonight Modal – Only active trending videos ---------- */
-function showHighlightsModal(videos) {
+function showHighlightsModal(initialVideos, loadMoreFn) {
   document.getElementById("highlightsModal")?.remove();
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
@@ -6009,7 +6025,7 @@ function showHighlightsModal(videos) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // HEADER with charming write-up
+  // HEADER
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -6063,14 +6079,13 @@ function showHighlightsModal(videos) {
   };
   intro.firstElementChild.appendChild(closeBtn);
 
-  // CONTROLS — Enter Location button + non-location tags only
+  // CONTROLS
   const controls = document.createElement("div");
   controls.style.cssText = `
     width:100%; max-width:640px; margin:0 auto 28px;
     display:flex; flex-direction:column; align-items:center; gap:16px;
   `;
 
-  // Enter Location Button
   const locationBtn = document.createElement("button");
   locationBtn.textContent = "Enter Location";
   Object.assign(locationBtn.style, {
@@ -6105,8 +6120,36 @@ function showHighlightsModal(videos) {
   `;
   modal.appendChild(grid);
 
+  // Loading indicator for more pages
+  const loadMoreDiv = document.createElement("div");
+  loadMoreDiv.id = "loadMoreTrigger";
+  loadMoreDiv.style.cssText = "height:200px; width:100%; text-align:center; padding:40px; color:#888;";
+  loadMoreDiv.innerHTML = "Loading more...";
+  grid.appendChild(loadMoreDiv);
+
   // State
+  let allVideos = [...initialVideos];
   let activeTags = new Set();
+  let isLoadingMore = false;
+  let hasMore = true;
+
+  // Infinite scroll observer
+  const observer = new IntersectionObserver(async (entries) => {
+    if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+      isLoadingMore = true;
+      loadMoreDiv.innerHTML = "Loading more...";
+      const loaded = await loadMoreFn();
+      if (loaded) {
+        renderCards(allVideos); // re-render with new clips
+      } else {
+        hasMore = false;
+        loadMoreDiv.innerHTML = "No more clips";
+      }
+      isLoadingMore = false;
+    }
+  }, { threshold: 0.1 });
+
+  observer.observe(loadMoreDiv);
 
   // Mini modal for location tags (multi-select, apply on "Go")
   function openLocationModal() {
@@ -6134,7 +6177,6 @@ function showHighlightsModal(videos) {
     locModal.appendChild(inner);
     document.body.appendChild(locModal);
 
-    // Populate location tags (multi-select)
     const locTagsContainer = inner.querySelector("#locTags");
     const allLocs = new Set();
     videos.forEach(v => {
@@ -6172,17 +6214,16 @@ function showHighlightsModal(videos) {
           activeTags.add(btn.dataset.loc);
         }
       });
-      renderCards(videos);
+      renderCards(allVideos);
       locModal.remove();
     };
 
-    // Close on outside click
     locModal.onclick = (e) => {
       if (e.target === locModal) locModal.remove();
     };
   }
 
-  function renderCards(videosToRender = videos) {
+  function renderCards(videosToRender = allVideos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
@@ -6200,10 +6241,11 @@ function showHighlightsModal(videos) {
       });
     }
 
+    // Only show non-location tags in main filter bar
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim() && !v.location && !v.city) { // exclude location/city from main tags
+        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim() && t.trim() !== v.city?.trim()) {
           visibleTags.add(t.trim().toLowerCase());
         }
       });
@@ -6237,7 +6279,7 @@ function showHighlightsModal(videos) {
 
     if (filtered.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = "No one's on Free Tonight right now... check back soon! 🔥";
+      empty.textContent = "No clips match your filters... try another location!";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
       grid.appendChild(empty);
       return;
@@ -6330,7 +6372,7 @@ function showHighlightsModal(videos) {
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-      // Tags — location & city layered on video, no #, only in overlay
+      // Tags — location & city layered on video, no #
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
@@ -6373,7 +6415,7 @@ function showHighlightsModal(videos) {
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
 
-      // FruitPick — tiny standalone emoji, extreme right, soft glow
+      // FruitPick — tiny standalone emoji
       let fruitEl = null;
       if (video.fruitPick) {
         fruitEl = document.createElement("div");
@@ -6392,7 +6434,7 @@ function showHighlightsModal(videos) {
 
       if (fruitEl) card.appendChild(fruitEl);
 
-      // BADGE — original top-right
+      // BADGE
       const badge = document.createElement("div");
       badge.textContent = "Free Tonight ♡";
       Object.assign(badge.style, {
@@ -6413,10 +6455,13 @@ function showHighlightsModal(videos) {
 
       grid.appendChild(card);
     });
+
+    // Re-attach load more trigger
+    grid.appendChild(loadMoreDiv);
   }
 
-  // Initial render
-  renderCards(videos);
+  // Initial render with first batch
+  renderCards(allVideos);
   document.body.appendChild(modal);
   setTimeout(() => {
     // Optional: focus on search if you add one later
