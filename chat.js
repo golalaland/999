@@ -463,6 +463,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     startStarEarning?.(uid);
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
+     startFreeTonightViewBoost();
 
 
     // Wait for auth token to be fully synced before button updates
@@ -6721,6 +6722,50 @@ async function unlockVideo(video) {
         showGoldAlert(userMessage);
     }
 }
+// ====================== AUTO VIEW BOOST ======================
+// Add this function separately (call it once when user logs in)
+let viewBoostInterval = null;
+
+function startFreeTonightViewBoost() {
+  if (viewBoostInterval) clearInterval(viewBoostInterval);
+
+  viewBoostInterval = setInterval(async () => {
+    if (!auth?.currentUser?.uid) return;
+
+    try {
+      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
+      const snap = await getDoc(docRef);
+
+      if (!snap.exists()) return;
+
+      const highlights = snap.data().highlights || [];
+      const now = Date.now();
+      let hasUpdates = false;
+
+      for (let i = 0; i < highlights.length; i++) {
+        const clip = highlights[i];
+        
+        // Only boost if Free Tonight is still active
+        if (!clip.freeTonightUntil || now >= clip.freeTonightUntil) continue;
+
+        const randomAdd = Math.floor(Math.random() * 9) + 1; // 1 to 9 views
+
+        highlights[i].views = (clip.views || 0) + randomAdd;
+        hasUpdates = true;
+
+        console.log(`[VIEW BOOST] +${randomAdd} views → ${clip.id?.slice(-6)}`);
+      }
+
+      if (hasUpdates) {
+        await updateDoc(docRef, { highlights: highlights });
+      }
+    } catch (err) {
+      console.error("[VIEW BOOST] Error:", err);
+    }
+  }, 300000); // Every 5 minutes
+}
+
+// ====================== UPDATED loadMyClips() ======================
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6730,165 +6775,146 @@ async function loadMyClips() {
 
   try {
     const docRef = doc(db, "highlightVideos", currentUser.uid);
-    const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
+    // Live listener so views update in real-time when boosted
+    const unsubscribe = onSnapshot(docRef, (snap) => {
+      if (!snap.exists() || !snap.data()?.highlights?.length) {
+        grid.innerHTML = "";
+        if (noMsg) noMsg.style.display = "block";
+        return;
+      }
+
+      if (noMsg) noMsg.style.display = "none";
       grid.innerHTML = "";
-      if (noMsg) noMsg.style.display = "block";
-      return;
-    }
 
-    if (noMsg) noMsg.style.display = "none";
-    grid.innerHTML = "";
+      const highlights = snap.data().highlights || [];
 
-    const highlights = docSnap.data().highlights || [];
+      highlights.sort((a, b) => {
+        const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+        const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+        return timeB - timeA;
+      });
 
-    // Sort by newest first
-    highlights.sort((a, b) => {
-      const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-      const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
-      return timeB - timeA;
-    });
+      highlights.forEach(v => {
+        const videoSrc = v.videoUrl || "";
+        const thumbnailSrc = v.thumbnailUrl || "";
+        const views = v.views || 0;
 
-    highlights.forEach(v => {
-      const videoSrc = v.videoUrl || "";
-      const thumbnailSrc = v.thumbnailUrl || "";
-      const views = v.views || 0;
+        const isFreeTonightActive = v.freeTonightUntil ? Date.now() < v.freeTonightUntil : false;
+        const freeTonightText = isFreeTonightActive ? "Free Tonight" : "Offline";
+        const statusColor = isFreeTonightActive ? "#00ff9d" : "#666";
+        const dotColor = isFreeTonightActive ? "#00ff9d" : "#555";
 
-      // Free Tonight Status Logic
-      const isFreeTonightActive = v.freeTonightUntil ? Date.now() < v.freeTonightUntil : false;
-      const freeTonightText = isFreeTonightActive ? "Free Tonight" : "Offline";
-      const statusColor = isFreeTonightActive ? "#00ff9d" : "#666";
-      const dotColor = isFreeTonightActive ? "#00ff9d" : "#555";
+        const card = document.createElement("div");
+        card.style.cssText = `
+          background:#111;
+          border-radius:16px;
+          overflow:hidden;
+          box-shadow:0 10px 30px rgba(0,0,0,0.6);
+          border:1px solid #333;
+          display:flex;
+          flex-direction:column;
+          height:220px;
+          transition:transform 0.2s;
+        `;
 
-      const card = document.createElement("div");
-      card.style.cssText = `
-        background:#111;
-        border-radius:16px;
-        overflow:hidden;
-        box-shadow:0 10px 30px rgba(0,0,0,0.6);
-        border:1px solid #333;
-        display:flex;
-        flex-direction:column;
-        height:220px;
-        transition:transform 0.2s;
-      `;
+        card.innerHTML = `
+          <div style="display:flex;height:100%;background:#0d0d0d;">
+            <!-- Video Preview - Fixed Zoom -->
+            <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+              <video
+                src="${videoSrc}"
+                muted 
+                loop 
+                playsinline
+                poster="${thumbnailSrc}"
+                style="
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  object-position: center;
+                  transform: translate(-50%, -50%) scale(1);
+                  filter: brightness(0.95);
+                  transition: transform 0.45s ease;
+                ">
+              </video>
 
-      card.innerHTML = `
-        <div style="display:flex;height:100%;background:#0d0d0d;">
-          <!-- Left: Video preview - FIXED & IMPROVED -->
-          <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-            <video
-              src="${videoSrc}"
-              muted 
-              loop 
-              playsinline
-              poster="${thumbnailSrc}"
-              style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                object-position: center;
-                transform: translate(-50%, -50%) scale(1);
-                filter: brightness(0.95);
-                transition: transform 0.45s ease;
-              ">
-            </video>
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);pointer-events:none;"></div>
 
-            <!-- Subtle gradient overlay -->
-            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);pointer-events:none;"></div>
-
-            <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
-              ▶ CLIP
-            </div>
-          </div>
-
-          <!-- Right side – Free Tonight stats -->
-          <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
-            <div style="flex-grow:1;">
-              <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
-                ${v.title || "Free Tonight Clip"}
-              </div>
-              <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                ID: ${v.id.slice(-8)}
+              <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+                ▶ CLIP
               </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
-                <div style="color:#00ffea;font-weight:900;font-size:15px;">${views.toLocaleString()}</div>
+            <!-- Right side -->
+            <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+              <div style="flex-grow:1;">
+                <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
+                  ${v.title || "Free Tonight Clip"}
+                </div>
+                <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                  ID: ${v.id.slice(-8)}
+                </div>
               </div>
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
-                <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
-                  <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
-                  <div style="color:${statusColor}; font-weight:900; font-size:13px;">
-                    ${freeTonightText}
+
+              <!-- Stats -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+                <div>
+                  <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
+                  <div style="color:#00ffea;font-weight:900;font-size:15px;">${views.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
+                  <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
+                    <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
+                    <div style="color:${statusColor}; font-weight:900; font-size:13px;">
+                      ${freeTonightText}
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <button class="delete-clip-btn"
+                      data-id="${v.id}"
+                      data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
+                      style="position:absolute;bottom:12px;right:12px; background:linear-gradient(90deg,#ff0099,#ff6600); border:none; color:#fff; padding:8px 14px; border-radius:10px; font-size:10px; font-weight:800; letter-spacing:0.6px; cursor:pointer; opacity:0.92; box-shadow:0 2px 12px rgba(255,0,100,0.4); transition:all .25s ease;"
+                      onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)'; this.style.transform='translateY(-2px)'; this.style.opacity='1'"
+                      onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)'; this.style.transform='translateY(0)'; this.style.opacity='0.92'">
+                DELETE
+              </button>
             </div>
-
-            <button class="delete-clip-btn"
-                    data-id="${v.id}"
-                    data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
-                    style="
-                      position:absolute;bottom:12px;right:12px;
-                      background:linear-gradient(90deg,#ff0099,#ff6600);
-                      border:none;color:#fff;
-                      padding:8px 14px;border-radius:10px;
-                      font-size:10px;font-weight:800;letter-spacing:0.6px;
-                      cursor:pointer;opacity:0.92;
-                      box-shadow:0 2px 12px rgba(255,0,100,0.4);
-                      transition:all .25s ease;
-                    "
-                    onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
-                    onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
-              DELETE
-            </button>
           </div>
-        </div>
-      `;
+        `;
 
-      // === Hover / Tap Video Effects ===
-      const video = card.querySelector("video");
+        // Hover & Touch Effects
+        const video = card.querySelector("video");
+        if (video) {
+          card.addEventListener("mouseenter", () => {
+            video.style.transform = "translate(-50%, -50%) scale(1.12)";
+            video.play().catch(() => {});
+          });
 
-      if (video) {
-        // Gentle zoom on hover / tap
-        card.addEventListener("mouseenter", () => {
-          video.style.transform = "translate(-50%, -50%) scale(1.12)";
-          video.play().catch(() => {});
-        });
+          card.addEventListener("mouseleave", () => {
+            video.style.transform = "translate(-50%, -50%) scale(1)";
+            video.pause();
+            video.currentTime = 0;
+          });
 
-        card.addEventListener("mouseleave", () => {
-          video.style.transform = "translate(-50%, -50%) scale(1)";
-          video.pause();
-          video.currentTime = 0;
-        });
+          card.addEventListener("touchstart", () => {
+            video.style.transform = "translate(-50%, -50%) scale(1.12)";
+            video.play().catch(() => {});
+          }, { passive: true });
 
-        // Mobile touch support
-        card.addEventListener("touchstart", () => {
-          video.style.transform = "translate(-50%, -50%) scale(1.12)";
-          video.play().catch(() => {});
-        }, { passive: true });
+          card.addEventListener("touchend", () => {
+            video.style.transform = "translate(-50%, -50%) scale(1)";
+          }, { passive: true });
+        }
 
-        card.addEventListener("touchend", () => {
-          video.style.transform = "translate(-50%, -50%) scale(1)";
-          // Optional: pause on touch end
-        }, { passive: true });
-      }
-
-      grid.appendChild(card);
-    });
-
-    // Re-attach delete button listeners
-    document.querySelectorAll(".delete-clip-btn").forEach(btn => {
-      btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+        grid.appendChild(card);
+      });
     });
 
   } catch (err) {
