@@ -7690,7 +7690,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       </div>
 
       <div class="neon-title-container">
-        <div class="neon-title">Choose your vibe for Free Tonight</div>
+        <div class="neon-title">Choose your vibe for tonight</div>
       </div>
 
            <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
