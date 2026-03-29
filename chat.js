@@ -7651,6 +7651,7 @@ paystackNigeriaBanks.forEach(bank => {
   bankSelect.appendChild(option);
 });
 
+
 // ───────────────────────────────────────────────
 // Client-side Free Tonight Toggle + FruitPick Picker (Neon Style)
 // ───────────────────────────────────────────────
@@ -7689,7 +7690,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       </div>
 
       <div class="neon-title-container">
-        <div class="neon-title">Choose your vibe for tonight</div>
+        <div class="neon-title">Choose your vibe for Free Tonight</div>
       </div>
 
       <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
@@ -7697,9 +7698,9 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
           🍇
         </button>
-        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Paid Meetups" 
+        <button class="fruit-btn" data-fruit="🍑" title="Thrills & Paid Meetups" 
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
-          🍉
+          🍑
         </button>
         <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates" 
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
@@ -7710,20 +7711,14 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
           🍓
         </button>
       </div>
-<button id="confirmFruit" disabled style="
-    padding: 8px 20px;
-    background: #444;
-    color: #888;
-    border: none;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: not-allowed;
-    width: auto;
-    min-width: 100px;
-">
-GO
-</button>
+
+      <button id="confirmFruit" disabled style="
+        padding:14px 40px; background:#444; color:#888; border:none; 
+        border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed; width:100%;">
+        Confirm Vibe
+      </button>
+    </div>
+  `;
 
   document.body.appendChild(fruitModal);
 
@@ -7790,7 +7785,7 @@ GO
 
       localStorage.setItem('freeTonightEndTime', endTime);
       startCountdown(btn, endTime);
-      showStarPopup(`Free Tonight activated!`);
+      showStarPopup(`Free Tonight activated! Vibe set to ${selectedFruit} 🔥`, 'success');
 
       if (typeof loadMyClips === 'function') loadMyClips();
     } catch (err) {
@@ -7806,6 +7801,8 @@ GO
   // Close modal with X button
   fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 });
+
+
 // Countdown function (unchanged)
 function startCountdown(btn, endTime) {
   function updateTimer() {
