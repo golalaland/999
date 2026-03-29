@@ -7727,7 +7727,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     fruitModal.remove();
 
     btn.disabled = true;
-    btn.textContent = 'Activating...';
+    btn.textContent = 'Activating... ✨';
 
     try {
       const rawUid = auth.currentUser.uid;
@@ -7775,7 +7775,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   // Close modal with X button
   fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 });
-
 // Countdown function (unchanged)
 function startCountdown(btn, endTime) {
   function updateTimer() {
