@@ -7611,7 +7611,7 @@ const paystackNigeriaBanks = [
   "Titan Trust Bank",
   "Union Bank of Nigeria",
   "United Bank for Africa (UBA)",
-  "Unity Bank",
+  "Unity Bank",\
   "VFD Microfinance Bank",
   "Wema Bank",
   "Zenith Bank"
@@ -7645,6 +7645,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
+  // Show neon fruit picker modal
   const fruitModal = document.createElement("div");
   fruitModal.style.cssText = `
     position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000000;
@@ -7653,7 +7654,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
   fruitModal.innerHTML = `
     <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative;">
-      
+      <!-- Tiny X close button -->
       <div id="closeFruitModal" style="
         position:absolute; top:14px; right:14px; width:28px; height:28px;
         display:flex; align-items:center; justify-content:center;
@@ -7663,31 +7664,39 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       </div>
 
       <div class="neon-title-container">
-        <div class="neon-title">Choose your vibe for tonight</div>
+        <div class="neon-title">Choose your vibe for Free Tonight</div>
       </div>
 
       <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
-        <button class="fruit-btn" data-fruit="🍇" style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer;">🍇</button>
-        <button class="fruit-btn" data-fruit="🍉" style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer;">🍉</button>
-        <button class="fruit-btn" data-fruit="🍒" style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer;">🍒</button>
-        <button class="fruit-btn" data-fruit="🍓" style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer;">🍓</button>
-      </div>
-
-      <div style="display:flex; justify-content:center;">
-        <button id="confirmFruit" disabled style="
-          padding:8px 18px; background:#444; color:#888; border:none; 
-          border-radius:50px; font-weight:700; font-size:13px; cursor:not-allowed; width:auto;">
-          GO
+        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout & Friendships" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍇
+        </button>
+        <button class="fruit-btn" data-fruit="🍑" title="Thrills & Paid Meetups" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍑
+        </button>
+        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍒
+        </button>
+        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍓
         </button>
       </div>
 
+      <button id="confirmFruit" disabled style="
+        padding:14px 40px; background:#444; color:#888; border:none; 
+        border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed; width:100%;">
+        Confirm Vibe
+      </button>
     </div>
   `;
 
   document.body.appendChild(fruitModal);
 
   let selectedFruit = null;
-});
 
   // Fruit button interaction
   fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
