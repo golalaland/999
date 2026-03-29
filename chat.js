@@ -2892,10 +2892,10 @@ let animationTimeout = null;
 
 // ==================== CONFIG ====================
 const STAR_EARNING_CONFIG = {
-  baseDailyCap: 250,      // Normal user
-  vipDailyCap: 250,       // VIP gets bonus
+  baseDailyCap: 150,      // Normal user
+  vipDailyCap: 150,       // VIP gets bonus
   paidDailyCap: 500,      // hasPaid: true
-  hostDailyCap: 500,      // isHost: true
+  hostDailyCap: 625,      // isHost: true
 
   earnAmount: 125,                   // ★ 125 stars per earn
   minTimeBetweenEarns: 60000,        // 1 minute (60,000 ms)
@@ -7689,7 +7689,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       </div>
 
       <div class="neon-title-container">
-        <div class="neon-title">Choose your vibe for Free Tonight</div>
+        <div class="neon-title">Choose your vibe for tonight</div>
       </div>
 
       <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
@@ -7710,14 +7710,20 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
           🍓
         </button>
       </div>
-
-      <button id="confirmFruit" disabled style="
-        padding:14px 40px; background:#444; color:#888; border:none; 
-        border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed; width:100%;">
-        Let's GO
-      </button>
-    </div>
-  `;
+<button id="confirmFruit" disabled style="
+    padding: 8px 20px;
+    background: #444;
+    color: #888;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: not-allowed;
+    width: auto;
+    min-width: 100px;
+">
+GO
+</button>
 
   document.body.appendChild(fruitModal);
 
