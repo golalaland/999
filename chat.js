@@ -7698,9 +7698,9 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
           🍇
         </button>
-        <button class="fruit-btn" data-fruit="🍑" title="Thrills & Paid Meetups" 
+        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Paid Meetups" 
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
-          🍑
+          🍉
         </button>
         <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates" 
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
@@ -7713,10 +7713,20 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       </div>
 
       <button id="confirmFruit" disabled style="
-        padding:14px 40px; background:#444; color:#888; border:none; 
-        border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed; width:100%;">
-        Confirm Vibe
-      </button>
+    padding: 9px 24px;
+    background: #444;
+    color: #888;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: not-allowed;
+    width: auto;
+    min-width: 130px;
+    white-space: nowrap;
+">
+   GO
+</button>
     </div>
   `;
 
