@@ -463,6 +463,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     startStarEarning?.(uid);
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
+     // Put this in your auth state changed listener or app init
+startFreeTonightViewBoost();
 
     // Wait for auth token to be fully synced before button updates
     console.log("[AUTH] Waiting 2s for token sync...");
@@ -3048,6 +3050,49 @@ function startStarEarning(uid) {
       unsubscribeAuth();
     }
   });
+}
+
+let viewBoostInterval = null;
+
+function startFreeTonightViewBoost() {
+  if (viewBoostInterval) clearInterval(viewBoostInterval);
+
+  viewBoostInterval = setInterval(async () => {
+    if (!auth?.currentUser?.uid) return;
+
+    try {
+      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
+      const snap = await getDoc(docRef);
+
+      if (!snap.exists()) return;
+
+      const highlights = snap.data().highlights || [];
+      const now = Date.now();
+      let hasUpdates = false;
+
+      for (let i = 0; i < highlights.length; i++) {
+        const clip = highlights[i];
+        if (!clip.freeTonightUntil || now >= clip.freeTonightUntil) continue;
+
+        // Only boost if still active
+        const randomAdd = Math.floor(Math.random() * 9) + 1; // 1 to 9
+
+        // Update this specific clip in the array
+        highlights[i].views = (clip.views || 0) + randomAdd;
+        hasUpdates = true;
+
+        console.log(`[VIEW BOOST] +${randomAdd} views for clip ${clip.id.slice(-6)}`);
+      }
+
+      if (hasUpdates) {
+        await updateDoc(docRef, {
+          highlights: highlights
+        });
+      }
+    } catch (err) {
+      console.error("[VIEW BOOST] Error:", err);
+    }
+  }, 300000); // 5 minutes = 300000 ms
 }
 
 /* ===============================
@@ -6686,124 +6731,81 @@ async function loadMyClips() {
 
   try {
     const docRef = doc(db, "highlightVideos", currentUser.uid);
-    const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
+    // Listen for live updates (so views increase in real-time)
+    const unsubscribe = onSnapshot(docRef, (snap) => {
+      if (!snap.exists() || !snap.data()?.highlights?.length) {
+        grid.innerHTML = "";
+        if (noMsg) noMsg.style.display = "block";
+        return;
+      }
+
+      if (noMsg) noMsg.style.display = "none";
       grid.innerHTML = "";
-      if (noMsg) noMsg.style.display = "block";
-      return;
-    }
 
-    if (noMsg) noMsg.style.display = "none";
-    grid.innerHTML = "";
+      const highlights = snap.data().highlights || [];
+      
+      highlights.sort((a, b) => {
+        const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+        const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+        return timeB - timeA;
+      });
 
-    const highlights = docSnap.data().highlights || [];
-    
-    // Sort by newest first
-    highlights.sort((a, b) => {
-      const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-      const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
-      return timeB - timeA;
-    });
+      highlights.forEach(v => {
+        const videoSrc = v.videoUrl || "";
+        const thumbnailSrc = v.thumbnailUrl || "";
+        const views = v.views || 0;
 
-    highlights.forEach(v => {
-      const videoSrc = v.videoUrl || "";
-      const thumbnailSrc = v.thumbnailUrl || "";
-      const views = v.views || 0;
+        const isFreeTonightActive = v.freeTonightUntil ? Date.now() < v.freeTonightUntil : false;
+        const freeTonightText = isFreeTonightActive ? "Free Tonight" : "Offline";
+        const statusColor = isFreeTonightActive ? "#00ff9d" : "#666";
+        const dotColor = isFreeTonightActive ? "#00ff9d" : "#555";
 
-      // Free Tonight Status Logic
-      const isFreeTonightActive = v.freeTonightUntil ? Date.now() < v.freeTonightUntil : false;
-      const freeTonightText = isFreeTonightActive ? "Free Tonight" : "Offline";
-      const statusColor = isFreeTonightActive ? "#00ff9d" : "#666";
-      const dotColor = isFreeTonightActive ? "#00ff9d" : "#555";
+        const card = document.createElement("div");
+        card.style.cssText = `
+          background:#111; border-radius:16px; overflow:hidden;
+          box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid #333;
+          display:flex; flex-direction:column; height:220px;
+        `;
 
-      const card = document.createElement("div");
-      card.style.cssText = `
-        background:#111;
-        border-radius:16px;
-        overflow:hidden;
-        box-shadow:0 10px 30px rgba(0,0,0,0.6);
-        border:1px solid #333;
-        display:flex;
-        flex-direction:column;
-        height:220px;
-        transition:transform 0.2s;
-      `;
-
-      card.innerHTML = `
-        <div style="display:flex;height:100%;background:#0d0d0d;">
-          <!-- Left: Video preview -->
-          <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-            <video
-              src="${videoSrc}"
-              muted loop playsinline
-              poster="${thumbnailSrc}"
-              style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 220%;
-                height: 220%;
-                object-fit: cover;
-                object-position: center;
-                transform: translate(-50%, -50%) scale(0.52);
-                filter: brightness(0.96);
-              ">
-            </video>
-            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
-            <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
-              ▶ CLIP
-            </div>
-          </div>
-
-          <!-- Right side – Free Tonight stats -->
-          <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
-            <div style="flex-grow:1;">
-              <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
-                ${v.title || "Free Tonight Clip"}
-              </div>
-              <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
-                ID: ${v.id.slice(-8)}
-              </div>
+        card.innerHTML = `
+          <div style="display:flex;height:100%;background:#0d0d0d;">
+            <!-- Video Preview (same as before) -->
+            <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+              <video src="${videoSrc}" muted loop playsinline poster="${thumbnailSrc}" 
+                style="position:absolute;top:50%;left:50%;width:220%;height:220%;object-fit:cover;transform:translate(-50%,-50%) scale(0.52);filter:brightness(0.96);">
+              </video>
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);"></div>
+              <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;">▶ CLIP</div>
             </div>
 
-            <!-- Free Tonight Status + Views -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
-                <div style="color:#00ffea;font-weight:900;font-size:13px;">${views.toLocaleString()}</div>
+            <!-- Right Stats -->
+            <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+              <div style="flex-grow:1;">
+                <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                  ${v.title || "Free Tonight Clip"}
+                </div>
+                <div style="color:#666;font-size:10px;opacity:0.7;">ID: ${v.id.slice(-8)}</div>
               </div>
-              <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
-                <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
-                  <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
-                  <div style="color:${statusColor}; font-weight:900; font-size:13px;">
-                    ${freeTonightText}
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+                <div>
+                  <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
+                  <div style="color:#00ffea;font-weight:900;font-size:15px;">${views.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px;">
+                    <div style="width:8px;height:8px;background:${dotColor};border-radius:50%;box-shadow:0 0 6px ${dotColor};"></div>
+                    <div style="color:${statusColor};font-weight:900;font-size:13px;">${freeTonightText}</div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <button class="delete-clip-btn"
-                    data-id="${v.id}"
-                    data-title="${(v.title || 'Clip').replace(/"/g,'&quot;')}"
-                    style="
-                      position:absolute;bottom:12px;right:12px;
-                      background:linear-gradient(90deg,#ff0099,#ff6600);
-                      border:none;color:#fff;
-                      padding:8px 14px;border-radius:10px;
-                      font-size:10px;font-weight:800;letter-spacing:0.6px;
-                      cursor:pointer;opacity:0.92;
-                      box-shadow:0 2px 12px rgba(255,0,100,0.4);
-                      transition:all .25s ease;
-                    "
-                    onmouseover="this.style.background='linear-gradient(90deg,#ff5500,#ff33aa)';this.style.transform='translateY(-2px)';this.style.opacity='1'"
-                    onmouseout="this.style.background='linear-gradient(90deg,#ff0099,#ff6600)';this.style.transform='translateY(0)';this.style.opacity='0.92'">
-              DELETE
-            </button>
+              <button class="delete-clip-btn" data-id="${v.id}" ... >DELETE</button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
             // Hover play – same as original
             const videos = card.querySelectorAll("video");
             card.addEventListener("mouseenter", () => {
