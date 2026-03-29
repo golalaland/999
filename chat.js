@@ -7611,7 +7611,7 @@ const paystackNigeriaBanks = [
   "Titan Trust Bank",
   "Union Bank of Nigeria",
   "United Bank for Africa (UBA)",
-  "Unity Bank",\
+  "Unity Bank",
   "VFD Microfinance Bank",
   "Wema Bank",
   "Zenith Bank"
