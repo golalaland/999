@@ -6687,6 +6687,7 @@ async function loadMyClips() {
   try {
     const docRef = doc(db, "highlightVideos", currentUser.uid);
     const docSnap = await getDoc(docRef);
+
     if (!docSnap.exists() || !docSnap.data()?.highlights?.length) {
       grid.innerHTML = "";
       if (noMsg) noMsg.style.display = "block";
@@ -6697,6 +6698,8 @@ async function loadMyClips() {
     grid.innerHTML = "";
 
     const highlights = docSnap.data().highlights || [];
+    
+    // Sort by newest first
     highlights.sort((a, b) => {
       const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
       const timeB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
@@ -6707,8 +6710,12 @@ async function loadMyClips() {
       const videoSrc = v.videoUrl || "";
       const thumbnailSrc = v.thumbnailUrl || "";
       const views = v.views || 0;
-      const trendingDays = v.trendingUntil ? Math.ceil((v.trendingUntil - Date.now()) / (86400000)) : 0;
-      const trendingText = trendingDays > 0 ? `${trendingDays} day${trendingDays > 1 ? 's' : ''} active` : "Not trending";
+
+      // Free Tonight Status Logic
+      const isFreeTonightActive = v.freeTonightUntil ? Date.now() < v.freeTonightUntil : false;
+      const freeTonightText = isFreeTonightActive ? "Free Tonight" : "Offline";
+      const statusColor = isFreeTonightActive ? "#00ff9d" : "#666";
+      const dotColor = isFreeTonightActive ? "#00ff9d" : "#555";
 
       const card = document.createElement("div");
       card.style.cssText = `
@@ -6760,14 +6767,20 @@ async function loadMyClips() {
               </div>
             </div>
 
+            <!-- Free Tonight Status + Views -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
               <div>
                 <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
-                <div style="color:#00ffea;font-weight:900;font-size:13px;">${views}</div>
+                <div style="color:#00ffea;font-weight:900;font-size:13px;">${views.toLocaleString()}</div>
               </div>
               <div>
-                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Trending</div>
-                <div style="color:#ff00ff;font-weight:900;font-size:13px;">${trendingText}</div>
+                <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
+                  <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
+                  <div style="color:${statusColor}; font-weight:900; font-size:13px;">
+                    ${freeTonightText}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -6900,7 +6913,7 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
 
   navigator.clipboard.writeText(fullText)
     .then(() => {
-      showStarPopup('Copied!', 'Your invite link is ready to share!', 2500);
+      showStarPopup('Invite link copied!', 'Your invite link is ready to share!', 2500);
     })
     .catch(() => {
       showStarPopup('Error', 'Could not copy link — try again', 3000);
