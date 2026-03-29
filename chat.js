@@ -2880,11 +2880,10 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 
 /* ===============================
-   💫 Auto Star Earning System — Multi-Tier Caps
-   - Supports isHost, isVIP, hasPaid with different daily caps
-   - Caps take the highest applicable value
-   - Same smooth counting animation
-   - Efficient (activity + visibility based)
+   💫 Auto Star Earning System — 125 Stars Per Minute
+   - Very fast earning as requested
+   - 125 stars every 1 minute
+   - Multi-tier daily caps
 ================================= */
 
 let starEarningUnsubscribe = null;
@@ -2894,16 +2893,16 @@ let animationTimeout = null;
 // ==================== CONFIG ====================
 const STAR_EARNING_CONFIG = {
   baseDailyCap: 250,      // Normal user
-  vipDailyCap: 250,       // VIP (can be higher than base if you want extra benefit)
+  vipDailyCap: 250,       // VIP gets bonus
   paidDailyCap: 500,      // hasPaid: true
   hostDailyCap: 500,      // isHost: true
 
-  earnAmount: 10,                    // stars per earn
-  minTimeBetweenEarns: 180000,       // 3 minutes
+  earnAmount: 125,                   // ★ 125 stars per earn
+  minTimeBetweenEarns: 60000,        // 1 minute (60,000 ms)
   visibilityCheckInterval: 60000     // 1 minute
 };
 
-// Calculate effective daily cap based on user flags
+// Calculate effective daily cap
 function getEffectiveDailyCap(userData) {
   if (!userData) return STAR_EARNING_CONFIG.baseDailyCap;
 
@@ -2930,29 +2929,24 @@ function startStarEarning(uid) {
   const userRef = doc(db, "users", uid);
   let displayedStars = currentUser.stars || 0;
 
-  // Smooth counting animation
   const animateStarCount = (target) => {
     if (!refs.starCountEl) return;
-
     const diff = target - displayedStars;
     if (Math.abs(diff) < 1) {
       displayedStars = target;
       refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
       return;
     }
-
     displayedStars += diff * 0.25;
     refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
     animationTimeout = setTimeout(() => animateStarCount(target), 40);
   };
 
-  // Sync stars from Firestore with animation
   function syncStars() {
     if (starEarningUnsubscribe) starEarningUnsubscribe();
 
     starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
       if (!snap.exists()) return;
-
       const data = snap.data();
       const target = data.stars || 0;
 
@@ -2961,13 +2955,12 @@ function startStarEarning(uid) {
       if (animationTimeout) clearTimeout(animationTimeout);
       animateStarCount(target);
 
-      if (target > 0 && target % 1000 === 0) {
+      if (target > 0 && target % 100000 === 0) {
         showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
       }
     }, { includeMetadataChanges: true });
   }
 
-  // Main earning logic with multi-tier caps
   async function tryEarnStars(trigger = 'activity') {
     if (Date.now() - lastEarnTime < STAR_EARNING_CONFIG.minTimeBetweenEarns) return;
 
@@ -2978,13 +2971,8 @@ function startStarEarning(uid) {
       const data = snap.data();
       const today = todayDate();
 
-      // Reset daily counter on new day
       if (data.lastStarDate !== today) {
-        await updateDoc(userRef, {
-          starsToday: 0,
-          lastStarDate: today
-        });
-        // Re-fetch data after reset to get accurate starsToday
+        await updateDoc(userRef, { starsToday: 0, lastStarDate: today });
         const freshSnap = await getDoc(userRef);
         if (!freshSnap.exists()) return;
         Object.assign(data, freshSnap.data());
@@ -2994,7 +2982,7 @@ function startStarEarning(uid) {
       const currentToday = data.starsToday || 0;
 
       if (currentToday >= effectiveCap) {
-        console.log(`[STARS] Daily cap reached (${effectiveCap}) for user type`);
+        console.log(`[STARS] Daily cap reached (${effectiveCap})`);
         return;
       }
 
@@ -3011,32 +2999,26 @@ function startStarEarning(uid) {
       lastEarnTime = Date.now();
 
       console.log(`[STARS] Earned ${amountToAdd} via ${trigger} ` +
-        `(today: ${currentToday + amountToAdd}/${effectiveCap} | ` +
-        `Host:${!!data.isHost} VIP:${!!data.isVIP} Paid:${!!data.hasPaid})`);
+        `(today: ${currentToday + amountToAdd}/${effectiveCap})`);
     } catch (err) {
       console.error("[STARS] Earn error:", err);
     }
   }
 
-  // ====================== Triggers ======================
-
-  // Real user activity (click anywhere - you can add more specific ones)
+  // Triggers
   document.addEventListener("click", () => tryEarnStars('interaction'), { once: false });
 
-  // Periodic visibility check (fallback)
   const visibilityCheck = setInterval(() => {
     if (document.visibilityState === "visible") {
       tryEarnStars('visibility');
     }
   }, STAR_EARNING_CONFIG.visibilityCheckInterval);
 
-  // Initial start when tab is visible
   if (document.visibilityState === "visible") {
     syncStars();
     tryEarnStars('initial');
   }
 
-  // Handle tab visibility changes
   const handleVisibility = () => {
     if (document.visibilityState === "visible") {
       syncStars();
@@ -3049,7 +3031,7 @@ function startStarEarning(uid) {
 
   document.addEventListener("visibilitychange", handleVisibility);
 
-  // ====================== Cleanup ======================
+  // Cleanup
   const cleanup = () => {
     if (starEarningUnsubscribe) starEarningUnsubscribe();
     clearInterval(visibilityCheck);
