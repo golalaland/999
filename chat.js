@@ -7685,15 +7685,19 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
           🍓
         </button>
       </div>
-
-      <button id="confirmFruit" disabled style="
-        padding:8px 28px; background:#444; color:#888; border:none; 
-        border-radius:50px; font-weight:700; font-size:12px; cursor:not-allowed; width:100%;">
-        Go Live
-      </button>
-    </div>
-  `;
-
+<button id="confirmFruit" disabled style="
+  padding:6px 14px;
+  background:#444;
+  color:#888;
+  border:none;
+  border-radius:50px;
+  font-weight:700;
+  font-size:12px;
+  cursor:not-allowed;
+  width:auto;
+  display:inline-block;">
+  GO
+</button>
   document.body.appendChild(fruitModal);
 
   let selectedFruit = null;
