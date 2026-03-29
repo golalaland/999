@@ -7693,41 +7693,43 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
         <div class="neon-title">Choose your vibe for Free Tonight</div>
       </div>
 
-      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
-        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout & Friendships" 
+           <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
+        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout & Friendships"
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
           🍇
         </button>
-        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Paid Meetups" 
+        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Paid Meetups"
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
           🍉
         </button>
-        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates" 
+        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates"
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
           🍒
         </button>
-        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" 
+        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures"
                 style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
           🍓
         </button>
       </div>
 
-      <button id="confirmFruit" disabled style="
-    padding: 9px 24px;
-    background: #444;
-    color: #888;
-    border: none;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: not-allowed;
-    width: auto;
-    min-width: 130px;
-    white-space: nowrap;
-">
-   GO
-</button>
-    </div>
+      <!-- Centered GO Button -->
+      <div style="display: flex; justify-content: center; margin-top: 28px;">
+        <button id="confirmFruit" disabled style="
+          padding: 10px 32px;
+          background: #444;
+          color: #888;
+          border: none;
+          border-radius: 50px;
+          font-weight: 700;
+          font-size: 14px;
+          cursor: not-allowed;
+          width: auto;
+          min-width: 140px;
+          white-space: nowrap;
+        ">
+          GO
+        </button>
+      </div>
   `;
 
   document.body.appendChild(fruitModal);
