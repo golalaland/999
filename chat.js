@@ -7627,7 +7627,7 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Client-side Free Tonight Toggle + FruitPick Picker
+// Client-side Free Tonight Toggle + FruitPick Picker (Neon Style)
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
@@ -7645,39 +7645,83 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     return;
   }
 
-  // Show fruit picker modal
+  // Show neon fruit picker modal
   const fruitModal = document.createElement("div");
   fruitModal.style.cssText = `
-    position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000000;
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000000;
     display:flex; align-items:center; justify-content:center;
   `;
+
   fruitModal.innerHTML = `
-    <div style="background:#111; padding:32px; border-radius:24px; text-align:center; max-width:420px; border:1px solid #444;">
-      <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose your vibe for Free Tonight</h3>
-      <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-bottom:24px;">
-        <button class="fruit-btn" data-fruit="🍇" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍇</button>
-        <button class="fruit-btn" data-fruit="🍑" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍑</button>
-        <button class="fruit-btn" data-fruit="🍒" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍒</button>
-        <button class="fruit-btn" data-fruit="🍓" style="font-size:48px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #666; cursor:pointer; transition:0.3s;">🍓</button>
+    <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative;">
+      <!-- Tiny X close button -->
+      <div id="closeFruitModal" style="
+        position:absolute; top:14px; right:14px; width:28px; height:28px;
+        display:flex; align-items:center; justify-content:center;
+        cursor:pointer; color:#ff00f2; font-size:22px; font-weight:900;
+        text-shadow:0 0 8px #ff00f2;">
+        ×
       </div>
-      <button id="confirmFruit" disabled style="padding:12px 40px; background:#444; color:#888; border:none; border-radius:50px; font-weight:700; cursor:not-allowed;">Confirm Vibe</button>
+
+      <div class="neon-title-container">
+        <div class="neon-title">Choose your vibe for Free Tonight</div>
+      </div>
+
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
+        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout & Friendships" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍇
+        </button>
+        <button class="fruit-btn" data-fruit="🍑" title="Thrills & Paid Meetups" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍑
+        </button>
+        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍒
+        </button>
+        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" 
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍓
+        </button>
+      </div>
+
+      <button id="confirmFruit" disabled style="
+        padding:14px 40px; background:#444; color:#888; border:none; 
+        border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed; width:100%;">
+        Confirm Vibe
+      </button>
     </div>
   `;
+
   document.body.appendChild(fruitModal);
 
   let selectedFruit = null;
+
+  // Fruit button interaction
   fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
     btn.onclick = () => {
-      fruitModal.querySelectorAll('.fruit-btn').forEach(b => b.style.borderColor = '#666');
-      btn.style.borderColor = '#ff2e78';
+      // Deselect all
+      fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
+        b.style.borderColor = '#666';
+        b.style.transform = 'scale(1)';
+      });
+
+      // Select this one
+      btn.style.borderColor = '#ff00f2';
+      btn.style.transform = 'scale(1.15)';
       selectedFruit = btn.dataset.fruit;
-      fruitModal.querySelector('#confirmFruit').disabled = false;
-      fruitModal.querySelector('#confirmFruit').style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-      fruitModal.querySelector('#confirmFruit').style.color = '#fff';
-      fruitModal.querySelector('#confirmFruit').style.cursor = 'pointer';
+
+      // Enable confirm button
+      const confirmBtn = fruitModal.querySelector('#confirmFruit');
+      confirmBtn.disabled = false;
+      confirmBtn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+      confirmBtn.style.color = '#fff';
+      confirmBtn.style.cursor = 'pointer';
     };
   });
 
+  // Confirm button
   fruitModal.querySelector('#confirmFruit').onclick = async () => {
     if (!selectedFruit) return;
     fruitModal.remove();
@@ -7696,7 +7740,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       // Save fruitPick
       await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
 
-      // Activate trending
+      // Activate trending for 24 hours
       const highlightsRef = doc(db, "highlightVideos", sanitizedId);
       const highlightsSnap = await getDoc(highlightsRef);
       if (!highlightsSnap.exists()) throw new Error("No highlights found");
@@ -7727,6 +7771,9 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       btn.disabled = false;
     }
   };
+
+  // Close modal with X button
+  fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 });
 
 // Countdown function (unchanged)
