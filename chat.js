@@ -6742,7 +6742,7 @@ async function loadMyClips() {
     grid.innerHTML = "";
 
     const highlights = docSnap.data().highlights || [];
-    
+
     // Sort by newest first
     highlights.sort((a, b) => {
       const timeA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
@@ -6776,25 +6776,31 @@ async function loadMyClips() {
 
       card.innerHTML = `
         <div style="display:flex;height:100%;background:#0d0d0d;">
-          <!-- Left: Video preview -->
+          <!-- Left: Video preview - FIXED & IMPROVED -->
           <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
             <video
               src="${videoSrc}"
-              muted loop playsinline
+              muted 
+              loop 
+              playsinline
               poster="${thumbnailSrc}"
               style="
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 220%;
-                height: 220%;
+                width: 100%;
+                height: 100%;
                 object-fit: cover;
                 object-position: center;
-                transform: translate(-50%, -50%) scale(0.52);
-                filter: brightness(0.96);
+                transform: translate(-50%, -50%) scale(1);
+                filter: brightness(0.95);
+                transition: transform 0.45s ease;
               ">
             </video>
-            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.98),transparent 70%);pointer-events:none;"></div>
+
+            <!-- Subtle gradient overlay -->
+            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);pointer-events:none;"></div>
+
             <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
               ▶ CLIP
             </div>
@@ -6811,11 +6817,11 @@ async function loadMyClips() {
               </div>
             </div>
 
-            <!-- Free Tonight Status + Views -->
+            <!-- Stats Grid -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
               <div>
                 <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
-                <div style="color:#00ffea;font-weight:900;font-size:13px;">${views.toLocaleString()}</div>
+                <div style="color:#00ffea;font-weight:900;font-size:15px;">${views.toLocaleString()}</div>
               </div>
               <div>
                 <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
@@ -6848,29 +6854,47 @@ async function loadMyClips() {
           </div>
         </div>
       `;
-            // Hover play – same as original
-            const videos = card.querySelectorAll("video");
-            card.addEventListener("mouseenter", () => {
-                videos.forEach(vid => vid.play().catch(() => {}));
-            });
-            card.addEventListener("mouseleave", () => {
-                videos.forEach(vid => {
-                    vid.pause();
-                    vid.currentTime = 0;
-                });
-            });
 
-            grid.appendChild(card);
+      // === Hover / Tap Video Effects ===
+      const video = card.querySelector("video");
+
+      if (video) {
+        // Gentle zoom on hover / tap
+        card.addEventListener("mouseenter", () => {
+          video.style.transform = "translate(-50%, -50%) scale(1.12)";
+          video.play().catch(() => {});
         });
 
-        document.querySelectorAll(".delete-clip-btn").forEach(btn => {
-            btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+        card.addEventListener("mouseleave", () => {
+          video.style.transform = "translate(-50%, -50%) scale(1)";
+          video.pause();
+          video.currentTime = 0;
         });
 
-    } catch (err) {
-        console.error("loadMyClips error:", err);
-        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
-    }
+        // Mobile touch support
+        card.addEventListener("touchstart", () => {
+          video.style.transform = "translate(-50%, -50%) scale(1.12)";
+          video.play().catch(() => {});
+        }, { passive: true });
+
+        card.addEventListener("touchend", () => {
+          video.style.transform = "translate(-50%, -50%) scale(1)";
+          // Optional: pause on touch end
+        }, { passive: true });
+      }
+
+      grid.appendChild(card);
+    });
+
+    // Re-attach delete button listeners
+    document.querySelectorAll(".delete-clip-btn").forEach(btn => {
+      btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+    });
+
+  } catch (err) {
+    console.error("loadMyClips error:", err);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
+  }
 }
 
 function showDeleteConfirm(clipId, clipTitle) {
