@@ -6723,45 +6723,6 @@ async function unlockVideo(video) {
     }
 }
 
-function startFreeTonightViewBoost() {
-  if (viewBoostInterval) clearInterval(viewBoostInterval);
-
-  viewBoostInterval = setInterval(async () => {
-    if (!auth?.currentUser?.uid) return;
-
-    try {
-      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
-      const snap = await getDoc(docRef);
-
-      if (!snap.exists()) return;
-
-      const highlights = snap.data().highlights || [];
-      const now = Date.now();
-      let hasUpdates = false;
-
-      for (let i = 0; i < highlights.length; i++) {
-        const clip = highlights[i];
-        
-        // Only boost if Free Tonight is still active
-        if (!clip.freeTonightUntil || now >= clip.freeTonightUntil) continue;
-
-        const randomAdd = Math.floor(Math.random() * 9) + 1; // 1 to 9 views
-
-        highlights[i].views = (clip.views || 0) + randomAdd;
-        hasUpdates = true;
-
-        console.log(`[VIEW BOOST] +${randomAdd} views → ${clip.id?.slice(-6)}`);
-      }
-
-      if (hasUpdates) {
-        await updateDoc(docRef, { highlights: highlights });
-      }
-    } catch (err) {
-      console.error("[VIEW BOOST] Error:", err);
-    }
-  }, 300000); // Every 5 minutes
-}
-
 // ====================== UPDATED loadMyClips() ======================
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
