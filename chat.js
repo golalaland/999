@@ -463,8 +463,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     startStarEarning?.(uid);
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
-     // Put this in your auth state changed listener or app init
-startFreeTonightViewBoost();
+
 
     // Wait for auth token to be fully synced before button updates
     console.log("[AUTH] Waiting 2s for token sync...");
