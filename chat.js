@@ -6722,9 +6722,6 @@ async function unlockVideo(video) {
         showGoldAlert(userMessage);
     }
 }
-// ====================== AUTO VIEW BOOST ======================
-// Add this function separately (call it once when user logs in)
-let viewBoostInterval = null;
 
 function startFreeTonightViewBoost() {
   if (viewBoostInterval) clearInterval(viewBoostInterval);
