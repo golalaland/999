@@ -5950,7 +5950,7 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* ====================== HIGHLIGHTS BUTTON – OPENS FREE TONIGHT ====================== */
+/* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
@@ -5960,64 +5960,86 @@ highlightsBtn.onclick = async () => {
 
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
-
     if (snap.empty) {
       showGoldAlert("No clips in Free Tonight yet");
       return;
     }
 
-    const allClips = [];
+    const allUploaderIds = [];
+    const highlightsByUploader = {};
 
-    // Collect ONLY ONE active Free Tonight clip per user
     snap.forEach(userDoc => {
       const data = userDoc.data();
       const uploaderId = data.uploaderId || userDoc.id;
-      const highlights = data.highlights || [];
+      allUploaderIds.push(uploaderId);
+      highlightsByUploader[uploaderId] = data.highlights || [];
+    });
 
-      // Find the first active clip for this user
-      const activeClip = highlights.find(clip => {
-        if (clip.isTrending !== true) return false;
-        const now = Date.now();
-        return !clip.trendingUntil || clip.trendingUntil > now;
+    // Fetch user profiles in batches (25 at a time to save reads)
+    const PAGE_SIZE = 25;
+    const allClips = [];
+    let currentPage = 0;
+
+    async function loadPage() {
+      const start = currentPage * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageIds = allUploaderIds.slice(start, end);
+
+      if (pageIds.length === 0) return false;
+
+      const userPromises = pageIds.map(id => getDoc(doc(db, "users", id)));
+      const userSnaps = await Promise.all(userPromises);
+
+      userSnaps.forEach((userSnap, index) => {
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        const clips = highlightsByUploader[pageIds[index]] || [];
+
+        clips.forEach(clip => {
+          if (clip.isTrending !== true) return;
+          const now = Date.now();
+          if (clip.trendingUntil && clip.trendingUntil < now) return;
+
+          allClips.push({
+            id: clip.id,
+            videoUrl: clip.videoUrl || "",
+            previewClip: clip.previewClip || "",
+            thumbnail: clip.thumbnailUrl || "",
+            uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+            uploaderId: pageIds[index],
+            isTrending: true,
+            tags: clip.tags || [],
+            location: userData.location || userData.city || "",
+            city: userData.city || "",
+            fruitPick: userData.fruitPick || null,
+            naturePick: userData.naturePick || "",
+            gender: userData.gender || "person",
+            age: userData.age || null
+          });
+        });
       });
 
-      if (activeClip) {
-        allClips.push({
-          id: activeClip.id,
-          videoUrl: activeClip.videoUrl || "",
-          previewClip: activeClip.previewClip || "",
-          thumbnail: activeClip.thumbnailUrl || "",
-          uploaderName: data.uploaderName || data.chatId || "Anonymous",
-          uploaderId: uploaderId,
-          isTrending: true,
-          tags: activeClip.tags || [],
-          location: data.location || data.city || "",
-          city: data.city || "",
-          fruitPick: data.fruitPick || null,
-          naturePick: data.naturePick || "",
-          gender: data.gender || "person",
-          age: data.age || null
-        });
-      }
-    });
+      currentPage++;
+      return true;
+    }
+
+    // Load first page
+    await loadPage();
 
     if (allClips.length === 0) {
       showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
       return;
     }
 
-    showHighlightsModal(allClips);
-
+    showHighlightsModal(allClips, loadPage);
   } catch (err) {
     console.error("Error fetching Free Tonight clips:", err);
     showGoldAlert("Error loading Free Tonight — try again.");
   }
 };
 
-/* ====================== FREE TONIGHT MODAL – FULL REWRITE ====================== */
-function showHighlightsModal(initialVideos) {
+/* ---------- Free Tonight Modal – Only active trending videos ---------- */
+function showHighlightsModal(initialVideos, loadMoreFn) {
   document.getElementById("highlightsModal")?.remove();
-
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
@@ -6046,8 +6068,8 @@ function showHighlightsModal(initialVideos) {
         </span>
       </div>
       <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-        Real moments, real vibes — no paywalls, no waiting.<br>
-        Just pure connection under the Lagos night sky.
+        Real moments, real vibes — no paywalls, no waiting.
+        <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
         Tap "Enter Location" or other tags to filter.
@@ -6062,14 +6084,26 @@ function showHighlightsModal(initialVideos) {
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
   Object.assign(closeBtn.style, {
-    position: "absolute", top: "8px", right: "10px", width: "32px", height: "32px",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", zIndex: "1002", transition: "all 0.25s ease",
+    position: "absolute",
+    top: "8px",
+    right: "10px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: "1002",
+    transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
   closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
-  closeBtn.onclick = () => modal.remove();
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+    setTimeout(() => modal.remove(), 280);
+  };
   intro.firstElementChild.appendChild(closeBtn);
 
   // CONTROLS
@@ -6082,198 +6116,82 @@ function showHighlightsModal(initialVideos) {
   const locationBtn = document.createElement("button");
   locationBtn.textContent = "Enter Location";
   Object.assign(locationBtn.style, {
-    padding: "10px 24px", borderRadius: "30px", fontSize: "14px", fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer", transition: "all 0.3s",
+    padding: "10px 24px",
+    borderRadius: "30px",
+    fontSize: "14px",
+    fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)",
+    color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)",
+    cursor: "pointer",
+    transition: "all 0.3s",
     boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
-  locationBtn.onclick = () => openLocationModal(initialVideos);
+  locationBtn.onclick = () => openLocationModal(initialVideos); // ← pass initialVideos here
   controls.appendChild(locationBtn);
 
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
   tagContainer.style.cssText = `
-    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; 
-    max-width:500px; margin-top:12px; padding:8px 0;
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
+    margin-top:12px; padding:8px 0;
   `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
-  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
     display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 100px;
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
   modal.appendChild(grid);
+
+  // Load more trigger
+  const loadMoreDiv = document.createElement("div");
+  loadMoreDiv.id = "loadMoreTrigger";
+  loadMoreDiv.style.cssText = "height:200px; width:100%; text-align:center; padding:40px; color:#888;";
+  loadMoreDiv.innerHTML = "Loading more...";
+  grid.appendChild(loadMoreDiv);
 
   // State
   let allVideos = [...initialVideos];
   let activeTags = new Set();
+  let isLoadingMore = false;
+  let hasMore = true;
 
-  // Render Cards
-  function renderCards(videosToRender = allVideos) {
-    grid.innerHTML = "";
-
-    let visibleVideos = videosToRender.filter(v => {
-      const now = Date.now();
-      return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
-    });
-
-    // Apply filters (location + tags)
-    if (activeTags.size > 0) {
-      visibleVideos = visibleVideos.filter(v => {
-        const videoTags = [
-          ...(v.tags || []).map(t => (t || "").trim().toLowerCase()),
-          (v.location || "").trim().toLowerCase(),
-          (v.city || "").trim().toLowerCase()
-        ].filter(Boolean);
-
-        return [...activeTags].every(tag => videoTags.includes(tag));
-      });
+  // Infinite scroll
+  const observer = new IntersectionObserver(async (entries) => {
+    if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+      isLoadingMore = true;
+      loadMoreDiv.innerHTML = "Loading more...";
+      const loaded = await loadMoreFn();
+      if (loaded) {
+        renderCards(allVideos);
+      } else {
+        hasMore = false;
+        loadMoreDiv.innerHTML = "No more clips";
+      }
+      isLoadingMore = false;
     }
+  }, { threshold: 0.1 });
 
-    if (visibleVideos.length === 0) {
-      const empty = document.createElement("div");
-      empty.textContent = "No clips match your filters... try another location!";
-      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:100px 20px; color:#888; font-size:16px;";
-      grid.appendChild(empty);
-      return;
-    }
+  observer.observe(loadMoreDiv);
 
-    visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
-      const card = document.createElement("div");
-      Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        border: "1px solid rgba(138,43,226,0.4)"
-      });
-
-      card.onmouseenter = () => {
-        card.style.transform = "scale(1.03)";
-        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-      };
-      card.onmouseleave = () => {
-        card.style.transform = "scale(1)";
-        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-      };
-
-      // Video Container
-      const vidContainer = document.createElement("div");
-      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-
-      const videoEl = document.createElement("video");
-      videoEl.muted = true; 
-      videoEl.loop = true; 
-      videoEl.preload = "metadata";
-      videoEl.loading = "lazy";
-      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      videoEl.src = video.previewClip || video.videoUrl || "";
-      videoEl.load();
-
-      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
-      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        openFullScreenVideo(video.videoUrl || "");
-      };
-
-      vidContainer.appendChild(videoEl);
-      card.appendChild(vidContainer);
-
-      // Info Overlay
-      const info = document.createElement("div");
-      info.style.cssText = `
-        position:absolute; bottom:0; left:0; right:0;
-        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-        padding:60px 12px 12px;
-      `;
-
-      const user = document.createElement("div");
-      user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
-      user.onclick = (e) => {
-        e.stopPropagation();
-        if (video.uploaderId) {
-          getDoc(doc(db, "users", video.uploaderId))
-            .then(snap => snap.exists() ? showSocialCard(snap.data()) : showStarPopup("User not found", "error"))
-            .catch(() => showStarPopup("Failed to load profile", "error"));
-        }
-      };
-
-      const naturePick = video.naturePick || "";
-      const genderRaw = (video.gender || "person").toLowerCase().trim();
-      const pronoun = genderRaw === "male" ? "his" : "her";
-      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
-      const oneLinerText = naturePick 
-        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
-        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
-
-      const oneLiner = document.createElement("div");
-      oneLiner.textContent = oneLinerText;
-      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
-
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
-
-      if (video.location) {
-        const span = document.createElement("span");
-        span.textContent = video.location.trim();
-        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
-        tagsEl.appendChild(span);
-      }
-      if (video.city) {
-        const span = document.createElement("span");
-        span.textContent = video.city.trim();
-        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
-        tagsEl.appendChild(span);
-      }
-
-      (video.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim()) {
-          const span = document.createElement("span");
-          span.textContent = t.trim();
-          span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(255,46,120,0.22); color: #ff4d8a; border: 1px solid rgba(255,46,120,0.6);`;
-          tagsEl.appendChild(span);
-        }
-      });
-
-      info.append(user, oneLiner, tagsEl);
-      card.appendChild(info);
-
-      // Fruit Pick
-      if (video.fruitPick) {
-        const fruitEl = document.createElement("div");
-        fruitEl.textContent = video.fruitPick.trim();
-        fruitEl.style.cssText = `position:absolute; bottom:10px; right:10px; font-size:18px; z-index:3;`;
-        card.appendChild(fruitEl);
-      }
-
-      // Badge
-      const badge = document.createElement("div");
-      badge.textContent = "Free Tonight ♡";
-      Object.assign(badge.style, {
-        position: "absolute", top: "12px", right: "12px", padding: "6px 12px",
-        borderRadius: "12px", fontSize: "12px", fontWeight: "700", color: "#fff",
-        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-        boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
-        textShadow: "0 0 4px rgba(0,0,0,0.7)"
-      });
-      card.appendChild(badge);
-
-      grid.appendChild(card);
-    });
-  }
-
-  // Location Modal
-  function openLocationModal(videos) {
+  // Mini modal for location tags (multi-select, apply on "Go")
+  function openLocationModal(videos) { // ← now receives the full list
     const locModal = document.createElement("div");
-    locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
+    locModal.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px);
+      z-index:1000000; display:flex; align-items:center; justify-content:center;
+    `;
 
     const inner = document.createElement("div");
-    inner.style.cssText = `background:rgba(15,10,26,0.95); border:1px solid rgba(138,43,226,0.5); border-radius:20px; padding:32px; max-width:420px; width:90%; box-shadow:0 0 40px rgba(138,43,226,0.6); text-align:center;`;
+    inner.style.cssText = `
+      background:rgba(15,10,26,0.95); border:1px solid rgba(138,43,226,0.5);
+      border-radius:20px; padding:32px; max-width:420px; width:90%;
+      box-shadow:0 0 40px rgba(138,43,226,0.6); text-align:center;
+    `;
 
     inner.innerHTML = `
       <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location(s)</h3>
@@ -6286,9 +6204,9 @@ function showHighlightsModal(initialVideos) {
     locModal.appendChild(inner);
     document.body.appendChild(locModal);
 
+    // Populate locations from the passed videos list
     const locTagsContainer = inner.querySelector("#locTags");
     const allLocs = new Set();
-
     videos.forEach(v => {
       if (v.location) allLocs.add(v.location.trim());
       if (v.city) allLocs.add(v.city.trim());
@@ -6298,14 +6216,19 @@ function showHighlightsModal(initialVideos) {
       const btn = document.createElement("button");
       btn.textContent = loc;
       btn.dataset.loc = loc.toLowerCase();
-      btn.style.cssText = `padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer; transition:all 0.2s;`;
-
+      btn.style.cssText = `
+        padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600;
+        background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3);
+        cursor:pointer; transition:all 0.2s;
+      `;
       btn.onclick = () => {
         if (btn.style.background.includes("0.1")) {
           btn.style.background = "linear-gradient(135deg, #ff2e78, #ff5e9e)";
+          btn.style.color = "#fff";
           btn.style.borderColor = "#ff2e78";
         } else {
           btn.style.background = "rgba(255,255,255,0.1)";
+          btn.style.color = "#fff";
           btn.style.borderColor = "rgba(255,255,255,0.3)";
         }
       };
@@ -6315,7 +6238,9 @@ function showHighlightsModal(initialVideos) {
     inner.querySelector("#goLoc").onclick = () => {
       activeTags.clear();
       locTagsContainer.querySelectorAll("button").forEach(btn => {
-        if (btn.style.background.includes("ff2e78")) activeTags.add(btn.dataset.loc);
+        if (btn.style.background.includes("ff2e78")) {
+          activeTags.add(btn.dataset.loc);
+        }
       });
       renderCards(allVideos);
       locModal.remove();
@@ -6326,12 +6251,249 @@ function showHighlightsModal(initialVideos) {
     };
   }
 
-  // Initial Render
+  function renderCards(videosToRender = allVideos) {
+    grid.innerHTML = "";
+    tagContainer.innerHTML = "";
+
+    let visibleVideos = videosToRender.filter(v => {
+      const now = Date.now();
+      return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+    });
+
+    if (activeTags.size > 0) {
+      visibleVideos = visibleVideos.filter(v => {
+        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+        if (v.location) videoTags.push(v.location.trim().toLowerCase());
+        if (v.city) videoTags.push(v.city.trim().toLowerCase());
+        return [...activeTags].every(tag => videoTags.includes(tag));
+      });
+    }
+
+    // Only non-location tags in main bar
+    const visibleTags = new Set();
+    visibleVideos.forEach(v => {
+      (v.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim() && t.trim() !== v.city?.trim()) {
+          visibleTags.add(t.trim().toLowerCase());
+        }
+      });
+    });
+    const sortedVisibleTags = [...visibleTags].sort();
+
+    sortedVisibleTags.forEach(tag => {
+      const btn = document.createElement("button");
+      btn.textContent = tag;
+      btn.dataset.tag = tag;
+      Object.assign(btn.style, {
+        padding: "6px 14px",
+        borderRadius: "24px",
+        fontSize: "12px",
+        fontWeight: "600",
+        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+        border: "1px solid rgba(255,46,120,0.6)",
+        cursor: "pointer",
+        transition: "all 0.25s"
+      });
+      btn.onclick = () => {
+        if (activeTags.has(tag)) activeTags.delete(tag);
+        else activeTags.add(tag);
+        renderCards(videosToRender);
+      };
+      tagContainer.appendChild(btn);
+    });
+
+    const filtered = visibleVideos.sort(() => Math.random() - 0.5);
+
+    if (filtered.length === 0) {
+      const empty = document.createElement("div");
+      empty.textContent = "No clips match your filters... try another location!";
+      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
+      grid.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(video => {
+      const card = document.createElement("div");
+      Object.assign(card.style, {
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        border: "1px solid rgba(138,43,226,0.4)"
+      });
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.03)";
+        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
+      };
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1)";
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+      };
+
+      const vidContainer = document.createElement("div");
+      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+
+      const videoEl = document.createElement("video");
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
+      videoEl.loading = "lazy";
+      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+      videoEl.src = video.previewClip || video.videoUrl || "";
+      videoEl.load();
+      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
+
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        openFullScreenVideo(video.videoUrl || "");
+      };
+
+      vidContainer.appendChild(videoEl);
+      card.appendChild(vidContainer);
+
+      // Info overlay
+      const info = document.createElement("div");
+      info.style.cssText = `
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
+      `;
+
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; position:relative;";
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) {
+          const spinner = document.createElement("div");
+          spinner.className = "profile-spinner";
+          user.appendChild(spinner);
+
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(userSnap => {
+              spinner.remove();
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              } else {
+                showStarPopup("User profile not found", "error");
+              }
+            })
+            .catch(err => {
+              spinner.remove();
+              console.error("Failed to load user:", err);
+              showStarPopup("Failed to load profile", "error");
+            });
+        }
+      };
+
+      // One-liner: A {naturePick} {gender} in {pronoun} {AgeGroup}
+      const naturePick = video.naturePick || "";
+      const genderRaw = (video.gender || "person").toLowerCase().trim();
+      const isMale = genderRaw === "male";
+      const pronoun = isMale ? "his" : "her";
+      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+
+      const oneLinerText = naturePick 
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+
+      const oneLiner = document.createElement("div");
+      oneLiner.textContent = oneLinerText;
+      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+
+      // Tags — location & city layered on video, no #
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
+      if (video.location) {
+        const span = document.createElement("span");
+        span.textContent = video.location.trim();
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
+        tagsEl.appendChild(span);
+      }
+
+      if (video.city) {
+        const span = document.createElement("span");
+        span.textContent = video.city.trim();
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
+        tagsEl.appendChild(span);
+      }
+
+      // Other tags
+      (video.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim()) {
+          const span = document.createElement("span");
+          span.textContent = t.trim();
+          span.style.cssText = `
+            font-size:11px; padding:2px 8px; border-radius:10px;
+            background: rgba(255,46,120,0.22); color: #ff4d8a;
+            border: 1px solid rgba(255,46,120,0.6);
+          `;
+          tagsEl.appendChild(span);
+        }
+      });
+
+      info.append(user, oneLiner, tagsEl);
+      card.appendChild(info);
+
+      // FruitPick — tiny standalone emoji
+      let fruitEl = null;
+      if (video.fruitPick) {
+        fruitEl = document.createElement("div");
+        fruitEl.textContent = video.fruitPick.trim();
+        fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          font-size: 16px;
+          line-height: 1;
+          color: #fff;
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
+          z-index: 3;
+        `;
+      }
+
+      if (fruitEl) card.appendChild(fruitEl);
+
+      // BADGE
+      const badge = document.createElement("div");
+      badge.textContent = "Free Tonight ♡";
+      Object.assign(badge.style, {
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        padding: "6px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#fff",
+        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)",
+        border: "1px solid rgba(255,255,255,0.3)",
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+      });
+      card.appendChild(badge);
+
+      grid.appendChild(card);
+    });
+
+    // Re-attach load more trigger
+    grid.appendChild(loadMoreDiv);
+  }
+
+  // Initial render
   renderCards(allVideos);
   document.body.appendChild(modal);
-  setTimeout(() => {
-    // Optional: focus on search if you add one later
-  }, 300);
+  setTimeout(() => {
+    // Optional: focus on search if you add one later
+  }, 300);
 }
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
