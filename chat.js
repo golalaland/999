@@ -6723,7 +6723,7 @@ async function unlockVideo(video) {
     }
 }
 
-// ====================== UPDATED loadMyClips() ======================
+// ====================== UPDATED loadMyClips() - FINAL ======================
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6734,7 +6734,6 @@ async function loadMyClips() {
   try {
     const docRef = doc(db, "highlightVideos", currentUser.uid);
 
-    // Live listener so views update in real-time when boosted
     const unsubscribe = onSnapshot(docRef, (snap) => {
       if (!snap.exists() || !snap.data()?.highlights?.length) {
         grid.innerHTML = "";
@@ -6758,10 +6757,11 @@ async function loadMyClips() {
         const thumbnailSrc = v.thumbnailUrl || "";
         const views = v.views || 0;
 
-        const isFreeTonightActive = v.freeTonightUntil ? Date.now() < v.freeTonightUntil : false;
-        const freeTonightText = isFreeTonightActive ? "Free Tonight" : "Offline";
-        const statusColor = isFreeTonightActive ? "#00ff9d" : "#666";
-        const dotColor = isFreeTonightActive ? "#00ff9d" : "#555";
+        // === STATUS LOGIC (Using isTrending from backend) ===
+        const isActive = v.isTrending === true;                    // ← Changed to match your backend
+        const freeTonightText = isActive ? "Free Tonight" : "Offline";
+        const statusColor = isActive ? "#00ff9d" : "#666";
+        const dotColor = isActive ? "#00ff9d" : "#555";
 
         const card = document.createElement("div");
         card.style.cssText = `
@@ -6778,14 +6778,11 @@ async function loadMyClips() {
 
         card.innerHTML = `
           <div style="display:flex;height:100%;background:#0d0d0d;">
-            <!-- Video Preview - Fixed Zoom -->
+            <!-- Video Preview - FIXED Thumbnail + Hover Zoom -->
             <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-              <video
-                src="${videoSrc}"
-                muted 
-                loop 
-                playsinline
-                poster="${thumbnailSrc}"
+              <img 
+                src="${thumbnailSrc}" 
+                alt="thumbnail"
                 style="
                   position: absolute;
                   top: 50%;
@@ -6795,8 +6792,27 @@ async function loadMyClips() {
                   object-fit: cover;
                   object-position: center;
                   transform: translate(-50%, -50%) scale(1);
-                  filter: brightness(0.95);
                   transition: transform 0.45s ease;
+                "
+              >
+              
+              <!-- Video element (hidden until hover) -->
+              <video
+                src="${videoSrc}"
+                muted
+                loop
+                playsinline
+                style="
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  object-position: center;
+                  transform: translate(-50%, -50%) scale(1);
+                  opacity: 0;
+                  transition: opacity 0.3s ease;
                 ">
               </video>
 
@@ -6818,7 +6834,6 @@ async function loadMyClips() {
                 </div>
               </div>
 
-              <!-- Stats -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
                 <div>
                   <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
@@ -6847,27 +6862,32 @@ async function loadMyClips() {
           </div>
         `;
 
-        // Hover & Touch Effects
+        // Hover Effects - Show video + zoom
+        const img = card.querySelector("img");
         const video = card.querySelector("video");
-        if (video) {
+
+        if (img && video) {
           card.addEventListener("mouseenter", () => {
+            img.style.opacity = "0";
+            video.style.opacity = "1";
             video.style.transform = "translate(-50%, -50%) scale(1.12)";
             video.play().catch(() => {});
           });
 
           card.addEventListener("mouseleave", () => {
+            img.style.opacity = "1";
+            video.style.opacity = "0";
             video.style.transform = "translate(-50%, -50%) scale(1)";
             video.pause();
             video.currentTime = 0;
           });
 
+          // Mobile support
           card.addEventListener("touchstart", () => {
+            img.style.opacity = "0";
+            video.style.opacity = "1";
             video.style.transform = "translate(-50%, -50%) scale(1.12)";
             video.play().catch(() => {});
-          }, { passive: true });
-
-          card.addEventListener("touchend", () => {
-            video.style.transform = "translate(-50%, -50%) scale(1)";
           }, { passive: true });
         }
 
@@ -6896,7 +6916,7 @@ function showDeleteConfirm(clipId, clipTitle) {
             </h3>
             <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
                 "<strong style="color:#ff3366;">${clipTitle}</strong>" will be removed.<br>
-                <small style="color:#999;">Buyers keep access forever.</small>
+                <small style="color:#999;"></small>
             </p>
             <div style="display:flex;gap:16px;justify-content:center;">
                 <button id="cancelDelete" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;cursor:pointer;">Cancel</button>
