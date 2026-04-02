@@ -6776,25 +6776,43 @@ async function loadMyClips() {
           display:flex;flex-direction:column;height:220px;
         `;
 
+               // Inside the forEach loop - replace the old button with this:
         card.innerHTML = `
           <div style="display:flex;height:100%;background:#0d0d0d;">
+            <!-- Left: Video preview -->
             <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
               <video
                 src="${videoSrc}"
                 muted loop playsinline
                 poster="${thumbnailSrc}"
-                style="position:absolute;top:50%;left:50%;width:100%;height:100%;object-fit:cover;object-position:center;transform:translate(-50%,-50%) scale(1.0);filter:brightness(0.96);transition:transform 0.45s ease;">
+                style="
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  object-position: center;
+                  transform: translate(-50%, -50%) scale(1.0);
+                  filter: brightness(0.96);
+                  transition: transform 0.45s ease;
+                ">
               </video>
-              <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);"></div>
-              <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;">▶ CLIP</div>
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);pointer-events:none;"></div>
+              <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+                ▶ CLIP
+              </div>
             </div>
 
+            <!-- Right side -->
             <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
               <div style="flex-grow:1;">
-                <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
                   ${v.title || "Free Tonight Clip"}
                 </div>
-                <div style="color:#666;font-size:10px;opacity:0.7;">ID: ${v.id.slice(-8)}</div>
+                <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                  ID: ${v.id.slice(-8)}
+                </div>
               </div>
 
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
@@ -6804,35 +6822,36 @@ async function loadMyClips() {
                 </div>
                 <div>
                   <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
-                  <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:2px;">
-                    <div style="width:8px;height:8px;background:${dotColor};border-radius:50%;box-shadow:0 0 6px ${dotColor};"></div>
-                    <div style="color:${statusColor};font-weight:900;font-size:13px;">${freeTonightText}</div>
+                  <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
+                    <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
+                    <div style="color:${statusColor}; font-weight:900; font-size:13px;">
+                      ${freeTonightText}
+                    </div>
                   </div>
                 </div>
               </div>
 
-            // Inside the highlights.forEach loop, replace the button part with this:
-
-<button class="delete-clip-btn"
-        data-id="${v.id}"
-        data-title="${(v.title || 'This clip').replace(/"/g, '&quot;')}"
-        style="position:absolute;bottom:12px;right:12px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;padding:8px 14px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:0.6px;cursor:pointer;opacity:0.92;box-shadow:0 2px 12px rgba(255,0,100,0.4);">
-    DELETE
-</button>
+              <!-- DELETE BUTTON - Clean & Original Style -->
+              <button class="delete-clip-btn"
+                      data-id="${v.id}"
+                      data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
+                      style="
+                        position:absolute;bottom:12px;right:12px;
+                        background:linear-gradient(90deg,#ff0099,#ff6600);
+                        border:none;color:#fff;
+                        padding:8px 14px;border-radius:10px;
+                        font-size:10px;font-weight:800;letter-spacing:0.6px;
+                        cursor:pointer;opacity:0.92;
+                        box-shadow:0 2px 12px rgba(255,0,100,0.4);
+                        transition:all .25s ease;
+                      ">
+                DELETE
+              </button>
             </div>
           </div>
         `;
 
-               // Re-attach delete button listeners (safer way)
-      setTimeout(() => {
-        document.querySelectorAll(".delete-clip-btn").forEach(btn => {
-          btn.onclick = (e) => {
-            e.stopPropagation(); // prevent any parent clicks
-            showDeleteConfirm(btn.dataset.id, btn.dataset.title);
-          };
-        });
-      }, 10);
-
+        // Hover effect for video (kept from your previous request)
         const video = card.querySelector("video");
         if (video) {
           card.addEventListener("mouseenter", () => {
@@ -6845,81 +6864,77 @@ async function loadMyClips() {
             video.currentTime = 0;
           });
         }
-
-        grid.appendChild(card);
       });
-    });
+
+      // === IMPORTANT: Re-attach delete buttons after rendering ===
+      setTimeout(() => {
+        document.querySelectorAll(".delete-clip-btn").forEach(btn => {
+          btn.onclick = () => {
+            showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+          };
+        });
+      }, 50);
+
+    }); // end of onSnapshot
 
   } catch (err) {
     console.error("loadMyClips error:", err);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
   }
 }
 
 function showDeleteConfirm(clipId, clipTitle) {
-    // Safety check
     if (!clipId || !auth?.currentUser?.uid) {
-        console.error("Missing clipId or user not logged in");
+        console.error("Missing clipId or user not authenticated");
         return;
     }
 
     const modal = document.createElement("div");
     modal.style.cssText = `
-        position:fixed; inset:0; background:rgba(0,0,0,0.9);
-        display:flex; align-items:center; justify-content:center;
-        z-index:99999; font-family:system-ui, sans-serif;
+        position:fixed;inset:0;background:rgba(0,0,0,0.9);
+        display:flex;align-items:center;justify-content:center;
+        z-index:99999;font-family:system-ui,sans-serif;
     `;
 
     modal.innerHTML = `
-        <div style="background:#111; padding:28px; border-radius:14px; text-align:center; color:#fff; max-width:340px; box-shadow:0 0 30px rgba(0,0,0,0.6);">
-            <h3 style="margin:0 0 12px; font-size:21px; font-weight:600; color:#ff3366;">
+        <div style="background:#111;padding:25px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <h3 style="color:#fff;margin:0 0 16px;font-size:20px;font-weight:600;">
                 Delete Clip?
             </h3>
-            <p style="color:#ccc; margin:0 0 24px; line-height:1.5;">
-                "<strong style="color:#fff;">${clipTitle || 'This clip'}</strong>"<br>
-                will be permanently deleted.
+            <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
+                "<strong style="color:#ff3366;">${clipTitle}</strong>" will be removed.<br>
+                <small style="color:#999;"></small>
             </p>
-            <div style="display:flex; gap:14px; justify-content:center;">
-                <button id="cancelDelete" style="
-                    padding:10px 20px; background:#333; border:none; color:#ddd; 
-                    border-radius:8px; font-weight:500; cursor:pointer; flex:1;">
-                    Cancel
-                </button>
-                <button id="confirmDelete" style="
-                    padding:10px 20px; background:linear-gradient(90deg,#ff0099,#ff6600); 
-                    border:none; color:#fff; border-radius:8px; font-weight:600; cursor:pointer; flex:1;">
-                    Yes, Delete
-                </button>
+            <div style="display:flex;gap:16px;justify-content:center;">
+                <button id="cancelDelete" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;cursor:pointer;">Cancel</button>
+                <button id="confirmDelete" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;">Yes, Delete</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(modal);
 
-    const cancelBtn = modal.querySelector("#cancelDelete");
-    const confirmBtn = modal.querySelector("#confirmDelete");
+    // Cancel → just close
+    modal.querySelector("#cancelDelete").onclick = () => modal.remove();
 
-    // Cancel
-    cancelBtn.onclick = () => modal.remove();
-
-    // Confirm Delete - FIXED & SAFER
-    confirmBtn.onclick = async () => {
+    // Confirm delete - Fixed & Safer version
+    modal.querySelector("#confirmDelete").onclick = async () => {
+        const confirmBtn = modal.querySelector("#confirmDelete");
         confirmBtn.disabled = true;
         confirmBtn.textContent = "Deleting...";
 
         try {
             const userDocRef = doc(db, "highlightVideos", auth.currentUser.uid);
 
-            // Use Transaction for safety (prevents race conditions)
             await runTransaction(db, async (transaction) => {
                 const userDoc = await transaction.get(userDocRef);
                 if (!userDoc.exists()) {
-                    throw new Error("Document does not exist");
+                    throw new Error("User highlights document not found");
                 }
 
                 const data = userDoc.data();
                 const currentHighlights = data.highlights || [];
 
-                // Filter out the clip to delete
                 const updatedHighlights = currentHighlights.filter(clip => clip.id !== clipId);
 
                 transaction.update(userDocRef, {
@@ -6929,17 +6944,17 @@ function showDeleteConfirm(clipId, clipTitle) {
                 });
             });
 
-            showGoldAlert?.("Clip deleted successfully") || alert("Clip deleted successfully");
+            showGoldAlert?.("Clip deleted successfully");
             modal.remove();
 
-            // Refresh the grid
+            // Refresh grid
             if (typeof loadMyClips === 'function') {
                 loadMyClips();
             }
 
         } catch (err) {
             console.error("Delete error:", err);
-            showGoldAlert?.("Failed to delete clip. Please try again.") || alert("Failed to delete clip");
+            showGoldAlert?.("Failed to delete clip. Try again.");
             modal.remove();
         }
     };
