@@ -6718,7 +6718,7 @@ function startFreeTonightViewBoost() {
   }, 300000); // Every 5 minutes
 }
 
-// Main Function
+// Main Function - FIXED
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6742,7 +6742,7 @@ async function loadMyClips() {
       let highlights = snap.data().highlights || [];
       const now = Date.now();
 
-      // Auto expire + update views in real-time
+      // Auto expire logic
       let needsUpdate = false;
       highlights = highlights.map(v => {
         if (v.isTrending === true && v.freeTonightUntil && v.freeTonightUntil < now) {
@@ -6776,7 +6776,6 @@ async function loadMyClips() {
           display:flex;flex-direction:column;height:220px;
         `;
 
-               // Inside the forEach loop - replace the old button with this:
         card.innerHTML = `
           <div style="display:flex;height:100%;background:#0d0d0d;">
             <!-- Left: Video preview -->
@@ -6831,7 +6830,7 @@ async function loadMyClips() {
                 </div>
               </div>
 
-              <!-- DELETE BUTTON - Clean & Original Style -->
+              <!-- DELETE BUTTON -->
               <button class="delete-clip-btn"
                       data-id="${v.id}"
                       data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
@@ -6851,7 +6850,7 @@ async function loadMyClips() {
           </div>
         `;
 
-        // Hover effect for video (kept from your previous request)
+        // Hover effect
         const video = card.querySelector("video");
         if (video) {
           card.addEventListener("mouseenter", () => {
@@ -6864,9 +6863,11 @@ async function loadMyClips() {
             video.currentTime = 0;
           });
         }
+
+        grid.appendChild(card);   // ← This was missing!
       });
 
-      // === IMPORTANT: Re-attach delete buttons after rendering ===
+      // Re-attach delete buttons
       setTimeout(() => {
         document.querySelectorAll(".delete-clip-btn").forEach(btn => {
           btn.onclick = () => {
@@ -6875,14 +6876,13 @@ async function loadMyClips() {
         });
       }, 50);
 
-    }); // end of onSnapshot
+    }); // end onSnapshot
 
   } catch (err) {
     console.error("loadMyClips error:", err);
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
   }
 }
-
 function showDeleteConfirm(clipId, clipTitle) {
     if (!clipId || !auth?.currentUser?.uid) {
         console.error("Missing clipId or user not authenticated");
