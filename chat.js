@@ -5968,13 +5968,13 @@ highlightsBtn.onclick = async () => {
 
     const allClips = [];
 
-    // Collect only ONE active Free Tonight clip per user
+    // Collect ONLY ONE active Free Tonight clip per user
     snap.forEach(userDoc => {
       const data = userDoc.data();
       const uploaderId = data.uploaderId || userDoc.id;
       const highlights = data.highlights || [];
 
-      // Find the first active Free Tonight clip for this user
+      // Find the first active clip for this user
       const activeClip = highlights.find(clip => {
         if (clip.isTrending !== true) return false;
         const now = Date.now();
@@ -6014,28 +6014,19 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ====================== FULL FREE TONIGHT MODAL ====================== */
+/* ====================== FREE TONIGHT MODAL – FULL REWRITE ====================== */
 function showHighlightsModal(initialVideos) {
   document.getElementById("highlightsModal")?.remove();
 
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed", 
-    top: 0, 
-    left: 0, 
-    width: "100vw", 
-    height: "100vh",
+    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex", 
-    flexDirection: "column",
-    alignItems: "center", 
-    justifyContent: "flex-start",
-    zIndex: "999999", 
-    overflowY: "auto", 
-    padding: "20px 12px", 
-    boxSizing: "border-box",
+    display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "flex-start",
+    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
 
@@ -6071,17 +6062,9 @@ function showHighlightsModal(initialVideos) {
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
   Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "8px",
-    right: "10px",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    zIndex: "1002",
-    transition: "all 0.25s ease",
+    position: "absolute", top: "8px", right: "10px", width: "32px", height: "32px",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", zIndex: "1002", transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
@@ -6099,15 +6082,9 @@ function showHighlightsModal(initialVideos) {
   const locationBtn = document.createElement("button");
   locationBtn.textContent = "Enter Location";
   Object.assign(locationBtn.style, {
-    padding: "10px 24px",
-    borderRadius: "30px",
-    fontSize: "14px",
-    fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)",
-    color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)",
-    cursor: "pointer",
-    transition: "all 0.3s",
+    padding: "10px 24px", borderRadius: "30px", fontSize: "14px", fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer", transition: "all 0.3s",
     boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
   locationBtn.onclick = () => openLocationModal(initialVideos);
@@ -6126,13 +6103,8 @@ function showHighlightsModal(initialVideos) {
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
   grid.style.cssText = `
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px; 
-    width: 100%; 
-    max-width: 960px; 
-    margin: 0 auto; 
-    padding-bottom: 100px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 100px;
   `;
   modal.appendChild(grid);
 
@@ -6140,7 +6112,7 @@ function showHighlightsModal(initialVideos) {
   let allVideos = [...initialVideos];
   let activeTags = new Set();
 
-  // Render Cards Function
+  // Render Cards
   function renderCards(videosToRender = allVideos) {
     grid.innerHTML = "";
 
@@ -6149,7 +6121,7 @@ function showHighlightsModal(initialVideos) {
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
     });
 
-    // Apply active filters (location + tags)
+    // Apply filters (location + tags)
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = [
@@ -6170,17 +6142,11 @@ function showHighlightsModal(initialVideos) {
       return;
     }
 
-    // Shuffle for variety
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
       const card = document.createElement("div");
       Object.assign(card.style, {
-        position: "relative", 
-        aspectRatio: "9/16", 
-        borderRadius: "16px", 
-        overflow: "hidden",
-        background: "#0f0a1a", 
-        cursor: "pointer", 
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
@@ -6199,23 +6165,16 @@ function showHighlightsModal(initialVideos) {
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
+      videoEl.muted = true; 
+      videoEl.loop = true; 
       videoEl.preload = "metadata";
       videoEl.loading = "lazy";
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       videoEl.src = video.previewClip || video.videoUrl || "";
       videoEl.load();
 
-      vidContainer.onmouseenter = (e) => { 
-        e.stopPropagation(); 
-        videoEl.play().catch(() => {}); 
-      };
-      vidContainer.onmouseleave = (e) => { 
-        e.stopPropagation(); 
-        videoEl.pause(); 
-        videoEl.currentTime = 0; 
-      };
+      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
       vidContainer.onclick = (e) => {
         e.stopPropagation();
         openFullScreenVideo(video.videoUrl || "");
@@ -6237,10 +6196,13 @@ function showHighlightsModal(initialVideos) {
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
       user.onclick = (e) => {
         e.stopPropagation();
-        if (video.uploaderId) showSocialCardFromId(video.uploaderId);
+        if (video.uploaderId) {
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(snap => snap.exists() ? showSocialCard(snap.data()) : showStarPopup("User not found", "error"))
+            .catch(() => showStarPopup("Failed to load profile", "error"));
+        }
       };
 
-      // One-liner
       const naturePick = video.naturePick || "";
       const genderRaw = (video.gender || "person").toLowerCase().trim();
       const pronoun = genderRaw === "male" ? "his" : "her";
@@ -6253,7 +6215,6 @@ function showHighlightsModal(initialVideos) {
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-      // Tags
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
@@ -6290,21 +6251,14 @@ function showHighlightsModal(initialVideos) {
         card.appendChild(fruitEl);
       }
 
-      // Free Tonight Badge
+      // Badge
       const badge = document.createElement("div");
       badge.textContent = "Free Tonight ♡";
       Object.assign(badge.style, {
-        position: "absolute",
-        top: "12px",
-        right: "12px",
-        padding: "6px 12px",
-        borderRadius: "12px",
-        fontSize: "12px",
-        fontWeight: "700",
-        color: "#fff",
+        position: "absolute", top: "12px", right: "12px", padding: "6px 12px",
+        borderRadius: "12px", fontSize: "12px", fontWeight: "700", color: "#fff",
         background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-        boxShadow: "0 0 18px rgba(255,51,102,0.9)",
-        border: "1px solid rgba(255,255,255,0.3)",
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
@@ -6361,9 +6315,7 @@ function showHighlightsModal(initialVideos) {
     inner.querySelector("#goLoc").onclick = () => {
       activeTags.clear();
       locTagsContainer.querySelectorAll("button").forEach(btn => {
-        if (btn.style.background.includes("ff2e78")) {
-          activeTags.add(btn.dataset.loc);
-        }
+        if (btn.style.background.includes("ff2e78")) activeTags.add(btn.dataset.loc);
       });
       renderCards(allVideos);
       locModal.remove();
@@ -6373,9 +6325,10 @@ function showHighlightsModal(initialVideos) {
       if (e.target === locModal) locModal.remove();
     };
   }
-// Initial render
-  renderCards(allVideos);
-  document.body.appendChild(modal);
+
+  // Initial Render
+  renderCards(allVideos);
+  document.body.appendChild(modal);
   setTimeout(() => {
     // Optional: focus on search if you add one later
   }, 300);
