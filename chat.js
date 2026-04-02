@@ -3052,49 +3052,6 @@ function startStarEarning(uid) {
   });
 }
 
-let viewBoostInterval = null;
-
-function startFreeTonightViewBoost() {
-  if (viewBoostInterval) clearInterval(viewBoostInterval);
-
-  viewBoostInterval = setInterval(async () => {
-    if (!auth?.currentUser?.uid) return;
-
-    try {
-      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
-      const snap = await getDoc(docRef);
-
-      if (!snap.exists()) return;
-
-      const highlights = snap.data().highlights || [];
-      const now = Date.now();
-      let hasUpdates = false;
-
-      for (let i = 0; i < highlights.length; i++) {
-        const clip = highlights[i];
-        if (!clip.freeTonightUntil || now >= clip.freeTonightUntil) continue;
-
-        // Only boost if still active
-        const randomAdd = Math.floor(Math.random() * 9) + 1; // 1 to 9
-
-        // Update this specific clip in the array
-        highlights[i].views = (clip.views || 0) + randomAdd;
-        hasUpdates = true;
-
-        console.log(`[VIEW BOOST] +${randomAdd} views for clip ${clip.id.slice(-6)}`);
-      }
-
-      if (hasUpdates) {
-        await updateDoc(docRef, {
-          highlights: highlights
-        });
-      }
-    } catch (err) {
-      console.error("[VIEW BOOST] Error:", err);
-    }
-  }, 300000); // 5 minutes = 300000 ms
-}
-
 /* ===============================
    🧩 Helper Functions
 ================================= */
@@ -6723,7 +6680,46 @@ async function unlockVideo(video) {
     }
 }
 
-// ====================== UPDATED loadMyClips() - FINAL ======================
+// ====================== AUTO VIEW BOOST (Add this separately) ======================
+let viewBoostInterval = null;
+
+function startFreeTonightViewBoost() {
+  if (viewBoostInterval) clearInterval(viewBoostInterval);
+
+  viewBoostInterval = setInterval(async () => {
+    if (!auth?.currentUser?.uid) return;
+
+    try {
+      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return;
+
+      const highlights = snap.data().highlights || [];
+      const now = Date.now();
+      let hasUpdates = false;
+
+      for (let i = 0; i < highlights.length; i++) {
+        const clip = highlights[i];
+        if (clip.isTrending !== true) continue;   // Only boost when isTrending = true
+
+        const randomAdd = Math.floor(Math.random() * 9) + 1; // 1 to 9 views
+
+        highlights[i].views = (clip.views || 0) + randomAdd;
+        hasUpdates = true;
+
+        console.log(`[VIEW BOOST] +${randomAdd} views for clip ${clip.id?.slice(-6)}`);
+      }
+
+      if (hasUpdates) {
+        await updateDoc(docRef, { highlights: highlights });
+      }
+    } catch (err) {
+      console.error("[VIEW BOOST] Error:", err);
+    }
+  }, 300000); // Every 5 minutes
+}
+
+// ====================== FIXED loadMyClips() ======================
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6757,8 +6753,8 @@ async function loadMyClips() {
         const thumbnailSrc = v.thumbnailUrl || "";
         const views = v.views || 0;
 
-        // === STATUS LOGIC (Using isTrending from backend) ===
-        const isActive = v.isTrending === true;                    // ← Changed to match your backend
+        // Status based on isTrending (as per your backend)
+        const isActive = v.isTrending === true;
         const freeTonightText = isActive ? "Free Tonight" : "Offline";
         const statusColor = isActive ? "#00ff9d" : "#666";
         const dotColor = isActive ? "#00ff9d" : "#555";
@@ -6778,30 +6774,14 @@ async function loadMyClips() {
 
         card.innerHTML = `
           <div style="display:flex;height:100%;background:#0d0d0d;">
-            <!-- Video Preview - FIXED Thumbnail + Hover Zoom -->
+            <!-- Video Preview - Reverted + Fixed Zoom -->
             <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
-              <img 
-                src="${thumbnailSrc}" 
-                alt="thumbnail"
-                style="
-                  position: absolute;
-                  top: 50%;
-                  left: 50%;
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  object-position: center;
-                  transform: translate(-50%, -50%) scale(1);
-                  transition: transform 0.45s ease;
-                "
-              >
-              
-              <!-- Video element (hidden until hover) -->
               <video
                 src="${videoSrc}"
                 muted
                 loop
                 playsinline
+                poster="${thumbnailSrc}"
                 style="
                   position: absolute;
                   top: 50%;
@@ -6810,14 +6790,12 @@ async function loadMyClips() {
                   height: 100%;
                   object-fit: cover;
                   object-position: center;
-                  transform: translate(-50%, -50%) scale(1);
-                  opacity: 0;
-                  transition: opacity 0.3s ease;
+                  transform: translate(-50%, -50%) scale(1.0);
+                  filter: brightness(0.96);
+                  transition: transform 0.45s ease;
                 ">
               </video>
-
               <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);pointer-events:none;"></div>
-
               <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
                 ▶ CLIP
               </div>
@@ -6862,32 +6840,27 @@ async function loadMyClips() {
           </div>
         `;
 
-        // Hover Effects - Show video + zoom
-        const img = card.querySelector("img");
+        // Hover & Touch Effects
         const video = card.querySelector("video");
-
-        if (img && video) {
+        if (video) {
           card.addEventListener("mouseenter", () => {
-            img.style.opacity = "0";
-            video.style.opacity = "1";
             video.style.transform = "translate(-50%, -50%) scale(1.12)";
             video.play().catch(() => {});
           });
 
           card.addEventListener("mouseleave", () => {
-            img.style.opacity = "1";
-            video.style.opacity = "0";
-            video.style.transform = "translate(-50%, -50%) scale(1)";
+            video.style.transform = "translate(-50%, -50%) scale(1.0)";
             video.pause();
             video.currentTime = 0;
           });
 
-          // Mobile support
           card.addEventListener("touchstart", () => {
-            img.style.opacity = "0";
-            video.style.opacity = "1";
             video.style.transform = "translate(-50%, -50%) scale(1.12)";
             video.play().catch(() => {});
+          }, { passive: true });
+
+          card.addEventListener("touchend", () => {
+            video.style.transform = "translate(-50%, -50%) scale(1.0)";
           }, { passive: true });
         }
 
