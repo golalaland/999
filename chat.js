@@ -6885,8 +6885,7 @@ async function loadMyClips() {
 }
 function showDeleteConfirm(clipId, clipTitle) {
     if (!clipId || !auth?.currentUser?.uid) {
-        console.error("Cannot delete: Missing clipId or user not logged in");
-        showGoldAlert?.("Please make sure you're logged in");
+        showGoldAlert?.("Please log in again");
         return;
     }
 
@@ -6923,21 +6922,26 @@ function showDeleteConfirm(clipId, clipTitle) {
         confirmBtn.textContent = "Deleting...";
 
         try {
-            const userDocRef = doc(db, "highlightVideos", auth.currentUser.uid);
+            // IMPORTANT: Use sanitized email as document ID, NOT uid
+            const docId = auth.currentUser.email 
+                ? auth.currentUser.email.replace(/[@.]/g, '_') 
+                : null;
 
-            // Get current document
+            if (!docId) throw new Error("Cannot find user document ID");
+
+            const userDocRef = doc(db, "highlightVideos", docId);
+
             const snap = await getDoc(userDocRef);
             if (!snap.exists()) {
-                throw new Error("Highlights document not found. Please refresh the page.");
+                throw new Error("No clips found for this account");
             }
 
             const data = snap.data();
             let highlights = data.highlights || [];
 
-            // Remove the clip from array
+            // Remove the clip
             highlights = highlights.filter(clip => clip.id !== clipId);
 
-            // Update document
             await updateDoc(userDocRef, {
                 highlights: highlights,
                 totalVideos: increment(-1),
@@ -6947,7 +6951,6 @@ function showDeleteConfirm(clipId, clipTitle) {
             showGoldAlert?.("Clip deleted successfully");
             modal.remove();
 
-            // Refresh the grid
             if (typeof loadMyClips === 'function') {
                 setTimeout(loadMyClips, 400);
             }
