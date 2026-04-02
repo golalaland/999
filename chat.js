@@ -5950,7 +5950,7 @@ initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* ====================== HIGHLIGHTS BUTTON ====================== */
+/* ====================== HIGHLIGHTS BUTTON – OPENS FREE TONIGHT ====================== */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
@@ -5968,12 +5968,13 @@ highlightsBtn.onclick = async () => {
 
     const allClips = [];
 
+    // Collect only ONE active Free Tonight clip per user
     snap.forEach(userDoc => {
       const data = userDoc.data();
       const uploaderId = data.uploaderId || userDoc.id;
       const highlights = data.highlights || [];
 
-      // Take ONLY the FIRST active Free Tonight clip per user
+      // Find the first active Free Tonight clip for this user
       const activeClip = highlights.find(clip => {
         if (clip.isTrending !== true) return false;
         const now = Date.now();
@@ -6013,19 +6014,28 @@ highlightsBtn.onclick = async () => {
   }
 };
 
-/* ====================== FREE TONIGHT MODAL ====================== */
+/* ====================== FULL FREE TONIGHT MODAL ====================== */
 function showHighlightsModal(initialVideos) {
   document.getElementById("highlightsModal")?.remove();
 
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   Object.assign(modal.style, {
-    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+    position: "fixed", 
+    top: 0, 
+    left: 0, 
+    width: "100vw", 
+    height: "100vh",
     background: "rgba(8,3,25,0.97)",
     backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "flex-start",
-    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
+    display: "flex", 
+    flexDirection: "column",
+    alignItems: "center", 
+    justifyContent: "flex-start",
+    zIndex: "999999", 
+    overflowY: "auto", 
+    padding: "20px 12px", 
+    boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
 
@@ -6055,15 +6065,23 @@ function showHighlightsModal(initialVideos) {
   `;
   modal.appendChild(intro);
 
-  // Close Button (your original style)
+  // CLOSE BUTTON
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
   </svg>`;
   Object.assign(closeBtn.style, {
-    position: "absolute", top: "8px", right: "10px", width: "32px", height: "32px",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", zIndex: "1002", transition: "all 0.25s ease",
+    position: "absolute",
+    top: "8px",
+    right: "10px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: "1002",
+    transition: "all 0.25s ease",
     filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
   });
   closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
@@ -6071,35 +6089,58 @@ function showHighlightsModal(initialVideos) {
   closeBtn.onclick = () => modal.remove();
   intro.firstElementChild.appendChild(closeBtn);
 
-  // Controls
+  // CONTROLS
   const controls = document.createElement("div");
-  controls.style.cssText = `width:100%; max-width:640px; margin:0 auto 28px; display:flex; flex-direction:column; align-items:center; gap:16px;`;
+  controls.style.cssText = `
+    width:100%; max-width:640px; margin:0 auto 28px;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+  `;
 
   const locationBtn = document.createElement("button");
   locationBtn.textContent = "Enter Location";
   Object.assign(locationBtn.style, {
-    padding: "10px 24px", borderRadius: "30px", fontSize: "14px", fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer"
+    padding: "10px 24px",
+    borderRadius: "30px",
+    fontSize: "14px",
+    fontWeight: "700",
+    background: "linear-gradient(135deg, #240046, #3c0b5e)",
+    color: "#00ffea",
+    border: "1px solid rgba(138,43,226,0.6)",
+    cursor: "pointer",
+    transition: "all 0.3s",
+    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
   });
   locationBtn.onclick = () => openLocationModal(initialVideos);
   controls.appendChild(locationBtn);
 
   const tagContainer = document.createElement("div");
   tagContainer.id = "tagButtons";
-  tagContainer.style.cssText = `display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px; margin-top:12px; padding:8px 0;`;
+  tagContainer.style.cssText = `
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; 
+    max-width:500px; margin-top:12px; padding:8px 0;
+  `;
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
 
+  // GRID
   const grid = document.createElement("div");
   grid.id = "highlightsGrid";
-  grid.style.cssText = `display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 100px;`;
+  grid.style.cssText = `
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px; 
+    width: 100%; 
+    max-width: 960px; 
+    margin: 0 auto; 
+    padding-bottom: 100px;
+  `;
   modal.appendChild(grid);
 
   // State
   let allVideos = [...initialVideos];
   let activeTags = new Set();
 
+  // Render Cards Function
   function renderCards(videosToRender = allVideos) {
     grid.innerHTML = "";
 
@@ -6129,16 +6170,150 @@ function showHighlightsModal(initialVideos) {
       return;
     }
 
-    // Random shuffle for variety
+    // Shuffle for variety
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
-      // Your existing card creation code goes here (I kept it short for readability)
       const card = document.createElement("div");
-      // ... paste your full card HTML + styles here (the long card part) ...
+      Object.assign(card.style, {
+        position: "relative", 
+        aspectRatio: "9/16", 
+        borderRadius: "16px", 
+        overflow: "hidden",
+        background: "#0f0a1a", 
+        cursor: "pointer", 
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        border: "1px solid rgba(138,43,226,0.4)"
+      });
+
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.03)";
+        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
+      };
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1)";
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+      };
+
+      // Video Container
+      const vidContainer = document.createElement("div");
+      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+
+      const videoEl = document.createElement("video");
+      videoEl.muted = true;
+      videoEl.loop = true;
+      videoEl.preload = "metadata";
+      videoEl.loading = "lazy";
+      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+      videoEl.src = video.previewClip || video.videoUrl || "";
+      videoEl.load();
+
+      vidContainer.onmouseenter = (e) => { 
+        e.stopPropagation(); 
+        videoEl.play().catch(() => {}); 
+      };
+      vidContainer.onmouseleave = (e) => { 
+        e.stopPropagation(); 
+        videoEl.pause(); 
+        videoEl.currentTime = 0; 
+      };
+      vidContainer.onclick = (e) => {
+        e.stopPropagation();
+        openFullScreenVideo(video.videoUrl || "");
+      };
+
+      vidContainer.appendChild(videoEl);
+      card.appendChild(vidContainer);
+
+      // Info Overlay
+      const info = document.createElement("div");
+      info.style.cssText = `
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
+      `;
+
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer;";
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) showSocialCardFromId(video.uploaderId);
+      };
+
+      // One-liner
+      const naturePick = video.naturePick || "";
+      const genderRaw = (video.gender || "person").toLowerCase().trim();
+      const pronoun = genderRaw === "male" ? "his" : "her";
+      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+      const oneLinerText = naturePick 
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+
+      const oneLiner = document.createElement("div");
+      oneLiner.textContent = oneLinerText;
+      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+
+      // Tags
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
+      if (video.location) {
+        const span = document.createElement("span");
+        span.textContent = video.location.trim();
+        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
+        tagsEl.appendChild(span);
+      }
+      if (video.city) {
+        const span = document.createElement("span");
+        span.textContent = video.city.trim();
+        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
+        tagsEl.appendChild(span);
+      }
+
+      (video.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim()) {
+          const span = document.createElement("span");
+          span.textContent = t.trim();
+          span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(255,46,120,0.22); color: #ff4d8a; border: 1px solid rgba(255,46,120,0.6);`;
+          tagsEl.appendChild(span);
+        }
+      });
+
+      info.append(user, oneLiner, tagsEl);
+      card.appendChild(info);
+
+      // Fruit Pick
+      if (video.fruitPick) {
+        const fruitEl = document.createElement("div");
+        fruitEl.textContent = video.fruitPick.trim();
+        fruitEl.style.cssText = `position:absolute; bottom:10px; right:10px; font-size:18px; z-index:3;`;
+        card.appendChild(fruitEl);
+      }
+
+      // Free Tonight Badge
+      const badge = document.createElement("div");
+      badge.textContent = "Free Tonight ♡";
+      Object.assign(badge.style, {
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        padding: "6px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#fff",
+        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)",
+        border: "1px solid rgba(255,255,255,0.3)",
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+      });
+      card.appendChild(badge);
+
       grid.appendChild(card);
     });
   }
 
-  // Location Modal (Fixed)
+  // Location Modal
   function openLocationModal(videos) {
     const locModal = document.createElement("div");
     locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
