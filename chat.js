@@ -6885,7 +6885,8 @@ async function loadMyClips() {
 }
 function showDeleteConfirm(clipId, clipTitle) {
     if (!clipId || !auth?.currentUser?.uid) {
-        console.error("Missing clipId or user not authenticated");
+        console.error("Cannot delete: Missing clipId or user not logged in");
+        showGoldAlert?.("Please make sure you're logged in");
         return;
     }
 
@@ -6902,7 +6903,7 @@ function showDeleteConfirm(clipId, clipTitle) {
                 Delete Clip?
             </h3>
             <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
-                "<strong style="color:#ff3366;">${clipTitle}</strong>" will be removed.<br>
+                "<strong style="color:#ff3366;">${clipTitle || 'This clip'}</strong>" will be removed.<br>
                 <small style="color:#999;"></small>
             </p>
             <div style="display:flex;gap:16px;justify-content:center;">
@@ -6914,10 +6915,8 @@ function showDeleteConfirm(clipId, clipTitle) {
 
     document.body.appendChild(modal);
 
-    // Cancel → just close
     modal.querySelector("#cancelDelete").onclick = () => modal.remove();
 
-    // Confirm delete - Fixed & Safer version
     modal.querySelector("#confirmDelete").onclick = async () => {
         const confirmBtn = modal.querySelector("#confirmDelete");
         confirmBtn.disabled = true;
@@ -6926,40 +6925,41 @@ function showDeleteConfirm(clipId, clipTitle) {
         try {
             const userDocRef = doc(db, "highlightVideos", auth.currentUser.uid);
 
-            await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userDocRef);
-                if (!userDoc.exists()) {
-                    throw new Error("User highlights document not found");
-                }
+            // Get current document
+            const snap = await getDoc(userDocRef);
+            if (!snap.exists()) {
+                throw new Error("Highlights document not found. Please refresh the page.");
+            }
 
-                const data = userDoc.data();
-                const currentHighlights = data.highlights || [];
+            const data = snap.data();
+            let highlights = data.highlights || [];
 
-                const updatedHighlights = currentHighlights.filter(clip => clip.id !== clipId);
+            // Remove the clip from array
+            highlights = highlights.filter(clip => clip.id !== clipId);
 
-                transaction.update(userDocRef, {
-                    highlights: updatedHighlights,
-                    totalVideos: increment(-1),
-                    lastUpdatedAt: serverTimestamp()
-                });
+            // Update document
+            await updateDoc(userDocRef, {
+                highlights: highlights,
+                totalVideos: increment(-1),
+                lastUpdatedAt: serverTimestamp()
             });
 
             showGoldAlert?.("Clip deleted successfully");
             modal.remove();
 
-            // Refresh grid
+            // Refresh the grid
             if (typeof loadMyClips === 'function') {
-                loadMyClips();
+                setTimeout(loadMyClips, 400);
             }
 
         } catch (err) {
             console.error("Delete error:", err);
-            showGoldAlert?.("Failed to delete clip. Try again.");
+            showGoldAlert?.("Failed to delete clip. Please try again.");
             modal.remove();
         }
     };
 
-    // Click outside to close
+    // Close modal when clicking outside
     modal.onclick = (e) => {
         if (e.target === modal) modal.remove();
     };
