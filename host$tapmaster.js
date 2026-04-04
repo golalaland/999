@@ -798,7 +798,7 @@ function getWeekNumber(date) {
 }
 
 // ======================================================
-// END SESSION — HOSTS-ONLY SAVE (Final Clean Version)
+// END SESSION — HOSTS-ONLY SAVE
 // ======================================================
 let sessionAlreadySaved = false;
 
@@ -836,7 +836,6 @@ async function endSessionRecord() {
 
       const data = snap.data();
 
-      // Safely initialize host fields if they don't exist
       const hostTapsDaily   = { ...(data.hostTapsDaily || {}) };
       const hostTapsWeekly  = { ...(data.hostTapsWeekly || {}) };
       const hostTapsMonthly = { ...(data.hostTapsMonthly || {}) };
@@ -852,7 +851,6 @@ async function endSessionRecord() {
         updatedAt: serverTimestamp(),
         lastPlayed: serverTimestamp(),
 
-        // Host-specific fields (will be created automatically if missing)
         hostTotalTaps: (data.hostTotalTaps || 0) + sessionTaps,
         hostTapsDaily:   hostTapsDaily,
         hostTapsWeekly:  hostTapsWeekly,
@@ -860,7 +858,6 @@ async function endSessionRecord() {
       });
     });
 
-    // Update local cache
     currentUser.hostTotalTaps = (currentUser.hostTotalTaps || 0) + sessionTaps;
     currentUser.bonusLevel = persistentBonusLevel;
 
@@ -871,6 +868,7 @@ async function endSessionRecord() {
     sessionAlreadySaved = false;
   }
 }
+
       // === UPDATE BID TAPS IF USER IS IN CURRENT BID ===
     if (sessionTaps > 0 && window.isUserInCurrentBid && window.CURRENT_ROUND_ID) {
       const bidQuery = query(
