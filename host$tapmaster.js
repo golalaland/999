@@ -798,7 +798,7 @@ function getWeekNumber(date) {
 }
 
 // ======================================================
-// END SESSION — HOSTS-ONLY SAVE (Final Clean Version)
+// END SESSION — HOSTS-ONLY SAVE (Final Fixed Version)
 // ======================================================
 let sessionAlreadySaved = false;
 
