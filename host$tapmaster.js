@@ -798,7 +798,7 @@ function getWeekNumber(date) {
 }
 
 // ======================================================
-// END SESSION — HOSTS-ONLY SAVE
+// END SESSION — HOSTS-ONLY SAVE (Clean & Fixed)
 // ======================================================
 let sessionAlreadySaved = false;
 
@@ -858,6 +858,7 @@ async function endSessionRecord() {
       });
     });
 
+    // Update local cache
     currentUser.hostTotalTaps = (currentUser.hostTotalTaps || 0) + sessionTaps;
     currentUser.bonusLevel = persistentBonusLevel;
 
@@ -1608,11 +1609,10 @@ document.getElementById('standardWithdrawBtn')?.addEventListener('click', () => 
 });
 
 // FAST TRACK → DOUBLE CONFIRM
-document.getElementById('fastTrackWithdrawBtn')?.addEventListener('click', () => {
-  if (currentUser.stars < 21) {
-    realAlert("You need 21 STRZ for Fast Track!");
-    return;
-  }
+if (currentUser.stars < 500) {
+  realAlert("You need 500 STRZ for Fast Track!");
+  return;
+}
   document.getElementById('withdrawConfirmModal').style.display = 'none';
   document.getElementById('fastTrackConfirmModal').style.display = 'flex';
 });
@@ -1638,59 +1638,70 @@ document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
 
-// MAIN WITHDRAWAL + GOLDEN COUNT-UP + CHEER + CONFETTI
+// ======================================================
+// WITHDRAWAL SYSTEM — HOSTS ONLY (tmhostswithdrawals)
+// Fast Track now costs 500 STRZ
+// ======================================================
 async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
   const userRef = doc(db, "users", currentUser.uid);
-  const withdrawalRef = doc(collection(db, "withdrawals"));
+  const withdrawalRef = doc(collection(db, "tmhostswithdrawals"));   // ← Changed collection
 
   try {
     await runTransaction(db, async (t) => {
       const snap = await t.get(userRef);
       if (!snap.exists()) throw "User not found";
+
       const data = snap.data();
 
       if (data.cash < amount) throw "Not enough cash";
-      if (isFastTrack && data.stars < 21) throw "Not enough STRZ";
+
+      // Fast Track now costs 500 stars
+      if (isFastTrack && (data.stars || 0) < 500) {
+        throw "Not enough STRZ for Fast Track (500 required)";
+      }
 
       t.update(userRef, {
         cash: data.cash - amount,
-        stars: isFastTrack ? data.stars - 21 : data.stars,
+        stars: isFastTrack ? (data.stars || 0) - 500 : (data.stars || 0),
         updatedAt: serverTimestamp()
       });
 
       t.set(withdrawalRef, {
         uid: currentUser.uid,
-        username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
+        username: currentUser.chatId || currentUser.email?.split('@')[0] || "Host",
         amount,
         bankName: data.bankName || "Not set",
         bankAccountNumber: data.bankAccountNumber || "Not set",
         status: isFastTrack ? "fast_track" : "pending",
         isFastTrack,
         requestedAt: serverTimestamp(),
-        note: isFastTrack ? "User paid 21 STRZ for priority" : "Standard"
+        note: isFastTrack 
+          ? "User paid 500 STRZ for Fast Track priority" 
+          : "Standard withdrawal",
+        type: "tmhost"   // Helpful flag to identify host withdrawals
       });
     });
 
-    // UPDATE LOCAL
+    // Update local state
     currentUser.cash -= amount;
-    if (isFastTrack) currentUser.stars -= 21;
+    if (isFastTrack) currentUser.stars -= 500;
+
     updateBankDisplay();
 
-    // LUXURY GOLDEN COUNTER (counts UP from 0)
+    // Success UI
     const counter = document.getElementById('goldenAmount');
     counter.textContent = '0';
 
     document.getElementById('successMessage').textContent = isFastTrack
-      ? "FAST TRACKED! Support notified"
+      ? "FAST TRACKED! (500 STRZ) — Support notified"
       : "Withdrawal requested!";
 
     document.getElementById('withdrawSuccessOverlay').style.display = 'flex';
 
-    // CHEERING SOUND + CONFETTI
-    document.getElementById('cheerSound')?.play();
+    // Visual celebration (sound removed because Glitch CDN is dead)
     triggerConfetti();
 
-    // COUNT UP ANIMATION
+    // Count-up animation
     let current = 0;
     const step = Math.ceil(amount / 60);
     const timer = setInterval(() => {
@@ -1702,16 +1713,16 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       counter.textContent = current.toLocaleString();
     }, 30);
 
-    // FAST TRACK → AUTO MESSAGE TO ADMIN
+    // Fast Track Telegram notification
     if (isFastTrack) {
       setTimeout(() => {
         const msg = encodeURIComponent(
-          `FAST TRACK WITHDRAWAL\n` +
+          `🚀 FAST TRACK WITHDRAWAL (TM HOSTS)\n` +
           `User: @${currentUser.chatId || 'unknown'}\n` +
           `Amount: ₦${amount.toLocaleString()}\n` +
           `Bank: ${currentUser.bankName || 'Not set'}\n` +
-          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
-          `Process urgently!`
+          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n` +
+          `Paid 500 STRZ for priority\n\nProcess urgently!`
         );
         window.open(`https://t.me/YOUR_ADMIN_USERNAME?text=${msg}`, '_blank');
       }, 1500);
@@ -1719,9 +1730,10 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
 
   } catch (err) {
     console.error("Withdrawal failed:", err);
-    realAlert("Withdrawal failed!\nPlease try again.");
+    realAlert(err.message || "Withdrawal failed!\nPlease try again.");
   }
 }
+
 /* ============================================================
    TAPMASTER CORE — CLEAN, MODERN, FULLY WORKING (2025+)
    ALL SETTINGS IN ONE PLACE — CHANGE IN 5 SECONDS
