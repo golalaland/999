@@ -798,7 +798,7 @@ function getWeekNumber(date) {
 }
 
 // ======================================================
-// END SESSION — HOSTS-ONLY SAVE (Clean & Fixed)
+// END SESSION — HOSTS-ONLY SAVE (Final Clean Version)
 // ======================================================
 let sessionAlreadySaved = false;
 
@@ -870,75 +870,17 @@ async function endSessionRecord() {
   }
 }
 
-      // === UPDATE BID TAPS IF USER IS IN CURRENT BID ===
-    if (sessionTaps > 0 && window.isUserInCurrentBid && window.CURRENT_ROUND_ID) {
-      const bidQuery = query(
-        collection(db, "bids"),
-        where("uid", "==", currentUser.uid),
-        where("roundId", "==", window.CURRENT_ROUND_ID),
-        where("status", "==", "active")
-      );
-
-      // Retry up to 5 times (1-second intervals) in case the join document is still propagating
-      let attempts = 0;
-      const maxAttempts = 5;
-
-      const tryUpdateBidTaps = async () => {
-        try {
-          const bidSnap = await getDocs(bidQuery);
-
-          if (!bidSnap.empty) {
-            const bidRef = bidSnap.docs[0].ref;
-            await updateDoc(bidRef, {
-              taps: increment(sessionTaps),
-              lastActive: serverTimestamp()
-            });
-            console.log(`%cBid taps saved: +${sessionTaps} (Total on leaderboard will update instantly)`, "color:#00ffaa;font-weight:bold");
-            return true;
-          } else {
-            attempts++;
-            if (attempts < maxAttempts) {
-              // Wait 1 second and try again
-              setTimeout(tryUpdateBidTaps, 1000);
-            } else {
-              console.warn("Bid document not found after", maxAttempts, "attempts — taps will be credited next round");
-            }
-            return false;
-          }
-        } catch (err) {
-          console.error("Error updating bid taps:", err);
-          return false;
-        }
-      };
-
-      // Start the first attempt immediately
-      tryUpdateBidTaps();
-    }
-
-    // Update local currentUser cache for instant UI consistency
-    currentUser.cash = (currentUser.cash || 0) + sessionEarnings;
-    currentUser.totalTaps = (currentUser.totalTaps || 0) + sessionTaps;
-    currentUser.bonusLevel = persistentBonusLevel;
-
-    console.log("%cSESSION SAVED SUCCESSFULLY — Level:", "color:#00ffaa;font-weight:bold", persistentBonusLevel);
-  } catch (error) {
-    console.error("Failed to save session record:", error);
-    sessionAlreadySaved = false; // Allow retry on next attempt if needed
-  }
-}
 // ======================================================
-//  RED HOT DEVIL MODE
+// RED HOT DEVIL MODE
 // ======================================================
 const RedHotMode = {
   active: false,
   timeout: null,
   sound: new Audio("https://raw.githubusercontent.com/golalaland/1010/main/buzzer-13-187755.mp3"),
-
   init() {
     this.sound.volume = 0.65;
     this.reset();
   },
-
   reset() {
     this.active = false;
     if (this.timeout) clearTimeout(this.timeout);
@@ -946,51 +888,39 @@ const RedHotMode = {
     tapButton?.classList.remove("red-hot", "red-punish");
     tapButton?.querySelector(".inner") && (tapButton.querySelector(".inner").textContent = "TAP");
   },
-
   trigger() {
     if (this.active || this.timeout) return false;
-
     this.active = true;
     tapButton?.classList.add("red-hot");
     tapButton?.querySelector(".inner") && (tapButton.querySelector(".inner").textContent = "HOT");
-
     try {
       this.sound.currentTime = 0;
       this.sound.play().catch(() => {});
     } catch {}
-
     const duration = 5000 + Math.random() * 2000;
-
     this.timeout = setTimeout(() => {
       this.active = false;
       this.timeout = null;
       tapButton?.classList.remove("red-hot");
       tapButton?.querySelector(".inner") && (tapButton.querySelector(".inner").textContent = "TAP");
     }, duration);
-
     return true;
   },
+  punish() {
+    taps = Math.max(0, taps - 25);
+    sessionTaps = Math.max(0, sessionTaps - 25);
+    progress = Math.max(0, progress - 10);
+    showFloatingPlus(tapButton, "-25");
+    tapButton?.classList.add("red-punish");
+    setTimeout(() => tapButton?.classList.remove("red-punish"), 400);
 
-punish() {
-  // subtract from live taps
-  taps = Math.max(0, taps - 25);
-  sessionTaps = Math.max(0, sessionTaps - 25);
-  progress = Math.max(0, progress - 10);
+    document.body.style.backgroundColor = "rgba(51, 0, 0, 0.92)";
+    setTimeout(() => { document.body.style.backgroundColor = ""; }, 180);
 
-  showFloatingPlus(tapButton, "-25");
-  tapButton?.classList.add("red-punish");
-  setTimeout(() => tapButton?.classList.remove("red-punish"), 400);
-
- // RED FLASH — DOES NOT DESTROY backgroundImage
-document.body.style.backgroundColor = "rgba(51, 0, 0, 0.92)";
-setTimeout(() => {
-  document.body.style.backgroundColor = "";
-}, 180);
-
-  navigator.vibrate?.([100, 50, 150, 50, 100]);
-  updateUI();
-  updateBonusBar();
-},
+    navigator.vibrate?.([100, 50, 150, 50, 100]);
+    updateUI();
+    updateBonusBar();
+  },
 };
 
 const redHotStyle = document.createElement("style");
