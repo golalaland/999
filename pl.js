@@ -1107,10 +1107,10 @@ async function updateTipLink() {
 
   try {
     const token = await createLoginToken(currentUser.uid);
-    refs.tipBtn.href = `/tm1?t=${token}`;
+    refs.tipBtn.href = `/tapmaster4hosts?t=${token}`;
   } catch (err) {
     console.warn("[TIP] Token failed, using fallback");
-    refs.tipBtn.href = "/tm1"; // fallback link
+    refs.tipBtn.href = "/tapmaster4hosts"; // fallback link
   }
 
   refs.tipBtn.style.display = "inline-block";
