@@ -1485,29 +1485,19 @@ function updateBankDisplay() {
   }
 }
 
-// INPUT — AUTO FORMAT WITH COMMAS
+// ==================== WITHDRAWAL INPUT HANDLERS ====================
+// Auto-format with commas (cleaned - only one listener needed)
 document.getElementById('withdrawAmount')?.addEventListener('input', function(e) {
   let value = e.target.value.replace(/\D/g, '');
   if (!value) {
     e.target.value = '';
     return;
   }
-  e.target.value = parseInt(value).toLocaleString();
+  e.target.value = parseInt(value).toLocaleString('en-US');
 });
 
-// ==================== WITHDRAWAL SYSTEM — FINAL LUXURY EDITION ====================
-
+// ==================== WITHDRAWAL SYSTEM — HOSTS ONLY ====================
 let pendingWithdrawal = { amount: 0, isFastTrack: false };
-
-// INPUT — AUTO COMMA FORMAT (type="text" required in HTML!)
-document.getElementById('withdrawAmount')?.addEventListener('input', function(e) {
-  let value = e.target.value.replace(/[^\d]/g, '');
-  if (!value) {
-    e.target.value = '';
-    return;
-  }
-  e.target.value = Number(value).toLocaleString('en-US');
-});
 
 // WITHDRAW BUTTON — OPENS CUTE CONFIRM MODAL
 document.getElementById('withdrawBtn')?.addEventListener('click', () => {
@@ -1518,16 +1508,14 @@ document.getElementById('withdrawBtn')?.addEventListener('click', () => {
     realAlert("Minimum withdrawal is ₦5,000");
     return;
   }
-  if (amount > currentUser.cash) {
-    realAlert(`You only have ₦${currentUser.cash.toLocaleString()}`);
+  if (amount > (currentUser?.cash || 0)) {
+    realAlert(`You only have ₦${(currentUser?.cash || 0).toLocaleString()}`);
     return;
   }
 
   pendingWithdrawal.amount = amount;
 
-  // Show amount only (cute & clean)
   document.getElementById('confirmAmount').textContent = amount.toLocaleString();
-  
   document.getElementById('starMarketModal').style.display = 'none';
   document.getElementById('withdrawConfirmModal').style.display = 'flex';
 });
@@ -1538,11 +1526,13 @@ document.getElementById('standardWithdrawBtn')?.addEventListener('click', () => 
   processWithdrawalAndCelebrate(pendingWithdrawal.amount, false);
 });
 
-// FAST TRACK → DOUBLE CONFIRM
-if (currentUser.stars < 500) {
-  realAlert("You need 500 STRZ for Fast Track!");
-  return;
-}
+// FAST TRACK BUTTON — DOUBLE CONFIRM
+document.getElementById('fastTrackWithdrawBtn')?.addEventListener('click', () => {
+  if ((currentUser?.stars || 0) < 500) {
+    realAlert("You need 500 STRZ for Fast Track!");
+    return;
+  }
+
   document.getElementById('withdrawConfirmModal').style.display = 'none';
   document.getElementById('fastTrackConfirmModal').style.display = 'flex';
 });
@@ -1563,7 +1553,7 @@ document.getElementById('cancelWithdrawBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawConfirmModal').style.display = 'none';
 });
 
-// CLOSE SUCCESS
+// CLOSE SUCCESS OVERLAY
 document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
