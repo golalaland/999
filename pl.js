@@ -1088,10 +1088,10 @@ async function updateRedeemLink() {
 
   try {
     const token = await createLoginToken(currentUser.uid);
-    refs.redeemBtn.href = `/tm?t=${token}`;
+    refs.redeemBtn.href = `/tapmaster4hosts?t=${token}`;
   } catch (err) {
     console.warn("[REDEEM] Token failed, using fallback");
-    refs.redeemBtn.href = "/tm"; // fallback link
+    refs.redeemBtn.href = "/tapmaster4hosts"; // fallback link
   }
 
   refs.redeemBtn.style.display = "inline-block";
