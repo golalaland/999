@@ -2398,7 +2398,7 @@ setInterval(() => {
   if (currentUser?.uid) startWeeklyStreakSystem();
 }, 120000);
 
-const START_BG   = "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/9F6F9EAC-F165-4C70-85CB-B2351A3B8C59.png?v=1763282422";
+const START_BG   = "https://res.cloudinary.com/dftorzv1j/image/upload/f_auto,q_auto,w_800/v1775371439/EE10EFFA-4B7A-434D-91D0-B4EFF460C482_win4gc.png";
 const GAME_BGS   = [
   "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/IMG_6345.jpg?v=1765409020",
   "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/IMG_6351.jpg?v=1765409019",
