@@ -4875,11 +4875,12 @@ async function generateThumbnail(file) {
 }
 
 // ================================
-// FREE TONIGHT UPLOAD HANDLER – VIDEO ONLY + "IT'S ME" CHECKBOX
+// FREE TONIGHT UPLOAD HANDLER – ONE VIDEO PER USER + INSTANT THUMBNAIL CACHE
 // ================================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
   const btn = e.currentTarget;
   if (btn.disabled) return;
+
   if (!currentUser?.uid) {
     showStarPopup('Please sign in to upload', 'error');
     return;
@@ -4889,29 +4890,33 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   if (!file) return showStarPopup('Please select a video', 'error');
   if (file.size > 50 * 1024 * 1024) return showStarPopup('Maximum file size is 50MB', 'error');
 
+  // === ENFORCE ONE VIDEO PER USER ===
+  const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
+  const highlightsSnap = await getDoc(highlightsRef);
+  const existingHighlights = highlightsSnap.exists() ? (highlightsSnap.data().highlights || []) : [];
+
+  const activeFreeTonight = existingHighlights.some(v => v.isTrending === true);
+
+  if (activeFreeTonight) {
+    showStarPopup("You already have one video on Free Tonight. Delete it first to upload another.", "error");
+    return;
+  }
+
   btn.disabled = true;
   btn.classList.add('uploading');
   btn.textContent = 'Going Live...';
   const progressContainer = document.getElementById('progressContainer');
   if (progressContainer) progressContainer.style.opacity = '1';
+
   showStarPopup('Going live on Free Tonight...', 'loading');
 
   try {
-    let thumbnailFile = null;
-    try {
-      thumbnailFile = await generateThumbnail(file);
-    } catch (err) {
-      console.warn('Thumbnail skipped:', err);
-    }
-
     const ts = Date.now();
     const rand = Math.random().toString(36).slice(2, 10);
     const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
     const videoName = `${ts}_${rand}.${ext}`;
-    const thumbName = thumbnailFile ? `thumb_${ts}_${rand}.jpg` : null;
     const basePath = `users/${currentUser.uid}`;
     const videoPath = `${basePath}/${videoName}`;
-    const thumbPath = thumbName ? `${basePath}/${thumbName}` : null;
 
     const videoRef = ref(storage, videoPath);
     const meta = {
@@ -4920,6 +4925,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     };
 
     const uploadTask = uploadBytesResumable(videoRef, file, meta);
+
     uploadTask.on(
       'state_changed',
       snapshot => {
@@ -4932,40 +4938,28 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
       err => {
         console.error('Upload error:', err);
         showStarPopup('Upload failed — try again', 'error');
-        btn.disabled = false;
-        btn.classList.remove('uploading');
-        btn.textContent = 'Go Live on Free Tonight';
-        if (progressContainer) progressContainer.style.opacity = '0';
+        resetButton(btn);
       },
       async () => {
         try {
           const rawVideo = await getDownloadURL(videoRef);
           const videoUrl = toCloudflareUrl(rawVideo);
-          let thumbnailUrl = '';
-          if (thumbnailFile && thumbPath) {
-            const thumbRef = ref(storage, thumbPath);
-            await uploadBytes(thumbRef, thumbnailFile, {
-              contentType: 'image/jpeg',
-              cacheControl: 'public, max-age=31536000, immutable'
-            });
-            const rawThumb = await getDownloadURL(thumbRef);
-            thumbnailUrl = toCloudflareUrl(rawThumb);
-          }
 
           const newHighlight = {
             id: `${ts}_${rand}`,
             videoUrl: videoUrl,
-            thumbnailUrl: thumbnailUrl,
+            thumbnailUrl: '',           // Will be filled by Cloud Function
             storagePath: videoPath,
-            tags: [], // no tags needed
+            tags: [],                   // No extra tags needed
             views: 0,
-            isTrending: true, // auto-joins Free Tonight
-            trendingUntil: Date.now() + 86400000 * 7, // 7 days trending
+            isTrending: true,           // Auto Free Tonight
+            trendingUntil: Date.now() + 86400000 * 7, // 7 days
             uploadedAt: new Date().toISOString(),
             createdAt: new Date().toISOString()
           };
 
           const docRef = doc(db, 'highlightVideos', currentUser.uid);
+
           try {
             await updateDoc(docRef, {
               highlights: arrayUnion(newHighlight),
@@ -4990,32 +4984,24 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           showStarPopup('You are LIVE on Free Tonight! 🔥', 'success');
           btn.textContent = 'LIVE!';
           btn.style.background = 'linear-gradient(90deg, #00ffea, #ff00f2)';
+
           if (progressContainer) progressContainer.style.opacity = '0';
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.classList.remove('uploading');
-            btn.textContent = 'Go Live on Free Tonight';
-            btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-          }, 3000);
+
+          setTimeout(() => resetButton(btn), 3000);
+
+          if (typeof loadMyClips === 'function') loadMyClips();
+
         } catch (err) {
           console.error('Save failed:', err);
           showStarPopup('Upload succeeded but saving failed — try again', 'error');
-          btn.disabled = false;
-          btn.classList.remove('uploading');
-          btn.textContent = 'Go Live on Free Tonight';
-          btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-          if (progressContainer) progressContainer.style.opacity = '0';
+          resetButton(btn);
         }
       }
     );
   } catch (err) {
     console.error('Setup failed:', err);
     showStarPopup('Failed to start — try again', 'error');
-    btn.disabled = false;
-    btn.classList.remove('uploading');
-    btn.textContent = 'Go Live on Free Tonight';
-    btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-    if (progressContainer) progressContainer.style.opacity = '0';
+    resetButton(btn);
   }
 });
 
