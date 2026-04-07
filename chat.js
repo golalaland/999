@@ -4897,10 +4897,14 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
   const activeFreeTonight = existingHighlights.some(v => v.isTrending === true);
 
-  if (activeFreeTonight) {
-    showStarPopup("You already have one video on Free Tonight. Delete it first to upload another.", "error");
-    return;
-  }
+if (activeFreeTonight) {
+  showStarPopup(
+    "You already have one video on Free Tonight.\n\n" +
+    "Delete it first to upload another.",
+    "error"
+  );
+  return;
+}
 
   btn.disabled = true;
   btn.classList.add('uploading');
