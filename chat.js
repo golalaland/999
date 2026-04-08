@@ -7235,15 +7235,14 @@ async function openPollModal() {
   }
 }
 
-// Show VIP Countdown - Fixed for modular Firebase
+// Show VIP Countdown - Safe & Improved
 async function showVIPCountdown() {
   const countdownEl = document.getElementById('vipCountdown');
   const textEl = document.getElementById('countdownText');
 
   if (!countdownEl || !textEl) return;
 
-  // Get current user (adjust this if you use a different way to get current user)
-  const auth = getAuth();                    // ← Make sure you imported getAuth
+  const auth = getAuth();
   const user = auth.currentUser;
 
   if (!user) {
@@ -7252,7 +7251,7 @@ async function showVIPCountdown() {
   }
 
   try {
-    const userRef = doc(db, "users", user.uid);   // or use your docId method
+    const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
@@ -7262,12 +7261,13 @@ async function showVIPCountdown() {
 
     const data = snap.data();
 
+    // If no vipExpiresAt field exists yet
     if (!data.vipExpiresAt) {
       countdownEl.style.display = 'none';
       return;
     }
 
-    const expiresAt = data.vipExpiresAt.toDate();
+    const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
 
     function updateCountdown() {
       const now = new Date();
@@ -7287,7 +7287,8 @@ async function showVIPCountdown() {
     }
 
     updateCountdown();
-    setInterval(updateCountdown, 60000); // update every minute
+    // Update every 60 seconds
+    setInterval(updateCountdown, 60000);
   } catch (err) {
     console.error("Countdown error:", err);
     countdownEl.style.display = 'none';
@@ -8015,3 +8016,10 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
  *********************************/
 loadReels();
 loadPollCarousel()
+// Call countdown when Media Tab is shown
+document.getElementById('mediaTab').addEventListener('click', () => {
+  showVIPCountdown();
+});
+
+// Also call it once when page loads
+setTimeout(showVIPCountdown, 1000);
