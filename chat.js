@@ -7237,21 +7237,29 @@ async function openPollModal() {
 
 // Show VIP Countdown
 async function showVIPCountdown() {
-  const userId = /* get current user uid or docId */;
-  const userRef = doc(db, "users", userId);
+  // Get current logged-in user (adjust this line to match how you get the current user in your app)
+  const currentUser = firebase.auth().currentUser;   // or however you get current user in your chat.js
+
+  if (!currentUser) {
+    console.log("No user logged in - skipping countdown");
+    return;
+  }
+
+  const userRef = doc(db, "users", currentUser.uid);   // or use docId if you use email as ID
   const snap = await getDoc(userRef);
 
   if (!snap.exists()) return;
 
   const data = snap.data();
+  const countdownEl = document.getElementById('vipCountdown');
+  const textEl = document.getElementById('countdownText');
+
   if (!data.vipExpiresAt) {
-    document.getElementById('vipCountdown').style.display = 'none';
+    if (countdownEl) countdownEl.style.display = 'none';
     return;
   }
 
   const expiresAt = data.vipExpiresAt.toDate();
-  const countdownEl = document.getElementById('vipCountdown');
-  const textEl = document.getElementById('countdownText');
 
   function updateCountdown() {
     const now = new Date();
@@ -7274,7 +7282,7 @@ async function showVIPCountdown() {
   setInterval(updateCountdown, 60000); // update every minute
 }
 
-// Call this when Media Tab loads or user logs in
+// Call this when the Media Tab is shown or user logs in
 showVIPCountdown();
 
 function startVotesListener(poll, endTime) {
