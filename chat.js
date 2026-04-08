@@ -657,6 +657,76 @@ function setupUsersListener() {
   );
 }
 
+
+// ===============================================
+// VIP COUNTDOWN FUNCTION (Fixed & Safe)
+// ===============================================
+async function showVIPCountdown() {
+  const countdownEl = document.getElementById('vipCountdown');
+  const textEl = document.getElementById('countdownText');
+
+  if (!countdownEl || !textEl) return;
+
+  if (!auth || !auth.currentUser) {
+    countdownEl.style.display = 'none';
+    return;
+  }
+
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      countdownEl.style.display = 'none';
+      return;
+    }
+
+    const data = snap.data();
+
+    if (!data.vipExpiresAt) {
+      countdownEl.style.display = 'none';
+      return;
+    }
+
+    const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = expiresAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        textEl.innerHTML = `VIP Expired - Time to <span style="color:#ff4444;">BOOST</span>!`;
+        countdownEl.style.display = 'block';
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+      textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
+      countdownEl.style.display = 'block';
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 60000); // update every minute
+  } catch (err) {
+    console.error("Countdown error:", err);
+    countdownEl.style.display = 'none';
+  }
+}
+
+// ===============================================
+// Call countdown when Media Tab is shown
+// ===============================================
+document.getElementById('mediaTab').addEventListener('click', () => {
+  showVIPCountdown();
+});
+
+// Also call it once when page loads (with small delay)
+setTimeout(() => {
+  showVIPCountdown();
+}, 1500);
+
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
    Works perfectly with sanitized IDs • Zero bugs • Instant & reliable
@@ -7235,66 +7305,6 @@ async function openPollModal() {
   }
 }
 
-// Show VIP Countdown - Safe & Improved
-async function showVIPCountdown() {
-  const countdownEl = document.getElementById('vipCountdown');
-  const textEl = document.getElementById('countdownText');
-
-  if (!countdownEl || !textEl) return;
-
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  if (!user) {
-    countdownEl.style.display = 'none';
-    return;
-  }
-
-  try {
-    const userRef = doc(db, "users", user.uid);
-    const snap = await getDoc(userRef);
-
-    if (!snap.exists()) {
-      countdownEl.style.display = 'none';
-      return;
-    }
-
-    const data = snap.data();
-
-    // If no vipExpiresAt field exists yet
-    if (!data.vipExpiresAt) {
-      countdownEl.style.display = 'none';
-      return;
-    }
-
-    const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
-
-    function updateCountdown() {
-      const now = new Date();
-      const diff = expiresAt - now;
-
-      if (diff <= 0) {
-        textEl.innerHTML = `VIP Expired - Time to <span style="color:#ff4444;">BOOST</span>!`;
-        countdownEl.style.display = 'block';
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-      textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
-      countdownEl.style.display = 'block';
-    }
-
-    updateCountdown();
-    // Update every 60 seconds
-    setInterval(updateCountdown, 60000);
-  } catch (err) {
-    console.error("Countdown error:", err);
-    countdownEl.style.display = 'none';
-  }
-}
-
 function startVotesListener(poll, endTime) {
   votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
     hideLoader();
@@ -8016,10 +8026,3 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
  *********************************/
 loadReels();
 loadPollCarousel()
-// Call countdown when Media Tab is shown
-document.getElementById('mediaTab').addEventListener('click', () => {
-  showVIPCountdown();
-});
-
-// Also call it once when page loads
-setTimeout(showVIPCountdown, 1000);
