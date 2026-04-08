@@ -4890,16 +4890,18 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   if (!file) return showStarPopup('Please select a video', 'error');
   if (file.size > 50 * 1024 * 1024) return showStarPopup('Maximum file size is 50MB', 'error');
 
-  // === ENFORCE ONE VIDEO PER USER ===
-  const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
-  const highlightsSnap = await getDoc(highlightsRef);
-  const existingHighlights = highlightsSnap.exists() ? (highlightsSnap.data().highlights || []) : [];
+// === ENFORCE ONE VIDEO PER USER ===
+const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
+const highlightsSnap = await getDoc(highlightsRef);
+const existingHighlights = highlightsSnap.exists() 
+  ? (highlightsSnap.data().highlights || []) 
+  : [];
 
-  const activeFreeTonight = existingHighlights.some(v => v.isTrending === true);
+const activeFreeTonight = existingHighlights.some(v => v.isTrending === true);
 
 if (activeFreeTonight) {
   showStarPopup(
-    "You already have one video on Free Tonight.\n\n" +
+    "You already have one video on Free Tonight.<br><br>" +
     "Delete it first to upload another.",
     "error"
   );
