@@ -7235,55 +7235,64 @@ async function openPollModal() {
   }
 }
 
-// Show VIP Countdown
+// Show VIP Countdown - Fixed for modular Firebase
 async function showVIPCountdown() {
-  // Get current logged-in user (adjust this line to match how you get the current user in your app)
-  const currentUser = firebase.auth().currentUser;   // or however you get current user in your chat.js
-
-  if (!currentUser) {
-    console.log("No user logged in - skipping countdown");
-    return;
-  }
-
-  const userRef = doc(db, "users", currentUser.uid);   // or use docId if you use email as ID
-  const snap = await getDoc(userRef);
-
-  if (!snap.exists()) return;
-
-  const data = snap.data();
   const countdownEl = document.getElementById('vipCountdown');
   const textEl = document.getElementById('countdownText');
 
-  if (!data.vipExpiresAt) {
-    if (countdownEl) countdownEl.style.display = 'none';
+  if (!countdownEl || !textEl) return;
+
+  // Get current user (adjust this if you use a different way to get current user)
+  const auth = getAuth();                    // ← Make sure you imported getAuth
+  const user = auth.currentUser;
+
+  if (!user) {
+    countdownEl.style.display = 'none';
     return;
   }
 
-  const expiresAt = data.vipExpiresAt.toDate();
+  try {
+    const userRef = doc(db, "users", user.uid);   // or use your docId method
+    const snap = await getDoc(userRef);
 
-  function updateCountdown() {
-    const now = new Date();
-    const diff = expiresAt - now;
-
-    if (diff <= 0) {
-      textEl.innerHTML = `VIP Expired - Time to <span style="color:#ff4444;">BOOST</span>!`;
-      countdownEl.style.display = 'block';
+    if (!snap.exists()) {
+      countdownEl.style.display = 'none';
       return;
     }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const data = snap.data();
 
-    textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
-    countdownEl.style.display = 'block';
+    if (!data.vipExpiresAt) {
+      countdownEl.style.display = 'none';
+      return;
+    }
+
+    const expiresAt = data.vipExpiresAt.toDate();
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = expiresAt - now;
+
+      if (diff <= 0) {
+        textEl.innerHTML = `VIP Expired - Time to <span style="color:#ff4444;">BOOST</span>!`;
+        countdownEl.style.display = 'block';
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+      textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
+      countdownEl.style.display = 'block';
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 60000); // update every minute
+  } catch (err) {
+    console.error("Countdown error:", err);
+    countdownEl.style.display = 'none';
   }
-
-  updateCountdown();
-  setInterval(updateCountdown, 60000); // update every minute
 }
-
-// Call this when the Media Tab is shown or user logs in
-showVIPCountdown();
 
 function startVotesListener(poll, endTime) {
   votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
