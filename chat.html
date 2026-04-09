@@ -1,4 +1,68 @@
+// ===============================================
+// VIP COUNTDOWN - FINAL VERSION WITH SMALL BUTTON
+// ===============================================
+async function showVIPCountdown() {
+  const countdownEl = document.getElementById('vipCountdown');
+  const textEl = document.getElementById('countdownText');
 
+  if (!countdownEl || !textEl) return;
+
+  if (!auth || !auth.currentUser) {
+    countdownEl.style.display = 'none';
+    return;
+  }
+
+  try {
+    const email = auth.currentUser.email.trim().toLowerCase();
+    const docId = sanitizeKey(email);
+    const userRef = doc(db, "users", docId);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      countdownEl.style.display = 'none';
+      return;
+    }
+
+    const data = snap.data();
+    const inviterName = data.invitedBy ? data.invitedBy.split('_')[0] : "someone";
+
+    if (!data.vipExpiresAt) {
+      textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+        <span style="color:#ff9999;">No active boost</span>`;
+      countdownEl.style.display = 'block';
+      return;
+    }
+
+    const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = expiresAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+          <span style="color:#ff4444;">Expired</span><br>
+          <button onclick="document.getElementById('payBtn').click(); return false;" 
+                  style="margin-top:8px; padding:6px 18px; font-size:0.95rem; background:var(--neon); color:#000; border:none; border-radius:30px; cursor:pointer; font-weight:600;">
+            BOOST YOUR TAB NOW
+          </button>`;
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+        textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+          STATUS: <span style="color:#c3f60c;">BOOSTED</span> • Expires in ${days}d ${hours}h`;
+      }
+      countdownEl.style.display = 'block';
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 60000); // update every minute
+  } catch (err) {
+    console.error("Countdown error:", err);
+    countdownEl.style.display = 'none';
+  }
+}
 <!doctype html>
 <html lang="en">
 <head>
@@ -3679,10 +3743,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 <!-- 🎥 MEDIA TAB -->
 <div id="mediaTab" class="tab-content active" style="max-height:500px; overflow-y:auto; padding:16px 8px 16px 16px; box-sizing:border-box;">
 
-  <!-- VIP Boost Countdown -->
+<!-- VIP Boost Countdown -->
 <div id="vipCountdown" style="text-align:center; margin:12px 0; padding:12px 16px; background:rgba(195,246,12,0.08); border-radius:16px; border:1px solid var(--neon); display:block; box-shadow:0 4px 20px rgba(195,246,12,0.15);">
   <strong style="color:var(--neon); font-size:1.05rem;">TAB STATUS</strong><br>
-  <span id="countdownText" style="font-size:1.15rem; color:#e0ff80; line-height:1.4;"></span>
+  <span id="countdownText" style="font-size:1.15rem; color:#e0ff80; line-height:1.4; display:block; margin:8px 0;"></span>
 </div>
   
   <!-- Profile Section -->
