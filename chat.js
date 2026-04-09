@@ -659,41 +659,48 @@ function setupUsersListener() {
 
 
 // ===============================================
-// VIP COUNTDOWN - FINAL SAFE VERSION
+// VIP COUNTDOWN - DEBUG VERSION
 // ===============================================
 async function showVIPCountdown() {
+  console.log("🔄 showVIPCountdown() called");
+
   const countdownEl = document.getElementById('vipCountdown');
   const textEl = document.getElementById('countdownText');
 
-  // Safety check - if elements don't exist yet, wait
   if (!countdownEl || !textEl) {
-    console.log("Countdown elements not found yet - retrying in 1s");
-    setTimeout(showVIPCountdown, 1000);
+    console.log("❌ Countdown elements not found in DOM");
     return;
   }
 
   if (!auth || !auth.currentUser) {
+    console.log("❌ No auth.currentUser");
     countdownEl.style.display = 'none';
     return;
   }
+
+  console.log("✅ User logged in:", auth.currentUser.uid);
 
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
+      console.log("❌ User document not found");
       countdownEl.style.display = 'none';
       return;
     }
 
     const data = snap.data();
+    console.log("📄 User data loaded. vipExpiresAt:", data.vipExpiresAt);
 
     if (!data.vipExpiresAt) {
+      console.log("❌ No vipExpiresAt field");
       countdownEl.style.display = 'none';
       return;
     }
 
     const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
+    console.log("⏰ Expires at:", expiresAt);
 
     function updateCountdown() {
       const now = new Date();
@@ -701,37 +708,36 @@ async function showVIPCountdown() {
 
       if (diff <= 0) {
         textEl.innerHTML = `VIP Expired - Time to <span style="color:#ff4444;">BOOST</span>!`;
-        countdownEl.style.display = 'block';
-        return;
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
       }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-      textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
       countdownEl.style.display = 'block';
+      console.log("✅ Countdown updated and shown");
     }
 
     updateCountdown();
-    setInterval(updateCountdown, 60000);   // update every minute
+    setInterval(updateCountdown, 60000);
+
   } catch (err) {
-    console.error("Countdown error:", err);
+    console.error("💥 Countdown error:", err);
     countdownEl.style.display = 'none';
   }
 }
 
 // ===============================================
-// Call countdown when Media Tab is shown
+// Call it when Media Tab is clicked + on page load
 // ===============================================
 document.getElementById('mediaTab').addEventListener('click', () => {
+  console.log("🖱️ Media Tab clicked");
   showVIPCountdown();
 });
 
-// Also call it once when page loads (with delay to ensure DOM is ready)
 setTimeout(() => {
+  console.log("⏰ Initial countdown call after delay");
   showVIPCountdown();
-}, 2000);   // increased delay to 2 seconds
-
+}, 2000);
 
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
