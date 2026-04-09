@@ -659,7 +659,7 @@ function setupUsersListener() {
 
 
 // ===============================================
-// VIP COUNTDOWN - SOPHISTICATED VERSION
+// VIP COUNTDOWN - FINAL VERSION WITH SMALL BUTTON
 // ===============================================
 async function showVIPCountdown() {
   const countdownEl = document.getElementById('vipCountdown');
@@ -674,7 +674,7 @@ async function showVIPCountdown() {
 
   try {
     const email = auth.currentUser.email.trim().toLowerCase();
-    const docId = sanitizeKey(email);   // Use your existing sanitizeKey function
+    const docId = sanitizeKey(email);
     const userRef = doc(db, "users", docId);
     const snap = await getDoc(userRef);
 
@@ -684,10 +684,11 @@ async function showVIPCountdown() {
     }
 
     const data = snap.data();
-    const inviter = data.invitedBy ? data.invitedBy.split('_')[0] : "someone"; // clean inviter name
+    const inviterName = data.invitedBy ? data.invitedBy.split('_')[0] : "someone";
 
     if (!data.vipExpiresAt) {
-      textEl.innerHTML = `You're on <strong>${inviter}'s</strong> VIP tab<br><span style="color:#ff9999;">No active boost</span>`;
+      textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+        <span style="color:#ff9999;">No active boost</span>`;
       countdownEl.style.display = 'block';
       return;
     }
@@ -699,17 +700,17 @@ async function showVIPCountdown() {
       const diff = expiresAt.getTime() - now.getTime();
 
       if (diff <= 0) {
-        textEl.innerHTML = `You're on <strong>${inviter}'s</strong> VIP tab<br>
-          <span style="color:#ff4444;">Expired • </span>
-          <a href="#" onclick="document.getElementById('payBtn').click(); return false;" 
-             style="color:var(--neon); text-decoration:underline;">
-            Click here to BOOST your tab
-          </a>`;
+        textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+          <span style="color:#ff4444;">Expired</span><br>
+          <button onclick="document.getElementById('payBtn').click(); return false;" 
+                  style="margin-top:8px; padding:6px 18px; font-size:0.95rem; background:var(--neon); color:#000; border:none; border-radius:30px; cursor:pointer; font-weight:600;">
+            BOOST YOUR TAB NOW
+          </button>`;
       } else {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-        textEl.innerHTML = `You're on <strong>${inviter}'s</strong> VIP tab<br>
+        textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
           STATUS: <span style="color:#c3f60c;">BOOSTED</span> • Expires in ${days}d ${hours}h`;
       }
       countdownEl.style.display = 'block';
