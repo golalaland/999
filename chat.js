@@ -659,7 +659,7 @@ function setupUsersListener() {
 
 
 // ===============================================
-// VIP COUNTDOWN - FINAL VERSION WITH SMALL BUTTON
+// VIP COUNTDOWN - WITH DIRECT BOOST LINK
 // ===============================================
 async function showVIPCountdown() {
   const countdownEl = document.getElementById('vipCountdown');
@@ -702,10 +702,10 @@ async function showVIPCountdown() {
       if (diff <= 0) {
         textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
           <span style="color:#ff4444;">Expired</span><br>
-          <button onclick="document.getElementById('payBtn').click(); return false;" 
-                  style="margin-top:8px; padding:6px 18px; font-size:0.95rem; background:var(--neon); color:#000; border:none; border-radius:30px; cursor:pointer; font-weight:600;">
+          <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537" 
+             style="display:inline-block; margin-top:8px; padding:8px 20px; background:var(--neon); color:#000; border-radius:30px; font-weight:700; text-decoration:none; font-size:0.95rem;">
             BOOST YOUR TAB NOW
-          </button>`;
+          </a>`;
       } else {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -717,7 +717,7 @@ async function showVIPCountdown() {
     }
 
     updateCountdown();
-    setInterval(updateCountdown, 60000); // update every minute
+    setInterval(updateCountdown, 60000);
   } catch (err) {
     console.error("Countdown error:", err);
     countdownEl.style.display = 'none';
