@@ -659,48 +659,48 @@ function setupUsersListener() {
 
 
 // ===============================================
-// VIP COUNTDOWN - DEBUG VERSION
+// VIP COUNTDOWN - FIXED FOR EMAIL-BASED DOC ID
 // ===============================================
 async function showVIPCountdown() {
-  console.log("🔄 showVIPCountdown() called");
-
   const countdownEl = document.getElementById('vipCountdown');
   const textEl = document.getElementById('countdownText');
 
-  if (!countdownEl || !textEl) {
-    console.log("❌ Countdown elements not found in DOM");
-    return;
-  }
+  if (!countdownEl || !textEl) return;
 
-  if (!auth || !auth.currentUser) {
-    console.log("❌ No auth.currentUser");
+  if (!auth || !auth.currentUser || !auth.currentUser.email) {
     countdownEl.style.display = 'none';
     return;
   }
 
-  console.log("✅ User logged in:", auth.currentUser.uid);
-
   try {
-    const userRef = doc(db, "users", auth.currentUser.uid);
+    // Use sanitized email as document ID (your system uses this)
+    const email = auth.currentUser.email.trim().toLowerCase();
+    const docId = email
+      .replace(/[@.]/g, '_')
+      .replace(/[,\\/*[\]]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+
+    const userRef = doc(db, "users", docId);
     const snap = await getDoc(userRef);
 
+    console.log("🔍 Looking for user doc:", docId);
+
     if (!snap.exists()) {
-      console.log("❌ User document not found");
+      console.log("❌ User document not found with docId:", docId);
       countdownEl.style.display = 'none';
       return;
     }
 
     const data = snap.data();
-    console.log("📄 User data loaded. vipExpiresAt:", data.vipExpiresAt);
+    console.log("✅ User document found. vipExpiresAt:", data.vipExpiresAt);
 
     if (!data.vipExpiresAt) {
-      console.log("❌ No vipExpiresAt field");
       countdownEl.style.display = 'none';
       return;
     }
 
     const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
-    console.log("⏰ Expires at:", expiresAt);
 
     function updateCountdown() {
       const now = new Date();
@@ -714,12 +714,10 @@ async function showVIPCountdown() {
         textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
       }
       countdownEl.style.display = 'block';
-      console.log("✅ Countdown updated and shown");
     }
 
     updateCountdown();
     setInterval(updateCountdown, 60000);
-
   } catch (err) {
     console.error("💥 Countdown error:", err);
     countdownEl.style.display = 'none';
