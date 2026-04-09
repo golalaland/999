@@ -659,7 +659,7 @@ function setupUsersListener() {
 
 
 // ===============================================
-// VIP COUNTDOWN - FIXED FOR EMAIL-BASED DOC ID
+// VIP COUNTDOWN - SOPHISTICATED VERSION
 // ===============================================
 async function showVIPCountdown() {
   const countdownEl = document.getElementById('vipCountdown');
@@ -667,36 +667,28 @@ async function showVIPCountdown() {
 
   if (!countdownEl || !textEl) return;
 
-  if (!auth || !auth.currentUser || !auth.currentUser.email) {
+  if (!auth || !auth.currentUser) {
     countdownEl.style.display = 'none';
     return;
   }
 
   try {
-    // Use sanitized email as document ID (your system uses this)
     const email = auth.currentUser.email.trim().toLowerCase();
-    const docId = email
-      .replace(/[@.]/g, '_')
-      .replace(/[,\\/*[\]]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
-
+    const docId = sanitizeKey(email);   // Use your existing sanitizeKey function
     const userRef = doc(db, "users", docId);
     const snap = await getDoc(userRef);
 
-    console.log("🔍 Looking for user doc:", docId);
-
     if (!snap.exists()) {
-      console.log("❌ User document not found with docId:", docId);
       countdownEl.style.display = 'none';
       return;
     }
 
     const data = snap.data();
-    console.log("✅ User document found. vipExpiresAt:", data.vipExpiresAt);
+    const inviter = data.invitedBy ? data.invitedBy.split('_')[0] : "someone"; // clean inviter name
 
     if (!data.vipExpiresAt) {
-      countdownEl.style.display = 'none';
+      textEl.innerHTML = `You're on <strong>${inviter}'s</strong> VIP tab<br><span style="color:#ff9999;">No active boost</span>`;
+      countdownEl.style.display = 'block';
       return;
     }
 
@@ -707,19 +699,26 @@ async function showVIPCountdown() {
       const diff = expiresAt.getTime() - now.getTime();
 
       if (diff <= 0) {
-        textEl.innerHTML = `VIP Expired - Time to <span style="color:#ff4444;">BOOST</span>!`;
+        textEl.innerHTML = `You're on <strong>${inviter}'s</strong> VIP tab<br>
+          <span style="color:#ff4444;">Expired • </span>
+          <a href="#" onclick="document.getElementById('payBtn').click(); return false;" 
+             style="color:var(--neon); text-decoration:underline;">
+            Click here to BOOST your tab
+          </a>`;
       } else {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        textEl.textContent = `VIP expires in ${days}d ${hours}h — Boost to extend`;
+
+        textEl.innerHTML = `You're on <strong>${inviter}'s</strong> VIP tab<br>
+          STATUS: <span style="color:#c3f60c;">BOOSTED</span> • Expires in ${days}d ${hours}h`;
       }
       countdownEl.style.display = 'block';
     }
 
     updateCountdown();
-    setInterval(updateCountdown, 60000);
+    setInterval(updateCountdown, 60000); // update every minute
   } catch (err) {
-    console.error("💥 Countdown error:", err);
+    console.error("Countdown error:", err);
     countdownEl.style.display = 'none';
   }
 }
