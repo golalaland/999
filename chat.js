@@ -659,13 +659,18 @@ function setupUsersListener() {
 
 
 // ===============================================
-// VIP COUNTDOWN FUNCTION (Fixed & Safe)
+// VIP COUNTDOWN - FINAL SAFE VERSION
 // ===============================================
 async function showVIPCountdown() {
   const countdownEl = document.getElementById('vipCountdown');
   const textEl = document.getElementById('countdownText');
 
-  if (!countdownEl || !textEl) return;
+  // Safety check - if elements don't exist yet, wait
+  if (!countdownEl || !textEl) {
+    console.log("Countdown elements not found yet - retrying in 1s");
+    setTimeout(showVIPCountdown, 1000);
+    return;
+  }
 
   if (!auth || !auth.currentUser) {
     countdownEl.style.display = 'none';
@@ -708,7 +713,7 @@ async function showVIPCountdown() {
     }
 
     updateCountdown();
-    setInterval(updateCountdown, 60000); // update every minute
+    setInterval(updateCountdown, 60000);   // update every minute
   } catch (err) {
     console.error("Countdown error:", err);
     countdownEl.style.display = 'none';
@@ -722,10 +727,11 @@ document.getElementById('mediaTab').addEventListener('click', () => {
   showVIPCountdown();
 });
 
-// Also call it once when page loads (with small delay)
+// Also call it once when page loads (with delay to ensure DOM is ready)
 setTimeout(() => {
   showVIPCountdown();
-}, 1500);
+}, 2000);   // increased delay to 2 seconds
+
 
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
