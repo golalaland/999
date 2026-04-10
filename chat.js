@@ -463,7 +463,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     startStarEarning?.(uid);
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
-     startFreeTonightViewBoost();
+activateViewBoost();
 
 
     // Wait for auth token to be fully synced before button updates
@@ -6771,7 +6771,7 @@ function activateViewBoost() {
 
       highlights = highlights.map(v => {
         if (v.isTrending === true && v.trendingUntil && v.trendingUntil > now) {
-          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1-9 views
+          const randomAdd = Math.floor(Math.random() * 9) + 1;
           v.views = (v.views || 0) + randomAdd;
           hasUpdates = true;
           console.log(`[VIEW BOOST] +${randomAdd} views for clip ${v.id?.slice(-6) || 'unknown'}`);
@@ -6785,7 +6785,7 @@ function activateViewBoost() {
     } catch (err) {
       console.error("[VIEW BOOST] Error:", err);
     }
-  }, 60000); // Every 60 seconds
+  }, 60000);
 }
 
 function stopViewBoost() {
@@ -7961,7 +7961,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       // Success actions
       localStorage.setItem('freeTonightEndTime', endTime);
       startCountdown(btn, endTime);
-      activateViewBoost();                    // ← Start view boost every 60 seconds
+      activateViewBoost();                    // ← Fixed: correct function name
       showStarPopup(`Free Tonight activated! Vibe set to ${selectedFruit} 🔥`, 'success');
 
       if (typeof loadMyClips === 'function') loadMyClips();
@@ -7979,7 +7979,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 });
 
-/// Countdown function
 function startCountdown(btn, endTime) {
   function updateTimer() {
     const now = Date.now();
@@ -7989,7 +7988,7 @@ function startCountdown(btn, endTime) {
       btn.disabled = false;
       btn.textContent = "I'm Free Tonight";
       localStorage.removeItem('freeTonightEndTime');
-      stopViewBoost();                    // ← Stop boosting when Free Tonight ends
+      stopViewBoost();           // ← Important: stop boosting when time ends
       return;
     }
 
@@ -8002,7 +8001,6 @@ function startCountdown(btn, endTime) {
   }
   updateTimer();
 }
-
 // Auto-start countdown on load
 window.addEventListener('load', () => {
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
