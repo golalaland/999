@@ -6789,7 +6789,7 @@ function startFreeTonightViewBoost() {
   }, 300000); // Every 5 minutes
 }
 
-// Main Function - FIXED
+// Main Function - FIXED (Free Tonight status + normal thumbnails)
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6813,10 +6813,10 @@ async function loadMyClips() {
       let highlights = snap.data().highlights || [];
       const now = Date.now();
 
-      // Auto expire logic
+      // Auto-expire logic
       let needsUpdate = false;
       highlights = highlights.map(v => {
-        if (v.isTrending === true && v.freeTonightUntil && v.freeTonightUntil < now) {
+        if (v.isTrending === true && v.trendingUntil && v.trendingUntil < now) {
           v.isTrending = false;
           needsUpdate = true;
         }
@@ -6834,23 +6834,23 @@ async function loadMyClips() {
         const videoSrc = v.videoUrl || "";
         const thumbnailSrc = v.thumbnailUrl || "";
         const views = v.views || 0;
+        const isActive = v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
 
-        const isActive = v.isTrending === true;
         const freeTonightText = isActive ? "Free Tonight" : "Offline";
-        const statusColor = isActive ? "#00ff9d" : "#666";
+        const statusColor = isActive ? "#00ff9d" : "#888";
         const dotColor = isActive ? "#00ff9d" : "#555";
 
         const card = document.createElement("div");
         card.style.cssText = `
-          background:#111;border-radius:16px;overflow:hidden;
-          box-shadow:0 10px 30px rgba(0,0,0,0.6);border:1px solid #333;
-          display:flex;flex-direction:column;height:220px;
+          background:#111; border-radius:16px; overflow:hidden;
+          box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid #333;
+          display:flex; flex-direction:column; height:220px;
         `;
 
         card.innerHTML = `
-          <div style="display:flex;height:100%;background:#0d0d0d;">
-            <!-- Left: Video preview -->
-            <div style="width:136px;flex-shrink:0;position:relative;overflow:hidden;background:#000;">
+          <div style="display:flex; height:100%; background:#0d0d0d;">
+            <!-- Left: Video preview - NORMAL SIZE -->
+            <div style="width:136px; flex-shrink:0; position:relative; overflow:hidden; background:#000;">
               <video
                 src="${videoSrc}"
                 muted loop playsinline
@@ -6865,33 +6865,33 @@ async function loadMyClips() {
                   object-position: center;
                   transform: translate(-50%, -50%) scale(1.0);
                   filter: brightness(0.96);
-                  transition: transform 0.45s ease;
+                  transition: transform 0.4s ease;
                 ">
               </video>
-              <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%);pointer-events:none;"></div>
-              <div style="position:absolute;bottom:8px;left:10px;color:#00ff9d;font-size:9px;font-weight:800;letter-spacing:1.2px;text-shadow:0 0 8px #000;">
+              <div style="position:absolute; inset:0; background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%); pointer-events:none;"></div>
+              <div style="position:absolute; bottom:8px; left:10px; color:#00ff9d; font-size:9px; font-weight:800; letter-spacing:1.2px; text-shadow:0 0 8px #000;">
                 ▶ CLIP
               </div>
             </div>
 
             <!-- Right side -->
-            <div style="flex:1;padding:14px 16px 60px 16px;position:relative;background:linear-gradient(90deg,#0f0f0f,#111 50%);display:flex;flex-direction:column;">
+            <div style="flex:1; padding:14px 16px 60px 16px; position:relative; background:linear-gradient(90deg,#0f0f0f,#111 50%); display:flex; flex-direction:column;">
               <div style="flex-grow:1;">
-                <div style="color:#fff;font-weight:800;font-size:14px;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
+                <div style="color:#fff; font-weight:800; font-size:14px; line-height:1.3; margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis;">
                   ${v.title || "Free Tonight Clip"}
                 </div>
-                <div style="color:#666;font-size:10px;margin-top:6px;opacity:0.7;">
+                <div style="color:#666; font-size:10px; margin-top:6px; opacity:0.7;">
                   ID: ${v.id.slice(-8)}
                 </div>
               </div>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;margin-top:10px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:center; margin-top:10px;">
                 <div>
-                  <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Views</div>
-                  <div style="color:#00ffea;font-weight:900;font-size:15px;">${views.toLocaleString()}</div>
+                  <div style="color:#888; font-size:9px; text-transform:uppercase; letter-spacing:0.8px;">Views</div>
+                  <div style="color:#00ffea; font-weight:900; font-size:15px;">${views.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div style="color:#888;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;">Free Tonight</div>
+                  <div style="color:#888; font-size:9px; text-transform:uppercase; letter-spacing:0.8px;">Status</div>
                   <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
                     <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
                     <div style="color:${statusColor}; font-weight:900; font-size:13px;">
@@ -6906,12 +6906,12 @@ async function loadMyClips() {
                       data-id="${v.id}"
                       data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
                       style="
-                        position:absolute;bottom:12px;right:12px;
+                        position:absolute; bottom:12px; right:12px;
                         background:linear-gradient(90deg,#ff0099,#ff6600);
-                        border:none;color:#fff;
-                        padding:8px 14px;border-radius:10px;
-                        font-size:10px;font-weight:800;letter-spacing:0.6px;
-                        cursor:pointer;opacity:0.92;
+                        border:none; color:#fff;
+                        padding:8px 14px; border-radius:10px;
+                        font-size:10px; font-weight:800; letter-spacing:0.6px;
+                        cursor:pointer; opacity:0.92;
                         box-shadow:0 2px 12px rgba(255,0,100,0.4);
                         transition:all .25s ease;
                       ">
@@ -6921,11 +6921,11 @@ async function loadMyClips() {
           </div>
         `;
 
-        // Hover effect
+        // Subtle hover effect - no crazy zoom
         const video = card.querySelector("video");
         if (video) {
           card.addEventListener("mouseenter", () => {
-            video.style.transform = "translate(-50%, -50%) scale(1.12)";
+            video.style.transform = "translate(-50%, -50%) scale(1.08)";
             video.play().catch(() => {});
           });
           card.addEventListener("mouseleave", () => {
@@ -6935,7 +6935,7 @@ async function loadMyClips() {
           });
         }
 
-        grid.appendChild(card);   // ← This was missing!
+        grid.appendChild(card);
       });
 
       // Re-attach delete buttons
@@ -6946,14 +6946,14 @@ async function loadMyClips() {
           };
         });
       }, 50);
-
-    }); // end onSnapshot
+    });
 
   } catch (err) {
     console.error("loadMyClips error:", err);
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
   }
 }
+
 function showDeleteConfirm(clipId, clipTitle) {
     if (!clipId || !auth?.currentUser?.uid) {
         showGoldAlert?.("Please log in again");
