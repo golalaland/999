@@ -6794,7 +6794,7 @@ function stopViewBoost() {
   }
 }
 
-// Main Function - UPDATED (Cute Free Tonight + No Views + Unique Clip ID)
+// Main Function - UPDATED (Delete button moved under status + better spacing)
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6842,7 +6842,7 @@ async function loadMyClips() {
         const thumbnailSrc = v.thumbnailUrl || "";
         const isActive = v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
 
-        // Generate cute unique clip ID: freetonightclip-XXXXXXXX
+        // Cute unique clip ID
         const clipId = `freetonightclip-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
         const card = document.createElement("div");
@@ -6854,9 +6854,8 @@ async function loadMyClips() {
           border: 1px solid ${isActive ? '#00ff9d33' : '#333'};
           display: flex; 
           flex-direction: column; 
-          height: 240px;
+          height: 245px;
           position: relative;
-          transition: all 0.3s ease;
         `;
 
         card.innerHTML = `
@@ -6867,10 +6866,10 @@ async function loadMyClips() {
                 src="${videoSrc}"
                 muted loop playsinline
                 poster="${thumbnailSrc}"
-                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform 0.5s ease;">
+                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
               </video>
               ${isActive ? `
-              <div style="position:absolute; top:10px; right:10px; background:#00ff9d; color:#000; font-size:10px; font-weight:900; padding:3px 10px; border-radius:20px; box-shadow:0 0 15px #00ff9d;">
+              <div style="position:absolute; top:12px; right:12px; background:#00ff9d; color:#000; font-size:10px; font-weight:900; padding:4px 11px; border-radius:20px; box-shadow:0 0 15px #00ff9d;">
                 LIVE
               </div>` : ''}
             </div>
@@ -6879,37 +6878,36 @@ async function loadMyClips() {
             <div style="flex:1; padding:16px 18px; display:flex; flex-direction:column; position:relative;">
               <div style="flex-grow:1;">
                 <div style="color:#fff; font-weight:800; font-size:15px; line-height:1.35; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                  ${v.title || "Free Tonight Vibes"}
+                  ${v.title || "Free Tonight Clips"}
                 </div>
 
-                <!-- Cute Clip ID -->
                 <div style="color:#00ffea; font-size:11px; font-family:monospace; margin-top:4px; opacity:0.85;">
                   ${clipId}
                 </div>
               </div>
 
-              <!-- Status -->
+              <!-- Status + Delete Button Area -->
               <div style="margin-top:auto; padding-top:12px;">
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
                   <div style="width:10px; height:10px; background:${isActive ? '#00ff9d' : '#666'}; border-radius:50%; box-shadow:0 0 12px ${isActive ? '#00ff9d' : '#444'};"></div>
                   <span style="color:${isActive ? '#00ff9d' : '#888'}; font-weight:900; font-size:15px; letter-spacing:0.5px;">
                     ${isActive ? 'FREE TONIGHT ✨' : 'Offline'}
                   </span>
                 </div>
-              </div>
 
-              <!-- Delete Button -->
-              <button class="delete-clip-btn"
-                      data-id="${v.id}"
-                      data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
-                      style="position:absolute; bottom:14px; right:14px; background:#ff3366; color:white; border:none; padding:7px 16px; border-radius:12px; font-size:10px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
-                DELETE
-              </button>
+                <!-- Delete Button - Now cleanly below status -->
+                <button class="delete-clip-btn"
+                        data-id="${v.id}"
+                        data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
+                        style="background:#ff3366; color:white; border:none; padding:9px 18px; border-radius:12px; font-size:11px; font-weight:800; cursor:pointer; width:100%; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
+                  DELETE CLIP
+                </button>
+              </div>
             </div>
           </div>
         `;
 
-        // Hover effect
+        // Hover effect on video
         const video = card.querySelector("video");
         if (video) {
           card.addEventListener("mouseenter", () => {
