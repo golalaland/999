@@ -6890,8 +6890,8 @@ async function loadMyClips() {
               <div style="margin-top:auto; padding-top:12px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
                   <div style="width:10px; height:10px; background:${isActive ? '#00ff9d' : '#666'}; border-radius:50%; box-shadow:0 0 12px ${isActive ? '#00ff9d' : '#444'};"></div>
-                  <span style="color:${isActive ? '#00ff9d' : '#888'}; font-weight:900; font-size:15px; letter-spacing:0.5px;">
-                    ${isActive ? 'FREE TONIGHT ✨' : 'Offline'}
+                  <span style="color:${isActive ? '#00ff9d' : '#888'}; font-weight:900; font-size:13px; letter-spacing:0.5px;">
+                    ${isActive ? 'FREE TONIGHT' : 'Offline'}
                   </span>
                 </div>
 
@@ -6900,7 +6900,7 @@ async function loadMyClips() {
                         data-id="${v.id}"
                         data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
                         style="background:#ff3366; color:white; border:none; padding:9px 18px; border-radius:12px; font-size:11px; font-weight:800; cursor:pointer; width:100%; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
-                  DELETE CLIP
+                  DELETE
                 </button>
               </div>
             </div>
