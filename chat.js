@@ -6751,7 +6751,7 @@ async function unlockVideo(video) {
     }
 }
 
-// ====================== View Boost (Every 60 seconds) ======================
+// ====================== Optimized View Boost (Every 60 seconds) ======================
 let viewBoostInterval = null;
 
 function activateViewBoost() {
@@ -6771,10 +6771,9 @@ function activateViewBoost() {
 
       highlights = highlights.map(v => {
         if (v.isTrending === true && v.trendingUntil && v.trendingUntil > now) {
-          const randomAdd = Math.floor(Math.random() * 9) + 1;
+          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1-9 views
           v.views = (v.views || 0) + randomAdd;
           hasUpdates = true;
-          console.log(`[VIEW BOOST] +${randomAdd} views for clip ${v.id?.slice(-6) || 'unknown'}`);
         }
         return v;
       });
@@ -6785,14 +6784,13 @@ function activateViewBoost() {
     } catch (err) {
       console.error("[VIEW BOOST] Error:", err);
     }
-  }, 60000);
+  }, 60000); // 60 seconds
 }
 
 function stopViewBoost() {
   if (viewBoostInterval) {
     clearInterval(viewBoostInterval);
     viewBoostInterval = null;
-    console.log("[VIEW BOOST] Stopped");
   }
 }
 
