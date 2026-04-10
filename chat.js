@@ -2974,13 +2974,13 @@ let animationTimeout = null;
 
 // ==================== CONFIG ====================
 const STAR_EARNING_CONFIG = {
-  baseDailyCap: 150,      // Normal user
-  vipDailyCap: 150,       // VIP gets bonus
+  baseDailyCap: 50,      // Normal user
+  vipDailyCap: 50,       // VIP gets bonus
   paidDailyCap: 500,      // hasPaid: true
-  hostDailyCap: 625,      // isHost: true
+  hostDailyCap: 600,      // isHost: true
 
-  earnAmount: 125,                   // ★ 125 stars per earn
-  minTimeBetweenEarns: 60000,        // 1 minute (60,000 ms)
+  earnAmount: 100,                   // ★ 100 stars per earn
+  minTimeBetweenEarns: 30000,        // 30 SECS (30,000 ms)
   visibilityCheckInterval: 60000     // 1 minute
 };
 
@@ -6751,11 +6751,10 @@ async function unlockVideo(video) {
     }
 }
 
-// ====================== VERSION 1: Simple Client-side + Auto View Boost ======================
-
+// ====================== View Boost (Every 60 seconds) ======================
 let viewBoostInterval = null;
 
-function startFreeTonightViewBoost() {
+function activateViewBoost() {
   if (viewBoostInterval) clearInterval(viewBoostInterval);
 
   viewBoostInterval = setInterval(async () => {
@@ -6771,11 +6770,11 @@ function startFreeTonightViewBoost() {
       let hasUpdates = false;
 
       highlights = highlights.map(v => {
-        if (v.isTrending === true && v.freeTonightUntil && v.freeTonightUntil > now) {
-          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1 to 9
+        if (v.isTrending === true && v.trendingUntil && v.trendingUntil > now) {
+          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1-9 views
           v.views = (v.views || 0) + randomAdd;
           hasUpdates = true;
-          console.log(`[VIEW BOOST] +${randomAdd} views for clip ${v.id?.slice(-6)}`);
+          console.log(`[VIEW BOOST] +${randomAdd} views for clip ${v.id?.slice(-6) || 'unknown'}`);
         }
         return v;
       });
@@ -6786,7 +6785,15 @@ function startFreeTonightViewBoost() {
     } catch (err) {
       console.error("[VIEW BOOST] Error:", err);
     }
-  }, 300000); // Every 5 minutes
+  }, 60000); // Every 60 seconds
+}
+
+function stopViewBoost() {
+  if (viewBoostInterval) {
+    clearInterval(viewBoostInterval);
+    viewBoostInterval = null;
+    console.log("[VIEW BOOST] Stopped");
+  }
 }
 
 // Main Function - FIXED (Free Tonight status + normal thumbnails)
@@ -7912,7 +7919,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       confirmBtn.style.cursor = 'pointer';
     };
   });
-
   // Confirm button
   fruitModal.querySelector('#confirmFruit').onclick = async () => {
     if (!selectedFruit) return;
@@ -7926,6 +7932,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
       const userSnap = await getDocs(usersQuery);
       if (userSnap.empty) throw new Error("Profile not found");
+
       const userDoc = userSnap.docs[0];
       const sanitizedId = userDoc.id;
 
@@ -7936,12 +7943,14 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       const highlightsRef = doc(db, "highlightVideos", sanitizedId);
       const highlightsSnap = await getDoc(highlightsRef);
       if (!highlightsSnap.exists()) throw new Error("No highlights found");
+
       const highlightsData = highlightsSnap.data() || {};
       const highlights = [...(highlightsData.highlights || [])];
 
       if (highlights.length === 0) throw new Error("Upload some clips first!");
 
       const endTime = Date.now() + 24 * 60 * 60 * 1000;
+
       highlights.forEach(h => {
         h.isTrending = true;
         h.trendingUntil = endTime;
@@ -7949,8 +7958,10 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
       await updateDoc(highlightsRef, { highlights });
 
+      // Success actions
       localStorage.setItem('freeTonightEndTime', endTime);
       startCountdown(btn, endTime);
+      activateViewBoost();                    // ← Start view boost every 60 seconds
       showStarPopup(`Free Tonight activated! Vibe set to ${selectedFruit} 🔥`, 'success');
 
       if (typeof loadMyClips === 'function') loadMyClips();
@@ -7968,22 +7979,25 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 });
 
-
-// Countdown function (unchanged)
+/// Countdown function
 function startCountdown(btn, endTime) {
   function updateTimer() {
     const now = Date.now();
     const remaining = endTime - now;
+
     if (remaining <= 0) {
       btn.disabled = false;
       btn.textContent = "I'm Free Tonight";
       localStorage.removeItem('freeTonightEndTime');
+      stopViewBoost();                    // ← Stop boosting when Free Tonight ends
       return;
     }
+
     const hours = Math.floor(remaining / 3600000);
     const minutes = Math.floor((remaining % 3600000) / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
     btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
+
     setTimeout(updateTimer, 1000);
   }
   updateTimer();
