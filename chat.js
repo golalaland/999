@@ -6794,13 +6794,15 @@ function stopViewBoost() {
   }
 }
 
-// Main Function - FIXED (Free Tonight status + normal thumbnails)
+// Main Function - UPDATED (Cute Free Tonight + No Views + Unique Clip ID)
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
   if (!grid || !currentUser?.uid) return;
 
-  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:120px;color:#888;font-size:18px;">Loading your Free Tonight clips...</div>`;
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:100px;color:#666;font-size:17px;">
+    Loading your Free Tonight clips...
+  </div>`;
 
   try {
     const docRef = doc(db, "highlightVideos", currentUser.uid);
@@ -6818,7 +6820,7 @@ async function loadMyClips() {
       let highlights = snap.data().highlights || [];
       const now = Date.now();
 
-      // Auto-expire logic
+      // Auto-expire trending clips
       let needsUpdate = false;
       highlights = highlights.map(v => {
         if (v.isTrending === true && v.trendingUntil && v.trendingUntil < now) {
@@ -6838,103 +6840,84 @@ async function loadMyClips() {
       highlights.forEach(v => {
         const videoSrc = v.videoUrl || "";
         const thumbnailSrc = v.thumbnailUrl || "";
-        const views = v.views || 0;
         const isActive = v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
 
-        const freeTonightText = isActive ? "Free Tonight" : "Offline";
-        const statusColor = isActive ? "#00ff9d" : "#888";
-        const dotColor = isActive ? "#00ff9d" : "#555";
+        // Generate cute unique clip ID: freetonightclip-XXXXXXXX
+        const clipId = `freetonightclip-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
         const card = document.createElement("div");
         card.style.cssText = `
-          background:#111; border-radius:16px; overflow:hidden;
-          box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid #333;
-          display:flex; flex-direction:column; height:220px;
+          background: #111; 
+          border-radius: 20px; 
+          overflow: hidden;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+          border: 1px solid ${isActive ? '#00ff9d33' : '#333'};
+          display: flex; 
+          flex-direction: column; 
+          height: 240px;
+          position: relative;
+          transition: all 0.3s ease;
         `;
 
         card.innerHTML = `
-          <div style="display:flex; height:100%; background:#0d0d0d;">
-            <!-- Left: Video preview - NORMAL SIZE -->
-            <div style="width:136px; flex-shrink:0; position:relative; overflow:hidden; background:#000;">
+          <div style="display:flex; height:100%; background:#0a0a0a;">
+            <!-- Video Preview -->
+            <div style="width:140px; flex-shrink:0; position:relative; overflow:hidden; background:#000;">
               <video
                 src="${videoSrc}"
                 muted loop playsinline
                 poster="${thumbnailSrc}"
-                style="
-                  position: absolute;
-                  top: 50%;
-                  left: 50%;
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  object-position: center;
-                  transform: translate(-50%, -50%) scale(1.0);
-                  filter: brightness(0.96);
-                  transition: transform 0.4s ease;
-                ">
+                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform 0.5s ease;">
               </video>
-              <div style="position:absolute; inset:0; background:linear-gradient(90deg,rgba(13,13,13,0.85),transparent 70%); pointer-events:none;"></div>
-              <div style="position:absolute; bottom:8px; left:10px; color:#00ff9d; font-size:9px; font-weight:800; letter-spacing:1.2px; text-shadow:0 0 8px #000;">
-                ▶ CLIP
-              </div>
+              ${isActive ? `
+              <div style="position:absolute; top:10px; right:10px; background:#00ff9d; color:#000; font-size:10px; font-weight:900; padding:3px 10px; border-radius:20px; box-shadow:0 0 15px #00ff9d;">
+                LIVE
+              </div>` : ''}
             </div>
 
-            <!-- Right side -->
-            <div style="flex:1; padding:14px 16px 60px 16px; position:relative; background:linear-gradient(90deg,#0f0f0f,#111 50%); display:flex; flex-direction:column;">
+            <!-- Right Content -->
+            <div style="flex:1; padding:16px 18px; display:flex; flex-direction:column; position:relative;">
               <div style="flex-grow:1;">
-                <div style="color:#fff; font-weight:800; font-size:14px; line-height:1.3; margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis;">
-                  ${v.title || "Free Tonight Clip"}
+                <div style="color:#fff; font-weight:800; font-size:15px; line-height:1.35; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                  ${v.title || "Free Tonight Vibes"}
                 </div>
-                <div style="color:#666; font-size:10px; margin-top:6px; opacity:0.7;">
-                  ID: ${v.id.slice(-8)}
+
+                <!-- Cute Clip ID -->
+                <div style="color:#00ffea; font-size:11px; font-family:monospace; margin-top:4px; opacity:0.85;">
+                  ${clipId}
                 </div>
               </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:center; margin-top:10px;">
-                <div>
-                  <div style="color:#888; font-size:9px; text-transform:uppercase; letter-spacing:0.8px;">Views</div>
-                  <div style="color:#00ffea; font-weight:900; font-size:15px;">${views.toLocaleString()}</div>
-                </div>
-                <div>
-                  <div style="color:#888; font-size:9px; text-transform:uppercase; letter-spacing:0.8px;">Status</div>
-                  <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
-                    <div style="width:8px; height:8px; background:${dotColor}; border-radius:50%; box-shadow:0 0 6px ${dotColor};"></div>
-                    <div style="color:${statusColor}; font-weight:900; font-size:13px;">
-                      ${freeTonightText}
-                    </div>
-                  </div>
+              <!-- Status -->
+              <div style="margin-top:auto; padding-top:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="width:10px; height:10px; background:${isActive ? '#00ff9d' : '#666'}; border-radius:50%; box-shadow:0 0 12px ${isActive ? '#00ff9d' : '#444'};"></div>
+                  <span style="color:${isActive ? '#00ff9d' : '#888'}; font-weight:900; font-size:15px; letter-spacing:0.5px;">
+                    ${isActive ? 'FREE TONIGHT ✨' : 'Offline'}
+                  </span>
                 </div>
               </div>
 
-              <!-- DELETE BUTTON -->
+              <!-- Delete Button -->
               <button class="delete-clip-btn"
                       data-id="${v.id}"
                       data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
-                      style="
-                        position:absolute; bottom:12px; right:12px;
-                        background:linear-gradient(90deg,#ff0099,#ff6600);
-                        border:none; color:#fff;
-                        padding:8px 14px; border-radius:10px;
-                        font-size:10px; font-weight:800; letter-spacing:0.6px;
-                        cursor:pointer; opacity:0.92;
-                        box-shadow:0 2px 12px rgba(255,0,100,0.4);
-                        transition:all .25s ease;
-                      ">
+                      style="position:absolute; bottom:14px; right:14px; background:#ff3366; color:white; border:none; padding:7px 16px; border-radius:12px; font-size:10px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
                 DELETE
               </button>
             </div>
           </div>
         `;
 
-        // Subtle hover effect - no crazy zoom
+        // Hover effect
         const video = card.querySelector("video");
         if (video) {
           card.addEventListener("mouseenter", () => {
-            video.style.transform = "translate(-50%, -50%) scale(1.08)";
+            video.style.transform = "scale(1.08)";
             video.play().catch(() => {});
           });
           card.addEventListener("mouseleave", () => {
-            video.style.transform = "translate(-50%, -50%) scale(1.0)";
+            video.style.transform = "scale(1)";
             video.pause();
             video.currentTime = 0;
           });
@@ -6943,19 +6926,17 @@ async function loadMyClips() {
         grid.appendChild(card);
       });
 
-      // Re-attach delete buttons
+      // Attach delete listeners
       setTimeout(() => {
         document.querySelectorAll(".delete-clip-btn").forEach(btn => {
-          btn.onclick = () => {
-            showDeleteConfirm(btn.dataset.id, btn.dataset.title);
-          };
+          btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
         });
-      }, 50);
+      }, 100);
     });
 
   } catch (err) {
     console.error("loadMyClips error:", err);
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px;color:#f66;">Failed to load clips</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:100px;color:#f66;">Failed to load your clips</div>`;
   }
 }
 
