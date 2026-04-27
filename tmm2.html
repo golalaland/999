@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>TAP MASTER • Tap the Screen, Win Real Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Press+Start+2P&family=Barlow+Condensed:wght@600;700;900&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   Direction: NEON VAULT — underground casino meets Lagos night market
+   Font pairing: Syne (display) + Barlow Condensed (UI) + DM Mono (data)
+   Color: near-black base, electric green primary, hot coral accent
+   Unforgettable: the tap button is a living object — it breathes
+============================================================ */
+:root {
+  /* palette */
+  --ink:       #080A0F;
+  --ink2:      #0D1018;
+  --ink3:      #141720;
+  --surface:   rgba(255,255,255,0.03);
+  --border:    rgba(255,255,255,0.06);
+  --border2:   rgba(255,255,255,0.12);
+
+  --volt:      #C6FF00;   /* electric yellow-green — primary */
+  --volt-dim:  rgba(198,255,0,0.12);
+  --coral:     #FF4D6A;   /* hot coral — danger / accent */
+  --coral-dim: rgba(255,77,106,0.12);
+  --gold:      #FFB800;   /* warm gold — rewards */
+  --gold-dim:  rgba(255,184,0,0.12);
+  --ice:       #00D4FF;   /* ice blue — secondary info */
+  --ice-dim:   rgba(0,212,255,0.10);
+  --mint:      #00F5A0;   /* mint green — success */
+  --muted:     #3D4251;
+  --dim:       #6B7385;
+  --text:      #E8EAF0;
+
+  /* type */
+  --f-display: 'Syne', sans-serif;
+  --f-ui:      'Barlow Condensed', sans-serif;
+  --f-data:    'DM Mono', monospace;
+  --f-pixel:   'Press Start 2P', cursive;
+
+  /* radii */
+  --r-sm:  8px;
+  --r-md:  14px;
+  --r-lg:  20px;
+  --r-xl:  28px;
+  --r-pill:999px;
+
+  /* motion */
+  --ease-snap:  cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth:cubic-bezier(0.25,0.46,0.45,0.94);
+}
+
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--ink);color:var(--text);
+  font-family:var(--f-ui);-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;overflow-x:hidden;}
+button,input{font-family:var(--f-ui);font-size:16px;}
+button{cursor:pointer;border:none;background:none;}
+
+/* ── AMBIENT BACKGROUND ── */
+body {
+  display:flex;justify-content:center;align-items:flex-start;
+  padding:0 0 140px;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%,  rgba(198,255,0,0.07)  0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 80%,  rgba(255,77,106,0.06) 0%,transparent 50%),
+    radial-gradient(ellipse 50% 35% at 0% 60%,   rgba(0,212,255,0.05)  0%,transparent 50%),
+    var(--ink);
+  background-attachment:fixed;
+}
+
+/* Scanline overlay for depth */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:0;
+}
+
+#appWrapper{
+  width:100%;max-width:460px;
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;z-index:1;
+}
+
+/* ============================================================
+   HEADER
+============================================================ */
+#gameHeader{
+  width:100%;text-align:center;
+  padding:28px 0 4px;
+  position:relative;
+}
+
+#welcomeText{
+  font-family:var(--f-pixel);font-size:8px;
+  color:var(--volt);letter-spacing:5px;
+  opacity:0.6;text-transform:uppercase;
+  animation:fadeSlideDown 0.6s var(--ease-smooth) both;
+}
+
+#scrambleText{
+  font-family:var(--f-display);
+  font-size:clamp(52px,14vw,76px);
+  font-weight:800;
+  letter-spacing:-2px;
+  line-height:0.9;
+  margin-top:6px;
+  background:linear-gradient(135deg, var(--volt) 0%, #80FF57 40%, var(--ice) 80%, var(--volt) 100%);
+  background-size:200% 200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradientShift 4s ease infinite, fadeSlideDown 0.7s var(--ease-smooth) 0.1s both;
+  filter:drop-shadow(0 0 30px rgba(198,255,0,0.3));
+}
+
+@keyframes gradientShift{
+  0%,100%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+}
+@keyframes fadeSlideDown{
+  from{opacity:0;transform:translateY(-16px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ============================================================
+   LIVE BANNER
+============================================================ */
+#bannerPage{
+  width:92% !important;
+  max-width:420px !important;
+  margin:20px auto 16px !important;
+  padding:0 !important;
+  border-radius:var(--r-md) !important;
+  border:1px solid rgba(198,255,0,0.2) !important;
+  border-left:3px solid var(--volt) !important;
+  background:rgba(13,16,24,0.9) !important;
+  box-shadow:0 0 24px rgba(198,255,0,0.08),0 4px 20px rgba(0,0,0,0.4) !important;
+  overflow:hidden !important;
+  display:flex;align-items:center;
+  animation:fadeSlideDown 0.8s var(--ease-smooth) 0.2s both;
+}
+
+/* LIVE pill */
+#bannerPage::before{
+  content:'● LIVE';
+  flex-shrink:0;
+  font-family:var(--f-pixel);font-size:6px;
+  color:var(--coral);letter-spacing:1px;
+  padding:12px 10px;
+  border-right:1px solid rgba(255,255,255,0.06);
+  animation:blink 1.4s ease-in-out infinite;
+  white-space:nowrap;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+#liveBannerText{
+  font-family:var(--f-ui) !important;
+  font-size:11.5px !important;
+  font-weight:600 !important;
+  letter-spacing:0.3px !important;
+  padding:10px 0 !important;
+  animation:marquee 180s linear infinite !important;
+  min-width:300% !important;
+  display:inline-block !important;
+  white-space:nowrap !important;
+}
+@keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* ============================================================
+   START PAGE
+============================================================ */
+#startPage{
+  width:100%;
+  display:flex;flex-direction:column;align-items:center;
+  margin-top:12px;
+  animation:fadeSlideDown 0.9s var(--ease-smooth) 0.3s both;
+}
+
+#startBtn{
+  position:relative;
+  padding:0 52px;height:60px;
+  border-radius:var(--r-pill);
+  background:var(--volt);
+  color:var(--ink);
+  font-family:var(--f-display);
+  font-size:22px;font-weight:800;
+  letter-spacing:2px;
+  overflow:hidden;
+  transition:transform 0.15s var(--ease-snap),box-shadow 0.15s ease;
+  box-shadow:0 0 0 0 rgba(198,255,0,0.4),0 8px 24px rgba(198,255,0,0.25);
+}
+#startBtn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.35) 50%,transparent 100%);
+  transform:translateX(-100%);
+  animation:sweepBtn 2.5s ease-in-out infinite;
+}
+@keyframes sweepBtn{0%{transform:translateX(-100%);}40%,100%{transform:translateX(100%);}}
+#startBtn:active{
+  transform:scale(0.95);
+  box-shadow:0 0 0 8px rgba(198,255,0,0.15),0 2px 8px rgba(198,255,0,0.2);
+}
+
+/* ============================================================
+   SPINNER
+============================================================ */
+#spinner{margin-top:28px;text-align:center;}
+#spinner>div:first-child{
+  width:40px;height:40px;margin:0 auto;border-radius:50%;
+  border:2px solid rgba(198,255,0,0.12) !important;
+  border-top:2px solid var(--volt) !important;
+  animation:spin 0.75s linear infinite;
+}
+#spinner>div:last-child{
+  margin-top:12px;color:var(--muted);
+  font-family:var(--f-pixel);font-size:7px;letter-spacing:2px;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ============================================================
+   GAME PAGE
+============================================================ */
+#gamePage{width:100%;display:flex;flex-direction:column;align-items:center;}
+
+/* ── GLASS TERMINAL ── */
+.glass-terminal{
+  width:92%;max-width:420px;
+  margin:16px auto 12px;
+  padding:20px 22px;
+  background:rgba(13,16,24,0.85);
+  border:1px solid var(--border2);
+  border-radius:var(--r-xl);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(198,255,0,0.05) inset,
+    0 24px 48px rgba(0,0,0,0.5),
+    0 0 60px rgba(198,255,0,0.04);
+  position:relative;overflow:hidden;
+}
+
+/* Corner tick marks */
+.glass-terminal::before,.glass-terminal::after{
+  content:'';position:absolute;width:16px;height:16px;
+  border-color:var(--volt);border-style:solid;opacity:0.4;
+}
+.glass-terminal::before{top:0;left:0;border-width:1.5px 0 0 1.5px;border-radius:4px 0 0 0;}
+.glass-terminal::after{bottom:0;right:0;border-width:0 1.5px 1.5px 0;border-radius:0 0 4px 0;}
+
+.terminal-header{
+  text-align:center;
+  font-family:var(--f-pixel);font-size:7px;
+  color:var(--volt);letter-spacing:4px;
+  margin-bottom:18px;opacity:0.7;
+}
+
+.terminal-line{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--f-ui);font-size:13px;font-weight:600;
+  color:var(--dim);letter-spacing:0.5px;
+  margin-bottom:10px;
+}
+.terminal-line span{
+  font-family:var(--f-data);font-size:18px;font-weight:500;
+  color:var(--volt);letter-spacing:-0.5px;
+}
+
+/* Train bar */
+#trainBarContainer{
+  width:100%;height:3px;
+  background:rgba(255,255,255,0.04);
+  border-radius:var(--r-pill);overflow:hidden;
+  margin-top:4px;
+}
+#trainBar{
+  height:100%;width:100%;
+  background:linear-gradient(90deg,var(--volt),var(--ice));
+  border-radius:var(--r-pill);
+  transition:width 0.2s linear;
+  box-shadow:0 0 10px var(--volt);
+}
+
+/* Stats row */
+.stats-row{display:flex;gap:10px;margin-top:16px;}
+.stat{
+  flex:1;
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--border);
+  border-radius:var(--r-md);
+  padding:12px 10px;text-align:center;
+}
+.stat .label{
+  font-family:var(--f-pixel);font-size:6px;
+  color:var(--muted);letter-spacing:1.5px;display:block;
+}
+.stat .value{
+  font-family:var(--f-display);font-size:26px;font-weight:800;
+  color:var(--volt);display:block;margin-top:4px;letter-spacing:-1px;
+}
+
+/* Bonus bar */
+#bonusContainer{
+  width:100%;height:5px;
+  background:rgba(255,255,255,0.04);
+  border-radius:var(--r-pill);overflow:hidden;
+  margin-top:14px;
+}
+#bonusBar{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--gold),var(--coral));
+  border-radius:var(--r-pill);
+  transition:width 0.15s linear;
+  box-shadow:0 0 8px var(--gold);
+}
+#bonusBar.flash{animation:bonusFlash 0.4s ease-out;}
+@keyframes bonusFlash{
+  0%{box-shadow:0 0 0 rgba(255,184,0,0);}
+  50%{box-shadow:0 0 20px rgba(255,184,0,0.8);}
+  100%{box-shadow:0 0 0 rgba(255,184,0,0);}
+}
+
+/* ============================================================
+   TAP BUTTON — THE CENTREPIECE
+   A living, breathing orb. The pulse is heartbeat-like.
+============================================================ */
+#tapButton{
+  --gem:      var(--volt);
+  --glow:     rgba(198,255,0,0.45);
+  --shadow:   rgba(198,255,0,0.3);
+  --pulse:    2s;
+
+  position:relative;
+  width:148px;height:148px;
+  border-radius:50%;border:none;
+  background:
+    radial-gradient(circle at 32% 28%,rgba(255,255,255,0.95) 0%,var(--volt) 30%,#3A7A00 100%);
+  box-shadow:
+    0 0 0 10px rgba(198,255,0,0.06),
+    0 0 0 20px rgba(198,255,0,0.03),
+    0 20px 60px rgba(198,255,0,0.3),
+    0 8px 20px rgba(0,0,0,0.5),
+    inset 0 -8px 16px rgba(0,0,0,0.25),
+    inset 0 8px 16px rgba(255,255,255,0.3);
+  cursor:pointer;overflow:hidden;
+  transition:transform 0.07s var(--ease-snap),box-shadow 0.07s ease;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+  margin:10px auto 20px;
+  display:flex;align-items:center;justify-content:center;
+  animation:breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe{
+  0%,100%{box-shadow:0 0 0 10px rgba(198,255,0,0.06),0 0 0 20px rgba(198,255,0,0.03),0 20px 60px rgba(198,255,0,0.3),0 8px 20px rgba(0,0,0,0.5),inset 0 -8px 16px rgba(0,0,0,0.25),inset 0 8px 16px rgba(255,255,255,0.3);}
+  50%{box-shadow:0 0 0 14px rgba(198,255,0,0.09),0 0 0 28px rgba(198,255,0,0.04),0 24px 80px rgba(198,255,0,0.45),0 8px 20px rgba(0,0,0,0.5),inset 0 -8px 16px rgba(0,0,0,0.25),inset 0 8px 16px rgba(255,255,255,0.3);}
+}
+
+/* Rotating halo ring */
+#tapButton::before{
+  content:'';position:absolute;
+  width:172px;height:172px;
+  border-radius:50%;
+  border:1px solid transparent;
+  background:conic-gradient(from 0deg,transparent 70%,rgba(198,255,0,0.6) 100%) border-box;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;mask-composite:exclude;
+  animation:haloSpin 4s linear infinite;
+  pointer-events:none;
+}
+@keyframes haloSpin{to{transform:rotate(360deg);}}
+
+#tapButton .inner{
+  position:relative;z-index:2;
+  font-family:var(--f-display);font-size:30px;font-weight:800;
+  letter-spacing:3px;
+  color:#000;
+  text-shadow:0 2px 4px rgba(255,255,255,0.4);
+}
+
+#tapButton:active{
+  transform:scale(0.9) translateY(4px);
+  animation:none;
+  box-shadow:
+    0 0 0 6px rgba(198,255,0,0.1),
+    0 6px 20px rgba(198,255,0,0.2),
+    0 4px 8px rgba(0,0,0,0.5),
+    inset 0 -4px 8px rgba(0,0,0,0.25),
+    inset 0 4px 8px rgba(255,255,255,0.3);
+}
+
+/* Tap ripple */
+#tapButton .ripple{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,0.55) 0%,transparent 70%);
+  transform:scale(0);
+  animation:ripple 0.55s ease-out;
+  pointer-events:none;z-index:3;
+}
+@keyframes ripple{to{transform:scale(5);opacity:0;}}
+
+/* Particle burst on tap */
+#tapButton:active::after{
+  content:'';position:absolute;
+  inset:50%;width:8px;height:8px;margin:-4px;
+  background:var(--volt);border-radius:50%;
+  box-shadow:
+    0 0 10px 3px var(--volt),
+    22px -22px 0 -3px var(--volt),
+    -22px 22px 0 -3px var(--volt),
+    22px 22px 0 -3px var(--volt),
+    -22px -22px 0 -3px var(--volt);
+  animation:burst 0.45s ease-out forwards;
+}
+@keyframes burst{to{transform:translateY(-40px) scale(0.2);opacity:0;}}
+
+/* ============================================================
+   RED HOT MODE — ALL ORIGINAL KEYFRAMES PRESERVED
+============================================================ */
+#tapButton.red-hot{
+  --hot-core:#ff1a1a;--hot-glow:#ff0044;--lava:#ff6600;--hell:#880000;
+  position:relative;overflow:hidden;
+  animation:redHotFury 0.6s infinite alternate,heatWave 2.8s infinite ease-in-out;
+  background:radial-gradient(circle at 40% 30%,#ffffff 0%,var(--hot-core) 20%,var(--hell) 70%),
+    repeating-radial-gradient(circle at 60% 70%,transparent 0%,transparent 10%,rgba(255,80,0,0.4) 11%,transparent 12%);
+  box-shadow:0 0 60px 15px var(--hot-glow),0 0 100px 30px var(--lava),inset 0 0 40px #ff0033,inset 0 -10px 30px rgba(0,0,0,0.7) !important;
+  border:6px solid #ff0000 !important;
+  transform-origin:center;will-change:transform,box-shadow,filter;
+}
+#tapButton.red-hot::before{
+  content:"";position:absolute;inset:-50%;
+  background:radial-gradient(circle at 50% 20%,rgba(255,255,255,0.4) 0%,transparent 60%);
+  opacity:0.6;animation:lavaShine 3s infinite linear;filter:blur(12px);
+}
+@keyframes lavaShine{0%{transform:translate(-60%,-60%) rotate(0deg);}100%{transform:translate(60%,60%) rotate(360deg);}}
+@keyframes redHotFury{from{transform:scale(1) rotate(-1.5deg);}to{transform:scale(1.18) rotate(1.5deg);}}
+@keyframes heatWave{0%,100%{filter:brightness(1) saturate(1.4);}50%{filter:brightness(1.6) saturate(2.2);}}
+#tapButton.red-hot .inner{
+  color:#ffff00 !important;font-weight:900;letter-spacing:-1.5px;
+  text-shadow:0 0 20px #ffff00,0 0 40px #ff6600,0 0 60px #ff0000;
+  animation:textBurn 0.35s infinite alternate,flickerHell 0.12s infinite alternate;
+}
+@keyframes textBurn{from{transform:scale(1.05);opacity:0.85;}to{transform:scale(1.18);opacity:1;}}
+@keyframes flickerHell{0%,100%{opacity:1;}50%{opacity:0.7;}}
+#tapButton.red-punish{
+  animation:punishViolent 0.5s cubic-bezier(0.36,0.07,0.19,0.97),redFlash 0.4s ease-out;
+  filter:hue-rotate(10deg) brightness(1.8) contrast(1.4);transform:scale(1.1);
+}
+@keyframes punishViolent{
+  0%{transform:translate(0,0) rotate(0deg);}
+  10%,30%,50%,70%,90%{transform:translate(-12px,-6px) rotate(-4deg);}
+  20%,40%,60%,80%{transform:translate(12px,6px) rotate(4deg);}
+  100%{transform:translate(0,0) rotate(0deg);}
+}
+@keyframes redFlash{0%{background:#ff0000;}40%{background:#ff3300;}100%{background:transparent;}}
+#tapButton.red-hot::after{
+  content:"";position:absolute;width:100%;height:100%;
+  background:radial-gradient(circle at 20% 20%,#ffff00 0%,transparent 40%),
+    radial-gradient(circle at 80% 70%,#ff6600 0%,transparent 50%);
+  opacity:0.4;animation:sparks 1.2s infinite;pointer-events:none;
+}
+@keyframes sparks{0%,100%{opacity:0.3;transform:scale(1);}50%{opacity:0.8;transform:scale(1.15);}}
+
+/* ============================================================
+   CONFETTI
+============================================================ */
+.confetti-dot{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9999;opacity:1;}
+.confetti-rainbow{background:hsl(var(--h),80%,60%);}
+@keyframes rainbowFall{to{transform:translate(var(--dx),var(--dy)) rotate(720deg);opacity:0;}}
+.confetti-spark{background:#0ff;box-shadow:0 0 6px #0ff;}
+@keyframes sparkBurst{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0;}}
+.confetti-coin{background:#ff0;border-radius:0;width:8px;height:4px;}
+@keyframes coinFlip{to{transform:translate(var(--dx),var(--dy)) rotateY(720deg);opacity:0;}}
+.confetti-star{background:transparent;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid #ff0;}
+@keyframes starBoom{to{transform:translate(var(--dx),var(--dy)) rotate(360deg) scale(2);opacity:0;}}
+
+/* ============================================================
+   MODALS — BASE
+============================================================ */
+.modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.78);
+  backdrop-filter:blur(14px);
+  display:none;align-items:center;justify-content:center;
+  z-index:9000;
+}
+.modal{
+  width:92%;max-width:420px;
+  background:rgba(13,16,24,0.97);
+  border-radius:var(--r-xl);
+  border:1px solid var(--border2);
+  box-shadow:0 30px 80px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.03) inset;
+  color:var(--text);overflow:hidden;
+}
+.modal h3{margin:0 0 10px;color:var(--coral);font-size:16px;font-family:var(--f-pixel);}
+.modal .list{text-align:left;margin-top:12px;max-height:320px;overflow:auto;}
+.modal .list li{padding:8px 6px;border-bottom:1px solid var(--border);font-weight:600;}
+.hidden{display:none!important;}
+
+/* Modal inner padding helper */
+.m-body{padding:22px 20px;}
+.m-head{
+  padding:20px 22px 16px;
+  border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+  text-align:center;
+}
+.m-foot{
+  padding:16px 20px 22px;
+  background:rgba(0,0,0,0.25);
+  text-align:center;border-top:1px solid var(--border);
+}
+
+/* ============================================================
+   PLAY CONFIRM MODAL
+============================================================ */
+#playModal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.78);backdrop-filter:blur(14px);
+  z-index:2000;display:flex;justify-content:center;align-items:center;
+}
+#playModal>div{
+  background:rgba(13,16,24,0.97);color:var(--text);
+  padding:28px 24px;border-radius:var(--r-xl);
+  width:90%;max-width:320px;text-align:center;
+  border:1px solid var(--border2);
+  box-shadow:0 0 0 1px rgba(198,255,0,0.08) inset,0 30px 60px rgba(0,0,0,0.7);
+}
+#playModal h3{
+  font-family:var(--f-display);font-size:24px;font-weight:800;
+  letter-spacing:0.5px;color:var(--volt);margin-bottom:10px;
+}
+#playModal p{color:var(--dim);font-size:15px;line-height:1.6;}
+#playModal strong{color:var(--gold);font-weight:700;}
+#cancelPlay{
+  flex:1;padding:13px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border2);border-radius:var(--r-md);
+  color:var(--dim);font-weight:700;font-size:15px;letter-spacing:0.5px;
+  transition:all 0.2s ease;
+}
+#cancelPlay:active{background:rgba(255,255,255,0.08);}
+#confirmPlay{
+  flex:1;padding:13px;
+  background:var(--volt);
+  border-radius:var(--r-md);
+  color:var(--ink);font-weight:800;font-size:15px;letter-spacing:0.5px;
+  box-shadow:0 4px 20px rgba(198,255,0,0.3);
+  transition:all 0.15s var(--ease-snap);
+}
+#confirmPlay:active{transform:scale(0.95);}
+
+/* ============================================================
+   RESULT MODAL
+============================================================ */
+#resultModal .modal{
+  border:1px solid rgba(198,255,0,0.2);
+  box-shadow:0 0 40px rgba(198,255,0,0.1),0 30px 60px rgba(0,0,0,0.7);
+}
+#closeResult{
+  position:absolute;top:12px;right:14px;
+  font-size:18px;color:var(--muted);
+  transition:color 0.2s;
+}
+#closeResult:hover{color:var(--text);}
+#resultMessage{
+  margin-top:10px;font-size:16px;font-weight:600;
+  font-family:var(--f-ui);line-height:1.6;color:var(--text);
+}
+#playAgainBtn{
+  margin-top:18px;padding:13px 28px;
+  border-radius:var(--r-pill);
+  background:var(--volt);color:var(--ink);
+  font-weight:800;font-size:16px;letter-spacing:0.5px;
+  box-shadow:0 4px 20px rgba(198,255,0,0.3);
+  transition:all 0.15s var(--ease-snap);
+}
+#playAgainBtn:active{transform:scale(0.95);}
+
+/* ============================================================
+   BOTTOM BAR
+============================================================ */
+#bottomBar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:460px;
+  padding:12px 0 24px;
+  background:transparent;z-index:997;pointer-events:none;
+}
+#bottomBar>div{pointer-events:auto;}
+
+/* Profile card */
+.profile-card{
+  background:rgba(13,16,24,0.94);
+  border:1px solid var(--border2);
+  border-radius:var(--r-lg);
+  backdrop-filter:blur(24px);
+  width:92%;max-width:420px;
+  margin:0 auto 10px;
+  padding:14px 18px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(198,255,0,0.04) inset;
+}
+.profile-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--volt),var(--ice));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-display);font-size:16px;font-weight:800;
+  color:var(--ink);flex-shrink:0;
+}
+.profile-info{flex:1;min-width:0;}
+#profileName{
+  font-family:var(--f-display);font-size:16px;font-weight:800;
+  letter-spacing:0.5px;color:var(--volt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.profile-stats{display:flex;gap:16px;margin-top:4px;}
+.profile-stat{display:flex;align-items:center;gap:5px;}
+.profile-stat-label{
+  font-family:var(--f-pixel);font-size:6px;color:var(--muted);letter-spacing:1px;
+}
+.profile-stat-value{
+  font-family:var(--f-data);font-size:14px;font-weight:500;
+  color:var(--text);margin-left:2px;
+}
+
+/* Action bar */
+.action-bar{
+  display:flex;justify-content:center;gap:10px;
+  padding:10px 14px;
+  background:rgba(13,16,24,0.92);
+  border-radius:var(--r-lg);
+  border:1px solid var(--border2);
+  backdrop-filter:blur(24px);
+  width:88%;max-width:320px;
+  margin:0 auto;
+  box-shadow:0 -8px 30px rgba(0,0,0,0.4);
+}
+
+.tiny-action-btn{
+  width:48px;height:48px;
+  border-radius:var(--r-md);
+  border:1px solid var(--border2);
+  font-size:20px;
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s var(--ease-snap);
+  position:relative;overflow:hidden;
+}
+.tiny-action-btn::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.12),transparent 70%);
+  opacity:0;transition:opacity 0.15s;
+}
+.tiny-action-btn:active{transform:scale(0.88);}
+.tiny-action-btn:active::before{opacity:1;}
+/* Individual button accents */
+#leaderboardBtn{border-color:rgba(255,184,0,0.25);box-shadow:0 0 16px rgba(255,184,0,0.06);}
+#rulesBtn{border-color:rgba(255,77,106,0.25);box-shadow:0 0 16px rgba(255,77,106,0.06);}
+#starMarketBtn{border-color:rgba(0,245,160,0.25);box-shadow:0 0 16px rgba(0,245,160,0.06);}
+
+/* Game mode transitions */
+div[style*="max-width:320px"][style*="border-radius:24px"],
+.action-bar{
+  position:relative;transition:opacity 0.35s ease,transform 0.35s ease;pointer-events:auto;
+}
+body.game-mode div[style*="max-width:320px"][style*="border-radius:24px"],
+body.game-mode .action-bar{opacity:0;transform:translateY(50px);pointer-events:none;}
+body.start-mode div[style*="max-width:320px"][style*="border-radius:24px"],
+body.start-mode .action-bar{opacity:1;transform:translateY(0);}
+
+div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"],
+.profile-card{
+  position:relative;transition:opacity 0.4s ease,transform 0.4s ease;pointer-events:auto;
+}
+body.game-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"],
+body.game-mode .profile-card{opacity:0;transform:translateY(30px);pointer-events:none;}
+body.start-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"],
+body.start-mode .profile-card{opacity:1;transform:translateY(0);}
+
+body.start-mode,body.game-mode{
+  background:#000 no-repeat center center fixed;background-size:cover;
+  transition:background-image 0.6s ease-in-out;
+}
+body.start-mode::before{display:none;}
+
+/* ============================================================
+   LEADERBOARD MODAL
+============================================================ */
+#leaderboardModal .modal{
+  max-width:360px;max-height:88vh;
+  display:flex;flex-direction:column;
+  border:1px solid rgba(255,184,0,0.2);
+  box-shadow:0 0 60px rgba(255,184,0,0.12),0 30px 80px rgba(0,0,0,0.8);
+}
+
+/* Tabs */
+#leaderboardTabs{display:flex;gap:6px;margin-bottom:14px;}
+.lb-tab{
+  flex:1;padding:10px 0;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--muted);
+  font-family:var(--f-pixel);font-size:7px;
+  font-weight:600;letter-spacing:0.5px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  position:relative;overflow:hidden;
+  white-space:nowrap;
+}
+.lb-tab.active{
+  background:var(--gold) !important;color:var(--ink) !important;
+  border-color:var(--gold) !important;
+  box-shadow:0 4px 20px rgba(255,184,0,0.35) !important;
+}
+.lb-tab.active::before{
+  content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);
+  animation:shimmer 2.5s infinite;pointer-events:none;
+}
+@keyframes shimmer{0%{left:-100%;}100%{left:100%;}}
+
+/* Leaderboard rows */
+.lb-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;margin:6px 0;
+  border-radius:var(--r-md);
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--border);
+  transition:all 0.2s ease;
+  position:relative;overflow:hidden;
+}
+.lb-row:hover{transform:translateY(-1px);border-color:rgba(255,184,0,0.2);}
+.lb-row:nth-child(1){
+  background:linear-gradient(135deg,rgba(44,36,0,0.7),rgba(60,46,0,0.8));
+  border:1px solid rgba(255,184,0,0.4);
+  box-shadow:0 0 20px rgba(255,184,0,0.12);
+}
+.lb-row:nth-child(2){
+  background:linear-gradient(135deg,rgba(25,25,35,0.7),rgba(35,35,50,0.8));
+  border:1px solid rgba(192,192,192,0.25);
+}
+.lb-row:nth-child(3){
+  background:linear-gradient(135deg,rgba(35,20,10,0.7),rgba(50,28,12,0.8));
+  border:1px solid rgba(205,127,50,0.25);
+}
+.lb-row:nth-child(-n+3)::before{
+  content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);
+  animation:shimmer 4s infinite;pointer-events:none;
+}
+.lb-avatar{
+  width:40px;height:40px;border-radius:50%;object-fit:cover;
+  border:2px solid var(--muted);
+  transition:all 0.2s ease;flex-shrink:0;
+}
+.lb-row:nth-child(1) .lb-avatar{border-color:var(--gold);box-shadow:0 0 12px rgba(255,184,0,0.4);}
+.lb-row:nth-child(2) .lb-avatar{border-color:#C0C0C0;}
+.lb-row:nth-child(3) .lb-avatar{border-color:#CD7F32;}
+.lb-info{flex:1;display:flex;flex-direction:column;gap:2px;}
+.lb-name{font-size:14px;font-weight:700;color:var(--text);font-family:var(--f-ui);}
+.lb-score{font-size:12px;color:var(--volt);font-weight:600;font-family:var(--f-data);}
+
+/* Streak dots */
+.streak-day-mini{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-family:var(--f-pixel);font-size:7px;color:var(--mint);
+  font-weight:800;opacity:0.4;transition:all 0.4s;
+}
+.streak-dot{
+  width:12px;height:12px;border-radius:50%;
+  background:rgba(255,255,255,0.05);
+  border:1.5px solid var(--mint);
+  transition:all 0.5s;
+}
+.streak-dot.active{
+  background:var(--mint);box-shadow:0 0 14px var(--mint);
+  transform:scale(1.4);animation:streakPulse 1.5s infinite alternate;
+}
+.streak-day-mini.active{opacity:1;transform:translateY(-2px);}
+@keyframes streakPulse{from{box-shadow:0 0 8px var(--mint);}to{box-shadow:0 0 24px var(--mint);}}
+
+/* lb-tabs container */
+.lb-tabs{
+  display:flex;gap:6px;padding:6px;
+  background:rgba(255,255,255,0.03);
+  border-radius:var(--r-md);
+  margin:14px auto;width:fit-content;
+}
+
+/* Slider */
+.slider-wrapper{overflow:hidden;width:100%;position:relative;}
+.slider-track{display:flex;transition:transform 0.6s var(--ease-smooth);width:100%;}
+.leaderboard-slide{width:100%;flex-shrink:0;}
+
+/* ============================================================
+   RULES MODAL
+============================================================ */
+#rulesModal .modal{
+  max-width:360px;max-height:88vh;overflow:hidden;
+  display:flex;flex-direction:column;
+  border:1px solid rgba(255,77,106,0.2);
+  box-shadow:0 0 40px rgba(255,77,106,0.1),0 30px 80px rgba(0,0,0,0.8);
+}
+
+/* ============================================================
+   BID MODAL
+============================================================ */
+#bidModal .modal{
+  max-width:380px;max-height:90vh;overflow:hidden;
+  display:flex;flex-direction:column;
+  border:1px solid rgba(0,245,160,0.2);
+  box-shadow:0 0 40px rgba(0,245,160,0.1),0 30px 80px rgba(0,0,0,0.8);
+}
+
+/* ============================================================
+   CONFIRM BID
+============================================================ */
+#confirmBidModal .modal{
+  max-width:340px;
+  border:1px solid rgba(255,77,106,0.25);
+  box-shadow:0 0 40px rgba(255,77,106,0.1);
+}
+
+/* ============================================================
+   ALERT MODALS
+============================================================ */
+#niceAlert .modal,#realAlert .modal{
+  border:1px solid rgba(198,255,0,0.25);
+  box-shadow:0 0 40px rgba(198,255,0,0.1),0 30px 80px rgba(0,0,0,0.8);
+}
+#realAlert .modal{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  animation:realAlertPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes realAlertPop{
+  0%{transform:translate(-50%,-50%) scale(0.3);opacity:0;}
+  70%{transform:translate(-50%,-50%) scale(1.05);}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:1;}
+}
+#niceAlertBtn,#realAlertBtn{
+  padding:13px 44px;
+  background:var(--volt);color:var(--ink);
+  border:none;border-radius:var(--r-pill);
+  font-weight:800;font-size:15px;letter-spacing:0.5px;
+  box-shadow:0 4px 20px rgba(198,255,0,0.3);
+  transition:all 0.15s var(--ease-snap);
+}
+#niceAlertBtn:active,#realAlertBtn:active{transform:scale(0.95);}
+
+/* ============================================================
+   STAR MARKET MODAL
+============================================================ */
+#starMarketModal .modal{
+  max-width:380px;
+  border:1px solid rgba(0,245,160,0.2);
+  box-shadow:0 0 40px rgba(0,245,160,0.08),0 30px 80px rgba(0,0,0,0.8);
+}
+
+/* sm- component classes */
+.sm-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.sm-modal{width:92%;max-width:420px;max-height:92vh;background:rgba(13,16,24,0.97);border-radius:var(--r-xl);border:1px solid rgba(255,184,0,0.2);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.8);display:flex;flex-direction:column;color:var(--text);}
+.sm-header{padding:20px;text-align:center;background:linear-gradient(135deg,var(--gold),#ffaa00);color:#000;font-weight:900;font-size:22px;letter-spacing:1px;position:relative;}
+.sm-close{position:absolute;top:14px;right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:24px;font-weight:bold;cursor:pointer;}
+.sm-tabs{display:flex;background:rgba(255,255,255,0.05);}
+.sm-tab-btn{flex:1;padding:16px;background:none;border:none;color:var(--dim);font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.sm-tab-btn.sm-active{background:var(--gold);color:#000;font-weight:800;}
+.sm-content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.sm-tab-content{display:none;flex-direction:column;height:100%;}
+.sm-tab-content.sm-active{display:flex;}
+.sm-scroll{flex:1;overflow-y:auto;padding:0 20px 20px;scrollbar-width:thin;scrollbar-color:var(--gold) #111;}
+.sm-scroll::-webkit-scrollbar{width:5px;}
+.sm-scroll::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px;}
+.sm-listing{background:rgba(255,255,255,0.04);border:1px solid rgba(255,184,0,0.2);border-radius:var(--r-lg);padding:18px;margin-top:16px;display:flex;justify-content:space-between;align-items:center;}
+.sm-listing strong{font-size:24px;color:var(--gold);font-weight:900;}
+.sm-listing .seller{font-size:15px;font-weight:700;color:var(--mint);margin-top:6px;}
+.sm-buy-btn,.sm-cancel-btn{padding:12px 22px;border-radius:var(--r-md);border:none;font-weight:800;font-size:15px;cursor:pointer;}
+.sm-buy-btn{background:var(--gold);color:#000;}
+.sm-cancel-btn{background:var(--coral);color:white;}
+.sm-sell-form{background:rgba(255,255,255,0.04);padding:20px;border-radius:var(--r-lg);margin:20px;border:1px solid rgba(255,184,0,0.15);}
+.sm-sell-form input{width:100%;padding:15px;margin:10px 0;background:rgba(0,0,0,0.4);border:1px solid rgba(255,184,0,0.2);border-radius:var(--r-md);color:var(--text);font-size:16px;}
+.sm-btn-primary{width:100%;padding:17px;margin-top:14px;background:var(--gold);color:#000;border:none;border-radius:var(--r-lg);font-size:18px;font-weight:900;cursor:pointer;}
+.sm-balance{font-size:17px;text-align:center;margin:0 0 18px;}
+.sm-section-title{margin:28px 20px 10px;color:var(--gold);font-size:18px;font-weight:700;}
+.sm-empty{text-align:center;padding:70px 20px;opacity:0.5;font-size:17px;}
+
+/* ============================================================
+   WITHDRAW MODALS
+============================================================ */
+#withdrawConfirmModal .modal{
+  max-width:340px;
+  border:1px solid rgba(0,245,160,0.2);
+  box-shadow:0 0 40px rgba(0,245,160,0.08);
+}
+#fastTrackConfirmModal .modal{
+  max-width:320px;
+  border:1px solid rgba(255,184,0,0.25);
+  box-shadow:0 0 40px rgba(255,184,0,0.1);
+}
+
+/* ============================================================
+   WITHDRAW SUCCESS
+============================================================ */
+#withdrawSuccessOverlay{z-index:9999999;background:rgba(0,0,0,0.97);}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+@keyframes amountPulse{from{transform:scale(1);}to{transform:scale(1.05);}}
+
+/* ============================================================
+   BUTTONS — SYSTEM WIDE
+============================================================ */
+.btn-primary{
+  padding:14px 36px;border-radius:var(--r-pill);
+  background:var(--volt);color:var(--ink);
+  font-weight:800;font-size:16px;letter-spacing:0.5px;
+  box-shadow:0 4px 20px rgba(198,255,0,0.25);
+  transition:all 0.15s var(--ease-snap);
+}
+.btn-primary:active{transform:scale(0.95);}
+.btn-secondary{
+  padding:13px 36px;border-radius:var(--r-pill);
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border2);
+  color:var(--dim);font-weight:700;font-size:15px;
+  transition:all 0.15s ease;
+}
+
+/* Spinner inside button */
+.btn-spinner{
+  border:2px solid rgba(0,0,0,0.1);border-top:2px solid #fff;
+  border-radius:50%;width:16px;height:16px;
+  animation:spin 0.7s linear infinite;
+  display:inline-block;vertical-align:middle;margin-right:6px;
+}
+
+/* ============================================================
+   MISC
+============================================================ */
+.shake{animation:shake 0.1s ease-in-out;}
+@keyframes shake{0%{transform:translate(0,0);}25%{transform:translate(2px,0);}50%{transform:translate(-2px,0);}75%{transform:translate(2px,0);}100%{transform:translate(0,0);}}
+footer{min-height:100vh;}
+#appWrapper{padding-bottom:100px;}
+#endGameModal{opacity:1;transition:opacity 0.4s ease-out;}
+@keyframes pulse{0%,100%{opacity:0.9;}50%{opacity:1;}}
+@keyframes pulseGlow{0%,100%{text-shadow:0 0 40px var(--gold);}50%{text-shadow:0 0 80px var(--gold),0 0 120px #FF8C00;}}
+</style>
+</head>
+<body>
+
+<div id="appWrapper">
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════ -->
+<div id="gameHeader">
+  <div id="welcomeText">WELCOME TO</div>
+  <div id="scrambleText">TAP MASTER</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LIVE BANNER
+═══════════════════════════════════════════════ -->
+<div id="bannerPage" style="background:rgba(13,16,24,0.92);padding:0;
+  border:1px solid rgba(198,255,0,0.15);border-left:3px solid #C6FF00;
+  box-shadow:0 0 20px rgba(198,255,0,0.06);overflow:hidden;
+  margin:20px auto 16px;max-width:92%;border-radius:12px;display:flex;align-items:center;">
+  <div id="liveBannerText" style="display:inline-block;white-space:nowrap;
+    font-size:11.5px;font-weight:600;letter-spacing:0.3px;padding:10px 0;
+    animation:marquee 180s linear infinite;min-width:300%;">
+    <span style="color:#C6FF00;">LIVE • ₦4.82M POT</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FF4D6A;font-weight:800;">1ST WINS ₦1.9M</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#C6FF00;">Trojan IS EATING • 5,252 TAPS</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FFB800;">Jennifer #2 CHASING HARD</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#00D4FF;">₦5.4M PAID OUT THIS WEEK</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FF4D6A;">BID ROYALE PEAKED • 11 MINS AGO</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FFB800;">TOP 30 CASHING OUT DAILY</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#C6FF00;">YOU'RE ~1,200 TAPS FROM TOP-30 • MOVE!</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FF4D6A;">RESET IN 6HRS • WAR DON START</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#C6FF00;">LIVE • ₦4.82M POT</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FF4D6A;font-weight:800;">1ST WINS ₦1.9M</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#C6FF00;">Trojan IS EATING • 5,252 TAPS</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FFB800;">Jennifer #2 CHASING HARD</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#00D4FF;">₦5.4M PAID OUT THIS WEEK</span><span style="color:#2A2D38;"> &nbsp;•&nbsp; </span>
+    <span style="color:#FF4D6A;">RESET IN 6HRS • WAR DON START</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     START PAGE
+═══════════════════════════════════════════════ -->
+<div id="startPage" style="width:100%;display:flex;flex-direction:column;align-items:center;margin-top:16px;">
+  <button id="startBtn">PLAY</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PLAY CONFIRM MODAL
+═══════════════════════════════════════════════ -->
+<div id="playModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.78);backdrop-filter:blur(14px);z-index:2000;
+  justify-content:center;align-items:center;display:flex;">
+  <div style="background:rgba(13,16,24,0.97);color:#E8EAF0;padding:28px 24px;
+    border-radius:20px;width:90%;max-width:320px;text-align:center;
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:0 0 0 1px rgba(198,255,0,0.06) inset,0 30px 60px rgba(0,0,0,0.7);">
+    <h3 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+      color:#C6FF00;margin-bottom:10px;letter-spacing:0.5px;">Confirm Play</h3>
+    <p style="color:#6B7385;font-size:14px;line-height:1.6;font-family:'Barlow Condensed',sans-serif;font-size:15px;">
+      Play Tap Master for <strong style="color:#FFB800;font-weight:700;">50 STRZ ⭐️</strong>?
+    </p>
+    <div style="display:flex;gap:10px;margin-top:22px;">
+      <button id="cancelPlay" style="flex:1;padding:13px;background:rgba(255,255,255,0.05);
+        border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#6B7385;
+        font-weight:700;font-size:15px;font-family:'Barlow Condensed',sans-serif;
+        letter-spacing:0.5px;transition:all 0.2s;">Cancel</button>
+      <button id="confirmPlay" style="flex:1;padding:13px;background:#C6FF00;
+        border-radius:12px;color:#080A0F;font-weight:800;font-size:15px;
+        font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;
+        box-shadow:0 4px 20px rgba(198,255,0,0.3);transition:all 0.15s;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SPINNER
+═══════════════════════════════════════════════ -->
+<div id="spinner" class="hidden" style="margin-top:32px;text-align:center;">
+  <div style="width:40px;height:40px;border-radius:50%;
+    border:2px solid rgba(198,255,0,0.1);
+    border-top:2px solid #C6FF00;
+    animation:spin 0.75s linear infinite;margin:0 auto;"></div>
+  <div style="margin-top:14px;color:#3D4251;font-family:'Press Start 2P',cursive;
+    font-size:7px;letter-spacing:2px;">LOADING…</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     GAME PAGE
+═══════════════════════════════════════════════ -->
+<div id="gamePage" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+
+  <!-- Glass Terminal -->
+  <div id="tapTerminal" class="glass-terminal" aria-live="polite">
+    <div class="terminal-header">── TAP TERMINAL ──</div>
+
+    <div class="terminal-line">
+      <span style="color:#3D4251;">⏱ TIME</span>
+      <div><span id="timer">90</span> <span style="font-family:'DM Mono',monospace;font-size:12px;color:#3D4251;">SEC</span></div>
+    </div>
+    <div class="terminal-line">
+      <span style="color:#3D4251;">✋ TAPS</span>
+      <div><span id="tapCount">0</span></div>
+    </div>
+    <div class="terminal-line">
+      <span style="color:#3D4251;">💰 EARNINGS</span>
+      <div><span id="earnings">0.00</span></div>
+    </div>
+
+    <div id="trainBarContainer" style="margin-top:8px;">
+      <div id="trainBar" style="width:100%;"></div>
+    </div>
+
+    <div class="stats-row" style="margin-top:16px;">
+      <div class="stat">
+        <span class="label">TAP LVL</span>
+        <span class="value" id="bonusLevelVal">—</span>
+      </div>
+      <div class="stat">
+        <span class="label">SPEED</span>
+        <span class="value" id="speedVal">—</span>
+      </div>
+    </div>
+
+    <div id="bonusContainer" style="margin-top:14px;">
+      <div id="bonusBar"></div>
+    </div>
+  </div>
+
+  <!-- TAP BUTTON -->
+  <button id="tapButton" aria-label="Tap" title="Tap fast!">
+    <span class="inner">TAP</span>
+    <div class="ripple"></div>
+  </button>
+
+  <!-- Result Modal -->
+  <div id="resultModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
+    <div class="modal" style="padding:24px 22px;max-width:360px;text-align:center;position:relative;
+      border:1px solid rgba(198,255,0,0.15);
+      box-shadow:0 0 40px rgba(198,255,0,0.08),0 30px 60px rgba(0,0,0,0.7);">
+      <button id="closeResult" style="position:absolute;top:12px;right:14px;
+        font-size:18px;color:#3D4251;transition:color 0.2s;">✖</button>
+      <div id="resultMessage" style="margin-top:10px;font-size:16px;font-weight:600;
+        line-height:1.6;color:#E8EAF0;font-family:'Barlow Condensed',sans-serif;"></div>
+      <button id="playAgainBtn" style="margin-top:20px;padding:14px 32px;
+        border-radius:999px;background:#C6FF00;color:#080A0F;
+        font-weight:800;font-size:16px;letter-spacing:0.5px;
+        box-shadow:0 4px 20px rgba(198,255,0,0.3);
+        transition:all 0.15s;font-family:'Barlow Condensed',sans-serif;">Play Again</button>
+    </div>
+  </div>
+
+</div><!-- /gamePage -->
+
+<!-- ═══════════════════════════════════════════════
+     BOTTOM BAR
+═══════════════════════════════════════════════ -->
+<div id="bottomBar" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:460px;padding:10px 0 24px;background:transparent;
+  z-index:997;pointer-events:none;">
+  <div style="pointer-events:auto;">
+
+    <!-- Profile Card -->
+    <div style="background:rgba(13,16,24,0.94);padding:13px 18px;border-radius:16px;
+      border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(24px);
+      width:92%;max-width:420px;margin:0 auto 10px;
+      display:flex;align-items:center;gap:14px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(198,255,0,0.04) inset;">
+      <div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;
+        background:linear-gradient(135deg,#C6FF00,#00D4FF);
+        display:flex;align-items:center;justify-content:center;
+        font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#080A0F;">G</div>
+      <div style="flex:1;min-width:0;">
+        <div id="profileName" style="font-family:'Syne',sans-serif;font-size:15px;
+          font-weight:800;letter-spacing:0.5px;color:#C6FF00;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">GUEST 0000</div>
+        <div style="display:flex;gap:16px;margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span style="font-family:'Press Start 2P',cursive;font-size:6px;color:#3D4251;letter-spacing:1px;">STARS</span>
+            <span id="starCount" style="font-family:'DM Mono',monospace;font-size:13px;color:#E8EAF0;">50</span>
+            <span style="font-size:12px;">⭐</span>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.06);"></div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span style="font-family:'Press Start 2P',cursive;font-size:6px;color:#3D4251;letter-spacing:1px;">CASH</span>
+            <span id="cashCount" style="font-family:'DM Mono',monospace;font-size:13px;color:#C6FF00;">₦0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div style="display:flex;justify-content:center;gap:10px;padding:10px 14px;
+      background:rgba(13,16,24,0.92);border-radius:16px;
+      border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(24px);
+      width:88%;max-width:320px;margin:0 auto;
+      box-shadow:0 -8px 30px rgba(0,0,0,0.4);">
+      <button id="leaderboardBtn" class="tiny-action-btn" data-title="Leaderboard">🏆</button>
+      <button id="rulesBtn"       class="tiny-action-btn" data-title="Game Rules">🏁</button>
+      <button id="starMarketBtn"  class="tiny-action-btn" data-title="Star Market">🏪</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LEADERBOARD MODAL
+═══════════════════════════════════════════════ -->
+<div id="leaderboardModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:88%;max-width:360px;max-height:88vh;
+    display:flex;flex-direction:column;
+    border:1px solid rgba(255,184,0,0.2);
+    box-shadow:0 0 60px rgba(255,184,0,0.1),0 30px 80px rgba(0,0,0,0.8);">
+
+    <div class="m-head" style="border-bottom:1px solid rgba(255,184,0,0.12);
+      background:rgba(255,184,0,0.03);">
+      <h3 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+        color:#FFB800;letter-spacing:1px;margin:0;">LEADERBOARD</h3>
+      <p style="margin:6px 0 0;font-size:13px;color:#6B7385;font-weight:600;">
+        Only the fastest survive
+      </p>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:16px 16px 10px;display:flex;flex-direction:column;">
+
+      <!-- Tabs -->
+      <div id="leaderboardTabs" style="display:flex;gap:6px;margin-bottom:14px;">
+        <button class="lb-tab active" data-period="weekly"
+          style="flex:1;padding:10px 0;border-radius:8px;
+          border:1px solid rgba(255,184,0,0.4);
+          background:#FFB800;color:#080A0F;font-weight:800;
+          font-family:'Press Start 2P',cursive;font-size:7px;cursor:pointer;
+          box-shadow:0 4px 16px rgba(255,184,0,0.3);">THIS WEEK</button>
+        <button class="lb-tab" data-period="daily"
+          style="flex:1;padding:10px 0;border-radius:8px;
+          border:1px solid rgba(255,255,255,0.06);
+          background:rgba(255,255,255,0.03);color:#3D4251;font-weight:700;
+          font-family:'Press Start 2P',cursive;font-size:7px;cursor:pointer;">TODAY</button>
+        <button class="lb-tab" data-period="monthly"
+          style="flex:1;padding:10px 0;border-radius:8px;
+          border:1px solid rgba(255,255,255,0.06);
+          background:rgba(255,255,255,0.03);color:#3D4251;font-weight:700;
+          font-family:'Press Start 2P',cursive;font-size:7px;cursor:pointer;">THIS MONTH</button>
+      </div>
+
+      <!-- Timer -->
+      <div id="dailyTimer" style="text-align:center;font-size:12px;font-weight:700;
+        color:#FF4D6A;margin:8px 0;font-family:'DM Mono',monospace;">
+        Reset in: <span id="dailyTimerValue">23:59:59</span>
+      </div>
+
+      <!-- Image Slider -->
+      <div id="leaderboardImageSlider" class="leaderboardImageSlider"
+        style="position:relative;width:100%;height:220px;flex-shrink:0;
+        border-radius:14px;margin-bottom:14px;overflow:hidden;
+        box-shadow:0 0 20px rgba(255,184,0,0.15);
+        border:1px solid rgba(255,184,0,0.15);">
+        <div class="slider-track" style="display:flex;width:100%;height:100%;transition:transform 0.6s ease;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+          <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+            class="leaderboard-slide" style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+        </div>
+      </div>
+
+      <p id="leaderboardDescription" style="font-size:13px;color:#6B7385;line-height:1.5;
+        margin:8px 0;text-align:center;font-family:'Barlow Condensed',sans-serif;">
+        Checkout today's top tappers who dominate the leaderboard.
+      </p>
+
+      <!-- Streak Bar -->
+      <div id="weeklyStreakBar" style="margin:14px 0 8px;padding:14px 16px;
+        background:rgba(0,245,160,0.05);border:1px solid rgba(0,245,160,0.2);
+        border-radius:16px;text-align:center;">
+        <div style="font-family:'Press Start 2P',cursive;font-size:7px;
+          color:#00F5A0;letter-spacing:2px;text-shadow:0 0 8px rgba(0,245,160,0.5);">
+          WEEKLY STREAK</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+          color:#00F5A0;margin:6px 0;letter-spacing:1px;">
+          <span id="streakDayCount">0</span>/7 DAYS</div>
+        <div style="display:flex;justify-content:space-between;gap:4px;margin:10px 0;">
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">SUN</span></div>
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">MON</span></div>
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">TUE</span></div>
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">WED</span></div>
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">THU</span></div>
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">FRI</span></div>
+          <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">SAT</span></div>
+        </div>
+        <button id="claimStreakRewardBtn" style="margin-top:10px;width:100%;padding:10px 0;
+          border:1px solid rgba(255,255,255,0.08);border-radius:10px;
+          background:rgba(255,255,255,0.03);color:#3D4251;
+          font-weight:900;font-size:12px;opacity:0.4;pointer-events:none;
+          font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">CLAIM 350 STRZ</button>
+      </div>
+
+      <!-- My Taps Today -->
+      <div id="myTapsToday" style="background:rgba(255,184,0,0.06);
+        border:1px solid rgba(255,184,0,0.2);border-radius:14px;
+        padding:12px 14px;margin:14px 0 6px;
+        display:flex;align-items:center;gap:10px;">
+        <div style="flex-shrink:0;font-size:24px;opacity:0.8;">✨</div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-family:'Press Start 2P',cursive;font-size:7px;
+            color:#FF8C00;letter-spacing:1px;">YOUR TAPS</div>
+          <div style="margin-top:5px;font-family:'Syne',sans-serif;font-size:18px;
+            font-weight:800;color:#FFB800;display:inline-flex;align-items:baseline;
+            gap:8px;flex-wrap:nowrap;justify-content:center;">
+            <span id="myDailyTapsValue">0</span>
+            <span style="font-size:12px;color:#6B7385;align-self:center;">taps</span>
+            <span id="myRankFull" style="font-size:18px;font-weight:800;line-height:1;"></span>
+            <span style="font-size:12px;color:#6B7385;align-self:center;">position</span>
+          </div>
+        </div>
+        <div style="flex-shrink:0;font-size:22px;opacity:0.5;">✨</div>
+      </div>
+
+      <!-- Leaderboard list -->
+      <ol id="leaderboardList" style="list-style:none;padding:0;margin:12px 0 8px;"></ol>
+      <ol id="leaderboardList" style="list-style:none;padding:0;margin:14px 0 10px;"></ol>
+
+      <div style="text-align:center;font-size:11px;color:#2A2D38;
+        font-style:italic;padding-bottom:10px;font-family:'Barlow Condensed',sans-serif;">
+        自分の雰囲気を自分のものにしよう
+      </div>
+    </div>
+
+    <div class="m-foot">
+      <button id="closeLeaderboard" style="padding:14px 40px;border:none;border-radius:999px;
+        background:linear-gradient(90deg,#FFB800,#FF8C00);color:#080A0F;
+        font-weight:800;font-size:15px;cursor:pointer;min-width:180px;
+        font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;
+        box-shadow:0 6px 24px rgba(255,184,0,0.3);">CLOSE THE RANKS</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     RULES MODAL
+═══════════════════════════════════════════════ -->
+<div id="rulesModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:88%;max-width:360px;max-height:88vh;overflow:hidden;
+    display:flex;flex-direction:column;
+    border:1px solid rgba(255,77,106,0.2);
+    box-shadow:0 0 40px rgba(255,77,106,0.08),0 30px 80px rgba(0,0,0,0.8);">
+
+    <div class="m-head" style="border-bottom:1px solid rgba(255,77,106,0.12);
+      background:rgba(255,77,106,0.03);">
+      <h3 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+        color:#FF4D6A;letter-spacing:1px;margin:0;">TAPMASTER</h3>
+      <p style="margin:6px 0 0;font-size:13px;color:#00F5A0;font-weight:600;">
+        Tap the screen, Win real life.</p>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:18px 20px;
+      font-family:'Barlow Condensed',sans-serif;font-size:15px;line-height:1.7;color:#9CA3AF;">
+
+      <div style="background:rgba(255,77,106,0.07);padding:14px 16px;border-radius:12px;
+        margin-bottom:12px;border:1px solid rgba(255,77,106,0.12);">
+        <strong style="color:#FF4D6A;">1. Entry</strong><br>No STRZ ⭐️ = No entry.
+      </div>
+      <div style="background:rgba(0,245,160,0.07);padding:14px 16px;border-radius:12px;
+        margin-bottom:12px;border:1px solid rgba(0,245,160,0.12);">
+        <strong style="color:#00F5A0;">2. Gameplay</strong><br>
+        90 seconds. Tap fast! <strong style="color:#E8EAF0;">THE TAP BUTTON</strong> may heat up.<br>
+        <strong style="color:#FF4D6A;">DO NOT</strong> tap while it's blazing red — you'll lose TAPS.<br>
+        Master the pause-cool rhythm.
+      </div>
+      <div style="background:rgba(255,184,0,0.07);padding:14px 16px;border-radius:12px;
+        margin-bottom:12px;border:1px solid rgba(255,184,0,0.12);">
+        <strong style="color:#FFB800;">3. Rewards</strong><br>
+        • Top 100 tappers daily get <strong style="color:#E8EAF0;">GUARANTEED CASH</strong><br>
+        • Train reflexes, WIN real rewards.<br>
+        <span style="font-size:12px;color:#3D4251;">Winners responsible for personal taxes.</span>
+      </div>
+      <div style="background:rgba(255,77,106,0.07);padding:14px 16px;border-radius:12px;
+        border:1px solid rgba(255,77,106,0.2);">
+        <strong style="color:#FF4D6A;">4. THE LAW</strong><br>
+        Skill-based promotional contest. No bots. Transparent payouts.<br>
+        We detect <strong style="color:#E8EAF0;">EVERYTHING</strong>.<br>
+        Cheaters = <strong style="color:#FF4D6A;">INSTANT BAN!</strong><br><br>
+        <strong style="color:#00F5A0;">Play clean. Tap like a Master.</strong>
+      </div>
+      <div style="margin-top:18px;text-align:center;font-size:12px;color:#2A2D38;font-style:italic;">
+        自分の雰囲気を自分のものにしよう</div>
+    </div>
+
+    <div class="m-foot">
+      <button id="closeRulesBtn" style="padding:14px 36px;border:none;border-radius:999px;
+        background:linear-gradient(90deg,#FF4D6A,#FF8C00);color:#fff;
+        font-weight:800;font-size:15px;cursor:pointer;min-width:180px;
+        font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">I'M READY</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     BID ROYALE MODAL
+═══════════════════════════════════════════════ -->
+<div id="bidModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:90%;max-width:380px;max-height:90vh;overflow:hidden;
+    display:flex;flex-direction:column;
+    border:1px solid rgba(0,245,160,0.2);
+    box-shadow:0 0 40px rgba(0,245,160,0.08),0 30px 80px rgba(0,0,0,0.8);">
+
+    <div class="m-head" style="border-bottom:1px solid rgba(0,245,160,0.12);
+      background:rgba(0,245,160,0.03);">
+      <h3 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+        color:#00F5A0;letter-spacing:1px;margin:0;">JOIN BID ROYALE</h3>
+      <div style="margin-top:6px;font-size:13px;color:#00F5A0;font-weight:600;
+        font-family:'Barlow Condensed',sans-serif;">Starts 00:33 • Ends 23:59 Daily</div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:18px 20px;
+      font-family:'Barlow Condensed',sans-serif;color:#9CA3AF;">
+
+      <div style="background:rgba(0,245,160,0.06);padding:18px;border-radius:14px;
+        margin-bottom:16px;text-align:center;border:1px solid rgba(0,245,160,0.12);">
+        <div style="font-size:12px;color:#3D4251;font-weight:600;letter-spacing:1px;">TODAY'S PRIZE</div>
+        <div id="livePrize" style="font-family:'Syne',sans-serif;font-size:40px;
+          font-weight:800;color:#00F5A0;margin:6px 0;letter-spacing:-1px;">₦50,000</div>
+        <div style="font-size:12px;color:#00F5A0;opacity:0.7;">Tap your way to bigger funds</div>
+      </div>
+
+      <div style="background:rgba(255,184,0,0.06);padding:16px;border-radius:14px;
+        margin-bottom:16px;border:1px solid rgba(255,184,0,0.12);">
+        <div style="display:flex;justify-content:space-between;color:#FFB800;font-weight:700;font-size:15px;">
+          <span>Entry Fee:</span><span>50 STRZ ⭐️</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#FFB800;font-weight:700;font-size:15px;margin-top:8px;">
+          <span>Joined In:</span><span id="livePlayers">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#FFB800;font-weight:700;font-size:15px;margin-top:8px;">
+          <span>Royale Ends:</span>
+          <span id="countdownTimer" style="color:#00F5A0;font-family:'DM Mono',monospace;">--:--:--</span>
+        </div>
+      </div>
+
+      <div style="background:rgba(138,43,226,0.07);padding:16px;border-radius:14px;
+        border:1px solid rgba(138,43,226,0.2);">
+        <h4 style="margin:0 0 14px;text-align:center;color:#C084FC;font-weight:800;
+          font-family:'Press Start 2P',cursive;font-size:8px;letter-spacing:1px;">LIVE BID BOARD</h4>
+        <div id="bidLeaderboard" style="max-height:200px;overflow-y:auto;font-size:14px;">
+          <div style="text-align:center;color:#3D4251;padding:24px 0;">
+            Bid opens at 00:33<br>Join and start tapping!
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;background:rgba(255,77,106,0.07);
+        padding:16px;border-radius:14px;text-align:center;
+        border:1px solid rgba(255,77,106,0.12);">
+        <strong style="color:#FF4D6A;font-family:'Press Start 2P',cursive;font-size:8px;">TOP 5 SPLIT THE POT</strong><br><br>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;color:#9CA3AF;font-weight:600;">
+          <div>1st → 40%</div><div>4th → 15%</div>
+          <div>2nd → 25%</div><div>5th → 10%</div>
+          <div>3rd → 20%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="m-foot" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+      <button id="confirmBidBtn" style="padding:15px 50px;border:none;border-radius:999px;
+        background:linear-gradient(90deg,#00F5A0,#00C853);color:#080A0F;
+        font-weight:900;font-size:17px;cursor:pointer;min-width:200px;
+        font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;
+        box-shadow:0 4px 20px rgba(0,245,160,0.3);">ENTER</button>
+      <button id="closeBidBtn" style="color:#3D4251;background:none;border:none;
+        font-size:13px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;">maybe tomorrow</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     CONFIRM BID MODAL
+═══════════════════════════════════════════════ -->
+<div id="confirmBidModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:88%;max-width:340px;
+    border:1px solid rgba(255,77,106,0.25);
+    box-shadow:0 0 40px rgba(255,77,106,0.1),0 30px 80px rgba(0,0,0,0.8);">
+    <div style="padding:24px 20px;text-align:center;">
+      <h3 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+        color:#FF4D6A;margin:0 0 12px;letter-spacing:0.5px;">LOCK IN BID?</h3>
+      <p style="color:#6B7385;font-size:14px;line-height:1.6;
+        font-family:'Barlow Condensed',sans-serif;margin:0 0 20px;">
+        This deducts <strong style="color:#E8EAF0;">50 STRZ ⭐️</strong> permanently.<br>
+        <span style="color:#FF4D6A;font-size:13px;">No refund. No escape.</span>
+      </p>
+      <div style="display:flex;gap:10px;">
+        <button id="finalConfirmBtn" style="flex:1;padding:13px;
+          background:#FF4D6A;color:#fff;border:none;border-radius:12px;
+          font-weight:900;font-size:15px;
+          font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;
+          box-shadow:0 4px 16px rgba(255,77,106,0.3);
+          transition:all 0.15s;">Yeah!</button>
+        <button id="finalCancelBtn" style="flex:1;padding:13px;
+          background:rgba(255,255,255,0.04);color:#6B7385;
+          border:1px solid rgba(255,255,255,0.08);border-radius:12px;
+          font-weight:600;font-size:15px;
+          font-family:'Barlow Condensed',sans-serif;transition:all 0.15s;">Not Ready</button>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:#2A2D38;font-style:italic;
+        font-family:'Barlow Condensed',sans-serif;">What's tapping yo!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     NICE ALERT
+═══════════════════════════════════════════════ -->
+<div id="niceAlert" class="modal-backdrop" style="display:none;z-index:9999;">
+  <div class="modal" style="width:88%;max-width:340px;
+    border:1px solid rgba(198,255,0,0.2);
+    box-shadow:0 0 40px rgba(198,255,0,0.08),0 30px 80px rgba(0,0,0,0.8);">
+    <div style="padding:28px 22px;text-align:center;">
+      <p id="niceAlertMessage" style="margin:0 0 22px;color:#9CA3AF;font-size:15px;
+        line-height:1.6;font-family:'Barlow Condensed',sans-serif;">Message</p>
+      <button id="niceAlertBtn" style="padding:13px 44px;background:#C6FF00;color:#080A0F;
+        border:none;border-radius:999px;font-weight:800;font-size:15px;
+        font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;
+        box-shadow:0 4px 20px rgba(198,255,0,0.3);transition:all 0.15s;">OKAY</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STAR MARKET / BANK MODAL
+═══════════════════════════════════════════════ -->
+<div id="starMarketModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:92%;max-width:380px;
+    border:1px solid rgba(0,245,160,0.2);
+    box-shadow:0 0 40px rgba(0,245,160,0.08),0 30px 80px rgba(0,0,0,0.8);
+    padding:24px 20px;text-align:center;">
+
+    <h2 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;
+      color:#00F5A0;margin:0 0 18px;letter-spacing:1px;
+      text-shadow:0 0 20px rgba(0,245,160,0.3);">
+      스트리즈 은행 지구 최고의 은행
+    </h2>
+
+    <div style="background:rgba(0,245,160,0.05);border:1px solid rgba(0,245,160,0.15);
+      border-radius:16px;padding:18px 16px;margin:0 0 18px;">
+      <div style="font-family:'Press Start 2P',cursive;font-size:7px;
+        color:#00F5A0;letter-spacing:1px;opacity:0.7;">WELCOME</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+        color:#E8EAF0;margin:8px 0;letter-spacing:0.5px;">
+        @<span id="bankUsername">player</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;">
+        <div style="text-align:left;">
+          <div style="font-family:'Press Start 2P',cursive;font-size:6px;
+            color:#3D4251;letter-spacing:1px;margin-bottom:4px;">CASH</div>
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;
+            color:#00F5A0;letter-spacing:-1px;">₦<span id="bankCash">0</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Press Start 2P',cursive;font-size:6px;
+            color:#3D4251;letter-spacing:1px;margin-bottom:4px;">STRZ</div>
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;
+            color:#FFB800;letter-spacing:-1px;"><span id="bankStars">0</span> ⭐</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin:0 0 18px;">
+      <p style="color:#6B7385;font-size:14px;margin:0 0 10px;
+        font-family:'Barlow Condensed',sans-serif;">Withdraw Cash (min ₦5,000)</p>
+      <input type="text" id="withdrawAmount" placeholder="Enter amount"
+        style="width:100%;padding:14px;
+        background:rgba(255,255,255,0.03);
+        border:1px solid rgba(255,255,255,0.08);border-radius:12px;
+        color:#E8EAF0;font-size:16px;text-align:center;
+        font-family:'DM Mono',monospace;outline:none;
+        transition:border-color 0.2s;">
+      <button id="withdrawBtn" style="margin-top:12px;width:100%;padding:14px;
+        background:#00F5A0;color:#080A0F;font-weight:900;font-size:16px;border:none;
+        border-radius:12px;cursor:not-allowed;opacity:0.4;
+        font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">WITHDRAW</button>
+      <div style="margin-top:8px;font-size:11px;color:#2A2D38;
+        font-family:'Barlow Condensed',sans-serif;">
+        Processing: 24 Hrs • Fast Track available
+      </div>
+    </div>
+
+    <button id="closeStarMarket" style="width:100%;padding:12px;
+      background:rgba(255,255,255,0.03);color:#3D4251;
+      border:1px solid rgba(255,255,255,0.06);border-radius:12px;
+      font-weight:600;font-size:14px;
+      font-family:'Barlow Condensed',sans-serif;transition:all 0.2s;">CLOSE</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     WITHDRAW SUCCESS
+═══════════════════════════════════════════════ -->
+<div id="withdrawSuccessOverlay" class="modal-backdrop"
+  style="display:none;z-index:9999999;background:rgba(0,0,0,0.97);">
+  <div id="goldenRain" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"></div>
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    text-align:center;width:90%;max-width:420px;">
+    <div style="font-family:'Syne',sans-serif;font-size:72px;font-weight:800;
+      letter-spacing:8px;color:#FFB800;
+      text-shadow:0 0 40px rgba(255,184,0,0.5);
+      margin-bottom:16px;opacity:0;
+      animation:fadeInUp 1s ease-out 0.3s forwards;">PAID</div>
+    <div style="font-family:'Syne',sans-serif;font-size:64px;font-weight:800;
+      letter-spacing:2px;
+      background:linear-gradient(180deg,#FFE566,#FFB800,#FF8C00);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin:20px 0;opacity:0;
+      animation:fadeInUp 1.2s ease-out 0.6s forwards,amountPulse 2s ease-in-out infinite alternate 1.8s;">
+      ₦<span id="goldenAmount">0</span>
+    </div>
+    <div id="successMessage" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;
+      font-weight:600;color:#00F5A0;margin:24px 0 40px;opacity:0;
+      animation:fadeInUp 1s ease-out 1s forwards;">
+      Withdrawal requested successfully!
+    </div>
+    <button id="closeSuccessBtn" style="padding:16px 48px;
+      background:linear-gradient(135deg,#FFB800,#FF8C00);color:#000;border:none;
+      border-radius:999px;font-family:'Barlow Condensed',sans-serif;font-size:18px;
+      font-weight:900;letter-spacing:1px;cursor:pointer;
+      box-shadow:0 8px 30px rgba(255,184,0,0.4);transition:all 0.3s;opacity:0;
+      animation:fadeInUp 1s ease-out 1.3s forwards;">GOT IT</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     WITHDRAW CONFIRM MODAL
+═══════════════════════════════════════════════ -->
+<div id="withdrawConfirmModal" class="modal-backdrop" style="display:none;z-index:99999;">
+  <div class="modal" style="width:88%;max-width:340px;
+    border:1px solid rgba(0,245,160,0.2);
+    box-shadow:0 0 40px rgba(0,245,160,0.08),0 30px 80px rgba(0,0,0,0.8);
+    padding:26px 20px;text-align:center;">
+
+    <h2 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+      color:#00F5A0;margin:0 0 16px;letter-spacing:0.5px;">WITHDRAW CASH?</h2>
+
+    <div style="background:rgba(0,245,160,0.05);border:1px solid rgba(0,245,160,0.15);
+      border-radius:14px;padding:20px;margin:0 0 18px;">
+      <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;
+        color:#E8EAF0;letter-spacing:-2px;">
+        ₦<span id="confirmAmount">0</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button id="standardWithdrawBtn" style="flex:1;padding:14px;
+        background:rgba(255,255,255,0.04);color:#9CA3AF;
+        border:1px solid rgba(255,255,255,0.08);border-radius:12px;
+        font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;
+        line-height:1.4;">
+        STANDARD<br><small style="opacity:0.6;font-size:10px;font-weight:500;">24 hrs • FREE</small>
+      </button>
+      <button id="fastTrackWithdrawBtn" style="flex:1;padding:14px;
+        background:linear-gradient(135deg,#00F5A0,#00C853);color:#080A0F;border:none;
+        border-radius:12px;font-weight:900;font-size:13px;
+        font-family:'Barlow Condensed',sans-serif;line-height:1.4;
+        box-shadow:0 4px 20px rgba(0,245,160,0.25);">
+        FAST TRACK<br><small style="opacity:0.8;font-size:10px;font-weight:600;">30 mins • 21 STRZ</small>
+      </button>
+    </div>
+
+    <button id="cancelWithdrawBtn" style="margin-top:12px;width:100%;padding:12px;
+      background:rgba(255,255,255,0.03);color:#3D4251;
+      border:1px solid rgba(255,255,255,0.06);border-radius:12px;
+      font-weight:600;font-size:13px;font-family:'Barlow Condensed',sans-serif;">CANCEL</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     FAST TRACK CONFIRM
+═══════════════════════════════════════════════ -->
+<div id="fastTrackConfirmModal" class="modal-backdrop" style="display:none;z-index:999999;">
+  <div class="modal" style="width:88%;max-width:320px;
+    border:1px solid rgba(255,184,0,0.2);
+    box-shadow:0 0 40px rgba(255,184,0,0.1),0 30px 80px rgba(0,0,0,0.8);
+    padding:26px 20px;text-align:center;">
+    <h3 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+      color:#FFB800;margin:0 0 14px;letter-spacing:0.5px;">FAST TRACK?</h3>
+    <p style="color:#9CA3AF;font-size:14px;line-height:1.6;
+      font-family:'Barlow Condensed',sans-serif;margin:0 0 20px;">
+      Pay <strong style="color:#FFB800;">21 STRZ ⭐️</strong> for<br>priority payment processing?
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button id="cancelFastTrack" style="flex:1;padding:13px;
+        background:rgba(255,255,255,0.04);color:#6B7385;
+        border:1px solid rgba(255,255,255,0.08);border-radius:12px;
+        font-weight:700;font-size:15px;font-family:'Barlow Condensed',sans-serif;">NO</button>
+      <button id="confirmFastTrack" style="flex:1;padding:13px;
+        background:linear-gradient(90deg,#FFB800,#FF8C00);color:#080A0F;border:none;
+        border-radius:12px;font-weight:900;font-size:15px;
+        font-family:'Barlow Condensed',sans-serif;
+        box-shadow:0 4px 16px rgba(255,184,0,0.3);">YES!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     REAL ALERT
+═══════════════════════════════════════════════ -->
+<div id="realAlert" class="modal-backdrop"
+  style="display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.94);z-index:9999999!important;">
+  <div class="modal" style="position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:90%;max-width:360px;
+    border:1px solid rgba(198,255,0,0.25);
+    box-shadow:0 0 60px rgba(198,255,0,0.12),0 30px 80px rgba(0,0,0,0.8);
+    padding:28px 22px;text-align:center;
+    animation:realAlertPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);">
+    <p id="realAlertMessage" style="margin:0 0 22px;color:#9CA3AF;font-size:16px;
+      line-height:1.6;font-weight:500;font-family:'Barlow Condensed',sans-serif;">Message goes here</p>
+    <button id="realAlertBtn" style="padding:13px 44px;background:#C6FF00;color:#080A0F;
+      border:none;border-radius:999px;font-weight:800;font-size:15px;
+      font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;
+      box-shadow:0 4px 20px rgba(198,255,0,0.3);min-width:160px;
+      transition:all 0.15s;">OKAY</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     AUDIO
+═══════════════════════════════════════════════ -->
+<audio id="cheerSound"    src="https://cdn.glitch.global/8f8e1f45-7e3f-4b5c-9f0a-4d8e9f1a2b3c/cheer.mp3"></audio>
+<audio id="tapSound"      src="/assets/pop-reverb-423718.mp3"    preload="metadata"></audio>
+<audio id="confettiSound" src="/assets/material-mold-394512.mp3" preload="metadata"></audio>
+<audio id="comboSound"    src="/assets/clear-combo-7-394494.mp3" preload="metadata"></audio>
+<audio id="uiClickSound"  src="/assets/click-sound-432501.mp3"   preload="metadata"></audio>
+
+</div><!-- /appWrapper -->
+
+<script type="module" src="e05b44cf59f8548cc0a2d34d9b122cf86cc44b18.js?t=20251123"></script>
+
+</body>
+</html>
