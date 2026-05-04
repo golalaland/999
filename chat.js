@@ -323,8 +323,9 @@ async function pushNotification(userId, message) {
 }
 
 
-// ON AUTH STATE CHANGED — FINAL 2025 ETERNAL EDITION (WITH ADMIN + HOST SUPPORT)
+// ON AUTH STATE CHANGED — FINAL CLEAN VERSION (WITH DAILY STAR BONUS)
 onAuthStateChanged(auth, async (firebaseUser) => {
+
   // ——— CLEANUP PREVIOUS LISTENERS ———
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
@@ -346,34 +347,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (typeof showLoginUI === "function") showLoginUI();
 
     console.log("User logged out");
-
-    // Clear clips grid safely
-    const grid = document.getElementById("myClipsGrid");
-    const noMsg = document.getElementById("noClipsMessage");
-    if (grid) grid.innerHTML = "";
-    if (noMsg) noMsg.style.display = "none";
-
-    // Hide host-only fields
-    const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) hostFields.style.display = "none";
-
     return;
   }
 
   // ——— USER LOGGED IN ———
-  console.log("[AUTH] State changed - user logged in, UID:", firebaseUser.uid || "unknown");
-
-  // Guard against invalid user object
-  if (!firebaseUser.uid) {
-    console.warn("[AUTH] Invalid user object - no UID");
-    await signOut(auth);
-    return;
-  }
+  console.log("[AUTH] User logged in:", firebaseUser.email);
 
   const email = firebaseUser.email?.toLowerCase()?.trim() || "";
-
   if (!email) {
-    console.warn("[AUTH] No email in firebaseUser");
+    console.warn("[AUTH] No email found");
     showStarPopup("Login error — no email found");
     await signOut(auth);
     return;
@@ -383,10 +365,9 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   const userRef = doc(db, "users", uid);
 
   try {
-    console.log("[AUTH] Loading profile for sanitized UID:", uid);
+    console.log("[AUTH] Loading profile for:", uid);
 
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
       console.error("[AUTH] Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
@@ -396,16 +377,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-// Wait a moment for auth to stabilize
-    await new Promise(r => setTimeout(r, 1500));
-
-    // Run cleanup once per login (optional)
-    await cleanupExpiredTokens();
-
-    await updateRedeemLink();
-    await updateTipLink();
-     
-    // BUILD CURRENT USER OBJECT
+    // Build currentUser object
     currentUser = {
       uid,
       email,
@@ -420,19 +392,21 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       hasPaid: !!data.hasPaid,
       stars: data.stars || 0,
       cash: data.cash || 0,
-      starsGifted: data.starsGifted || 0,
       starsToday: data.starsToday || 0,
+      lastStarDate: data.lastStarDate || todayDate(),
       usernameColor: data.usernameColor || "#ff69b4",
       subscriptionActive: !!data.subscriptionActive,
       subscriptionCount: data.subscriptionCount || 0,
-      lastStarDate: data.lastStarDate || todayDate(),
       unlockedVideos: data.unlockedVideos || [],
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
       hostLink: data.hostLink || null
     };
 
-    // ADMIN MODE ACTIVATION
+    // ====================== DAILY STAR BONUS ======================
+    await giveDailyStarBonus(uid);
+
+    // ADMIN MODE
     if (currentUser.isAdmin) {
       currentAdmin = {
         uid: currentUser.uid,
@@ -445,7 +419,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     }
 
     console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-    console.log("[USER STATUS]", currentUser);
 
     // ——— POST-LOGIN UI & FUNCTION SETUP ———
     revealHostTabs?.();
@@ -460,65 +433,35 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     setupUsersListener?.();
     showChatUI?.(currentUser);
     attachMessagesListener?.();
-    startStarEarning?.(uid);
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
-activateViewBoost();
-
-
-    // Wait for auth token to be fully synced before button updates
-    console.log("[AUTH] Waiting 2s for token sync...");
-    await new Promise(r => setTimeout(r, 2000));
-
-    if (typeof updateRedeemLink === "function") {
-      console.log("[AUTH] Calling updateRedeemLink");
-      await updateRedeemLink();
-    } else {
-      console.warn("[AUTH] updateRedeemLink not defined");
-    }
-
-    if (typeof updateTipLink === "function") {
-      console.log("[AUTH] Calling updateTipLink");
-      await updateTipLink();
-    } else {
-      console.warn("[AUTH] updateTipLink not defined");
-    }
+    activateViewBoost?.();
 
     // Delayed loads
     setTimeout(() => {
       syncUserUnlocks?.();
       loadNotifications?.();
-    }, 600);
-
-    if (document.getElementById("myClipsPanel") && typeof loadMyClips === "function") {
-      setTimeout(loadMyClips, 1000);
-    }
+      if (typeof loadMyClips === "function") loadMyClips();
+    }, 800);
 
     if (currentUser.chatId.startsWith("GUEST")) {
-      setTimeout(() => {
-        promptForChatID?.(userRef, data);
-      }, 2000);
+      setTimeout(() => promptForChatID?.(userRef, data), 2000);
     }
 
-    // ——— SHOW HOST-ONLY FIELDS (Nature Pick & Fruit Pick) ———
+    // Show host fields
     const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) {
-      hostFields.style.display = currentUser.isHost ? "block" : "none";
-    }
+    if (hostFields) hostFields.style.display = currentUser.isHost ? "block" : "none";
 
-    // ——— DIVINE WELCOME POPUP ———
-    const holyColors = ["#FF1493", "#FFD700", "#00FFFF", "#FF4500", "#DA70D6", "#FF69B4", "#32CD32", "#FFA500", "#FF00FF"];
-    const glow = holyColors[Math.floor(Math.random() * holyColors.length)];
+    // Welcome Popup
+    const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
     showStarPopup(`
       <div style="text-align:center;font-size:13px;">
-        Welcome back,
-        <b style="font-size:13px;color:${glow};text-shadow:0 0 20px ${glow}88;">
-          ${currentUser.chatId.toUpperCase()}
-        </b>
-        ${currentUser.isAdmin ? "<br><span style='color:#0f9;font-size:16px;'>ADMIN MODE</span>" : ""}
+        Welcome back, 
+        <b style="color:${glow};">${currentUser.chatId.toUpperCase()}</b>
+        ${currentUser.isAdmin ? "<br><span style='color:#0f9'>ADMIN MODE</span>" : ""}
       </div>
     `);
-    console.log("YOU HAVE ENTERED THE ETERNAL CUBE");
+
   } catch (err) {
     console.error("Login process error:", err);
     showStarPopup("Login failed — try again");
@@ -2960,176 +2903,127 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 });
 
 
+/* ====================== DAILY STAR BONUS ON LOGIN ====================== */
+async function giveDailyStarBonus(uid) {
+  if (!uid) return;
 
-/* ===============================
-   💫 Auto Star Earning System — 125 Stars Per Minute
-   - Very fast earning as requested
-   - 125 stars every 1 minute
-   - Multi-tier daily caps
-================================= */
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
 
-let starEarningUnsubscribe = null;
-let lastEarnTime = 0;
-let animationTimeout = null;
+    const data = snap.data();
+    const today = todayDate();
 
-// ==================== CONFIG ====================
-const STAR_EARNING_CONFIG = {
-  baseDailyCap: 50,      // Normal user
-  vipDailyCap: 50,       // VIP gets bonus
-  paidDailyCap: 500,      // hasPaid: true
-  hostDailyCap: 600,      // isHost: true
+    // Reset if new day
+    if (data.lastStarDate !== today) {
+      await updateDoc(userRef, { 
+        starsToday: 0, 
+        lastStarDate: today 
+      });
+    }
 
-  earnAmount: 100,                   // ★ 100 stars per earn
-  minTimeBetweenEarns: 30000,        // 30 SECS (30,000 ms)
-  visibilityCheckInterval: 60000     // 1 minute
-};
+    const effectiveCap = getEffectiveDailyCap(data);
+    const currentToday = data.starsToday || 0;
 
-// Calculate effective daily cap
+    if (currentToday >= effectiveCap) return; // Already received today
+
+    const amountToAdd = effectiveCap - currentToday;
+
+    await updateDoc(userRef, {
+      stars: increment(amountToAdd),
+      starsToday: increment(amountToAdd)
+    });
+
+    showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
+
+    console.log(`[DAILY BONUS] +${amountToAdd} stars given | Cap: ${effectiveCap}`);
+
+  } catch (err) {
+    console.error("[DAILY BONUS] Error:", err);
+  }
+}
+
 function getEffectiveDailyCap(userData) {
-  if (!userData) return STAR_EARNING_CONFIG.baseDailyCap;
+  if (!userData) return 50;
 
-  let cap = STAR_EARNING_CONFIG.baseDailyCap;
+  let cap = 50;                    // Normal user
 
-  if (userData.isHost === true) {
-    cap = Math.max(cap, STAR_EARNING_CONFIG.hostDailyCap);
-  }
-  if (userData.isVIP === true) {
-    cap = Math.max(cap, STAR_EARNING_CONFIG.vipDailyCap);
-  }
-  if (userData.hasPaid === true) {
-    cap = Math.max(cap, STAR_EARNING_CONFIG.paidDailyCap);
-  }
+  if (userData.isHost === true)     cap = 600;
+  else if (userData.hasPaid === true) cap = 500;
+  else if (userData.isVIP === true)  cap = 150;   // Adjust as you like
 
   return cap;
 }
 
-// ===============================================
+/* ===============================
+   💫 Daily Star Login Bonus System
+   - Gives full daily stars on login based on user status
+   - Very low reads/writes (only once per day)
+   - Clean & efficient
+================================= */
 
-function startStarEarning(uid) {
-  if (!uid || !auth.currentUser) return;
+let dailyStarBonusGiven = false;
 
-  const userRef = doc(db, "users", uid);
-  let displayedStars = currentUser.stars || 0;
+async function giveDailyStarBonus(uid) {
+  if (!uid || !auth.currentUser || dailyStarBonusGiven) return;
 
-  const animateStarCount = (target) => {
-    if (!refs.starCountEl) return;
-    const diff = target - displayedStars;
-    if (Math.abs(diff) < 1) {
-      displayedStars = target;
-      refs.starCountEl.textContent = formatNumberWithCommas(displayedStars);
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const today = todayDate();
+
+    // Reset if new day
+    if (data.lastStarDate !== today) {
+      await updateDoc(userRef, {
+        starsToday: 0,
+        lastStarDate: today
+      });
+    }
+
+    const effectiveCap = getEffectiveDailyCap(data);
+    const currentToday = data.starsToday || 0;
+
+    // If user already received today's full bonus, do nothing
+    if (currentToday >= effectiveCap) {
+      dailyStarBonusGiven = true;
       return;
     }
-    displayedStars += diff * 0.25;
-    refs.starCountEl.textContent = formatNumberWithCommas(Math.floor(displayedStars));
-    animationTimeout = setTimeout(() => animateStarCount(target), 40);
-  };
 
-  function syncStars() {
-    if (starEarningUnsubscribe) starEarningUnsubscribe();
+    const amountToAdd = effectiveCap - currentToday;
 
-    starEarningUnsubscribe = onSnapshot(userRef, (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const target = data.stars || 0;
+    await updateDoc(userRef, {
+      stars: increment(amountToAdd),
+      starsToday: increment(amountToAdd)
+    });
 
-      currentUser.stars = target;
+    dailyStarBonusGiven = true;
 
-      if (animationTimeout) clearTimeout(animationTimeout);
-      animateStarCount(target);
+    // Show nice notification
+    showGoldAlert(`🎁 You've been gifted **${amountToAdd} Stars** for today!`, "success");
 
-      if (target > 0 && target % 100000 === 0) {
-        showStarPopup(`🔥 Congrats! You’ve reached ${formatNumberWithCommas(target)} stars!`);
-      }
-    }, { includeMetadataChanges: true });
+    console.log(`[STARS] Daily bonus given: +${amountToAdd} stars (Cap: ${effectiveCap})`);
+
+  } catch (err) {
+    console.error("[STARS] Daily bonus error:", err);
   }
+}
 
-  async function tryEarnStars(trigger = 'activity') {
-    if (Date.now() - lastEarnTime < STAR_EARNING_CONFIG.minTimeBetweenEarns) return;
+// Keep this helper from before
+function getEffectiveDailyCap(userData) {
+  if (!userData) return 50;
 
-    try {
-      const snap = await getDoc(userRef);
-      if (!snap.exists()) return;
+  let cap = 50; // base
 
-      const data = snap.data();
-      const today = todayDate();
+  if (userData.isHost === true) cap = Math.max(cap, 600);
+  if (userData.isVIP === true) cap = Math.max(cap, 50);
+  if (userData.hasPaid === true) cap = Math.max(cap, 500);
 
-      if (data.lastStarDate !== today) {
-        await updateDoc(userRef, { starsToday: 0, lastStarDate: today });
-        const freshSnap = await getDoc(userRef);
-        if (!freshSnap.exists()) return;
-        Object.assign(data, freshSnap.data());
-      }
-
-      const effectiveCap = getEffectiveDailyCap(data);
-      const currentToday = data.starsToday || 0;
-
-      if (currentToday >= effectiveCap) {
-        console.log(`[STARS] Daily cap reached (${effectiveCap})`);
-        return;
-      }
-
-      const amountToAdd = Math.min(
-        STAR_EARNING_CONFIG.earnAmount,
-        effectiveCap - currentToday
-      );
-
-      await updateDoc(userRef, {
-        stars: increment(amountToAdd),
-        starsToday: increment(amountToAdd)
-      });
-
-      lastEarnTime = Date.now();
-
-      console.log(`[STARS] Earned ${amountToAdd} via ${trigger} ` +
-        `(today: ${currentToday + amountToAdd}/${effectiveCap})`);
-    } catch (err) {
-      console.error("[STARS] Earn error:", err);
-    }
-  }
-
-  // Triggers
-  document.addEventListener("click", () => tryEarnStars('interaction'), { once: false });
-
-  const visibilityCheck = setInterval(() => {
-    if (document.visibilityState === "visible") {
-      tryEarnStars('visibility');
-    }
-  }, STAR_EARNING_CONFIG.visibilityCheckInterval);
-
-  if (document.visibilityState === "visible") {
-    syncStars();
-    tryEarnStars('initial');
-  }
-
-  const handleVisibility = () => {
-    if (document.visibilityState === "visible") {
-      syncStars();
-      tryEarnStars('visibility');
-    } else if (starEarningUnsubscribe) {
-      starEarningUnsubscribe();
-      starEarningUnsubscribe = null;
-    }
-  };
-
-  document.addEventListener("visibilitychange", handleVisibility);
-
-  // Cleanup
-  const cleanup = () => {
-    if (starEarningUnsubscribe) starEarningUnsubscribe();
-    clearInterval(visibilityCheck);
-    document.removeEventListener("visibilitychange", handleVisibility);
-    document.removeEventListener("click", tryEarnStars);
-    if (animationTimeout) clearTimeout(animationTimeout);
-  };
-
-  window.addEventListener("beforeunload", cleanup);
-
-  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-    if (!user || user.uid !== uid) {
-      cleanup();
-      unsubscribeAuth();
-    }
-  });
+  return cap;
 }
 
 /* ===============================
