@@ -323,34 +323,26 @@ async function pushNotification(userId, message) {
 }
 
 
-// ON AUTH STATE CHANGED — CLEAN & FIXED VERSION
+// ON AUTH STATE CHANGED — FINAL CLEAN VERSION
 onAuthStateChanged(auth, async (firebaseUser) => {
 
-  // Cleanup previous listeners
+  // Cleanup
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
   }
 
-  // Reset globals
   currentUser = null;
   currentAdmin = null;
 
-  // USER LOGGED OUT
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-
     if (typeof showLoginUI === "function") showLoginUI();
-    console.log("User logged out");
     return;
   }
-
-  // USER LOGGED IN
-  console.log("[AUTH] User logged in:", firebaseUser.email);
 
   const email = firebaseUser.email?.toLowerCase()?.trim() || "";
   if (!email) {
@@ -363,8 +355,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   const userRef = doc(db, "users", uid);
 
   try {
-    console.log("[AUTH] Loading profile for:", uid);
-
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
       showStarPopup("Profile missing — contact support");
@@ -374,7 +364,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-    // Build currentUser
     currentUser = {
       uid,
       email,
@@ -405,19 +394,13 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     // ADMIN MODE
     if (currentUser.isAdmin) {
-      currentAdmin = {
-        uid: currentUser.uid,
-        email: currentUser.email,
-        chatId: currentUser.chatId
-      };
+      currentAdmin = { uid, email, chatId: currentUser.chatId };
       console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
       const pollSection = document.getElementById("polls");
       if (pollSection) pollSection.style.display = "block";
     }
 
-    console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
-
-    // ——— POST-LOGIN SETUP ———
+    // UI Setup
     revealHostTabs?.();
     updateInfoTab?.();
 
@@ -434,13 +417,9 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     setupNotificationsListener?.(uid);
     activateViewBoost?.();
 
-    // Important: Update redeem & tip links AFTER currentUser is set
-    if (typeof updateRedeemLink === "function") {
-      await updateRedeemLink();
-    }
-    if (typeof updateTipLink === "function") {
-      await updateTipLink();
-    }
+    // Redeem & Tip Links
+    if (typeof updateRedeemLink === "function") await updateRedeemLink();
+    if (typeof updateTipLink === "function") await updateTipLink();
 
     // Delayed loads
     setTimeout(() => {
@@ -453,11 +432,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       setTimeout(() => promptForChatID?.(userRef, data), 2000);
     }
 
-    // Host fields
     const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) {
-      hostFields.style.display = currentUser.isHost ? "block" : "none";
-    }
+    if (hostFields) hostFields.style.display = currentUser.isHost ? "block" : "none";
 
     // Welcome Popup
     const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
@@ -2920,7 +2896,7 @@ let dailyStarBonusGiven = false;
 
 // ====================== DAILY STAR BONUS FUNCTION ======================
 async function giveDailyStarBonus(uid) {
-  if (!uid) return;
+  if (!uid || !currentUser) return;
 
   try {
     const userRef = doc(db, "users", uid);
@@ -2930,7 +2906,7 @@ async function giveDailyStarBonus(uid) {
     const data = snap.data();
     const today = todayDate();
 
-    // Reset daily counter if it's a new day
+    // Reset if new day
     if (data.lastStarDate !== today) {
       await updateDoc(userRef, { 
         starsToday: 0, 
@@ -2941,40 +2917,81 @@ async function giveDailyStarBonus(uid) {
     const effectiveCap = getEffectiveDailyCap(data);
     const currentToday = data.starsToday || 0;
 
-    if (currentToday >= effectiveCap) return; // Already received today
+    if (currentToday >= effectiveCap) return;
 
     const amountToAdd = effectiveCap - currentToday;
 
+    // Award the stars
     await updateDoc(userRef, {
       stars: increment(amountToAdd),
       starsToday: increment(amountToAdd)
     });
 
+    // Update local object
+    currentUser.stars = (currentUser.stars || 0) + amountToAdd;
+    currentUser.starsToday = (currentUser.starsToday || 0) + amountToAdd;
+
     // Show notification
     showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
 
-    console.log(`[DAILY BONUS] +${amountToAdd} stars given | Cap: ${effectiveCap}`);
+    // Smooth counting animation
+    if (typeof animateStarCount === "function") {
+      animateStarCount(currentUser.stars);
+    } else if (refs?.starCountEl) {
+      // Fallback smooth animation
+      let displayed = parseInt(refs.starCountEl.textContent.replace(/[^0-9]/g, '')) || 0;
+      const diff = currentUser.stars - displayed;
+      let step = Math.ceil(diff / 25);
+
+      const interval = setInterval(() => {
+        displayed += step;
+        if (displayed >= currentUser.stars) {
+          displayed = currentUser.stars;
+          clearInterval(interval);
+        }
+        refs.starCountEl.textContent = formatNumberWithCommas(displayed);
+      }, 40);
+    }
+
+    console.log(`[DAILY BONUS] +${amountToAdd} stars | New Total: ${currentUser.stars}`);
 
   } catch (err) {
     console.error("[DAILY BONUS] Error:", err);
   }
 }
 
-// Your exact tiers
+// Your tiers
 function getEffectiveDailyCap(userData) {
   if (!userData) return 50;
 
-  let cap = 50;                    // Normal user
+  if (userData.isHost === true) return 600;
+  if (userData.hasPaid === true) return 500;
+  if (userData.isVIP === true) return 50;
 
-  if (userData.isHost === true) {
-    cap = 600;
-  } else if (userData.hasPaid === true) {
-    cap = 500;
-  } else if (userData.isVIP === true) {
-    cap = 50;     // You can increase this later if you want VIP to get more
+  return 50; // Normal user
+}
+
+// ====================== SMOOTH ANIMATION HELPER ======================
+function animateStarCount(target) {
+  if (!refs?.starCountEl) return;
+
+  let displayed = currentUser.stars || 0;
+  const diff = target - displayed;
+  if (Math.abs(diff) < 5) {
+    refs.starCountEl.textContent = formatNumberWithCommas(target);
+    return;
   }
 
-  return cap;
+  const step = Math.ceil(diff / 25);
+
+  const interval = setInterval(() => {
+    displayed += step;
+    if ((step > 0 && displayed >= target) || (step < 0 && displayed <= target)) {
+      displayed = target;
+      clearInterval(interval);
+    }
+    refs.starCountEl.textContent = formatNumberWithCommas(displayed);
+  }, 40);
 }
 
 /* ===============================
