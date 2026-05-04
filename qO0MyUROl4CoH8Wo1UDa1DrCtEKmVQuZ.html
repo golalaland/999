@@ -835,7 +835,7 @@ submitBtn.onclick = async () => {
       return;
     }
 
-    // === REFERRAL CHECK + LIMIT (MAX 5 VIPs ONLY) ===
+    // === REFERRAL CHECK + LIMIT (MAX 25 VIPs ONLY) ===
     let inviterDocId = null;
     let hiveName = '';
     if (cleanRef) {
@@ -879,139 +879,157 @@ submitBtn.onclick = async () => {
       country = data.country_name || 'Unknown';
     } catch (e) {}
 
-    // === CREATE NEW USER ===
-    const userData = {
-      uid: userCredential.user.uid,
-      fullName,
-      chatId,
-      chatIdLower: chatId,
-      email,
-      phone,
-      dob,
-      age: calculateAge(dob),
-      gender,
-      country,
-      city: "",
-      location: "",
-      bankName: "",
-      bankAccountNumber: "",
-      instagram: "",
-      tiktok: "",
-      whatsapp: "",
-      telegram: "",
-      bioPick: "",
-      naturePick: "",
-      fruitPick: "",
-      videoUrl: "",
-      popupPhoto: "",
-      isVIP: !!isVIP,
-      hasPaid: false,
-      isHost: isHost && hiveName, // Gatekeeper: only true if they have hiveName
-      isTrending: false,
-      isAdmin: false,
-      featuredHosts: false,
-      invitedBy: inviterDocId,
-      referral: rawRef || null,
-      hiveName: hiveName,
-      phoneVerified: false,
-      emailVerified: false,
-      hostLink: (!isVIP && isHost && hiveName)
-        ? `https://cube.xixi.com/signup?ref=${chatId}`
-        : null,
-      vipName: isVIP ? chatId : null,
-      socialShare: gender === 'Female' && !isVIP,
-      stars: 50,
-      starsToday: 0,
-      starsGifted: 0,
-      lastStarDate: new Date().toISOString().split("T")[0],
-      cash: 0,
-      points: 0,
-      gifts: 0,
-      views: 0,
-      inviteeGiftStars: 0,
-      inviteeGiftShown: false,
-      hostFriends: [],
-      usernameColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
-      createdAt: serverTimestamp(),
+// === CREATE NEW USER ===
+const userData = {
+  uid: userCredential.user.uid,
+  fullName,
+  chatId,
+  chatIdLower: chatId,
+  email,
+  phone,
+  dob,
+  age: calculateAge(dob),
+  gender,
+  country,
+  city: "",
+  location: "",
+  bankName: "",
+  bankAccountNumber: "",
+  instagram: "",
+  tiktok: "",
+  whatsapp: "",
+  telegram: "",
+  bioPick: "",
+  naturePick: "",
+  fruitPick: "",
+  videoUrl: "",
+  popupPhoto: "",
+
+  // VIP Fields
+  isVIP: !!isVIP,
+  hasPaid: false,
+
+  // === HOST LOGIC WITH GATEKEEPER ===
+  isHost: !!(isHost && hiveName),           // ← Gatekeeper kept: only true if they have hiveName
+  hiveName: hiveName || null,               // ← hiveName is completely independent
+
+  isTrending: false,
+  isAdmin: false,
+  featuredHosts: false,
+
+  invitedBy: inviterDocId,
+  referral: rawRef || null,
+
+  phoneVerified: false,
+  emailVerified: false,
+
+  // Host Link - Only generated for approved hosts
+  hostLink: (!isVIP && isHost && hiveName)
+    ? `https://cube.xixi.com/signup?ref=${chatId}`
+    : null,
+
+  vipName: isVIP ? chatId : null,
+  socialShare: gender === 'Female' && !isVIP,
+
+  stars: 50,
+  starsToday: 0,
+  starsGifted: 0,
+  lastStarDate: new Date().toISOString().split("T")[0],
+  cash: 0,
+  points: 0,
+  gifts: 0,
+  views: 0,
+  inviteeGiftStars: 0,
+  inviteeGiftShown: false,
+  hostFriends: [],
+
+  usernameColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
+  createdAt: serverTimestamp(),
+  lastUpdated: serverTimestamp()
+};
+
+await setDoc(userRef, userData);
+
+// === UPDATE INVITER ON SIGNUP ===
+if (inviterDocId) {
+  if (isVIP) {
+    // VIP Flow (unchanged)
+    await updateDoc(doc(db, "users", inviterDocId), {
+      referralCount: increment(1),
+      vipCount: increment(1),
       lastUpdated: serverTimestamp()
-    };
+    }).catch(err => console.warn("Inviter VIP count update failed:", err));
 
-    await setDoc(userRef, userData);
-
-    // === UPDATE INVITER ON SIGNUP (SAFE ARRAY + TIMER FIELDS READY) ===
-    if (inviterDocId) {
-      if (isVIP) {
-        await updateDoc(doc(db, "users", inviterDocId), {
-          referralCount: increment(1),
-          vipCount: increment(1),
-          lastUpdated: serverTimestamp()
-        }).catch(err => console.warn("Inviter VIP count update failed:", err));
-
-        try {
-          await addDoc(collection(db, "notifications"), {
-            recipientId: inviterDocId,
-            type: "new_vip_pending",
-            title: "A VIP in Your Cube!",
-            message: `@${chatId} just signed up as VIP using your invite link!`,
-            vipUserId: userCredential.user.uid,
-            vipUserName: chatId,
-            read: false,
-            createdAt: serverTimestamp()
-          });
-        } catch (notifErr) {
-          console.warn("VIP pending notification failed:", notifErr);
-        }
-      } else {
-        const hostInviteBonus = 100;
-        await updateDoc(doc(db, "users", inviterDocId), {
-          hostFriends: arrayUnion({
-            chatId,
-            fullName,
-            email,
-            phone,
-            isVIP: false,
-            isHost: gender === 'Female',
-            joinedAt: Date.now()
-          }),
-          stars: increment(hostInviteBonus),
-          referralCount: increment(1),
-          hostReferralCount: increment(1),
-          hostFriendsLastUpdated: serverTimestamp(),
-          lastUpdated: serverTimestamp()
-        }).catch(err => console.warn("Inviter host bonus failed:", err));
-
-        try {
-          await addDoc(collection(db, "notifications"), {
-            recipientId: inviterDocId,
-            type: "new_host_join",
-            title: "A Host Joined Your Cube!",
-            message: `@${chatId} just joined as a Host using your link!\n+${hostInviteBonus} STRZ `,
-            newUserId: userCredential.user.uid,
-            newUserName: chatId,
-            read: false,
-            createdAt: serverTimestamp()
-          });
-        } catch (notifErr) {
-          console.warn("Host join notification failed:", notifErr);
-        }
-      }
+    try {
+      await addDoc(collection(db, "notifications"), {
+        recipientId: inviterDocId,
+        type: "new_vip_pending",
+        title: "A VIP in Your Cube!",
+        message: `@${chatId} just signed up as VIP using your invite link!`,
+        vipUserId: userCredential.user.uid,
+        vipUserName: chatId,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    } catch (notifErr) {
+      console.warn("VIP pending notification failed:", notifErr);
     }
+  } 
+  else {
+    // Host / Normal User Flow
+    const hostInviteBonus = 100;
+    const isNewHost = !!(isHost && hiveName);   // Same gatekeeper logic
 
-    // Success
-    messageEl.textContent = `Welcome ${fullName}!`;
-    localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
-    localStorage.setItem("fullName", fullName || '');
+    await updateDoc(doc(db, "users", inviterDocId), {
+      hostFriends: arrayUnion({
+        chatId,
+        fullName,
+        email,
+        phone,
+        isVIP: false,
+        isHost: isNewHost,                    // ← Uses gated value
+        joinedAt: Date.now()
+      }),
+      stars: increment(hostInviteBonus),
+      referralCount: increment(1),
+      hostReferralCount: increment(isNewHost ? 1 : 0),   // Only count real hosts
+      hostFriendsLastUpdated: serverTimestamp(),
+      lastUpdated: serverTimestamp()
+    }).catch(err => console.warn("Inviter host bonus failed:", err));
 
-    submitBtn.classList.remove('loading');
-
-    if (isVIP) {
-      triggerSprayConfetti();
-      submitBtn.classList.add('hidden');
-      vipPayBtn.classList.remove('hidden');
-      messageEl.textContent = "Your VIP Access is reserved 🔒";
-    } else {
-      setTimeout(() => window.location.href = "https://visitcube.xyz", 1800);
+    try {
+      await addDoc(collection(db, "notifications"), {
+        recipientId: inviterDocId,
+        type: isNewHost ? "new_host_join" : "new_user_join",
+        title: isNewHost ? "A Host Joined Your Cube!" : "New User Joined",
+        message: isNewHost 
+          ? `@${chatId} just joined as a Host using your link!\n+${hostInviteBonus} STRZ` 
+          : `@${chatId} just joined using your link!`,
+        newUserId: userCredential.user.uid,
+        newUserName: chatId,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    } catch (notifErr) {
+      console.warn("Notification failed:", notifErr);
     }
+  }
+}
+
+// Success
+messageEl.textContent = `Welcome ${fullName}!`;
+localStorage.setItem("vipUser", JSON.stringify({ email, chatId }));
+localStorage.setItem("fullName", fullName || '');
+submitBtn.classList.remove('loading');
+
+if (isVIP) {
+  triggerSprayConfetti();
+  submitBtn.classList.add('hidden');
+  vipPayBtn.classList.remove('hidden');
+  messageEl.textContent = "Your VIP Access is reserved 🔒";
+} else {
+  setTimeout(() => window.location.href = "https://visitcube.xyz", 1800);
+}
   } catch (err) {
     console.error(err);
     const errorMsg = err.code === 'auth/email-already-in-use'
@@ -1093,7 +1111,7 @@ vipPayBtn.onclick = () => {
         // Reward inviter/host
         if (inviterId) {
           const inviterRef = doc(db, "users", inviterId);
-          const cashRewardAmount = 2512; // fixed ₦2,512
+          const cashRewardAmount = 2500; // fixed ₦2,500
 
           await updateDoc(inviterRef, {
             stars: increment(250),
