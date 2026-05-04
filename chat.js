@@ -323,10 +323,10 @@ async function pushNotification(userId, message) {
 }
 
 
-// ON AUTH STATE CHANGED — FINAL CLEAN VERSION (WITH DAILY STAR BONUS)
+// ON AUTH STATE CHANGED — CLEAN & FIXED VERSION
 onAuthStateChanged(auth, async (firebaseUser) => {
 
-  // ——— CLEANUP PREVIOUS LISTENERS ———
+  // Cleanup previous listeners
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -336,7 +336,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   currentUser = null;
   currentAdmin = null;
 
-  // ——— USER LOGGED OUT ———
+  // USER LOGGED OUT
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
@@ -345,17 +345,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
 
     if (typeof showLoginUI === "function") showLoginUI();
-
     console.log("User logged out");
     return;
   }
 
-  // ——— USER LOGGED IN ———
+  // USER LOGGED IN
   console.log("[AUTH] User logged in:", firebaseUser.email);
 
   const email = firebaseUser.email?.toLowerCase()?.trim() || "";
   if (!email) {
-    console.warn("[AUTH] No email found");
     showStarPopup("Login error — no email found");
     await signOut(auth);
     return;
@@ -369,7 +367,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
-      console.error("[AUTH] Profile not found for:", uid);
       showStarPopup("Profile missing — contact support");
       await signOut(auth);
       return;
@@ -377,7 +374,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     const data = userSnap.data();
 
-    // Build currentUser object
+    // Build currentUser
     currentUser = {
       uid,
       email,
@@ -420,7 +417,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     console.log("WELCOME BACK:", currentUser.chatId.toUpperCase());
 
-    // ——— POST-LOGIN UI & FUNCTION SETUP ———
+    // ——— POST-LOGIN SETUP ———
     revealHostTabs?.();
     updateInfoTab?.();
 
@@ -437,6 +434,14 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     setupNotificationsListener?.(uid);
     activateViewBoost?.();
 
+    // Important: Update redeem & tip links AFTER currentUser is set
+    if (typeof updateRedeemLink === "function") {
+      await updateRedeemLink();
+    }
+    if (typeof updateTipLink === "function") {
+      await updateTipLink();
+    }
+
     // Delayed loads
     setTimeout(() => {
       syncUserUnlocks?.();
@@ -448,9 +453,11 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       setTimeout(() => promptForChatID?.(userRef, data), 2000);
     }
 
-    // Show host fields
+    // Host fields
     const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) hostFields.style.display = currentUser.isHost ? "block" : "none";
+    if (hostFields) {
+      hostFields.style.display = currentUser.isHost ? "block" : "none";
+    }
 
     // Welcome Popup
     const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
@@ -2911,34 +2918,30 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 let dailyStarBonusGiven = false;
 
+// ====================== DAILY STAR BONUS FUNCTION ======================
 async function giveDailyStarBonus(uid) {
-  if (!uid || !auth.currentUser || dailyStarBonusGiven) return;
+  if (!uid) return;
 
   try {
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
-
     if (!snap.exists()) return;
 
     const data = snap.data();
     const today = todayDate();
 
-    // Reset if new day
+    // Reset daily counter if it's a new day
     if (data.lastStarDate !== today) {
-      await updateDoc(userRef, {
-        starsToday: 0,
-        lastStarDate: today
+      await updateDoc(userRef, { 
+        starsToday: 0, 
+        lastStarDate: today 
       });
     }
 
     const effectiveCap = getEffectiveDailyCap(data);
     const currentToday = data.starsToday || 0;
 
-    // If user already received today's full bonus, do nothing
-    if (currentToday >= effectiveCap) {
-      dailyStarBonusGiven = true;
-      return;
-    }
+    if (currentToday >= effectiveCap) return; // Already received today
 
     const amountToAdd = effectiveCap - currentToday;
 
@@ -2947,27 +2950,29 @@ async function giveDailyStarBonus(uid) {
       starsToday: increment(amountToAdd)
     });
 
-    dailyStarBonusGiven = true;
+    // Show notification
+    showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
 
-    // Show nice notification
-    showGoldAlert(`🎁 You've been gifted **${amountToAdd} Stars** for today!`, "success");
-
-    console.log(`[STARS] Daily bonus given: +${amountToAdd} stars (Cap: ${effectiveCap})`);
+    console.log(`[DAILY BONUS] +${amountToAdd} stars given | Cap: ${effectiveCap}`);
 
   } catch (err) {
-    console.error("[STARS] Daily bonus error:", err);
+    console.error("[DAILY BONUS] Error:", err);
   }
 }
 
-// Keep this helper from before
+// Your exact tiers
 function getEffectiveDailyCap(userData) {
   if (!userData) return 50;
 
-  let cap = 50; // base
+  let cap = 50;                    // Normal user
 
-  if (userData.isHost === true) cap = Math.max(cap, 600);
-  if (userData.isVIP === true) cap = Math.max(cap, 50);
-  if (userData.hasPaid === true) cap = Math.max(cap, 500);
+  if (userData.isHost === true) {
+    cap = 600;
+  } else if (userData.hasPaid === true) {
+    cap = 500;
+  } else if (userData.isVIP === true) {
+    cap = 50;     // You can increase this later if you want VIP to get more
+  }
 
   return cap;
 }
