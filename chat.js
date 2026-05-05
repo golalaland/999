@@ -5634,32 +5634,52 @@ if (bodyTypeEl) bodyTypeEl.value = data.bodyTypePick || "";
         }
       });
 
-    // --- save info button (safe)
+ // --- save info button (safe + allows clearing fields)
 const maybeSaveInfo = document.getElementById("saveInfo");
 if (maybeSaveInfo) {
   maybeSaveInfo.addEventListener("click", async () => {
-    if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
+    if (!currentUser?.uid) {
+      return showStarPopup("⚠️ Please log in first.");
+    }
 
-    const getVal = id => document.getElementById(id)?.value ?? "";
+    const getVal = id => {
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : "";
+    };
 
-    // Collect all form values
-let dataToUpdate = {
-  fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
-  city: getVal("city"),
-  location: getVal("location"),
-  bioPick: getVal("bio"),
-  bankAccountNumber: getVal("bankAccountNumber"),
-  bankName: getVal("bankName"),
-  telegram: getVal("telegram"),
-    snapchat: getVal("snapchat"),
-  tiktok: getVal("tiktok"),
-  whatsapp: getVal("whatsapp"),
-  instagram: getVal("instagram"),
-  naturePick: getVal("naturePick"),
-  fruitPick: getVal("fruitPick"),
-  bodyTypePick: getVal("bodyTypePick"), // ← ADD THIS
-};
+    // Collect all fields - empty string = intentionally clear the field
+    const dataToUpdate = {
+      fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
+      city: getVal("city"),
+      location: getVal("location"),
+      bioPick: getVal("bio"),
+      bankAccountNumber: getVal("bankAccountNumber"),
+      bankName: getVal("bankName"),
+      
+      telegram: getVal("telegram"),
+      snapchat: getVal("snapchat"),     // ← important
+      tiktok: getVal("tiktok"),
+      whatsapp: getVal("whatsapp"),
+      instagram: getVal("instagram"),
 
+      naturePick: getVal("naturePick"),
+      fruitPick: getVal("fruitPick"),
+      bodyTypePick: getVal("bodyTypePick"),
+    };
+
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      
+      await updateDoc(userRef, dataToUpdate);
+      
+      showStarPopup("✅ Profile updated successfully!", "success");
+      
+    } catch (error) {
+      console.error("Save failed:", error);
+      showStarPopup("❌ Failed to save. Try again.", "error");
+    }
+  });
+}
     // ───────────────────────────────────────────────────────────────
     // ADD BANK NORMALIZATION + SLUG GENERATION HERE
     if (dataToUpdate.bankName) {
