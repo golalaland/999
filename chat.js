@@ -5677,7 +5677,7 @@ if (maybeSaveInfo) {
       showStarPopup("❌ Failed to save. Try again.", "error");
     }
   });
-}
+   
     // ───────────────────────────────────────────────────────────────
     // ADD BANK NORMALIZATION + SLUG GENERATION HERE
     if (dataToUpdate.bankName) {
