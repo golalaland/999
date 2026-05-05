@@ -6222,7 +6222,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         padding:60px 12px 12px;
       `;
 
-            // User (Clickable) - Full Page Centered Spinner
+                 // User Click - Centered Spinner (Transparent Background)
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
@@ -6232,24 +6232,24 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
 
         if (!video.uploaderId) return;
 
-        // Create full-page centered spinner
+        // Transparent centered spinner
         const fullSpinner = document.createElement("div");
         fullSpinner.id = "profile-loading-spinner";
         fullSpinner.style.cssText = `
           position: fixed;
           top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0,0,0,0.85);
+          background: rgba(0,0,0,0.4);           /* Transparent dark */
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 999999;
-          backdrop-filter: blur(8px);
+          backdrop-filter: blur(6px);
         `;
 
         fullSpinner.innerHTML = `
           <div style="text-align:center;">
-            <div style="width:50px; height:50px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px;"></div>
-            <div style="color:#00ffea; font-size:15px; font-weight:600;"></div>
+            <div style="width:48px; height:48px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 14px;"></div>
+            <div style="color:#fff; font-size:15px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.6);">Loading Profile...</div>
           </div>
         `;
 
