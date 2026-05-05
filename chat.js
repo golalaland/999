@@ -6249,7 +6249,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         fullSpinner.innerHTML = `
           <div style="text-align:center;">
             <div style="width:50px; height:50px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px;"></div>
-            <div style="color:#00ffea; font-size:15px; font-weight:600;">Loading Profile...</div>
+            <div style="color:#00ffea; font-size:15px; font-weight:600;"></div>
           </div>
         `;
 
