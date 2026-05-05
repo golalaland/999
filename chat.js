@@ -6108,25 +6108,15 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   let activeTags = new Set();
   let activeLocation = null;   // Strong single location filter
 
-  // ==================== RENDER CARDS ====================
-  function renderCards() {
+  function renderCards(videosToRender = allVideos) {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
-    let visibleVideos = allVideos.filter(v => {
+    let visibleVideos = videosToRender.filter(v => {
       const now = Date.now();
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
     });
 
-    // Strong Location Filter
-    if (activeLocation) {
-      visibleVideos = visibleVideos.filter(v => {
-        const loc = (v.location || v.city || "").toLowerCase().trim();
-        return loc === activeLocation.toLowerCase();
-      });
-    }
-
-    // Other tags filter
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
@@ -6136,44 +6126,51 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       });
     }
 
-    // Non-location tags in top bar
+    // Only non-location tags in main bar
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim() && 
-            t.trim() !== v.location?.trim() && t.trim() !== v.city?.trim()) {
+        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim() && t.trim() !== v.city?.trim()) {
           visibleTags.add(t.trim().toLowerCase());
         }
       });
     });
+    const sortedVisibleTags = [...visibleTags].sort();
 
-    [...visibleTags].sort().forEach(tag => {
+    sortedVisibleTags.forEach(tag => {
       const btn = document.createElement("button");
       btn.textContent = tag;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
-        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
+        padding: "6px 14px",
+        borderRadius: "24px",
+        fontSize: "12px",
+        fontWeight: "600",
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer", transition: "all 0.25s"
+        border: "1px solid rgba(255,46,120,0.6)",
+        cursor: "pointer",
+        transition: "all 0.25s"
       });
       btn.onclick = () => {
         if (activeTags.has(tag)) activeTags.delete(tag);
         else activeTags.add(tag);
-        renderCards();
+        renderCards(videosToRender);
       };
       tagContainer.appendChild(btn);
     });
 
-    if (visibleVideos.length === 0) {
+    const filtered = visibleVideos.sort(() => Math.random() - 0.5);
+
+    if (filtered.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = activeLocation ? `No clips found in ${activeLocation}...` : "No clips match your filters...";
-      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
+      empty.textContent = "No clips match your filters... try another location!";
+      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:60px; color:#888; font-size:16px;";
       grid.appendChild(empty);
       return;
     }
 
-    visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+    filtered.forEach(video => {
       const card = document.createElement("div");
       Object.assign(card.style, {
         position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
@@ -6181,7 +6178,6 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
         border: "1px solid rgba(138,43,226,0.4)"
       });
-
       card.onmouseenter = () => {
         card.style.transform = "scale(1.03)";
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
@@ -6191,33 +6187,27 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
       };
 
-      // ==================== IMPROVED THUMBNAIL ====================
-      const thumbUrl = video.thumbnailUrl || video.videoUrl || "";
-      const fallbackThumb = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
-
       const vidContainer = document.createElement("div");
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = "metadata";
+      videoEl.muted = true; videoEl.loop = true; videoEl.preload = "metadata";
       videoEl.loading = "lazy";
-      videoEl.poster = thumbUrl || fallbackThumb;           // Better thumbnail handling
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
       videoEl.src = video.previewClip || video.videoUrl || "";
+      videoEl.load();
+      vidContainer.onmouseenter = (e) => { e.stopPropagation(); videoEl.play().catch(() => {}); };
+      vidContainer.onmouseleave = (e) => { e.stopPropagation(); videoEl.pause(); videoEl.currentTime = 0; };
 
-      vidContainer.appendChild(videoEl);
-      vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
-      vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
       vidContainer.onclick = (e) => {
         e.stopPropagation();
         openFullScreenVideo(video.videoUrl || "");
       };
 
+      vidContainer.appendChild(videoEl);
       card.appendChild(vidContainer);
 
-      // ==================== YOUR ORIGINAL INFO OVERLAY (Kept Fully) ====================
+      // Info overlay
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -6228,39 +6218,81 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; position:relative;";
-      // (your user click handler remains the same)
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) {
+          const spinner = document.createElement("div");
+          spinner.className = "profile-spinner";
+          user.appendChild(spinner);
 
-      // One-liner
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(userSnap => {
+              spinner.remove();
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              } else {
+                showStarPopup("User profile not found", "error");
+              }
+            })
+            .catch(err => {
+              spinner.remove();
+              console.error("Failed to load user:", err);
+              showStarPopup("Failed to load profile", "error");
+            });
+        }
+      };
+
+      // One-liner: A {naturePick} {gender} in {pronoun} {AgeGroup}
       const naturePick = video.naturePick || "";
       const genderRaw = (video.gender || "person").toLowerCase().trim();
       const isMale = genderRaw === "male";
       const pronoun = isMale ? "his" : "her";
       const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
-      const oneLinerText = naturePick ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}` : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+
+      const oneLinerText = naturePick 
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+
       const oneLiner = document.createElement("div");
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-      // Tags
+      // Tags — location & city layered on video, no #
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
       if (video.location) {
         const span = document.createElement("span");
         span.textContent = video.location.trim();
-        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
         tagsEl.appendChild(span);
       }
+
       if (video.city) {
         const span = document.createElement("span");
         span.textContent = video.city.trim();
-        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
+        span.style.cssText = `
+          font-size:11px; padding:2px 8px; border-radius:10px;
+          background: rgba(0,255,234,0.3); color: #00ffea;
+          border: 1px solid rgba(0,255,234,0.6);
+        `;
         tagsEl.appendChild(span);
       }
+
+      // Other tags
       (video.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           const span = document.createElement("span");
           span.textContent = t.trim();
-          span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(255,46,120,0.22); color: #ff4d8a; border: 1px solid rgba(255,46,120,0.6);`;
+          span.style.cssText = `
+            font-size:11px; padding:2px 8px; border-radius:10px;
+            background: rgba(255,46,120,0.22); color: #ff4d8a;
+            border: 1px solid rgba(255,46,120,0.6);
+          `;
           tagsEl.appendChild(span);
         }
       });
@@ -6268,22 +6300,40 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
 
-      // FruitPick
+      // FruitPick — tiny standalone emoji
+      let fruitEl = null;
       if (video.fruitPick) {
-        const fruitEl = document.createElement("div");
+        fruitEl = document.createElement("div");
         fruitEl.textContent = video.fruitPick.trim();
-        fruitEl.style.cssText = `position:absolute; bottom:10px; right:10px; font-size:16px; line-height:1; color:#fff; text-shadow:0 0 3px rgba(255,255,255,0.5); z-index:3;`;
-        card.appendChild(fruitEl);
+        fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          font-size: 16px;
+          line-height: 1;
+          color: #fff;
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
+          z-index: 3;
+        `;
       }
 
-      // Badge
+      if (fruitEl) card.appendChild(fruitEl);
+
+      // BADGE
       const badge = document.createElement("div");
       badge.textContent = "Free Tonight ♡";
       Object.assign(badge.style, {
-        position: "absolute", top: "12px", right: "12px", padding: "6px 12px", borderRadius: "12px",
-        fontSize: "12px", fontWeight: "700", color: "#fff",
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        padding: "6px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: "700",
+        color: "#fff",
         background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-        boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)",
+        border: "1px solid rgba(255,255,255,0.3)",
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
@@ -6291,56 +6341,17 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       grid.appendChild(card);
     });
 
+    // Re-attach load more trigger
     grid.appendChild(loadMoreDiv);
   }
 
-  // ==================== LOCATION MODAL ====================
-  function openLocationModal() {
-    const locModal = document.createElement("div");
-    locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
-
-    locModal.innerHTML = `
-      <div style="background:rgba(15,10,26,0.95); border:1px solid #8a2be2; border-radius:20px; padding:32px; max-width:420px; width:90%; text-align:center;">
-        <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
-        <div id="locList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-height:320px; overflow-y:auto; padding:10px;"></div>
-        <button id="clearLocBtn" style="margin-top:20px; padding:10px 30px; background:#333; color:#fff; border:none; border-radius:30px;">Clear Filter</button>
-      </div>
-    `;
-
-    document.body.appendChild(locModal);
-
-    const container = locModal.querySelector("#locList");
-    const locations = new Set();
-
-    allVideos.forEach(v => {
-      if (v.location) locations.add(v.location.trim());
-      if (v.city) locations.add(v.city.trim());
-    });
-
-    [...locations].sort().forEach(loc => {
-      const btn = document.createElement("button");
-      btn.textContent = loc;
-      btn.style.cssText = `padding:10px 20px; border-radius:25px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer;`;
-      btn.onclick = () => {
-        activeLocation = loc;
-        renderCards();
-        locModal.remove();
-      };
-      container.appendChild(btn);
-    });
-
-    locModal.querySelector("#clearLocBtn").onclick = () => {
-      activeLocation = null;
-      renderCards();
-      locModal.remove();
-    };
-  }
-
-  // Initial Render
-  renderCards();
+  // Initial render
+  renderCards(allVideos);
   document.body.appendChild(modal);
+  setTimeout(() => {
+    // Optional: focus on search if you add one later
+  }, 300);
 }
-
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
     document.getElementById("unlockConfirmModal")?.remove();
