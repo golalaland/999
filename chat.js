@@ -5665,18 +5665,6 @@ if (maybeSaveInfo) {
       fruitPick: getVal("fruitPick"),
       bodyTypePick: getVal("bodyTypePick"),
     };
-
-    try {
-      const userRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userRef, dataToUpdate);
-      
-      showStarPopup("✅ Profile updated successfully!", "success");
-      
-    } catch (error) {
-      console.error("Save failed:", error);
-      showStarPopup("❌ Failed to save. Try again.", "error");
-    }
-  });
    
     // ───────────────────────────────────────────────────────────────
     // ADD BANK NORMALIZATION + SLUG GENERATION HERE
