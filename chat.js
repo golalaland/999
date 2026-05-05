@@ -4141,7 +4141,7 @@ function showMeetModal(host) {
       box-shadow:0 0 20px rgba(0,0,0,0.5);
     ">
       <h3 style="margin-bottom:10px;font-weight:600;">Meet ${host.chatId || "this host"}?</h3>
-      <p style="margin-bottom:16px;">Request meet with <b>400 stars ⭐</b>?</p>
+      <p style="margin-bottom:16px;">Unlock with <b>250 STRZ ⭐</b>?</p>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
         <button id="confirmMeet" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
@@ -4158,7 +4158,7 @@ function showMeetModal(host) {
   cancelBtn.onclick = () => modal.remove();
 
   confirmBtn.onclick = async () => {
-    const COST = 400;
+    const COST = 250;
 
     if (!currentUser?.uid) {
       showGiftAlert("⚠️ Please log in to request meets");
@@ -4183,7 +4183,7 @@ function showMeetModal(host) {
       await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
 
       // === PLAYFUL STAGED ANIMATION (SAME FOR TELEGRAM & WHATSAPP) ===
-      const fixedStages = ["Handling your meet request…", "Collecting host’s identity…"];
+      const fixedStages = ["Handling your request…", "Collecting host’s identity…"];
       const playfulMessages = [
         "Oh, she’s hella cute…💋", "Careful, she may be naughty..😏",
         "Be generous with her, she’ll like you..", "Ohh, she’s a real star.. 🤩",
@@ -4328,19 +4328,28 @@ function showSocialRedirectModal(modalContent, host) {
     // Build proper Snapchat URL
     const snapUrl = `https://www.snapchat.com/add/${snapHandle}`;
 
-    modalContent.innerHTML = `
-      <h3 style="margin-bottom:10px; font-weight:600;">Meet ${hostName}?</h3>
-      <p style="margin-bottom:16px;">${hostName} hasn't shared her contact yet.</p>
-      <p style="margin-bottom:20px;">Add her & Chat on <b>Snapchat</b> instead?</p>
-      
-      <button id="goSocialBtn" style="padding:10px 24px; background:linear-gradient(90deg,#fffc00,#ff00aa); border:none; color:#000; border-radius:8px; font-weight:700; font-size:15px;">
-        Open Snapchat
-      </button>
-      
-      <button id="cancelMeet" style="margin-top:12px; padding:8px 20px; background:#333; border:none; color:#fff; border-radius:8px; font-weight:500;">
-        Close
-      </button>
-    `;
+   modalContent.innerHTML = `
+  <h3 style="margin-bottom:10px; font-weight:600;">Meet ${hostName}?</h3>
+  <p style="margin-bottom:16px;">${hostName} hasn't shared her contact yet.</p>
+  <p style="margin-bottom:20px;">Add her & Chat on <b>Snapchat</b> instead?</p>
+ 
+  <button id="goSocialBtn" style="
+    padding:12px 32px; 
+    background: #FFFC00; 
+    color: #000; 
+    border: none; 
+    border-radius: 12px; 
+    font-weight: 700; 
+    font-size: 16px; 
+    box-shadow: 0 4px 15px rgba(255, 252, 0, 0.5);
+  ">
+    Open Snapchat
+  </button>
+ 
+  <button id="cancelMeet" style="margin-top:14px; padding:9px 22px; background:#333; border:none; color:#fff; border-radius:8px; font-weight:500;">
+    Close
+  </button>
+`;
 
     modalContent.querySelector("#goSocialBtn").onclick = () => {
       window.open(snapUrl, "_blank");
