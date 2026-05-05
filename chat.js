@@ -5651,6 +5651,7 @@ let dataToUpdate = {
   bankAccountNumber: getVal("bankAccountNumber"),
   bankName: getVal("bankName"),
   telegram: getVal("telegram"),
+    snapchat: getVal("snapchat"),
   tiktok: getVal("tiktok"),
   whatsapp: getVal("whatsapp"),
   instagram: getVal("instagram"),
