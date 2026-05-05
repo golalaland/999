@@ -5647,7 +5647,7 @@ if (maybeSaveInfo) {
       return el ? el.value.trim() : "";
     };
 
-    const dataToUpdate = {
+    let dataToUpdate = {
       fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
       city: getVal("city"),
       location: getVal("location"),
@@ -5664,47 +5664,27 @@ if (maybeSaveInfo) {
       bodyTypePick: getVal("bodyTypePick"),
     };
 
-    // Simple save without complex try-catch
-    const userRef = doc(db, "users", currentUser.uid);
-    
-    try {
-      await updateDoc(userRef, dataToUpdate);
-      showStarPopup("✅ Profile updated successfully!", "success");
-    } catch (error) {
-      console.error("Save failed:", error);
-      showStarPopup("❌ Failed to save. Try again.", "error");
-    }
-  });
-}
-    // ───────────────────────────────────────────────────────────────
-    // ADD BANK NORMALIZATION + SLUG GENERATION HERE
+    // Bank normalization
     if (dataToUpdate.bankName) {
       const selectedBankName = dataToUpdate.bankName.trim();
-
-      // Clean and normalize the name (just in case user typed manually — though unlikely with <select>)
-      const normalizedBankName = selectedBankName
-        .replace(/\s+/g, ' ')           // normalize multiple spaces
-        .trim();
-
-      // Generate slug (Paystack-compatible format)
+      const normalizedBankName = selectedBankName.replace(/\s+/g, ' ').trim();
       const bankSlug = normalizedBankName
         .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')   // remove special chars except letters, numbers, space, hyphen
+        .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
 
-      // Update the data object with both versions
-      dataToUpdate.bankName = normalizedBankName;   // "Guaranty Trust Bank (GTBank)"
-      dataToUpdate.bankSlug = bankSlug;             // "guaranty-trust-bank-gtbank"
+      dataToUpdate.bankName = normalizedBankName;
+      dataToUpdate.bankSlug = bankSlug;
     }
-    // ───────────────────────────────────────────────────────────────
 
-    // Validation (existing)
-    if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber))
+    // Validation
+    if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber)) {
       return showStarPopup("⚠️ Bank account number must be digits only (max 11).");
-
-    if (dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp))
+    }
+    if (dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp)) {
       return showStarPopup("⚠️ WhatsApp number must be numbers only.");
+    }
 
     const originalHTML = maybeSaveInfo.innerHTML;
     maybeSaveInfo.innerHTML = `<div class="spinner" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation: spin 0.6s linear infinite;margin:auto;"></div>`;
@@ -5716,19 +5696,26 @@ if (maybeSaveInfo) {
         Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined && v !== "")
       );
 
-      await updateDoc(userRef, { ...filteredData, lastUpdated: serverTimestamp() });
+      await updateDoc(userRef, { 
+        ...filteredData, 
+        lastUpdated: serverTimestamp() 
+      });
 
-      // mirror to featuredHosts if exists
+      // Optional: mirror to featuredHosts
       const hostRef = doc(db, "featuredHosts", currentUser.uid);
       const hostSnap = await getDoc(hostRef);
       if (hostSnap.exists()) {
-        await updateDoc(hostRef, { ...filteredData, lastUpdated: serverTimestamp() });
+        await updateDoc(hostRef, { 
+          ...filteredData, 
+          lastUpdated: serverTimestamp() 
+        });
       }
 
       showStarPopup("✅ Profile updated successfully!");
-
-      // blur inputs for UX
+      
+      // blur inputs
       document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
+
     } catch (err) {
       console.error("[host-init] saveInfo error:", err);
       showStarPopup("⚠️ Failed to update info. Please try again.");
