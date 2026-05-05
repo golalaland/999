@@ -5634,7 +5634,7 @@ if (bodyTypeEl) bodyTypeEl.value = data.bodyTypePick || "";
         }
       });
 
- // --- save info button (safe + allows clearing fields)
+// --- save info button (safe + allows clearing fields)
 const maybeSaveInfo = document.getElementById("saveInfo");
 if (maybeSaveInfo) {
   maybeSaveInfo.addEventListener("click", async () => {
@@ -5647,7 +5647,6 @@ if (maybeSaveInfo) {
       return el ? el.value.trim() : "";
     };
 
-    // Collect all fields - empty string = intentionally clear the field
     const dataToUpdate = {
       fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
       city: getVal("city"),
@@ -5657,7 +5656,7 @@ if (maybeSaveInfo) {
       bankName: getVal("bankName"),
       
       telegram: getVal("telegram"),
-      snapchat: getVal("snapchat"),     // ← important
+      snapchat: getVal("snapchat"),
       tiktok: getVal("tiktok"),
       whatsapp: getVal("whatsapp"),
       instagram: getVal("instagram"),
@@ -5669,7 +5668,6 @@ if (maybeSaveInfo) {
 
     try {
       const userRef = doc(db, "users", currentUser.uid);
-      
       await updateDoc(userRef, dataToUpdate);
       
       showStarPopup("✅ Profile updated successfully!", "success");
@@ -6288,7 +6286,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         fullSpinner.innerHTML = `
           <div style="text-align:center;">
             <div style="width:48px; height:48px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 14px;"></div>
-            <div style="color:#fff; font-size:15px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.6);">Loading Profile...</div>
+            <div style="color:#fff; font-size:15px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.6);"></div>
           </div>
         `;
 
