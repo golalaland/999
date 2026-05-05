@@ -5654,18 +5654,28 @@ if (maybeSaveInfo) {
       bioPick: getVal("bio"),
       bankAccountNumber: getVal("bankAccountNumber"),
       bankName: getVal("bankName"),
-      
       telegram: getVal("telegram"),
       snapchat: getVal("snapchat"),
       tiktok: getVal("tiktok"),
       whatsapp: getVal("whatsapp"),
       instagram: getVal("instagram"),
-
       naturePick: getVal("naturePick"),
       fruitPick: getVal("fruitPick"),
       bodyTypePick: getVal("bodyTypePick"),
     };
-   
+
+    // Simple save without complex try-catch
+    const userRef = doc(db, "users", currentUser.uid);
+    
+    try {
+      await updateDoc(userRef, dataToUpdate);
+      showStarPopup("✅ Profile updated successfully!", "success");
+    } catch (error) {
+      console.error("Save failed:", error);
+      showStarPopup("❌ Failed to save. Try again.", "error");
+    }
+  });
+}
     // ───────────────────────────────────────────────────────────────
     // ADD BANK NORMALIZATION + SLUG GENERATION HERE
     if (dataToUpdate.bankName) {
