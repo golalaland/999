@@ -4316,34 +4316,51 @@ modalContent.innerHTML = `
   };
 }
 
-/* ---------- Social Fallback (unchanged) ---------- */
+/* ---------- Social Fallback (Snapchat Version) ---------- */
 function showSocialRedirectModal(modalContent, host) {
-  const socialUrl = host.tiktok || host.instagram || "";
-  const socialName = host.tiktok ? "TikTok" : host.instagram ? "Instagram" : "";
+  let snapHandle = (host.snapchat || "").trim();
   const hostName = host.chatId || "this host";
 
-  if (socialUrl) {
+  // Clean the handle (remove @ if user added it)
+  snapHandle = snapHandle.replace(/^@/, "").trim();
+
+  if (snapHandle) {
+    // Build proper Snapchat URL
+    const snapUrl = `https://www.snapchat.com/add/${snapHandle}`;
+
     modalContent.innerHTML = `
-      <h3 style="margin-bottom:10px;font-weight:600;">Meet ${hostName}?</h3>
-      <p style="margin-bottom:16px;">${hostName} isn’t available for direct meets yet.</p>
-      <p style="margin-bottom:16px;">Check her out on <b>${socialName}</b> instead?</p>
-      <button id="goSocialBtn" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Go</button>
-      <button id="cancelMeet" style="margin-top:10px;padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Close</button>
+      <h3 style="margin-bottom:10px; font-weight:600;">Meet ${hostName}?</h3>
+      <p style="margin-bottom:16px;">${hostName} hasn't shared her contact yet.</p>
+      <p style="margin-bottom:20px;">Add her & Chat on <b>Snapchat</b> instead?</p>
+      
+      <button id="goSocialBtn" style="padding:10px 24px; background:linear-gradient(90deg,#fffc00,#ff00aa); border:none; color:#000; border-radius:8px; font-weight:700; font-size:15px;">
+        Open Snapchat
+      </button>
+      
+      <button id="cancelMeet" style="margin-top:12px; padding:8px 20px; background:#333; border:none; color:#fff; border-radius:8px; font-weight:500;">
+        Close
+      </button>
     `;
 
     modalContent.querySelector("#goSocialBtn").onclick = () => {
-      window.open(socialUrl, "_blank");
+      window.open(snapUrl, "_blank");
       modalContent.parentElement.remove();
     };
-    modalContent.querySelector("#cancelMeet").onclick = () => modalContent.parentElement.remove();
+
   } else {
+    // No Snapchat added
     modalContent.innerHTML = `
-      <h3 style="margin-bottom:10px;font-weight:600;">Meet ${hostName}?</h3>
-      <p style="margin-bottom:16px;">${hostName} isn’t meeting new people yet. Check back soon!</p>
-      <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Close</button>
+      <h3 style="margin-bottom:10px; font-weight:600;">Meet ${hostName}?</h3>
+      <p style="margin-bottom:16px;">${hostName} isn’t meeting new people yet.</p>
+      <p style="margin-bottom:20px;">No Snapchat linked yet. Check back soon!</p>
+      
+      <button id="cancelMeet" style="padding:10px 24px; background:#333; border:none; color:#fff; border-radius:8px; font-weight:500;">
+        Close
+      </button>
     `;
-    modalContent.querySelector("#cancelMeet").onclick = () => modalContent.parentElement.remove();
   }
+
+  modalContent.querySelector("#cancelMeet").onclick = () => modalContent.parentElement.remove();
 }
 
 /* ---------- Gift Slider ---------- */
@@ -5554,6 +5571,7 @@ window.startStream = startStream;
           safeSet("bankName", data.bankName || "");
           safeSet("telegram", data.telegram || "");
           safeSet("tiktok", data.tiktok || "");
+              safeSet("snapchat", data.snapchat || "");
           safeSet("whatsapp", data.whatsapp || "");
           safeSet("instagram", data.instagram || "");
           // picks
