@@ -6265,9 +6265,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
-       @keyframes spin {
-  to { transform: rotate(360deg); }
-}
+   
 
       // Tags
       const tagsEl = document.createElement("div");
