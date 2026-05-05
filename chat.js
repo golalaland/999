@@ -6345,6 +6345,48 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     grid.appendChild(loadMoreDiv);
   }
 
+   // ==================== LOCATION MODAL ====================
+  function openLocationModal() {
+    const locModal = document.createElement("div");
+    locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
+
+    locModal.innerHTML = `
+      <div style="background:rgba(15,10,26,0.95); border:1px solid #8a2be2; border-radius:20px; padding:32px; max-width:420px; width:90%; text-align:center;">
+        <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
+        <div id="locList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-height:320px; overflow-y:auto; padding:10px;"></div>
+        <button id="clearLocBtn" style="margin-top:20px; padding:10px 30px; background:#333; color:#fff; border:none; border-radius:30px;">Clear Filter</button>
+      </div>
+    `;
+
+    document.body.appendChild(locModal);
+
+    const container = locModal.querySelector("#locList");
+    const locations = new Set();
+
+    allVideos.forEach(v => {
+      if (v.location) locations.add(v.location.trim());
+      if (v.city) locations.add(v.city.trim());
+    });
+
+    [...locations].sort().forEach(loc => {
+      const btn = document.createElement("button");
+      btn.textContent = loc;
+      btn.style.cssText = `padding:10px 20px; border-radius:25px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer;`;
+      btn.onclick = () => {
+        activeLocation = loc;
+        renderCards();
+        locModal.remove();
+      };
+      container.appendChild(btn);
+    });
+
+    locModal.querySelector("#clearLocBtn").onclick = () => {
+      activeLocation = null;
+      renderCards();
+      locModal.remove();
+    };
+  }
+
   // Initial render
   renderCards(allVideos);
   document.body.appendChild(modal);
