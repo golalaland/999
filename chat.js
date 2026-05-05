@@ -2894,9 +2894,9 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
 let dailyStarBonusGiven = false;
 
-// ====================== DAILY STAR BONUS FUNCTION ======================
 async function giveDailyStarBonus(uid) {
-  if (!uid || !currentUser) return;
+  if (!uid || dailyStarBonusGiven) return;
+  if (!currentUser) return;
 
   try {
     const userRef = doc(db, "users", uid);
@@ -2908,50 +2908,59 @@ async function giveDailyStarBonus(uid) {
 
     // Reset if new day
     if (data.lastStarDate !== today) {
-      await updateDoc(userRef, { 
-        starsToday: 0, 
-        lastStarDate: today 
+      await updateDoc(userRef, {
+        starsToday: 0,
+        lastStarDate: today
       });
     }
 
     const effectiveCap = getEffectiveDailyCap(data);
     const currentToday = data.starsToday || 0;
 
-    if (currentToday >= effectiveCap) return;
+    if (currentToday >= effectiveCap) {
+      dailyStarBonusGiven = true;
+      return;
+    }
 
     const amountToAdd = effectiveCap - currentToday;
 
-    // Award the stars
+    // Award stars
     await updateDoc(userRef, {
       stars: increment(amountToAdd),
       starsToday: increment(amountToAdd)
     });
 
-    // Update local object
+    // Update local state
     currentUser.stars = (currentUser.stars || 0) + amountToAdd;
-    currentUser.starsToday = (currentUser.starsToday || 0) + amountToAdd;
+    currentUser.starsToday = currentToday + amountToAdd;
 
-    // Show notification
-    showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
+    dailyStarBonusGiven = true;
 
-    // Smooth counting animation
-    if (typeof animateStarCount === "function") {
-      animateStarCount(currentUser.stars);
-    } else if (refs?.starCountEl) {
-      // Fallback smooth animation
-      let displayed = parseInt(refs.starCountEl.textContent.replace(/[^0-9]/g, '')) || 0;
-      const diff = currentUser.stars - displayed;
-      let step = Math.ceil(diff / 25);
+    // === Show Notification + Smooth Animation ===
+    // Small delay to make sure DOM and UI functions are ready
+    setTimeout(() => {
+      if (typeof showGoldAlert === "function") {
+        showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
+      }
 
-      const interval = setInterval(() => {
-        displayed += step;
-        if (displayed >= currentUser.stars) {
-          displayed = currentUser.stars;
-          clearInterval(interval);
-        }
-        refs.starCountEl.textContent = formatNumberWithCommas(displayed);
-      }, 40);
-    }
+      // Smooth count-up
+      if (typeof animateStarCount === "function") {
+        animateStarCount(currentUser.stars);
+      } else if (refs?.starCountEl) {
+        let displayed = parseInt(refs.starCountEl.textContent.replace(/[^0-9]/g, '')) || 0;
+        const target = currentUser.stars;
+        const step = Math.ceil((target - displayed) / 25);
+
+        const interval = setInterval(() => {
+          displayed += step;
+          if (displayed >= target) {
+            displayed = target;
+            clearInterval(interval);
+          }
+          refs.starCountEl.textContent = formatNumberWithCommas(displayed);
+        }, 40);
+      }
+    }, 800); // Small delay ensures everything is loaded
 
     console.log(`[DAILY BONUS] +${amountToAdd} stars | New Total: ${currentUser.stars}`);
 
@@ -4817,7 +4826,7 @@ async function generateThumbnail(file) {
 }
 
 // ================================
-// FREE TONIGHT UPLOAD HANDLER – ONE VIDEO PER USER + INSTANT THUMBNAIL CACHE
+// FREE TONIGHT UPLOAD HANDLER – IMPROVED (One Video Per User + Auto Clear)
 // ================================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
   const btn = e.currentTarget;
@@ -4828,35 +4837,39 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     return;
   }
 
-  const file = document.getElementById('highlightUploadInput')?.files?.[0];
+  const fileInput = document.getElementById('highlightUploadInput');
+  const file = fileInput?.files?.[0];
+
   if (!file) return showStarPopup('Please select a video', 'error');
   if (file.size > 50 * 1024 * 1024) return showStarPopup('Maximum file size is 50MB', 'error');
 
-// === ENFORCE ONE VIDEO PER USER ===
-const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
-const highlightsSnap = await getDoc(highlightsRef);
-const existingHighlights = highlightsSnap.exists() 
-  ? (highlightsSnap.data().highlights || []) 
-  : [];
+  // === STRICT ONE VIDEO PER USER ===
+  const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
+  const highlightsSnap = await getDoc(highlightsRef);
+  
+  if (highlightsSnap.exists()) {
+    const existing = highlightsSnap.data().highlights || [];
+    const hasActive = existing.some(v => v.isTrending === true);
 
-const activeFreeTonight = existingHighlights.some(v => v.isTrending === true);
+    if (hasActive) {
+      showStarPopup(
+        "You already have an active Free Tonight clip.<br><br>" +
+        "Please delete the current one first before uploading a new clip.",
+        "error"
+      );
+      return;
+    }
+  }
 
-if (activeFreeTonight) {
-  showStarPopup(
-    "You already have one video on Free Tonight.<br><br>" +
-    "Delete it first to upload another.",
-    "error"
-  );
-  return;
-}
-
+  // Disable button & start uploading
   btn.disabled = true;
-  btn.classList.add('uploading');
-  btn.textContent = 'Going Live...';
+  btn.textContent = 'Uploading...';
+  btn.style.background = '#555';
+
   const progressContainer = document.getElementById('progressContainer');
   if (progressContainer) progressContainer.style.opacity = '1';
 
-  showStarPopup('Going live on Free Tonight...', 'loading');
+  showStarPopup('Uploading your Free Tonight clip...', 'loading');
 
   try {
     const ts = Date.now();
@@ -4869,24 +4882,24 @@ if (activeFreeTonight) {
     const videoRef = ref(storage, videoPath);
     const meta = {
       contentType: file.type,
-      cacheControl: 'public, max-age=31536000, immutable'
+      cacheControl: 'public, max-age=31536000'
     };
 
     const uploadTask = uploadBytesResumable(videoRef, file, meta);
 
     uploadTask.on(
       'state_changed',
-      snapshot => {
+      (snapshot) => {
         const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
         const bar = document.getElementById('progressBar');
         const txt = document.getElementById('progressText');
         if (bar) bar.style.width = `${percent}%`;
         if (txt) txt.textContent = `Uploading... ${percent}%`;
       },
-      err => {
+      (err) => {
         console.error('Upload error:', err);
-        showStarPopup('Upload failed — try again', 'error');
-        resetButton(btn);
+        showStarPopup('Upload failed. Please try again.', 'error');
+        resetUploadButton(btn);
       },
       async () => {
         try {
@@ -4896,27 +4909,25 @@ if (activeFreeTonight) {
           const newHighlight = {
             id: `${ts}_${rand}`,
             videoUrl: videoUrl,
-            thumbnailUrl: '',           // Will be filled by Cloud Function
+            thumbnailUrl: '',           // ← Cloud Function will fill this
             storagePath: videoPath,
-            tags: [],                   // No extra tags needed
             views: 0,
-            isTrending: true,           // Auto Free Tonight
-            trendingUntil: Date.now() + 86400000 * 7, // 7 days
+            isTrending: true,
+            trendingUntil: Date.now() + (86400000 * 7), // 7 days
             uploadedAt: new Date().toISOString(),
             createdAt: new Date().toISOString()
           };
 
-          const docRef = doc(db, 'highlightVideos', currentUser.uid);
-
+          // Save to Firestore
           try {
-            await updateDoc(docRef, {
+            await updateDoc(highlightsRef, {
               highlights: arrayUnion(newHighlight),
               lastUploadAt: serverTimestamp(),
               totalVideos: increment(1)
             });
-          } catch (updateErr) {
-            if (updateErr.code === 'not-found') {
-              await setDoc(docRef, {
+          } catch (err) {
+            if (err.code === 'not-found') {
+              await setDoc(highlightsRef, {
                 uploaderId: currentUser.uid,
                 uploaderName: currentUser.chatId || 'Anonymous',
                 createdAt: serverTimestamp(),
@@ -4925,33 +4936,46 @@ if (activeFreeTonight) {
                 highlights: [newHighlight]
               });
             } else {
-              throw updateErr;
+              throw err;
             }
           }
 
-          showStarPopup('You are LIVE on Free Tonight! 🔥', 'success');
+          // === SUCCESS: Clear input so user doesn't re-upload same video ===
+          if (fileInput) fileInput.value = '';
+
+          showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
+          
           btn.textContent = 'LIVE!';
-          btn.style.background = 'linear-gradient(90deg, #00ffea, #ff00f2)';
+          btn.style.background = 'linear-gradient(90deg, #00ff88, #00cc66)';
 
           if (progressContainer) progressContainer.style.opacity = '0';
 
-          setTimeout(() => resetButton(btn), 3000);
-
+          // Refresh user clips
           if (typeof loadMyClips === 'function') loadMyClips();
 
+          // Reset button after delay
+          setTimeout(() => resetUploadButton(btn), 4000);
+
         } catch (err) {
-          console.error('Save failed:', err);
-          showStarPopup('Upload succeeded but saving failed — try again', 'error');
-          resetButton(btn);
+          console.error('Save error:', err);
+          showStarPopup('Video uploaded but failed to save. Try again.', 'error');
+          resetUploadButton(btn);
         }
       }
     );
   } catch (err) {
-    console.error('Setup failed:', err);
-    showStarPopup('Failed to start — try again', 'error');
-    resetButton(btn);
+    console.error('Upload setup error:', err);
+    showStarPopup('Failed to start upload', 'error');
+    resetUploadButton(btn);
   }
 });
+
+// Helper to reset button state
+function resetUploadButton(btn) {
+  btn.disabled = false;
+  btn.textContent = 'Go Live on Free Tonight';
+  btn.style.background = '';
+}
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
@@ -5960,7 +5984,7 @@ highlightsBtn.onclick = async () => {
     await loadPage();
 
     if (allClips.length === 0) {
-      showGoldAlert("No one's on Free Tonight right now... check back soon! 🔥");
+      showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
       return;
     }
 
