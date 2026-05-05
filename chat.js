@@ -6026,11 +6026,11 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
                      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
                      font-weight:800; font-size:22px; letter-spacing:0.4px;">
-          ◑△◐ Free Tonight ◑△◐
+          Free Tonight?
         </span>
       </div>
       <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-        Real moments, real vibes, no waiting.
+        Real moments, Real matches, No waiting.
         <br>Just pure connection under the night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
@@ -6222,10 +6222,35 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         padding:60px 12px 12px;
       `;
 
+          // User (Clickable - Fixed)
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; position:relative;";
-      user.onclick = (e) => { /* your original user click logic */ };
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; position:relative; display:inline-block;";
+      
+      user.onclick = (e) => {
+        e.stopPropagation();
+        if (video.uploaderId) {
+          const spinner = document.createElement("div");
+          spinner.className = "profile-spinner";
+          spinner.style.cssText = "display:inline-block; width:14px; height:14px; border:2px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin-left:6px; vertical-align:middle;";
+          user.appendChild(spinner);
+
+          getDoc(doc(db, "users", video.uploaderId))
+            .then(userSnap => {
+              spinner.remove();
+              if (userSnap.exists()) {
+                showSocialCard(userSnap.data());
+              } else {
+                showStarPopup("User profile not found", "error");
+              }
+            })
+            .catch(err => {
+              spinner.remove();
+              console.error("Failed to load user:", err);
+              showStarPopup("Failed to load profile", "error");
+            });
+        }
+      };
 
       // One-liner
       const naturePick = video.naturePick || "";
@@ -6233,9 +6258,16 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       const isMale = genderRaw === "male";
       const pronoun = isMale ? "his" : "her";
       const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+      const oneLinerText = naturePick
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
       const oneLiner = document.createElement("div");
-      oneLiner.textContent = naturePick ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}` : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+      oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
+
+       @keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
       // Tags
       const tagsEl = document.createElement("div");
