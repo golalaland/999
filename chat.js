@@ -6222,34 +6222,53 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         padding:60px 12px 12px;
       `;
 
-          // User (Clickable - Fixed)
+            // User (Clickable) - Full Page Centered Spinner
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; position:relative; display:inline-block;";
-      
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
+
       user.onclick = (e) => {
         e.stopPropagation();
-        if (video.uploaderId) {
-          const spinner = document.createElement("div");
-          spinner.className = "profile-spinner";
-          spinner.style.cssText = "display:inline-block; width:14px; height:14px; border:2px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin-left:6px; vertical-align:middle;";
-          user.appendChild(spinner);
 
-          getDoc(doc(db, "users", video.uploaderId))
-            .then(userSnap => {
-              spinner.remove();
-              if (userSnap.exists()) {
-                showSocialCard(userSnap.data());
-              } else {
-                showStarPopup("User profile not found", "error");
-              }
-            })
-            .catch(err => {
-              spinner.remove();
-              console.error("Failed to load user:", err);
-              showStarPopup("Failed to load profile", "error");
-            });
-        }
+        if (!video.uploaderId) return;
+
+        // Create full-page centered spinner
+        const fullSpinner = document.createElement("div");
+        fullSpinner.id = "profile-loading-spinner";
+        fullSpinner.style.cssText = `
+          position: fixed;
+          top: 0; left: 0; width: 100vw; height: 100vh;
+          background: rgba(0,0,0,0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999999;
+          backdrop-filter: blur(8px);
+        `;
+
+        fullSpinner.innerHTML = `
+          <div style="text-align:center;">
+            <div style="width:50px; height:50px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px;"></div>
+            <div style="color:#00ffea; font-size:15px; font-weight:600;">Loading Profile...</div>
+          </div>
+        `;
+
+        document.body.appendChild(fullSpinner);
+
+        getDoc(doc(db, "users", video.uploaderId))
+          .then(userSnap => {
+            fullSpinner.remove();
+            if (userSnap.exists()) {
+              showSocialCard(userSnap.data());
+            } else {
+              showStarPopup("User profile not found", "error");
+            }
+          })
+          .catch(err => {
+            fullSpinner.remove();
+            console.error("Failed to load user:", err);
+            showStarPopup("Failed to load profile", "error");
+          });
       };
 
       // One-liner
