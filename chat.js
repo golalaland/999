@@ -5824,101 +5824,87 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
 
-// === SINGLE FULL-SCREEN VIDEO MODAL – SAFE & REUSABLE ===
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
+
 function initFullScreenVideoModal() {
   if (fullScreenVideoModal) return;
+  
   fullScreenVideoModal = document.createElement("div");
   Object.assign(fullScreenVideoModal.style, {
-    position: "fixed",
-    inset: "0",
-    width: "100vw",
-    height: "100vh",
-    background: "#000",
-    zIndex: "99999",
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer"
+    position: "fixed", inset: "0", background: "#000", zIndex: "99999",
+    display: "none", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", touchAction: "none"
   });
+
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = false;
-  Object.assign(currentFullVideo.style, {
-    maxWidth: "100%",
-    maxHeight: "100%",
-    objectFit: "contain"
+  currentFullVideo.playsInline = true;   // better mobile behavior
+  currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
+
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
+
+  // Close on background click
+  fullScreenVideoModal.addEventListener("click", (e) => {
+    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
   });
-  // Close on click outside video (not on video itself)
-  fullScreenVideoModal.onclick = (e) => {
-    if (e.target === fullScreenVideoModal) {
-      closeFullScreenVideoModal();
-    }
-  };
-  // ESC key close
+
+  // ESC support
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
       closeFullScreenVideoModal();
     }
   });
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
 }
+
 function openFullScreenVideo(videoUrl) {
+  if (!videoUrl) return;
+  
   initFullScreenVideoModal();
-  // Full cleanup before opening new video
-  closeFullScreenVideoModal(true); // force cleanup without delay
-  currentFullVideo.src = videoUrl || "";
-  currentFullVideo.load();
+  
+  // Aggressive cleanup
+  if (currentFullVideo) {
+    currentFullVideo.pause();
+    currentFullVideo.src = "";
+    currentFullVideo.load();
+  }
+
+  currentFullVideo.src = videoUrl;
   fullScreenVideoModal.style.display = "flex";
-  // Autoplay
-  currentFullVideo.play().catch(err => console.log("Autoplay blocked:", err));
-  // Fullscreen (with fallback timing)
+
+  // Autoplay + Fullscreen
+  currentFullVideo.play().catch(() => {});
+  
+  // Fullscreen request (delayed for iOS reliability)
   setTimeout(() => {
-    const video = currentFullVideo;
-    if (video && document.fullscreenElement !== video) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen().catch(() => {});
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
-      }
+    if (!document.fullscreenElement) {
+      currentFullVideo.requestFullscreen?.()
+        .catch(() => currentFullVideo.webkitRequestFullscreen?.());
     }
-  }, 300); // slightly longer delay = more reliable on mobile
+  }, 350);
 }
-function closeFullScreenVideoModal(force = false) {
-  if (!fullScreenVideoModal) return;
-  // Always stop & clear
+
+function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal || !currentFullVideo) return;
+
   currentFullVideo.pause();
   currentFullVideo.src = "";
-  currentFullVideo.load(); // force unload
-  // Exit fullscreen safely
-  if (document.exitFullscreen) {
-    document.exitFullscreen().catch(() => {});
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
+  currentFullVideo.load();
+
+  // Exit fullscreen
+  document.exitFullscreen?.().catch(() => {});
+  document.webkitExitFullscreen?.();
+
   fullScreenVideoModal.style.display = "none";
-  // Extra safety: remove from DOM on force close (prevents stale state)
-  if (force) {
-    setTimeout(() => {
-      if (fullScreenVideoModal.parentNode) {
-        fullScreenVideoModal.parentNode.removeChild(fullScreenVideoModal);
-        fullScreenVideoModal = null;
-        currentFullVideo = null;
-      }
-    }, 500);
-  }
 }
+
 // Initialize once
 initFullScreenVideoModal();
-// Optional: expose globally if needed elsewhere
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
+
+
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
@@ -6084,6 +6070,17 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
   `;
+   grid.style.cssText = `
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px; 
+  width: 100%; 
+  max-width: 960px; 
+  margin: 0 auto; 
+  padding-bottom: 80px;
+  contain: content;           /* ← Important */
+  content-visibility: auto;   /* ← Modern browsers */
+`;
   modal.appendChild(grid);
   // Load more trigger
   const loadMoreDiv = document.createElement("div");
@@ -6155,42 +6152,49 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       return;
     }
 
-    visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
-      const card = document.createElement("div");
-      Object.assign(card.style, {
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        border: "1px solid rgba(138,43,226,0.4)"
-      });
+visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+  const card = document.createElement("div");
+  Object.assign(card.style, {
+    position: "relative",
+    aspectRatio: "9/16",
+    borderRadius: "16px",
+    overflow: "hidden",
+    background: "#0f0a1a",
+    cursor: "pointer",
+    boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+    transition: "transform 0.25s ease, box-shadow 0.25s ease",
+    border: "1px solid rgba(138,43,226,0.4)"
+  });
 
-      card.onmouseenter = () => card.style.transform = "scale(1.03)";
-      card.onmouseleave = () => card.style.transform = "scale(1)";
+  card.onmouseenter = () => card.style.transform = "scale(1.03)";
+  card.onmouseleave = () => card.style.transform = "scale(1)";
+   
+    // === OPTIMIZED THUMBNAIL (IMG instead of VIDEO) ===
+  const thumbUrl = video.thumbnail || video.thumbnailUrl || video.videoUrl || "";
+  const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
-      // ==================== STATIC THUMBNAIL (No Hover Play) ====================
-      const thumbUrl = video.thumbnailUrl || video.videoUrl || "";
-      const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
+  const img = document.createElement("img");
+  img.src = thumbUrl || fallback;
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block;";
+  img.alt = video.uploaderName || "Free Tonight";
 
-      const vidContainer = document.createElement("div");
-      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+  // Optional: low-res placeholder + fade in
+  img.style.opacity = "0.85";
+  img.onload = () => { img.style.transition = "opacity 0.3s"; img.style.opacity = "1"; };
 
-      const videoEl = document.createElement("video");
-      videoEl.muted = true;
-      videoEl.loop = true;
-      videoEl.preload = "metadata";
-      videoEl.loading = "lazy";
-      videoEl.poster = thumbUrl || fallback;           // Static thumbnail
-      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+  const thumbContainer = document.createElement("div");
+  thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+  thumbContainer.appendChild(img);
 
-      vidContainer.appendChild(videoEl);
+  // Click opens full video
+  thumbContainer.onclick = (e) => {
+    e.stopPropagation();
+    openFullScreenVideo(video.videoUrl || "");
+  };
 
-      // Click to play full video
-      vidContainer.onclick = (e) => {
-        e.stopPropagation();
-        openFullScreenVideo(video.videoUrl || "");
-      };
-
-      card.appendChild(vidContainer);
+  card.appendChild(thumbContainer);
        
       // ==================== YOUR ORIGINAL INFO, ONELINER, TAGS, FRUITPICK, BADGE ====================
       const info = document.createElement("div");
