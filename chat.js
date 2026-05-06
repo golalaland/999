@@ -6136,186 +6136,131 @@ grid.style.cssText = `
 let renderTimeout = null;
 let isRendering = false;
 
- // ==================== RENDER CARDS ====================
+function renderCards() {
+  if (isRendering) return;
+  isRendering = true;
 
-  function renderCards() {
-
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => {
     grid.innerHTML = "";
-
     tagContainer.innerHTML = "";
 
     let visibleVideos = allVideos.filter(v => {
-
       const now = Date.now();
-
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
-
     });
 
-    // Strong Location Filter (ONLY v.location, removed city)
-
+    // Strong Location Filter
     if (activeLocation) {
-
-      visibleVideos = visibleVideos.filter(v => {
-
-        return (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase();
-
-      });
-
+      visibleVideos = visibleVideos.filter(v =>
+        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
+      );
     }
 
     // Tag filtering
-
     if (activeTags.size > 0) {
-
       visibleVideos = visibleVideos.filter(v => {
-
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-
         return [...activeTags].every(tag => videoTags.includes(tag));
-
       });
-
     }
 
-    // Non-location tags in top bar
-
+    // Non-location tags for top bar
     const visibleTags = new Set();
-
     visibleVideos.forEach(v => {
-
       (v.tags || []).forEach(t => {
-
-        if (t && typeof t === "string" && t.trim() &&
-
-            t.trim() !== v.location?.trim()) {
-
+        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim()) {
           visibleTags.add(t.trim().toLowerCase());
-
         }
-
       });
-
     });
 
     [...visibleTags].sort().forEach(tag => {
-
       const btn = document.createElement("button");
-
       btn.textContent = tag;
-
       btn.dataset.tag = tag;
-
       Object.assign(btn.style, {
-
-        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
-
+        padding: "6px 14px", 
+        borderRadius: "24px", 
+        fontSize: "12px", 
+        fontWeight: "600",
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
-
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-
-        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer", transition: "all 0.25s"
-
+        border: "1px solid rgba(255,46,120,0.6)", 
+        cursor: "pointer", 
+        transition: "all 0.25s"
       });
-
       btn.onclick = () => {
-
         if (activeTags.has(tag)) activeTags.delete(tag);
-
         else activeTags.add(tag);
-
         renderCards();
-
       };
-
       tagContainer.appendChild(btn);
-
     });
 
     if (visibleVideos.length === 0) {
-
       const empty = document.createElement("div");
-
-      empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profile match your filters...";
-
+      empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profiles match your filters...";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
-
       grid.appendChild(empty);
-
+      isRendering = false;
       return;
-
     }
 
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
-
       const card = document.createElement("div");
-
       Object.assign(card.style, {
-
-        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
-
-        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-
+        position: "relative", 
+        aspectRatio: "9/16", 
+        borderRadius: "16px", 
+        overflow: "hidden",
+        background: "#0f0a1a", 
+        cursor: "pointer", 
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
-
         border: "1px solid rgba(138,43,226,0.4)"
-
       });
 
       card.onmouseenter = () => {
-
         card.style.transform = "scale(1.03)";
-
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-
       };
-
       card.onmouseleave = () => {
-
         card.style.transform = "scale(1)";
-
         card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-
       };
 
-      // ==================== IMPROVED THUMBNAIL ====================
-
-      const thumbUrl = video.thumbnailUrl || video.videoUrl || "";
-
+      // ==================== THUMBNAIL ====================
+      const thumbUrl = video.thumbnailUrl || "";
       const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
       const vidContainer = document.createElement("div");
-
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
-
       videoEl.muted = true;
-
       videoEl.loop = true;
-
       videoEl.preload = "metadata";
-
-      videoEl.loading = "lazy";
-
       videoEl.poster = thumbUrl || fallback;
-
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-
-      videoEl.src = video.previewClip || video.videoUrl || "";
+      if (video.previewClip) videoEl.src = video.previewClip;
 
       vidContainer.appendChild(videoEl);
 
+      // Hover preview
       vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
+      vidContainer.onmouseleave = () => { 
+        videoEl.pause(); 
+        videoEl.currentTime = 0; 
+      };
 
-      vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
-
+      // Click to open full screen
       vidContainer.onclick = (e) => {
-
         e.stopPropagation();
-
-        openFullScreenVideo(video.videoUrl || "");
-
+        if (video.videoUrl) openFullScreenVideo(video.videoUrl);
       };
 
       card.appendChild(vidContainer);
@@ -6420,14 +6365,15 @@ let isRendering = false;
       });
       card.appendChild(badge);
 
-      fragment.appendChild(card);   // ← Use fragment here
+   card.appendChild(info);
+      fragment.appendChild(card);
     });
 
-    // Append everything at once
     grid.appendChild(fragment);
     grid.appendChild(loadMoreDiv);
     isRendering = false;
-  }, 16);   // ← End of setTimeout
+
+  }, 16);
 }
   // ==================== LOCATION MODAL (Only v.location) ====================
   function openLocationModal() {
