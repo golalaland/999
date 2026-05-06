@@ -6133,247 +6133,397 @@ grid.style.cssText = `
   let activeLocation = null;
    
 // ==================== RENDER CARDS (Static Thumbnails Only) ====================
+
 let renderTimeout = null;
+
 let isRendering = false;
 
 function renderCards() {
+
   if (isRendering) return;
+
   isRendering = true;
 
   clearTimeout(renderTimeout);
+
   renderTimeout = setTimeout(() => {
+
     grid.innerHTML = "";
+
     tagContainer.innerHTML = "";
 
     let visibleVideos = allVideos.filter(v => {
+
       const now = Date.now();
+
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+
     });
 
-    // Strong Location Filter
     if (activeLocation) {
+
       visibleVideos = visibleVideos.filter(v =>
+
         (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
+
       );
+
     }
 
-    // Tag filtering
     if (activeTags.size > 0) {
+
       visibleVideos = visibleVideos.filter(v => {
+
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+
         return [...activeTags].every(tag => videoTags.includes(tag));
+
       });
+
     }
 
-    // Non-location tags for top bar
+    // Tag buttons
+
     const visibleTags = new Set();
+
     visibleVideos.forEach(v => {
+
       (v.tags || []).forEach(t => {
+
         if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim()) {
+
           visibleTags.add(t.trim().toLowerCase());
+
         }
+
       });
+
     });
 
     [...visibleTags].sort().forEach(tag => {
+
       const btn = document.createElement("button");
+
       btn.textContent = tag;
+
       btn.dataset.tag = tag;
+
       Object.assign(btn.style, {
-        padding: "6px 14px", 
-        borderRadius: "24px", 
-        fontSize: "12px", 
-        fontWeight: "600",
+
+        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
+
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.6)", 
-        cursor: "pointer", 
-        transition: "all 0.25s"
+
+        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer", transition: "all 0.25s"
+
       });
+
       btn.onclick = () => {
+
         if (activeTags.has(tag)) activeTags.delete(tag);
+
         else activeTags.add(tag);
+
         renderCards();
+
       };
+
       tagContainer.appendChild(btn);
+
     });
 
     if (visibleVideos.length === 0) {
+
       const empty = document.createElement("div");
+
       empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profiles match your filters...";
+
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
+
       grid.appendChild(empty);
+
       isRendering = false;
+
       return;
+
     }
 
-    // Use DocumentFragment for better performance
     const fragment = document.createDocumentFragment();
 
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+
       const card = document.createElement("div");
+
       Object.assign(card.style, {
-        position: "relative", 
-        aspectRatio: "9/16", 
-        borderRadius: "16px", 
+
+        position: "relative",
+
+        aspectRatio: "9/16",
+
+        borderRadius: "16px",
+
         overflow: "hidden",
-        background: "#0f0a1a", 
-        cursor: "pointer", 
+
+        background: "#0f0a1a",
+
+        cursor: "pointer",
+
         boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
+
         border: "1px solid rgba(138,43,226,0.4)"
+
       });
 
       card.onmouseenter = () => {
+
         card.style.transform = "scale(1.03)";
+
         card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-      };
-      card.onmouseleave = () => {
-        card.style.transform = "scale(1)";
-        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+
       };
 
-      // ==================== THUMBNAIL ====================
+      card.onmouseleave = () => {
+
+        card.style.transform = "scale(1)";
+
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
+
+      };
+
+      // ==================== THUMBNAIL (Best Version) ====================
+
       const thumbUrl = video.thumbnailUrl || "";
+
       const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
       const vidContainer = document.createElement("div");
+
       vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       const videoEl = document.createElement("video");
+
       videoEl.muted = true;
+
       videoEl.loop = true;
+
       videoEl.preload = "metadata";
+
       videoEl.poster = thumbUrl || fallback;
+
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      if (video.previewClip) videoEl.src = video.previewClip;
+
+      
+
+      if (video.previewClip) {
+
+        videoEl.src = video.previewClip;
+
+      }
 
       vidContainer.appendChild(videoEl);
 
       // Hover preview
-      vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
-      vidContainer.onmouseleave = () => { 
-        videoEl.pause(); 
-        videoEl.currentTime = 0; 
+
+      vidContainer.onmouseenter = () => {
+
+        videoEl.play().catch(() => {});
+
+      };
+
+      vidContainer.onmouseleave = () => {
+
+        videoEl.pause();
+
+        videoEl.currentTime = 0;
+
       };
 
       // Click to open full screen
+
       vidContainer.onclick = (e) => {
+
         e.stopPropagation();
+
         if (video.videoUrl) openFullScreenVideo(video.videoUrl);
+
       };
 
       card.appendChild(vidContainer);
 
       // ==================== INFO LAYER ====================
+
       const info = document.createElement("div");
+
       info.style.cssText = `
+
         position:absolute; bottom:0; left:0; right:0;
+
         background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+
         padding:60px 12px 12px;
+
       `;
 
-      // User name
       const user = document.createElement("div");
+
       user.textContent = `@${video.uploaderName || "cutie"}`;
+
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
+
       user.onclick = (e) => {
+
         e.stopPropagation();
+
         if (!video.uploaderId) return;
 
+        // Spinner code...
+
         const fullSpinner = document.createElement("div");
-        fullSpinner.id = "profile-loading-spinner";
-        fullSpinner.style.cssText = `
-          position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0,0,0,0.4); display: flex; align-items: center;
-          justify-content: center; z-index: 999999; backdrop-filter: blur(6px);
-        `;
-        fullSpinner.innerHTML = `
-          <div style="text-align:center;">
-            <div style="width:48px; height:48px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 14px;"></div>
-          </div>
-        `;
+
+        fullSpinner.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(6px);`;
+
+        fullSpinner.innerHTML = `<div style="text-align:center;"><div style="width:48px;height:48px;border:4px solid #00ffea;border-top-color:transparent;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div></div>`;
+
         document.body.appendChild(fullSpinner);
 
         getDoc(doc(db, "users", video.uploaderId))
+
           .then(userSnap => {
+
             fullSpinner.remove();
+
             if (userSnap.exists()) showSocialCard(userSnap.data());
+
             else showStarPopup("User profile not found", "error");
+
           })
+
           .catch(err => {
+
             fullSpinner.remove();
-            console.error(err);
+
             showStarPopup("Failed to load profile", "error");
+
           });
+
       };
 
-      // One-liner
+     // One-liner
+
       const naturePick = video.naturePick || "";
+
       const genderRaw = (video.gender || "person").toLowerCase().trim();
+
       const isMale = genderRaw === "male";
+
       const pronoun = isMale ? "his" : "her";
+
       const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+
       const oneLinerText = naturePick
+
         ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+
         : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
       const oneLiner = document.createElement("div");
+
       oneLiner.textContent = oneLinerText;
+
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
 
       // Tags
+
       const tagsEl = document.createElement("div");
+
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
       if (video.location) {
+
         const span = document.createElement("span");
+
         span.textContent = video.location.trim();
+
         span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
+
         tagsEl.appendChild(span);
+
       }
 
       (video.tags || []).forEach(t => {
+
         if (t && typeof t === "string" && t.trim()) {
+
           const span = document.createElement("span");
+
           span.textContent = t.trim();
+
           span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(255,46,120,0.22); color: #ff4d8a; border: 1px solid rgba(255,46,120,0.6);`;
+
           tagsEl.appendChild(span);
+
         }
+
       });
 
       info.append(user, oneLiner, tagsEl);
+
       card.appendChild(info);
 
       // FruitPick
+
       if (video.fruitPick) {
+
         const fruitEl = document.createElement("div");
+
         fruitEl.textContent = video.fruitPick.trim();
+
         fruitEl.style.cssText = `position:absolute; bottom:10px; right:10px; font-size:16px; line-height:1; color:#fff; text-shadow:0 0 3px rgba(255,255,255,0.5); z-index:3;`;
+
         card.appendChild(fruitEl);
+
       }
 
       // Badge
+
       const badge = document.createElement("div");
+
       badge.textContent = "Free Tonight ♡";
+
       Object.assign(badge.style, {
+
         position: "absolute", top: "12px", right: "12px", padding: "6px 12px", borderRadius: "12px",
+
         fontSize: "12px", fontWeight: "700", color: "#fff",
+
         background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+
         boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
+
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
+
       });
+
       card.appendChild(badge);
 
    card.appendChild(info);
+
       fragment.appendChild(card);
+
     });
 
     grid.appendChild(fragment);
+
     grid.appendChild(loadMoreDiv);
+
     isRendering = false;
 
   }, 16);
+
 }
   // ==================== LOCATION MODAL (Only v.location) ====================
   function openLocationModal() {
