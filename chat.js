@@ -96,7 +96,6 @@ export {
   storage,
   ref,
   uploadBytes,
-    deleteObject,
   uploadBytesResumable,
   getDownloadURL
 };
