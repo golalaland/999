@@ -14,6 +14,8 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
+   deleteObject,
+   deleteField,
   collection,
   addDoc,
   serverTimestamp,
@@ -6196,37 +6198,95 @@ function renderCards() {
       card.onmouseenter = () => card.style.transform = "scale(1.03)";
       card.onmouseleave = () => card.style.transform = "scale(1)";
 
-      // ==================== ROBUST THUMBNAIL ====================
-      const thumbUrl = (video.thumbnail || video.thumbnailUrl || "").trim();
-      const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
+   // ==================== ROBUST THUMBNAIL (Improved) ====================
+const thumbUrl = (video.thumbnailUrl || video.thumbnail || "").trim();
+const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
-      const img = document.createElement("img");
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.alt = video.uploaderName || "Free Tonight";
-      img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; background:#0a0614;";
+const img = document.createElement("img");
+img.loading = "lazy";
+img.decoding = "async";
+img.alt = video.uploaderName || "Free Tonight";
 
-      img.onerror = () => {
-        img.src = fallback;
-        img.onerror = null;
-      };
+// Better styling + smooth loading
+img.style.cssText = `
+  width:100%; 
+  height:100%; 
+  object-fit:cover; 
+  display:block; 
+  background:#0a0614;
+  transition: opacity 0.35s ease;
+  opacity: 0.92;
+`;
 
-      if (thumbUrl) {
-        img.src = thumbUrl;
-      } else {
-        img.src = fallback;
-      }
+img.onerror = () => {
+  img.src = fallback;
+  img.onerror = null;
+};
 
-      const thumbContainer = document.createElement("div");
-      thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-      thumbContainer.appendChild(img);
+// Set source
+img.src = thumbUrl || fallback;
 
-      thumbContainer.onclick = (e) => {
-        e.stopPropagation();
-        if (video.videoUrl) openFullScreenVideo(video.videoUrl);
-      };
+// Optional: Fade in when loaded
+img.onload = () => {
+  img.style.opacity = "1";
+};
 
-      card.appendChild(thumbContainer);
+// === THUMBNAIL CONTAINER + PLAY OVERLAY ===
+const thumbContainer = document.createElement("div");
+thumbContainer.style.cssText = `
+  width:100%; 
+  height:100%; 
+  position:relative; 
+  background:#000;
+  overflow:hidden;
+`;
+
+// Play icon overlay (very nice UX)
+const playOverlay = document.createElement("div");
+playOverlay.style.cssText = `
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid rgba(255,255,255,0.9);
+  opacity: 0.85;
+  transition: all 0.2s ease;
+  z-index: 2;
+`;
+playOverlay.innerHTML = `
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+    <path d="M8 5.14v14l11-7z"/>
+  </svg>
+`;
+
+thumbContainer.appendChild(img);
+thumbContainer.appendChild(playOverlay);
+
+// Hover effect on play button
+thumbContainer.onmouseenter = () => {
+  playOverlay.style.transform = "translate(-50%, -50%) scale(1.15)";
+  playOverlay.style.background = "rgba(255, 46, 120, 0.6)";
+};
+
+thumbContainer.onmouseleave = () => {
+  playOverlay.style.transform = "translate(-50%, -50%) scale(1)";
+  playOverlay.style.background = "rgba(0, 0, 0, 0.45)";
+};
+
+// Click handler
+thumbContainer.onclick = (e) => {
+  e.stopPropagation();
+  if (video.videoUrl) openFullScreenVideo(video.videoUrl);
+};
+
+card.appendChild(thumbContainer);
 
       // ==================== INFO LAYER ====================
       const info = document.createElement("div");
@@ -6603,7 +6663,7 @@ function stopViewBoost() {
   }
 }
 
-// Main Function - UPDATED (Delete button moved under status + better spacing)
+// Main Function - IMPROVED
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6629,10 +6689,10 @@ async function loadMyClips() {
       let highlights = snap.data().highlights || [];
       const now = Date.now();
 
-      // Auto-expire trending clips
+      // Auto-expire old clips
       let needsUpdate = false;
       highlights = highlights.map(v => {
-        if (v.isTrending === true && v.trendingUntil && v.trendingUntil < now) {
+        if (v.isTrending && v.trendingUntil && v.trendingUntil < now) {
           v.isTrending = false;
           needsUpdate = true;
         }
@@ -6647,55 +6707,57 @@ async function loadMyClips() {
       highlights.sort((a, b) => (b.uploadedAt || 0) - (a.uploadedAt || 0));
 
       highlights.forEach(v => {
-        const videoSrc = v.videoUrl || "";
-        const thumbnailSrc = v.thumbnailUrl || "";
         const isActive = v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
-
-        // Cute unique clip ID
-        const clipId = `freetonightclip-${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const thumbnailSrc = v.thumbnailUrl || "";
+        const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=No+Thumbnail";
 
         const card = document.createElement("div");
         card.style.cssText = `
-          background: #111; 
-          border-radius: 20px; 
+          background: #111;
+          border-radius: 20px;
           overflow: hidden;
           box-shadow: 0 12px 40px rgba(0,0,0,0.7);
           border: 1px solid ${isActive ? '#00ff9d33' : '#333'};
-          display: flex; 
-          flex-direction: column; 
+          display: flex;
+          flex-direction: column;
           height: 245px;
           position: relative;
         `;
 
         card.innerHTML = `
           <div style="display:flex; height:100%; background:#0a0a0a;">
-            <!-- Video Preview -->
+            <!-- Thumbnail Preview -->
             <div style="width:140px; flex-shrink:0; position:relative; overflow:hidden; background:#000;">
-              <video
-                src="${videoSrc}"
-                muted loop playsinline
-                poster="${thumbnailSrc}"
-                style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
-              </video>
+              <img 
+                src="${thumbnailSrc || fallback}" 
+                alt="thumbnail"
+                style="width:100%; height:100%; object-fit:cover;"
+                loading="lazy"
+              >
               ${isActive ? `
               <div style="position:absolute; top:12px; right:12px; background:#00ff9d; color:#000; font-size:10px; font-weight:900; padding:4px 11px; border-radius:20px; box-shadow:0 0 15px #00ff9d;">
                 LIVE
               </div>` : ''}
+
+              <!-- Play Icon Overlay -->
+              <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); 
+                          width:48px; height:48px; background:rgba(0,0,0,0.5); border-radius:50%; 
+                          display:flex; align-items:center; justify-content:center; border:2.5px solid rgba(255,255,255,0.9);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                  <path d="M8 5.14v14l11-7z"/>
+                </svg>
+              </div>
             </div>
 
             <!-- Right Content -->
             <div style="flex:1; padding:16px 18px; display:flex; flex-direction:column; position:relative;">
               <div style="flex-grow:1;">
                 <div style="color:#fff; font-weight:800; font-size:15px; line-height:1.35; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                  ${v.title || "Free Tonight Clips"}
-                </div>
-
-                <div style="color:#00ffea; font-size:11px; font-family:monospace; margin-top:4px; opacity:0.85;">
-                  ${clipId}
+                  ${v.title || "Free Tonight Clip"}
                 </div>
               </div>
 
-              <!-- Status + Delete Button Area -->
+              <!-- Status + Delete -->
               <div style="margin-top:auto; padding-top:12px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
                   <div style="width:10px; height:10px; background:${isActive ? '#00ff9d' : '#666'}; border-radius:50%; box-shadow:0 0 12px ${isActive ? '#00ff9d' : '#444'};"></div>
@@ -6704,31 +6766,16 @@ async function loadMyClips() {
                   </span>
                 </div>
 
-                <!-- Delete Button - Now cleanly below status -->
                 <button class="delete-clip-btn"
                         data-id="${v.id}"
                         data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
                         style="background:#ff3366; color:white; border:none; padding:9px 18px; border-radius:12px; font-size:11px; font-weight:800; cursor:pointer; width:100%; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
-                  DELETE
+                  DELETE CLIP
                 </button>
               </div>
             </div>
           </div>
         `;
-
-        // Hover effect on video
-        const video = card.querySelector("video");
-        if (video) {
-          card.addEventListener("mouseenter", () => {
-            video.style.transform = "scale(1.08)";
-            video.play().catch(() => {});
-          });
-          card.addEventListener("mouseleave", () => {
-            video.style.transform = "scale(1)";
-            video.pause();
-            video.currentTime = 0;
-          });
-        }
 
         grid.appendChild(card);
       });
@@ -6747,89 +6794,95 @@ async function loadMyClips() {
   }
 }
 
-function showDeleteConfirm(clipId, clipTitle) {
-    if (!clipId || !auth?.currentUser?.uid) {
-        showGoldAlert?.("Please log in again");
-        return;
-    }
+async function showDeleteConfirm(clipId, clipTitle) {
+  if (!clipId || !currentUser?.uid) {
+    showGoldAlert?.("Please log in again");
+    return;
+  }
 
-    const modal = document.createElement("div");
-    modal.style.cssText = `
-        position:fixed;inset:0;background:rgba(0,0,0,0.9);
-        display:flex;align-items:center;justify-content:center;
-        z-index:99999;font-family:system-ui,sans-serif;
-    `;
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    position:fixed; inset:0; background:rgba(0,0,0,0.92);
+    display:flex; align-items:center; justify-content:center;
+    z-index:99999; font-family:system-ui, sans-serif;
+  `;
 
-    modal.innerHTML = `
-        <div style="background:#111;padding:25px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
-            <h3 style="color:#fff;margin:0 0 16px;font-size:20px;font-weight:600;">
-                Delete Clip?
-            </h3>
-            <p style="color:#ccc;margin:0 0 24px;line-height:1.5;">
-                "<strong style="color:#ff3366;">${clipTitle || 'This clip'}</strong>" will be removed.<br>
-                <small style="color:#999;"></small>
-            </p>
-            <div style="display:flex;gap:16px;justify-content:center;">
-                <button id="cancelDelete" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;cursor:pointer;">Cancel</button>
-                <button id="confirmDelete" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;">Yes, Delete</button>
-            </div>
-        </div>
-    `;
+  modal.innerHTML = `
+    <div style="background:#111; padding:28px; border-radius:16px; text-align:center; color:#fff; max-width:340px; box-shadow:0 0 30px rgba(0,0,0,0.6);">
+      <h3 style="margin:0 0 12px; color:#ff3366; font-size:21px;">Delete Clip?</h3>
+      <p style="color:#ccc; margin:0 0 24px; line-height:1.5;">
+        "<strong style="color:#ff6699;">${(clipTitle || 'This clip').replace(/</g, '&lt;')}</strong>"<br>
+        will be permanently deleted.
+      </p>
+      <div style="display:flex; gap:14px; justify-content:center;">
+        <button id="cancelDelete" style="padding:10px 20px; background:#333; border:none; color:#fff; border-radius:10px; font-weight:500; cursor:pointer; flex:1;">
+          Cancel
+        </button>
+        <button id="confirmDelete" style="padding:10px 20px; background:linear-gradient(90deg,#ff3366,#ff0066); border:none; color:#fff; border-radius:10px; font-weight:700; cursor:pointer; flex:1;">
+          Yes, Delete
+        </button>
+      </div>
+    </div>
+  `;
 
-    document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-    modal.querySelector("#cancelDelete").onclick = () => modal.remove();
+  const confirmBtn = modal.querySelector("#confirmDelete");
+  const cancelBtn = modal.querySelector("#cancelDelete");
 
-    modal.querySelector("#confirmDelete").onclick = async () => {
-        const confirmBtn = modal.querySelector("#confirmDelete");
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = "Deleting...";
+  cancelBtn.onclick = () => modal.remove();
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
+  confirmBtn.onclick = async () => {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Deleting...";
+
+    try {
+      const userDocRef = doc(db, "highlightVideos", currentUser.uid);
+      const snap = await getDoc(userDocRef);
+
+      if (!snap.exists()) throw new Error("Document not found");
+
+      let highlights = snap.data().highlights || [];
+      const clipToDelete = highlights.find(c => c.id === clipId);
+
+      if (!clipToDelete) throw new Error("Clip not found");
+
+      // === DELETE THUMBNAIL FROM STORAGE (if exists) ===
+      if (clipToDelete.thumbnailStoragePath) {
         try {
-            // IMPORTANT: Use sanitized email as document ID, NOT uid
-            const docId = auth.currentUser.email 
-                ? auth.currentUser.email.replace(/[@.]/g, '_') 
-                : null;
-
-            if (!docId) throw new Error("Cannot find user document ID");
-
-            const userDocRef = doc(db, "highlightVideos", docId);
-
-            const snap = await getDoc(userDocRef);
-            if (!snap.exists()) {
-                throw new Error("No clips found for this account");
-            }
-
-            const data = snap.data();
-            let highlights = data.highlights || [];
-
-            // Remove the clip
-            highlights = highlights.filter(clip => clip.id !== clipId);
-
-            await updateDoc(userDocRef, {
-                highlights: highlights,
-                totalVideos: increment(-1),
-                lastUpdatedAt: serverTimestamp()
-            });
-
-            showGoldAlert?.("Clip deleted successfully");
-            modal.remove();
-
-            if (typeof loadMyClips === 'function') {
-                setTimeout(loadMyClips, 400);
-            }
-
-        } catch (err) {
-            console.error("Delete error:", err);
-            showGoldAlert?.("Failed to delete clip. Please try again.");
-            modal.remove();
+          const thumbRef = ref(storage, clipToDelete.thumbnailStoragePath);
+          await deleteObject(thumbRef).catch(() => {}); // silent fail is ok
+        } catch (e) {
+          console.warn("Failed to delete thumbnail:", e);
         }
-    };
+      }
 
-    // Close modal when clicking outside
-    modal.onclick = (e) => {
-        if (e.target === modal) modal.remove();
-    };
+      // Remove clip from array
+      highlights = highlights.filter(clip => clip.id !== clipId);
+
+      // Update Firestore
+      await updateDoc(userDocRef, {
+        highlights: highlights,
+        totalVideos: Math.max(0, (snap.data().totalVideos || 0) - 1),
+        lastUpdatedAt: serverTimestamp()
+      });
+
+      showGoldAlert?.("Clip deleted successfully ✓");
+      modal.remove();
+
+      // Refresh the list
+      if (typeof loadMyClips === 'function') {
+        setTimeout(loadMyClips, 300);
+      }
+
+    } catch (err) {
+      console.error("Delete error:", err);
+      showGoldAlert?.("Failed to delete clip. Please try again.");
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Yes, Delete";
+    }
+  };
 }
 
   // INVITE FOLKS!!!!!
