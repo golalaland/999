@@ -5831,7 +5831,6 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
 
-// === SINGLE FULL-SCREEN VIDEO MODAL – SAFE & REUSABLE ===
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
 
@@ -5842,105 +5841,100 @@ function initFullScreenVideoModal() {
   Object.assign(fullScreenVideoModal.style, {
     position: "fixed",
     inset: "0",
-    width: "100vw",
-    height: "100vh",
     background: "#000",
     zIndex: "99999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    cursor: "pointer"
+    cursor: "pointer",
+    touchAction: "none"
   });
 
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = false;
-  Object.assign(currentFullVideo.style, {
-    maxWidth: "100%",
-    maxHeight: "100%",
-    objectFit: "contain"
-  });
+  currentFullVideo.playsInline = true;        // Important for mobile
+  currentFullVideo.style.cssText = `
+    max-width: 100%; 
+    max-height: 100%; 
+    object-fit: contain;
+  `;
 
-  // Close on click outside video (not on video itself)
-  fullScreenVideoModal.onclick = (e) => {
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
+
+  // Close only when clicking background
+  fullScreenVideoModal.addEventListener("click", (e) => {
     if (e.target === fullScreenVideoModal) {
       closeFullScreenVideoModal();
     }
-  };
+  });
 
-  // ESC key close
+  // ESC support
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
       closeFullScreenVideoModal();
     }
   });
-
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
 }
 
 function openFullScreenVideo(videoUrl) {
+  if (!videoUrl) return;
+
   initFullScreenVideoModal();
 
-  // Full cleanup before opening new video
-  closeFullScreenVideoModal(true); // force cleanup without delay
-
-  currentFullVideo.src = videoUrl || "";
-  currentFullVideo.load();
+  // Strong cleanup
+  if (currentFullVideo) {
+    currentFullVideo.pause();
+    currentFullVideo.src = "";
+    currentFullVideo.load();
+  }
 
   fullScreenVideoModal.style.display = "flex";
+  currentFullVideo.src = videoUrl;
 
-  // Autoplay
-  currentFullVideo.play().catch(err => console.log("Autoplay blocked:", err));
+  // Force load + play with better timing for mobile
+  currentFullVideo.load();
 
-  // Fullscreen (with fallback timing)
+  // Play after a tiny delay (helps mobile)
   setTimeout(() => {
-    const video = currentFullVideo;
-    if (video && document.fullscreenElement !== video) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen().catch(() => {});
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
-      }
+    currentFullVideo.play()
+      .then(() => {
+        console.log("✅ Video started playing");
+      })
+      .catch(err => {
+        console.log("Autoplay blocked:", err);
+      });
+  }, 80);
+
+  // Fullscreen request
+  setTimeout(() => {
+    if (!document.fullscreenElement) {
+      currentFullVideo.requestFullscreen?.()
+        .catch(() => currentFullVideo.webkitRequestFullscreen?.())
+        .catch(() => {});
     }
-  }, 300); // slightly longer delay = more reliable on mobile
+  }, 450);
 }
 
-function closeFullScreenVideoModal(force = false) {
-  if (!fullScreenVideoModal) return;
+function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal || !currentFullVideo) return;
 
-  // Always stop & clear
   currentFullVideo.pause();
   currentFullVideo.src = "";
-  currentFullVideo.load(); // force unload
+  currentFullVideo.load();
 
-  // Exit fullscreen safely
-  if (document.exitFullscreen) {
-    document.exitFullscreen().catch(() => {});
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
+  // Exit fullscreen
+  document.exitFullscreen?.().catch(() => {});
+  document.webkitExitFullscreen?.();
 
   fullScreenVideoModal.style.display = "none";
-
-  // Extra safety: remove from DOM on force close (prevents stale state)
-  if (force) {
-    setTimeout(() => {
-      if (fullScreenVideoModal.parentNode) {
-        fullScreenVideoModal.parentNode.removeChild(fullScreenVideoModal);
-        fullScreenVideoModal = null;
-        currentFullVideo = null;
-      }
-    }, 500);
-  }
 }
 
 // Initialize once
 initFullScreenVideoModal();
+
+window.openFullScreenVideo = openFullScreenVideo;
+window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
 
 /* Highlights Button – opens Free Tonight (with pagination) */
@@ -6230,7 +6224,7 @@ function renderCards() {
       card.onmouseenter = () => card.style.transform = "scale(1.03)";
       card.onmouseleave = () => card.style.transform = "scale(1)";
 
-   // ==================== ROBUST THUMBNAIL (Improved) ====================
+// ==================== ROBUST THUMBNAIL + CLICK ====================
 const thumbUrl = (video.thumbnailUrl || video.thumbnail || "").trim();
 const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
@@ -6238,8 +6232,6 @@ const img = document.createElement("img");
 img.loading = "lazy";
 img.decoding = "async";
 img.alt = video.uploaderName || "Free Tonight";
-
-// Better styling + smooth loading
 img.style.cssText = `
   width:100%; 
   height:100%; 
@@ -6255,15 +6247,13 @@ img.onerror = () => {
   img.onerror = null;
 };
 
-// Set source
 img.src = thumbUrl || fallback;
 
-// Optional: Fade in when loaded
 img.onload = () => {
   img.style.opacity = "1";
 };
 
-// === THUMBNAIL CONTAINER + PLAY OVERLAY ===
+// === THUMBNAIL CONTAINER ===
 const thumbContainer = document.createElement("div");
 thumbContainer.style.cssText = `
   width:100%; 
@@ -6271,51 +6261,35 @@ thumbContainer.style.cssText = `
   position:relative; 
   background:#000;
   overflow:hidden;
+  cursor: pointer;
 `;
 
-// Play icon overlay (very nice UX)
+// Play Overlay
 const playOverlay = document.createElement("div");
 playOverlay.style.cssText = `
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 52px;
-  height: 52px;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2.5px solid rgba(255,255,255,0.9);
-  opacity: 0.85;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 52px; height: 52px; background: rgba(0,0,0,0.45);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 2.5px solid rgba(255,255,255,0.9); z-index: 2;
   transition: all 0.2s ease;
-  z-index: 2;
 `;
-playOverlay.innerHTML = `
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-    <path d="M8 5.14v14l11-7z"/>
-  </svg>
-`;
+playOverlay.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5.14v14l11-7z"/></svg>`;
 
 thumbContainer.appendChild(img);
 thumbContainer.appendChild(playOverlay);
 
-// Hover effect on play button
-thumbContainer.onmouseenter = () => {
-  playOverlay.style.transform = "translate(-50%, -50%) scale(1.15)";
-  playOverlay.style.background = "rgba(255, 46, 120, 0.6)";
-};
-
-thumbContainer.onmouseleave = () => {
-  playOverlay.style.transform = "translate(-50%, -50%) scale(1)";
-  playOverlay.style.background = "rgba(0, 0, 0, 0.45)";
-};
-
-// Click handler
+// === STRONGER CLICK HANDLER (Mobile Friendly) ===
 thumbContainer.onclick = (e) => {
   e.stopPropagation();
-  if (video.videoUrl) openFullScreenVideo(video.videoUrl);
+  e.preventDefault();           // Added for safety
+  if (video.videoUrl) {
+    openFullScreenVideo(video.videoUrl);
+  }
+};
+
+// Optional: Support touch events better
+thumbContainer.ontouchstart = (e) => {
+  e.stopPropagation();
 };
 
 card.appendChild(thumbContainer);
