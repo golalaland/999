@@ -5830,6 +5830,8 @@ function setGreeting() {
 document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
+
+// === SINGLE FULL-SCREEN VIDEO MODAL – SAFE & REUSABLE ===
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
 
@@ -5840,95 +5842,107 @@ function initFullScreenVideoModal() {
   Object.assign(fullScreenVideoModal.style, {
     position: "fixed",
     inset: "0",
+    width: "100vw",
+    height: "100vh",
     background: "#000",
     zIndex: "99999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    cursor: "pointer",
-    touchAction: "none"
+    cursor: "pointer"
   });
 
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = true;
-  currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
-
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
-
-  // Close on background click
-  fullScreenVideoModal.addEventListener("click", (e) => {
-    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
+  currentFullVideo.playsInline = false;
+  Object.assign(currentFullVideo.style, {
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain"
   });
 
-  // ESC support
+  // Close on click outside video (not on video itself)
+  fullScreenVideoModal.onclick = (e) => {
+    if (e.target === fullScreenVideoModal) {
+      closeFullScreenVideoModal();
+    }
+  };
+
+  // ESC key close
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
       closeFullScreenVideoModal();
     }
   });
+
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
 }
 
 function openFullScreenVideo(videoUrl) {
-  if (!videoUrl) return;
-
   initFullScreenVideoModal();
 
-  // === SUPER AGGRESSIVE RESET ===
-  closeFullScreenVideoModal(true);
+  // Full cleanup before opening new video
+  closeFullScreenVideoModal(true); // force cleanup without delay
 
-  // Small delay to let previous video fully die
+  currentFullVideo.src = videoUrl || "";
+  currentFullVideo.load();
+
+  fullScreenVideoModal.style.display = "flex";
+
+  // Autoplay
+  currentFullVideo.play().catch(err => console.log("Autoplay blocked:", err));
+
+  // Fullscreen (with fallback timing)
   setTimeout(() => {
-    currentFullVideo.src = videoUrl;
-    fullScreenVideoModal.style.display = "flex";
-
-    // Play with better mobile handling
-    setTimeout(() => {
-      currentFullVideo.play()
-        .then(() => console.log("✅ Video playing successfully"))
-        .catch(err => console.log("Play prevented:", err));
-    }, 100);
-
-    // Fullscreen
-    setTimeout(() => {
-      if (!document.fullscreenElement) {
-        currentFullVideo.requestFullscreen?.().catch(() => {
-          currentFullVideo.webkitRequestFullscreen?.();
-        });
+    const video = currentFullVideo;
+    if (video && document.fullscreenElement !== video) {
+      if (video.requestFullscreen) {
+        video.requestFullscreen().catch(() => {});
+      } else if (video.webkitRequestFullscreen) {
+        video.webkitRequestFullscreen();
+      } else if (video.msRequestFullscreen) {
+        video.msRequestFullscreen();
       }
-    }, 500);
-  }, 80);
+    }
+  }, 300); // slightly longer delay = more reliable on mobile
 }
 
 function closeFullScreenVideoModal(force = false) {
-  if (!fullScreenVideoModal || !currentFullVideo) return;
+  if (!fullScreenVideoModal) return;
 
-  // Stop everything
+  // Always stop & clear
   currentFullVideo.pause();
   currentFullVideo.src = "";
-  currentFullVideo.load();
+  currentFullVideo.load(); // force unload
 
-  // Exit fullscreen
-  document.exitFullscreen?.().catch(() => {});
-  document.webkitExitFullscreen?.();
+  // Exit fullscreen safely
+  if (document.exitFullscreen) {
+    document.exitFullscreen().catch(() => {});
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
+  }
 
   fullScreenVideoModal.style.display = "none";
 
-  // Extra cleanup on force
+  // Extra safety: remove from DOM on force close (prevents stale state)
   if (force) {
     setTimeout(() => {
-      if (currentFullVideo) {
-        currentFullVideo.src = "";
-        currentFullVideo.load();
+      if (fullScreenVideoModal.parentNode) {
+        fullScreenVideoModal.parentNode.removeChild(fullScreenVideoModal);
+        fullScreenVideoModal = null;
+        currentFullVideo = null;
       }
-    }, 150);
+    }, 500);
   }
 }
 
-// Initialize
+// Initialize once
 initFullScreenVideoModal();
 
+// Optional: expose globally if needed elsewhere
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
@@ -6122,174 +6136,189 @@ grid.style.cssText = `
 let renderTimeout = null;
 let isRendering = false;
 
-function renderCards() {
-  if (isRendering) return;
-  isRendering = true;
+ // ==================== RENDER CARDS ====================
 
-  clearTimeout(renderTimeout);
-  renderTimeout = setTimeout(() => {
+  function renderCards() {
+
     grid.innerHTML = "";
+
     tagContainer.innerHTML = "";
 
-    // === FILTERING (Must be done BEFORE rendering) ===
     let visibleVideos = allVideos.filter(v => {
+
       const now = Date.now();
+
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+
     });
 
+    // Strong Location Filter (ONLY v.location, removed city)
+
     if (activeLocation) {
-      visibleVideos = visibleVideos.filter(v =>
-        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
-      );
+
+      visibleVideos = visibleVideos.filter(v => {
+
+        return (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase();
+
+      });
+
     }
+
+    // Tag filtering
 
     if (activeTags.size > 0) {
+
       visibleVideos = visibleVideos.filter(v => {
+
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+
         return [...activeTags].every(tag => videoTags.includes(tag));
+
       });
+
     }
 
-    // === TAG BUTTONS (from visible videos only) ===
+    // Non-location tags in top bar
+
     const visibleTags = new Set();
+
     visibleVideos.forEach(v => {
+
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string") {
-          const trimmed = t.trim().toLowerCase();
-          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
-            visibleTags.add(trimmed);
-          }
+
+        if (t && typeof t === "string" && t.trim() &&
+
+            t.trim() !== v.location?.trim()) {
+
+          visibleTags.add(t.trim().toLowerCase());
+
         }
+
       });
+
     });
 
     [...visibleTags].sort().forEach(tag => {
+
       const btn = document.createElement("button");
+
       btn.textContent = tag;
+
       btn.dataset.tag = tag;
+
       Object.assign(btn.style, {
-        padding: "6px 14px", 
-        borderRadius: "24px", 
-        fontSize: "12px", 
-        fontWeight: "600",
+
+        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
+
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.6)", 
-        cursor: "pointer", 
-        transition: "all 0.25s"
+
+        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer", transition: "all 0.25s"
+
       });
 
       btn.onclick = () => {
+
         if (activeTags.has(tag)) activeTags.delete(tag);
+
         else activeTags.add(tag);
+
         renderCards();
+
       };
+
       tagContainer.appendChild(btn);
+
     });
 
-    // === EMPTY STATE ===
     if (visibleVideos.length === 0) {
+
       const empty = document.createElement("div");
-      empty.textContent = activeLocation
-        ? `No profiles found in ${activeLocation}...`
-        : "No profiles match your filters...";
+
+      empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profile match your filters...";
+
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
+
       grid.appendChild(empty);
-      grid.appendChild(loadMoreDiv);
-      isRendering = false;
+
       return;
+
     }
 
-    // === RENDER CARDS using DocumentFragment ===
-    const fragment = document.createDocumentFragment();
-
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+
       const card = document.createElement("div");
+
       Object.assign(card.style, {
-        position: "relative",
-        aspectRatio: "9/16",
-        borderRadius: "16px",
-        overflow: "hidden",
-        background: "#0f0a1a",
-        cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+
+        position: "relative", aspectRatio: "9/16", borderRadius: "16px", overflow: "hidden",
+
+        background: "#0f0a1a", cursor: "pointer", boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
+
         border: "1px solid rgba(138,43,226,0.4)"
+
       });
 
-      card.onmouseenter = () => card.style.transform = "scale(1.03)";
-      card.onmouseleave = () => card.style.transform = "scale(1)";
+      card.onmouseenter = () => {
 
-// ==================== ROBUST THUMBNAIL + CLICK ====================
-const thumbUrl = (video.thumbnailUrl || video.thumbnail || "").trim();
-const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
+        card.style.transform = "scale(1.03)";
 
-const img = document.createElement("img");
-img.loading = "lazy";
-img.decoding = "async";
-img.alt = video.uploaderName || "Free Tonight";
-img.style.cssText = `
-  width:100%; 
-  height:100%; 
-  object-fit:cover; 
-  display:block; 
-  background:#0a0614;
-  transition: opacity 0.35s ease;
-  opacity: 0.92;
-`;
+        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
 
-img.onerror = () => {
-  img.src = fallback;
-  img.onerror = null;
-};
+      };
 
-img.src = thumbUrl || fallback;
+      card.onmouseleave = () => {
 
-img.onload = () => {
-  img.style.opacity = "1";
-};
+        card.style.transform = "scale(1)";
 
-// === THUMBNAIL CONTAINER ===
-const thumbContainer = document.createElement("div");
-thumbContainer.style.cssText = `
-  width:100%; 
-  height:100%; 
-  position:relative; 
-  background:#000;
-  overflow:hidden;
-  cursor: pointer;
-`;
+        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
 
-// Play Overlay
-const playOverlay = document.createElement("div");
-playOverlay.style.cssText = `
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 52px; height: 52px; background: rgba(0,0,0,0.45);
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  border: 2.5px solid rgba(255,255,255,0.9); z-index: 2;
-  transition: all 0.2s ease;
-`;
-playOverlay.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5.14v14l11-7z"/></svg>`;
+      };
 
-thumbContainer.appendChild(img);
-thumbContainer.appendChild(playOverlay);
+      // ==================== IMPROVED THUMBNAIL ====================
 
-// === STRONGER CLICK HANDLER (Mobile Friendly) ===
-thumbContainer.onclick = (e) => {
-  e.stopImmediatePropagation();   // Stronger stop
-  e.preventDefault();
-  
-  if (video.videoUrl) {
-    openFullScreenVideo(video.videoUrl);
-  }
-};
+      const thumbUrl = video.thumbnailUrl || video.videoUrl || "";
 
-// Optional: Support touch events better
-thumbContainer.ontouchstart = (e) => {
-  e.stopPropagation();
-};
+      const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
-card.appendChild(thumbContainer);
+      const vidContainer = document.createElement("div");
+
+      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+
+      const videoEl = document.createElement("video");
+
+      videoEl.muted = true;
+
+      videoEl.loop = true;
+
+      videoEl.preload = "metadata";
+
+      videoEl.loading = "lazy";
+
+      videoEl.poster = thumbUrl || fallback;
+
+      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
+
+      videoEl.src = video.previewClip || video.videoUrl || "";
+
+      vidContainer.appendChild(videoEl);
+
+      vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
+
+      vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
+
+      vidContainer.onclick = (e) => {
+
+        e.stopPropagation();
+
+        openFullScreenVideo(video.videoUrl || "");
+
+      };
+
+      card.appendChild(vidContainer);
 
       // ==================== INFO LAYER ====================
       const info = document.createElement("div");
