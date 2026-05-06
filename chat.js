@@ -6152,6 +6152,8 @@ function renderCards() {
 
     tagContainer.innerHTML = "";
 
+    // === FILTERING (Must be done BEFORE rendering) ===
+
     let visibleVideos = allVideos.filter(v => {
 
       const now = Date.now();
@@ -6182,7 +6184,7 @@ function renderCards() {
 
     }
 
-    // Tag buttons
+    // === TAG BUTTONS (from visible videos only) ===
 
     const visibleTags = new Set();
 
@@ -6190,9 +6192,15 @@ function renderCards() {
 
       (v.tags || []).forEach(t => {
 
-        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim()) {
+        if (t && typeof t === "string") {
 
-          visibleTags.add(t.trim().toLowerCase());
+          const trimmed = t.trim().toLowerCase();
+
+          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
+
+            visibleTags.add(trimmed);
+
+          }
 
         }
 
@@ -6210,13 +6218,23 @@ function renderCards() {
 
       Object.assign(btn.style, {
 
-        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
+        padding: "6px 14px", 
+
+        borderRadius: "24px", 
+
+        fontSize: "12px", 
+
+        fontWeight: "600",
 
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
 
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
 
-        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer", transition: "all 0.25s"
+        border: "1px solid rgba(255,46,120,0.6)", 
+
+        cursor: "pointer", 
+
+        transition: "all 0.25s"
 
       });
 
@@ -6234,21 +6252,31 @@ function renderCards() {
 
     });
 
+    // === EMPTY STATE ===
+
     if (visibleVideos.length === 0) {
 
       const empty = document.createElement("div");
 
-      empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profiles match your filters...";
+      empty.textContent = activeLocation 
+
+        ? `No profiles found in ${activeLocation}...` 
+
+        : "No profiles match your filters...";
 
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
 
       grid.appendChild(empty);
+
+      grid.appendChild(loadMoreDiv);
 
       isRendering = false;
 
       return;
 
     }
+
+    // === RENDER CARDS using DocumentFragment ===
 
     const fragment = document.createDocumentFragment();
 
@@ -6278,73 +6306,45 @@ function renderCards() {
 
       });
 
-      card.onmouseenter = () => {
+      card.onmouseenter = () => card.style.transform = "scale(1.03)";
 
-        card.style.transform = "scale(1.03)";
+      card.onmouseleave = () => card.style.transform = "scale(1)";
 
-        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
 
-      };
 
-      card.onmouseleave = () => {
+      // ==================== ROBUST THUMBNAIL ====================
 
-        card.style.transform = "scale(1)";
-
-        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-
-      };
-
-      // ==================== THUMBNAIL (Best Version) ====================
-
-      const thumbUrl = video.thumbnailUrl || "";
+      const thumbUrl = (video.thumbnail || video.thumbnailUrl || "").trim();
 
       const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
-      const vidContainer = document.createElement("div");
+      const img = document.createElement("img");
 
-      vidContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+      img.loading = "lazy";
 
-      const videoEl = document.createElement("video");
+      img.decoding = "async";
 
-      videoEl.muted = true;
+      img.alt = video.uploaderName || "Free Tonight";
 
-      videoEl.loop = true;
+      img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; background:#0a0614;";
 
-      videoEl.preload = "metadata";
+      img.onerror = () => {
 
-      videoEl.poster = thumbUrl || fallback;
+        img.src = fallback;
 
-      videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-
-      
-
-      if (video.previewClip) {
-
-        videoEl.src = video.previewClip;
-
-      }
-
-      vidContainer.appendChild(videoEl);
-
-      // Hover preview
-
-      vidContainer.onmouseenter = () => {
-
-        videoEl.play().catch(() => {});
+        img.onerror = null;
 
       };
 
-      vidContainer.onmouseleave = () => {
+      img.src = thumbUrl || fallback;
 
-        videoEl.pause();
+      const thumbContainer = document.createElement("div");
 
-        videoEl.currentTime = 0;
+      thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
-      };
+      thumbContainer.appendChild(img);
 
-      // Click to open full screen
-
-      vidContainer.onclick = (e) => {
+      thumbContainer.onclick = (e) => {
 
         e.stopPropagation();
 
@@ -6352,9 +6352,9 @@ function renderCards() {
 
       };
 
-      card.appendChild(vidContainer);
+      card.appendChild(thumbContainer);
 
-      // ==================== INFO LAYER ====================
+     // ==================== INFO LAYER ====================
 
       const info = document.createElement("div");
 
@@ -6412,7 +6412,7 @@ function renderCards() {
 
       };
 
-     // One-liner
+    // One-liner
 
       const naturePick = video.naturePick || "";
 
@@ -6525,6 +6525,8 @@ function renderCards() {
   }, 16);
 
 }
+
+  
   // ==================== LOCATION MODAL (Only v.location) ====================
   function openLocationModal() {
     const locModal = document.createElement("div");
