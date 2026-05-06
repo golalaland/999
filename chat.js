@@ -4832,38 +4832,37 @@ function resetForm() {
 async function generateThumbnail(file) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
-    const url = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    
     video.preload = 'metadata';
     video.muted = true;
-    video.src = url;
+    video.src = objectUrl;
 
     video.onloadedmetadata = () => {
-      video.currentTime = Math.min(2, video.duration * 0.1 || 1); // better first frame
+      video.currentTime = Math.min(2, video.duration * 0.08 || 1);
     };
 
     video.onseeked = () => {
       const canvas = document.createElement('canvas');
-      const targetWidth = 480; // better resolution
-      const ratio = video.videoWidth / video.videoHeight;
-      canvas.width = targetWidth;
-      canvas.height = Math.round(targetWidth / ratio);
+      canvas.width = 480;
+      canvas.height = Math.round(480 * (video.videoHeight / video.videoWidth));
 
-      const ctx = canvas.getContext('2d', { alpha: false });
+      const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      canvas.toBlob((blob) => {
-        URL.revokeObjectURL(url);
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(objectUrl);
         if (blob) {
-          resolve(new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }));
+          resolve(new File([blob], 'thumb.jpg', { type: 'image/jpeg' }));
         } else {
-          reject(new Error('Thumbnail blob failed'));
+          reject(new Error('Canvas toBlob failed'));
         }
-      }, 'image/jpeg', 0.88);
+      }, 'image/jpeg', 0.85);
     };
 
     video.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Video processing failed'));
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Video load error'));
     };
   });
 }
@@ -4932,59 +4931,78 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
       showStarPopup('Upload failed', 'error');
       resetUploadUI();
     },
-    async () => {
-      try {
-        const rawVideoUrl = await getDownloadURL(videoRef);
-        const videoUrl = toCloudflareUrl(rawVideoUrl);
+   async () => {
+  try {
+    const rawVideoUrl = await getDownloadURL(videoRef);
+    const videoUrl = toCloudflareUrl(rawVideoUrl);
 
-        const newHighlight = {
-          id: `${ts}_${rand}`,
-          videoUrl: videoUrl,
-          thumbnailUrl: '',           // Cloud Function can still override
-          storagePath: videoPath,
-          views: 0,
-          isTrending: true,
-          trendingUntil: Date.now() + (86400000 * 7),
-          uploadedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-
-        // Save to Firestore
-        if (snap.exists()) {
-          await updateDoc(highlightsRef, {
-            highlights: arrayUnion(newHighlight),
-            lastUploadAt: serverTimestamp(),
-            totalVideos: increment(1)
-          });
-        } else {
-          await setDoc(highlightsRef, {
-            uploaderId: currentUser.uid,
-            uploaderName: currentUser.chatId || 'Anonymous',
-            highlights: [newHighlight],
-            lastUploadAt: serverTimestamp(),
-            totalVideos: 1
-          });
-        }
-
-        // === FINAL SUCCESS CLEANUP ===
-        resetUploadUI();                    // ← This fixes your main issue
-
-        showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
-
-        if (typeof loadMyClips === 'function') loadMyClips();
-
-      } catch (err) {
-        console.error(err);
-        showStarPopup('Video uploaded but save failed', 'error');
-        resetUploadUI();
+    // === GENERATE + UPLOAD THUMBNAIL ===
+    let thumbnailUrl = "";
+    try {
+      const thumbnailFile = await generateThumbnail(file);
+      
+      if (thumbnailFile) {
+        const thumbPath = `users/${currentUser.uid}/thumbnails/${videoName.replace('.mp4', '')}.jpg`;
+        const thumbRef = ref(storage, thumbPath);
+        
+        await uploadBytes(thumbRef, thumbnailFile, {
+          contentType: 'image/jpeg',
+          cacheControl: 'public, max-age=31536000'
+        });
+        
+        const rawThumbUrl = await getDownloadURL(thumbRef);
+        thumbnailUrl = toCloudflareUrl(rawThumbUrl);
       }
-    });
+    } catch (thumbErr) {
+      console.warn("Thumbnail generation/upload failed:", thumbErr);
+      // Fallback: You can still use video poster later if needed
+    }
+
+    const newHighlight = {
+      id: `${ts}_${rand}`,
+      videoUrl: videoUrl,
+      thumbnailUrl: thumbnailUrl,           // ← Now properly set
+      storagePath: videoPath,
+      thumbnailStoragePath: thumbnailUrl ? `users/${currentUser.uid}/thumbnails/${videoName.replace('.mp4', '')}.jpg` : "",
+      views: 0,
+      isTrending: true,
+      trendingUntil: Date.now() + (86400000 * 7),
+      uploadedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to Firestore
+    const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
+    const snap = await getDoc(highlightsRef);
+
+    if (snap.exists()) {
+      await updateDoc(highlightsRef, {
+        highlights: arrayUnion(newHighlight),
+        lastUploadAt: serverTimestamp(),
+        totalVideos: increment(1)
+      });
+    } else {
+      await setDoc(highlightsRef, {
+        uploaderId: currentUser.uid,
+        uploaderName: currentUser.chatId || 'Anonymous',
+        highlights: [newHighlight],
+        lastUploadAt: serverTimestamp(),
+        totalVideos: 1
+      });
+    }
+
+    // Success
+    resetUploadUI();
+    showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
+    
+    if (typeof loadMyClips === 'function') loadMyClips();
+
   } catch (err) {
     console.error(err);
-    showStarPopup('Failed to start upload', 'error');
+    showStarPopup('Upload succeeded but thumbnail failed', 'warning');
     resetUploadUI();
   }
-});
+}
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
