@@ -5835,8 +5835,6 @@ function initFullScreenVideoModal() {
   Object.assign(fullScreenVideoModal.style, {
     position: "fixed",
     inset: "0",
-    width: "100vw",
-    height: "100vh",
     background: "#000",
     zIndex: "99999",
     display: "none",
@@ -5847,21 +5845,17 @@ function initFullScreenVideoModal() {
 
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = false;
+  currentFullVideo.playsInline = true;
   Object.assign(currentFullVideo.style, {
     maxWidth: "100%",
     maxHeight: "100%",
     objectFit: "contain"
   });
 
-  // Close on click outside video (not on video itself)
   fullScreenVideoModal.onclick = (e) => {
-    if (e.target === fullScreenVideoModal) {
-      closeFullScreenVideoModal();
-    }
+    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
   };
 
-  // ESC key close
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
       closeFullScreenVideoModal();
@@ -5873,73 +5867,51 @@ function initFullScreenVideoModal() {
 }
 
 function openFullScreenVideo(videoUrl) {
+  if (!videoUrl) return;
+
   initFullScreenVideoModal();
 
-  // Full cleanup before opening new video
-  closeFullScreenVideoModal(true); // force cleanup without delay
-
-  currentFullVideo.src = videoUrl || "";
-  currentFullVideo.load();
-
-  fullScreenVideoModal.style.display = "flex";
-
-  // Autoplay
-  currentFullVideo.play().catch(err => console.log("Autoplay blocked:", err));
-
-  // Fullscreen (with fallback timing)
-  setTimeout(() => {
-    const video = currentFullVideo;
-    if (video && document.fullscreenElement !== video) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen().catch(() => {});
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
-      }
-    }
-  }, 300); // slightly longer delay = more reliable on mobile
-}
-
-function closeFullScreenVideoModal(force = false) {
-  if (!fullScreenVideoModal) return;
-
-  // Always stop & clear
+  // Clean previous video
   currentFullVideo.pause();
   currentFullVideo.src = "";
-  currentFullVideo.load(); // force unload
+  currentFullVideo.load();
+
+  currentFullVideo.src = videoUrl;
+  fullScreenVideoModal.style.display = "flex";
+
+  // Autoplay with fallback
+  currentFullVideo.play().catch(() => {});
+
+  // Try fullscreen
+  setTimeout(() => {
+    if (currentFullVideo.requestFullscreen) {
+      currentFullVideo.requestFullscreen().catch(() => {});
+    } else if (currentFullVideo.webkitRequestFullscreen) {
+      currentFullVideo.webkitRequestFullscreen();
+    }
+  }, 400);
+}
+
+function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal || !currentFullVideo) return;
+
+  currentFullVideo.pause();
+  currentFullVideo.src = "";
+  currentFullVideo.load();
 
   // Exit fullscreen safely
-  if (document.exitFullscreen) {
-    document.exitFullscreen().catch(() => {});
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
+  if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
 
   fullScreenVideoModal.style.display = "none";
-
-  // Extra safety: remove from DOM on force close (prevents stale state)
-  if (force) {
-    setTimeout(() => {
-      if (fullScreenVideoModal.parentNode) {
-        fullScreenVideoModal.parentNode.removeChild(fullScreenVideoModal);
-        fullScreenVideoModal = null;
-        currentFullVideo = null;
-      }
-    }, 500);
-  }
 }
 
 // Initialize once
 initFullScreenVideoModal();
-
-// Optional: expose globally if needed elsewhere
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
-/* Highlights Button – opens Free Tonight (with pagination) */
+/* Highlights Button – opens Free Tonight (Optimized) */
 highlightsBtn.onclick = async () => {
   try {
     if (!currentUser?.uid) {
@@ -5947,81 +5919,60 @@ highlightsBtn.onclick = async () => {
       return;
     }
 
+    showLoader("Loading Free Tonight clips...");
+
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
+
     if (snap.empty) {
-      showGoldAlert("No clips in Free Tonight yet");
-      return;
-    }
-
-    const allUploaderIds = [];
-    const highlightsByUploader = {};
-
-    snap.forEach(userDoc => {
-      const data = userDoc.data();
-      const uploaderId = data.uploaderId || userDoc.id;
-      allUploaderIds.push(uploaderId);
-      highlightsByUploader[uploaderId] = data.highlights || [];
-    });
-
-    // Fetch user profiles in batches (15 at a time to save reads)
-    const PAGE_SIZE = 15;
-    const allClips = [];
-    let currentPage = 0;
-
-    async function loadPage() {
-      const start = currentPage * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const pageIds = allUploaderIds.slice(start, end);
-
-      if (pageIds.length === 0) return false;
-
-      const userPromises = pageIds.map(id => getDoc(doc(db, "users", id)));
-      const userSnaps = await Promise.all(userPromises);
-
-      userSnaps.forEach((userSnap, index) => {
-        const userData = userSnap.exists() ? userSnap.data() : {};
-        const clips = highlightsByUploader[pageIds[index]] || [];
-
-        clips.forEach(clip => {
-          if (clip.isTrending !== true) return;
-          const now = Date.now();
-          if (clip.trendingUntil && clip.trendingUntil < now) return;
-
-          allClips.push({
-            id: clip.id,
-            videoUrl: clip.videoUrl || "",
-            previewClip: clip.previewClip || "",
-            thumbnail: clip.thumbnailUrl || "",
-            uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-            uploaderId: pageIds[index],
-            isTrending: true,
-            tags: clip.tags || [],
-            location: userData.location || userData.city || "",
-            city: userData.city || "",
-            fruitPick: userData.fruitPick || null,
-            naturePick: userData.naturePick || "",
-            gender: userData.gender || "person",
-            age: userData.age || null
-          });
-        });
-      });
-
-      currentPage++;
-      return true;
-    }
-
-    // Load first page
-    await loadPage();
-
-    if (allClips.length === 0) {
+      hideLoader();
       showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
       return;
     }
 
-    showHighlightsModal(allClips, loadPage);
+    const allClips = [];
+
+    snap.forEach(userDoc => {
+      const data = userDoc.data();
+      const uploaderId = data.uploaderId || userDoc.id;
+
+      (data.highlights || []).forEach(clip => {
+        if (clip.isTrending !== true) return;
+
+        const now = Date.now();
+        if (clip.trendingUntil && clip.trendingUntil < now) return;
+
+        allClips.push({
+          id: clip.id,
+          videoUrl: clip.videoUrl || "",
+          previewClip: clip.previewClip || "",
+          thumbnailUrl: clip.thumbnailUrl || "",
+          uploaderName: data.uploaderName || data.chatId || "Anonymous",
+          uploaderId: uploaderId,
+          isTrending: true,
+          tags: clip.tags || [],
+          location: data.location || "",
+          city: data.city || "",
+          fruitPick: data.fruitPick || null,
+          naturePick: data.naturePick || "",
+          gender: data.gender || "person",
+          age: data.age || null
+        });
+      });
+    });
+
+    hideLoader();
+
+    if (allClips.length === 0) {
+      showGoldAlert("No active Free Tonight clips right now.");
+      return;
+    }
+
+    showHighlightsModal(allClips, () => Promise.resolve(false)); // disable load more for now
+
   } catch (err) {
     console.error("Error fetching Free Tonight clips:", err);
+    hideLoader();
     showGoldAlert("Error loading Free Tonight — try again.");
   }
 };
@@ -6061,7 +6012,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         </span>
       </div>
       <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-        Real moments, real vibes — no paywalls, no waiting.
+        Real moments, real vibes, no waiting.
         <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
@@ -6260,7 +6211,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         fullSpinner.innerHTML = `
           <div style="text-align:center;">
             <div style="width:48px; height:48px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 14px;"></div>
-            <div style="color:#fff; font-size:15px; font-weight:600;">Loading Profile...</div>
+            <div style="color:#fff; font-size:15px; font-weight:600;"></div>
           </div>
         `;
         document.body.appendChild(fullSpinner);
