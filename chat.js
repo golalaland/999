@@ -6027,8 +6027,8 @@ highlightsBtn.onclick = async () => {
 };
 
 /* ================================================
-   FREE TONIGHT MODAL – FULL CLEAN REWRITE
-   (Reliable Thumbnails + Strong Location Filter)
+   FREE TONIGHT MODAL – FULL OPTIMIZED REWRITE
+   (Fast Static Thumbnails + Strong Location Filter)
    ================================================ */
 function showHighlightsModal(initialVideos, loadMoreFn) {
   document.getElementById("highlightsModal")?.remove();
@@ -6045,7 +6045,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     fontFamily: "system-ui, sans-serif"
   });
 
-  // ==================== YOUR ORIGINAL HEADER ====================
+  // ==================== YOUR HEADER ====================
   const intro = document.createElement("div");
   intro.innerHTML = `
     <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -6057,12 +6057,12 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
                      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
                      font-weight:800; font-size:22px; letter-spacing:0.4px;">
-          Free Tonight?
+          ◑△◐ Free Tonight ◑△◐
         </span>
       </div>
       <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-        Real moments, Real matches, No waiting.
-        <br>Just pure connection under the night sky.
+        Real moments, real vibes — no paywalls, no waiting.
+        <br>Just pure connection under the Lagos night sky.
       </p>
       <p style="margin:0; color:#aaa; font-size:13px;">
         Tap "Enter Location" or other tags to filter.
@@ -6139,7 +6139,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   let activeTags = new Set();
   let activeLocation = null;
 
-  // ==================== RENDER CARDS ====================
+  // ==================== RENDER CARDS (Optimized) ====================
   function renderCards() {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
@@ -6149,14 +6149,13 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
     });
 
-    // Strong Location Filter (ONLY v.location, removed city)
+    // Strong Location Filter (ONLY v.location)
     if (activeLocation) {
-      visibleVideos = visibleVideos.filter(v => {
-        return (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase();
-      });
+      visibleVideos = visibleVideos.filter(v => 
+        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase()
+      );
     }
 
-    // Tag filtering
     if (activeTags.size > 0) {
       visibleVideos = visibleVideos.filter(v => {
         const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
@@ -6168,8 +6167,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim() && 
-            t.trim() !== v.location?.trim()) {
+        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim()) {
           visibleTags.add(t.trim().toLowerCase());
         }
       });
@@ -6195,7 +6193,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
 
     if (visibleVideos.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profile match your filters...";
+      empty.textContent = activeLocation ? `No clips found in ${activeLocation}...` : "No clips match your filters...";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
       grid.appendChild(empty);
       return;
@@ -6210,16 +6208,10 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         border: "1px solid rgba(138,43,226,0.4)"
       });
 
-      card.onmouseenter = () => {
-        card.style.transform = "scale(1.03)";
-        card.style.boxShadow = "0 12px 32px rgba(255,0,242,0.5)";
-      };
-      card.onmouseleave = () => {
-        card.style.transform = "scale(1)";
-        card.style.boxShadow = "0 4px 20px rgba(138,43,226,0.35)";
-      };
+      card.onmouseenter = () => card.style.transform = "scale(1.03)";
+      card.onmouseleave = () => card.style.transform = "scale(1)";
 
-      // ==================== IMPROVED THUMBNAIL ====================
+      // ==================== FAST STATIC THUMBNAIL ====================
       const thumbUrl = video.thumbnailUrl || video.videoUrl || "";
       const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
@@ -6231,13 +6223,11 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       videoEl.loop = true;
       videoEl.preload = "metadata";
       videoEl.loading = "lazy";
-      videoEl.poster = thumbUrl || fallback;
+      videoEl.poster = thumbUrl || fallback;           // Fast thumbnail
       videoEl.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      videoEl.src = video.previewClip || video.videoUrl || "";
+      // Do NOT set src here → prevents auto loading / hanging
 
       vidContainer.appendChild(videoEl);
-      vidContainer.onmouseenter = () => videoEl.play().catch(() => {});
-      vidContainer.onmouseleave = () => { videoEl.pause(); videoEl.currentTime = 0; };
       vidContainer.onclick = (e) => {
         e.stopPropagation();
         openFullScreenVideo(video.videoUrl || "");
@@ -6245,7 +6235,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
 
       card.appendChild(vidContainer);
 
-      // ==================== YOUR ORIGINAL INFO, ONELINER, TAGS, FRUITPICK, BADGE ====================
+      // ==================== YOUR ORIGINAL INFO OVERLAY ====================
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
@@ -6253,51 +6243,37 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         padding:60px 12px 12px;
       `;
 
-                 // User Click - Centered Spinner (Transparent Background)
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
 
       user.onclick = (e) => {
         e.stopPropagation();
-
         if (!video.uploaderId) return;
-
         // Transparent centered spinner
         const fullSpinner = document.createElement("div");
-        fullSpinner.id = "profile-loading-spinner";
         fullSpinner.style.cssText = `
-          position: fixed;
-          top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0,0,0,0.4);           /* Transparent dark */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999999;
-          backdrop-filter: blur(6px);
+          position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+          display: flex; align-items: center; justify-content: center;
+          z-index: 999999; backdrop-filter: blur(6px);
         `;
-
         fullSpinner.innerHTML = `
           <div style="text-align:center;">
             <div style="width:48px; height:48px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 14px;"></div>
-            <div style="color:#fff; font-size:15px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.6);"></div>
+            <div style="color:#fff; font-size:15px; font-weight:600;">Loading Profile...</div>
           </div>
         `;
-
         document.body.appendChild(fullSpinner);
 
         getDoc(doc(db, "users", video.uploaderId))
           .then(userSnap => {
             fullSpinner.remove();
-            if (userSnap.exists()) {
-              showSocialCard(userSnap.data());
-            } else {
-              showStarPopup("User profile not found", "error");
-            }
+            if (userSnap.exists()) showSocialCard(userSnap.data());
+            else showStarPopup("User profile not found", "error");
           })
           .catch(err => {
             fullSpinner.remove();
-            console.error("Failed to load user:", err);
+            console.error(err);
             showStarPopup("Failed to load profile", "error");
           });
       };
@@ -6308,14 +6284,9 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       const isMale = genderRaw === "male";
       const pronoun = isMale ? "his" : "her";
       const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
-      const oneLinerText = naturePick
-        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
-        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
       const oneLiner = document.createElement("div");
-      oneLiner.textContent = oneLinerText;
+      oneLiner.textContent = naturePick ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}` : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
-
-   
 
       // Tags
       const tagsEl = document.createElement("div");
@@ -6364,7 +6335,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     grid.appendChild(loadMoreDiv);
   }
 
-  // ==================== LOCATION MODAL (Only v.location) ====================
+  // ==================== LOCATION MODAL ====================
   function openLocationModal() {
     const locModal = document.createElement("div");
     locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
@@ -6381,7 +6352,6 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
 
     const container = locModal.querySelector("#locList");
     const locations = new Set();
-
     allVideos.forEach(v => {
       if (v.location) locations.add(v.location.trim());
     });
@@ -6405,10 +6375,11 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     };
   }
 
-  // Initial render
+  // Initial Render
   renderCards();
   document.body.appendChild(modal);
 }
+
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
     document.getElementById("unlockConfirmModal")?.remove();
