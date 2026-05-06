@@ -14,8 +14,6 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
-   deleteObject,
-   deleteField,
   collection,
   addDoc,
   serverTimestamp,
@@ -39,6 +37,8 @@ import {
   getStorage,
   ref,
   uploadBytes,
+      deleteObject,
+   deleteField,
   uploadBytesResumable,
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -6850,13 +6850,14 @@ async function showDeleteConfirm(clipId, clipTitle) {
 
       if (!clipToDelete) throw new Error("Clip not found");
 
-      // === DELETE THUMBNAIL FROM STORAGE (if exists) ===
+      // Delete thumbnail from Storage
       if (clipToDelete.thumbnailStoragePath) {
         try {
           const thumbRef = ref(storage, clipToDelete.thumbnailStoragePath);
-          await deleteObject(thumbRef).catch(() => {}); // silent fail is ok
+          await deleteObject(thumbRef);
+          console.log("Thumbnail deleted from storage");
         } catch (e) {
-          console.warn("Failed to delete thumbnail:", e);
+          console.warn("Thumbnail delete failed (might not exist):", e);
         }
       }
 
@@ -6873,7 +6874,6 @@ async function showDeleteConfirm(clipId, clipTitle) {
       showGoldAlert?.("Clip deleted successfully ✓");
       modal.remove();
 
-      // Refresh the list
       if (typeof loadMyClips === 'function') {
         setTimeout(loadMyClips, 300);
       }
