@@ -4880,6 +4880,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   // One active clip check
   const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
   const snap = await getDoc(highlightsRef);
+
   if (snap.exists()) {
     const hasActive = (snap.data().highlights || []).some(v => v.isTrending === true);
     if (hasActive) {
@@ -4905,12 +4906,12 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     const videoPath = `users/${currentUser.uid}/${videoName}`;
     const videoRef = ref(storage, videoPath);
 
-    // === Generate Thumbnail Client-Side (Backup + Faster) ===
+    // Generate thumbnail (client-side)
     let thumbnailFile = null;
     try {
       thumbnailFile = await generateThumbnail(file);
     } catch (thumbErr) {
-      console.warn("Thumbnail generation failed, will rely on Cloud Function", thumbErr);
+      console.warn("Thumbnail generation failed:", thumbErr);
     }
 
     // Upload Video
@@ -4919,90 +4920,92 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
       cacheControl: 'public, max-age=31536000'
     });
 
-    uploadTask.on('state_changed', (snapshot) => {
-      const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-      const bar = document.getElementById('progressBar');
-      const txt = document.getElementById('progressText');
-      if (bar) bar.style.width = `${percent}%`;
-      if (txt) txt.textContent = `Uploading ${percent}%`;
-    },
-    (error) => {
-      console.error(error);
-      showStarPopup('Upload failed', 'error');
-      resetUploadUI();
-    },
-   async () => {
-  try {
-    const rawVideoUrl = await getDownloadURL(videoRef);
-    const videoUrl = toCloudflareUrl(rawVideoUrl);
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        const bar = document.getElementById('progressBar');
+        const txt = document.getElementById('progressText');
+        if (bar) bar.style.width = `${percent}%`;
+        if (txt) txt.textContent = `Uploading ${percent}%`;
+      },
+      (error) => {
+        console.error(error);
+        showStarPopup('Upload failed', 'error');
+        resetUploadUI();
+      },
+      async () => {
+        try {
+          const rawVideoUrl = await getDownloadURL(videoRef);
+          const videoUrl = toCloudflareUrl(rawVideoUrl);
 
-    // === GENERATE + UPLOAD THUMBNAIL ===
-    let thumbnailUrl = "";
-    try {
-      const thumbnailFile = await generateThumbnail(file);
-      
-      if (thumbnailFile) {
-        const thumbPath = `users/${currentUser.uid}/thumbnails/${videoName.replace('.mp4', '')}.jpg`;
-        const thumbRef = ref(storage, thumbPath);
-        
-        await uploadBytes(thumbRef, thumbnailFile, {
-          contentType: 'image/jpeg',
-          cacheControl: 'public, max-age=31536000'
-        });
-        
-        const rawThumbUrl = await getDownloadURL(thumbRef);
-        thumbnailUrl = toCloudflareUrl(rawThumbUrl);
+          // === GENERATE + UPLOAD THUMBNAIL ===
+          let thumbnailUrl = "";
+          try {
+            if (thumbnailFile) {
+              const thumbPath = `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg`;
+              const thumbRef = ref(storage, thumbPath);
+
+              await uploadBytes(thumbRef, thumbnailFile, {
+                contentType: 'image/jpeg',
+                cacheControl: 'public, max-age=31536000'
+              });
+
+              const rawThumbUrl = await getDownloadURL(thumbRef);
+              thumbnailUrl = toCloudflareUrl(rawThumbUrl);
+            }
+          } catch (thumbErr) {
+            console.warn("Thumbnail upload failed:", thumbErr);
+          }
+
+          const newHighlight = {
+            id: `${ts}_${rand}`,
+            videoUrl: videoUrl,
+            thumbnailUrl: thumbnailUrl,
+            storagePath: videoPath,
+            thumbnailStoragePath: thumbnailUrl ? `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg` : "",
+            views: 0,
+            isTrending: true,
+            trendingUntil: Date.now() + (86400000 * 7),
+            uploadedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString()
+          };
+
+          // Save to Firestore
+          if (snap.exists()) {
+            await updateDoc(highlightsRef, {
+              highlights: arrayUnion(newHighlight),
+              lastUploadAt: serverTimestamp(),
+              totalVideos: increment(1)
+            });
+          } else {
+            await setDoc(highlightsRef, {
+              uploaderId: currentUser.uid,
+              uploaderName: currentUser.chatId || 'Anonymous',
+              highlights: [newHighlight],
+              lastUploadAt: serverTimestamp(),
+              totalVideos: 1
+            });
+          }
+
+          // Success
+          resetUploadUI();
+          showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
+          if (typeof loadMyClips === 'function') loadMyClips();
+
+        } catch (err) {
+          console.error(err);
+          showStarPopup('Upload succeeded but save failed', 'error');
+          resetUploadUI();
+        }
       }
-    } catch (thumbErr) {
-      console.warn("Thumbnail generation/upload failed:", thumbErr);
-      // Fallback: You can still use video poster later if needed
-    }
-
-    const newHighlight = {
-      id: `${ts}_${rand}`,
-      videoUrl: videoUrl,
-      thumbnailUrl: thumbnailUrl,           // ← Now properly set
-      storagePath: videoPath,
-      thumbnailStoragePath: thumbnailUrl ? `users/${currentUser.uid}/thumbnails/${videoName.replace('.mp4', '')}.jpg` : "",
-      views: 0,
-      isTrending: true,
-      trendingUntil: Date.now() + (86400000 * 7),
-      uploadedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
-
-    // Save to Firestore
-    const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
-    const snap = await getDoc(highlightsRef);
-
-    if (snap.exists()) {
-      await updateDoc(highlightsRef, {
-        highlights: arrayUnion(newHighlight),
-        lastUploadAt: serverTimestamp(),
-        totalVideos: increment(1)
-      });
-    } else {
-      await setDoc(highlightsRef, {
-        uploaderId: currentUser.uid,
-        uploaderName: currentUser.chatId || 'Anonymous',
-        highlights: [newHighlight],
-        lastUploadAt: serverTimestamp(),
-        totalVideos: 1
-      });
-    }
-
-    // Success
-    resetUploadUI();
-    showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
-    
-    if (typeof loadMyClips === 'function') loadMyClips();
-
+    ); // ← This closing parenthesis was missing
   } catch (err) {
     console.error(err);
-    showStarPopup('Upload succeeded but thumbnail failed', 'warning');
+    showStarPopup('Failed to start upload', 'error');
     resetUploadUI();
   }
-}
+});
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
