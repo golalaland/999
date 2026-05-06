@@ -5836,17 +5836,23 @@ let currentFullVideo = null;
 
 function initFullScreenVideoModal() {
   if (fullScreenVideoModal) return;
-  
+
   fullScreenVideoModal = document.createElement("div");
   Object.assign(fullScreenVideoModal.style, {
-    position: "fixed", inset: "0", background: "#000", zIndex: "99999",
-    display: "none", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", touchAction: "none"
+    position: "fixed",
+    inset: "0",
+    background: "#000",
+    zIndex: "99999",
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    touchAction: "none"
   });
 
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = true;   // better mobile behavior
+  currentFullVideo.playsInline = true;
   currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
 
   fullScreenVideoModal.appendChild(currentFullVideo);
@@ -5867,50 +5873,63 @@ function initFullScreenVideoModal() {
 
 function openFullScreenVideo(videoUrl) {
   if (!videoUrl) return;
-  
+
   initFullScreenVideoModal();
-  
-  // Aggressive cleanup
-  if (currentFullVideo) {
-    currentFullVideo.pause();
-    currentFullVideo.src = "";
-    currentFullVideo.load();
-  }
 
-  currentFullVideo.src = videoUrl;
-  fullScreenVideoModal.style.display = "flex";
+  // === AGGRESSIVE CLEANUP FIRST ===
+  closeFullScreenVideoModal(true); // force full reset
 
-  // Autoplay + Fullscreen
-  currentFullVideo.play().catch(() => {});
-  
-  // Fullscreen request (delayed for iOS reliability)
+  // Small delay to let cleanup finish
   setTimeout(() => {
-    if (!document.fullscreenElement) {
-      currentFullVideo.requestFullscreen?.()
-        .catch(() => currentFullVideo.webkitRequestFullscreen?.());
-    }
-  }, 350);
+    currentFullVideo.src = videoUrl;
+    fullScreenVideoModal.style.display = "flex";
+
+    // Autoplay
+    currentFullVideo.play()
+      .then(() => console.log("▶️ Video playing"))
+      .catch(err => console.log("Autoplay blocked:", err));
+
+    // Request fullscreen after a short delay (more reliable)
+    setTimeout(() => {
+      if (currentFullVideo && !document.fullscreenElement) {
+        currentFullVideo.requestFullscreen?.()
+          .catch(() => currentFullVideo.webkitRequestFullscreen?.())
+          .catch(() => {}); // ignore errors
+      }
+    }, 400);
+  }, 50);
 }
 
-function closeFullScreenVideoModal() {
+function closeFullScreenVideoModal(force = false) {
   if (!fullScreenVideoModal || !currentFullVideo) return;
 
   currentFullVideo.pause();
-  currentFullVideo.src = "";
-  currentFullVideo.load();
+  currentFullVideo.src = "";        // Important: clear source
+  currentFullVideo.load();          // Force unload
 
   // Exit fullscreen
-  document.exitFullscreen?.().catch(() => {});
-  document.webkitExitFullscreen?.();
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.().catch(() => {});
+    document.webkitExitFullscreen?.();
+  }
 
   fullScreenVideoModal.style.display = "none";
+
+  // Extra aggressive cleanup on force close
+  if (force) {
+    setTimeout(() => {
+      if (currentFullVideo) {
+        currentFullVideo.src = "";
+        currentFullVideo.load();
+      }
+    }, 100);
+  }
 }
 
 // Initialize once
 initFullScreenVideoModal();
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
-
 
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
@@ -6664,7 +6683,7 @@ function stopViewBoost() {
   }
 }
 
-// Main Function - IMPROVED
+// Main Function - UPDATED & OPTIMIZED
 async function loadMyClips() {
   const grid = document.getElementById("myClipsGrid");
   const noMsg = document.getElementById("noClipsMessage");
@@ -6690,10 +6709,10 @@ async function loadMyClips() {
       let highlights = snap.data().highlights || [];
       const now = Date.now();
 
-      // Auto-expire old clips
+      // Auto-expire trending clips
       let needsUpdate = false;
       highlights = highlights.map(v => {
-        if (v.isTrending && v.trendingUntil && v.trendingUntil < now) {
+        if (v.isTrending === true && v.trendingUntil && v.trendingUntil < now) {
           v.isTrending = false;
           needsUpdate = true;
         }
@@ -6711,6 +6730,9 @@ async function loadMyClips() {
         const isActive = v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
         const thumbnailSrc = v.thumbnailUrl || "";
         const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=No+Thumbnail";
+
+        // Cute unique clip ID (kept as you wanted)
+        const clipId = `freetonightclip-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
         const card = document.createElement("div");
         card.style.cssText = `
@@ -6732,9 +6754,10 @@ async function loadMyClips() {
               <img 
                 src="${thumbnailSrc || fallback}" 
                 alt="thumbnail"
-                style="width:100%; height:100%; object-fit:cover;"
                 loading="lazy"
+                style="width:100%; height:100%; object-fit:cover;"
               >
+              
               ${isActive ? `
               <div style="position:absolute; top:12px; right:12px; background:#00ff9d; color:#000; font-size:10px; font-weight:900; padding:4px 11px; border-radius:20px; box-shadow:0 0 15px #00ff9d;">
                 LIVE
@@ -6742,8 +6765,8 @@ async function loadMyClips() {
 
               <!-- Play Icon Overlay -->
               <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); 
-                          width:48px; height:48px; background:rgba(0,0,0,0.5); border-radius:50%; 
-                          display:flex; align-items:center; justify-content:center; border:2.5px solid rgba(255,255,255,0.9);">
+                          width:48px; height:48px; background:rgba(0,0,0,0.55); border-radius:50%; 
+                          display:flex; align-items:center; justify-content:center; border:2.5px solid rgba(255,255,255,0.9); z-index:2;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
                   <path d="M8 5.14v14l11-7z"/>
                 </svg>
@@ -6755,6 +6778,9 @@ async function loadMyClips() {
               <div style="flex-grow:1;">
                 <div style="color:#fff; font-weight:800; font-size:15px; line-height:1.35; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
                   ${v.title || "Free Tonight Clip"}
+                </div>
+                <div style="color:#00ffea; font-size:11px; font-family:monospace; margin-top:4px; opacity:0.85;">
+                  ${clipId}
                 </div>
               </div>
 
@@ -6771,7 +6797,7 @@ async function loadMyClips() {
                         data-id="${v.id}"
                         data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
                         style="background:#ff3366; color:white; border:none; padding:9px 18px; border-radius:12px; font-size:11px; font-weight:800; cursor:pointer; width:100%; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
-                  DELETE CLIP
+                  DELETE
                 </button>
               </div>
             </div>
@@ -6820,7 +6846,7 @@ async function showDeleteConfirm(clipId, clipTitle) {
           Cancel
         </button>
         <button id="confirmDelete" style="padding:10px 20px; background:linear-gradient(90deg,#ff3366,#ff0066); border:none; color:#fff; border-radius:10px; font-weight:700; cursor:pointer; flex:1;">
-          Yes, Delete
+          Delete
         </button>
       </div>
     </div>
