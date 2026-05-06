@@ -4766,10 +4766,9 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// HIGHLIGHT UPLOAD HANDLER + PROGRESS BAR + THUMBNAIL
-// One document per user in highlightVideos collection
-// All user's videos stored in 'highlights' array inside that one doc
+// IMPROVED HIGHLIGHT UPLOAD HANDLER
 // ================================
+
 function toCloudflareUrl(firebaseUrl) {
   const clean = firebaseUrl.split('?')[0];
   return clean
@@ -4778,116 +4777,118 @@ function toCloudflareUrl(firebaseUrl) {
     .replace(/%2F/g, '/') + '?alt=media';
 }
 
-function resetButton(btn) {
-  btn.disabled = false;
-  btn.classList.remove('uploading');
-  btn.textContent = 'Post Highlight';
-  btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-  const container = document.getElementById('progressContainer');
-  if (container) {
-    container.style.opacity = '0';
-    setTimeout(() => {
-      const bar = document.getElementById('progressBar');
-      const txt = document.getElementById('progressText');
-      if (bar) bar.style.width = '0%';
-      if (txt) txt.textContent = '';
-    }, 450);
+function resetUploadUI() {
+  const btn = document.getElementById('uploadHighlightBtn');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Go Live on Free Tonight';
+    btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
   }
+
+  const progressContainer = document.getElementById('progressContainer');
+  if (progressContainer) {
+    progressContainer.style.opacity = '0';
+  }
+
+  resetForm(); // ← This is the key missing piece
 }
 
+// Full form reset
 function resetForm() {
-  const fields = {
-    highlightUploadInput: '',
-    highlightTitleInput: '',
-    highlightDescInput: '',
-    highlightPriceInput: '50'
-  };
-  Object.entries(fields).forEach(([id, val]) => {
+  const fileInput = document.getElementById('highlightUploadInput');
+  if (fileInput) fileInput.value = '';
+
+  const fields = ['highlightTitleInput', 'highlightDescInput'];
+  fields.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.value = val;
+    if (el) el.value = '';
   });
+
+  const priceInput = document.getElementById('highlightPriceInput');
+  if (priceInput) priceInput.value = '50';
+
   const cb = document.getElementById('boostTrendingCheckbox');
   if (cb) cb.checked = false;
+
+  // Reset preview
+  const videoPreview = document.getElementById('videoPreview');
+  const previewContainer = document.getElementById('videoPreviewContainer');
+  const placeholder = document.getElementById('uploadPlaceholder');
+  const fileSizeInfo = document.getElementById('fileSizeInfo');
+
+  if (videoPreview) {
+    videoPreview.pause();
+    videoPreview.src = '';
+    videoPreview.load();
+  }
+  if (previewContainer) previewContainer.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'block';
+  if (fileSizeInfo) fileSizeInfo.textContent = '';
+
   document.querySelectorAll('.tag-btn.selected').forEach(el => el.classList.remove('selected'));
-  const ph = document.getElementById('uploadPlaceholder');
-  const pc = document.getElementById('videoPreviewContainer');
-  const v = document.getElementById('videoPreview');
-  const si = document.getElementById('fileSizeInfo');
-  if (v) v.src = '';
-  if (pc) pc.style.display = 'none';
-  if (ph) ph.style.display = 'block';
-  if (si) si.textContent = '';
 }
 
+// Generate good quality thumbnail
 async function generateThumbnail(file) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
+    const url = URL.createObjectURL(file);
     video.preload = 'metadata';
     video.muted = true;
-    video.src = URL.createObjectURL(file);
+    video.src = url;
+
     video.onloadedmetadata = () => {
-      video.currentTime = Math.min(3, video.duration || 1);
+      video.currentTime = Math.min(2, video.duration * 0.1 || 1); // better first frame
     };
+
     video.onseeked = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = 320;
-      canvas.height = 180;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        URL.revokeObjectURL(video.src);
-        return reject(new Error('Canvas failed'));
-      }
+      const targetWidth = 480; // better resolution
+      const ratio = video.videoWidth / video.videoHeight;
+      canvas.width = targetWidth;
+      canvas.height = Math.round(targetWidth / ratio);
+
+      const ctx = canvas.getContext('2d', { alpha: false });
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(blob => {
-        URL.revokeObjectURL(video.src);
-        if (!blob) return reject(new Error('Blob failed'));
-        resolve(new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }));
-      }, 'image/jpeg', 0.85);
+
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url);
+        if (blob) {
+          resolve(new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }));
+        } else {
+          reject(new Error('Thumbnail blob failed'));
+        }
+      }, 'image/jpeg', 0.88);
     };
-    video.onerror = err => {
-      URL.revokeObjectURL(video.src);
-      reject(err);
+
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Video processing failed'));
     };
   });
 }
 
-// ================================
-// FREE TONIGHT UPLOAD HANDLER – IMPROVED (One Video Per User + Auto Clear)
-// ================================
+// ====================== UPLOAD HANDLER ======================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
   const btn = e.currentTarget;
   if (btn.disabled) return;
 
-  if (!currentUser?.uid) {
-    showStarPopup('Please sign in to upload', 'error');
-    return;
-  }
-
   const fileInput = document.getElementById('highlightUploadInput');
   const file = fileInput?.files?.[0];
-
   if (!file) return showStarPopup('Please select a video', 'error');
   if (file.size > 50 * 1024 * 1024) return showStarPopup('Maximum file size is 50MB', 'error');
 
-  // === STRICT ONE VIDEO PER USER ===
+  // One active clip check
   const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
-  const highlightsSnap = await getDoc(highlightsRef);
-  
-  if (highlightsSnap.exists()) {
-    const existing = highlightsSnap.data().highlights || [];
-    const hasActive = existing.some(v => v.isTrending === true);
-
+  const snap = await getDoc(highlightsRef);
+  if (snap.exists()) {
+    const hasActive = (snap.data().highlights || []).some(v => v.isTrending === true);
     if (hasActive) {
-      showStarPopup(
-        "You already have an active Free Tonight clip.<br><br>" +
-        "Please delete the current one first before uploading a new clip.",
-        "error"
-      );
-      return;
+      return showStarPopup("You already have an active clip.<br>Delete the current one first.", "error");
     }
   }
 
-  // Disable button & start uploading
+  // Start UI
   btn.disabled = true;
   btn.textContent = 'Uploading...';
   btn.style.background = '#555';
@@ -4895,113 +4896,95 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   const progressContainer = document.getElementById('progressContainer');
   if (progressContainer) progressContainer.style.opacity = '1';
 
-  showStarPopup('Uploading your Free Tonight clip...', 'loading');
+  showStarPopup('Uploading your clip...', 'loading');
 
   try {
     const ts = Date.now();
-    const rand = Math.random().toString(36).slice(2, 10);
-    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+    const rand = Math.random().toString(36).slice(2, 12);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     const videoName = `${ts}_${rand}.${ext}`;
-    const basePath = `users/${currentUser.uid}`;
-    const videoPath = `${basePath}/${videoName}`;
-
+    const videoPath = `users/${currentUser.uid}/${videoName}`;
     const videoRef = ref(storage, videoPath);
-    const meta = {
+
+    // === Generate Thumbnail Client-Side (Backup + Faster) ===
+    let thumbnailFile = null;
+    try {
+      thumbnailFile = await generateThumbnail(file);
+    } catch (thumbErr) {
+      console.warn("Thumbnail generation failed, will rely on Cloud Function", thumbErr);
+    }
+
+    // Upload Video
+    const uploadTask = uploadBytesResumable(videoRef, file, {
       contentType: file.type,
       cacheControl: 'public, max-age=31536000'
-    };
+    });
 
-    const uploadTask = uploadBytesResumable(videoRef, file, meta);
+    uploadTask.on('state_changed', (snapshot) => {
+      const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+      const bar = document.getElementById('progressBar');
+      const txt = document.getElementById('progressText');
+      if (bar) bar.style.width = `${percent}%`;
+      if (txt) txt.textContent = `Uploading ${percent}%`;
+    },
+    (error) => {
+      console.error(error);
+      showStarPopup('Upload failed', 'error');
+      resetUploadUI();
+    },
+    async () => {
+      try {
+        const rawVideoUrl = await getDownloadURL(videoRef);
+        const videoUrl = toCloudflareUrl(rawVideoUrl);
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        const bar = document.getElementById('progressBar');
-        const txt = document.getElementById('progressText');
-        if (bar) bar.style.width = `${percent}%`;
-        if (txt) txt.textContent = `Uploading... ${percent}%`;
-      },
-      (err) => {
-        console.error('Upload error:', err);
-        showStarPopup('Upload failed. Please try again.', 'error');
-        resetUploadButton(btn);
-      },
-      async () => {
-        try {
-          const rawVideo = await getDownloadURL(videoRef);
-          const videoUrl = toCloudflareUrl(rawVideo);
+        const newHighlight = {
+          id: `${ts}_${rand}`,
+          videoUrl: videoUrl,
+          thumbnailUrl: '',           // Cloud Function can still override
+          storagePath: videoPath,
+          views: 0,
+          isTrending: true,
+          trendingUntil: Date.now() + (86400000 * 7),
+          uploadedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
 
-          const newHighlight = {
-            id: `${ts}_${rand}`,
-            videoUrl: videoUrl,
-            thumbnailUrl: '',           // ← Cloud Function will fill this
-            storagePath: videoPath,
-            views: 0,
-            isTrending: true,
-            trendingUntil: Date.now() + (86400000 * 7), // 7 days
-            uploadedAt: new Date().toISOString(),
-            createdAt: new Date().toISOString()
-          };
-
-          // Save to Firestore
-          try {
-            await updateDoc(highlightsRef, {
-              highlights: arrayUnion(newHighlight),
-              lastUploadAt: serverTimestamp(),
-              totalVideos: increment(1)
-            });
-          } catch (err) {
-            if (err.code === 'not-found') {
-              await setDoc(highlightsRef, {
-                uploaderId: currentUser.uid,
-                uploaderName: currentUser.chatId || 'Anonymous',
-                createdAt: serverTimestamp(),
-                lastUploadAt: serverTimestamp(),
-                totalVideos: 1,
-                highlights: [newHighlight]
-              });
-            } else {
-              throw err;
-            }
-          }
-
-          // === SUCCESS: Clear input so user doesn't re-upload same video ===
-          if (fileInput) fileInput.value = '';
-
-          showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
-          
-          btn.textContent = 'LIVE!';
-          btn.style.background = 'linear-gradient(90deg, #00ff88, #00cc66)';
-
-          if (progressContainer) progressContainer.style.opacity = '0';
-
-          // Refresh user clips
-          if (typeof loadMyClips === 'function') loadMyClips();
-
-          // Reset button after delay
-          setTimeout(() => resetUploadButton(btn), 4000);
-
-        } catch (err) {
-          console.error('Save error:', err);
-          showStarPopup('Video uploaded but failed to save. Try again.', 'error');
-          resetUploadButton(btn);
+        // Save to Firestore
+        if (snap.exists()) {
+          await updateDoc(highlightsRef, {
+            highlights: arrayUnion(newHighlight),
+            lastUploadAt: serverTimestamp(),
+            totalVideos: increment(1)
+          });
+        } else {
+          await setDoc(highlightsRef, {
+            uploaderId: currentUser.uid,
+            uploaderName: currentUser.chatId || 'Anonymous',
+            highlights: [newHighlight],
+            lastUploadAt: serverTimestamp(),
+            totalVideos: 1
+          });
         }
+
+        // === FINAL SUCCESS CLEANUP ===
+        resetUploadUI();                    // ← This fixes your main issue
+
+        showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
+
+        if (typeof loadMyClips === 'function') loadMyClips();
+
+      } catch (err) {
+        console.error(err);
+        showStarPopup('Video uploaded but save failed', 'error');
+        resetUploadUI();
       }
-    );
+    });
   } catch (err) {
-    console.error('Upload setup error:', err);
+    console.error(err);
     showStarPopup('Failed to start upload', 'error');
-    resetUploadButton(btn);
+    resetUploadUI();
   }
 });
-
-// Helper to reset button state
-function resetUploadButton(btn) {
-  btn.disabled = false;
-  btn.textContent = 'Go Live on Free Tonight';
-  btn.style.background = '';
-}
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
@@ -6064,22 +6047,19 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   controls.appendChild(tagContainer);
   modal.appendChild(controls);
   // ==================== GRID ====================
-  const grid = document.createElement("div");
-  grid.id = "highlightsGrid";
-  grid.style.cssText = `
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px; width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 80px;
-  `;
-   grid.style.cssText = `
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 14px; 
-  width: 100%; 
-  max-width: 960px; 
-  margin: 0 auto; 
-  padding-bottom: 80px;
-  contain: content;           /* ← Important */
-  content-visibility: auto;   /* ← Modern browsers */
+const grid = document.createElement("div");
+grid.id = "highlightsGrid";
+grid.style.cssText = `
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 120px;
+  contain: content;
+  content-visibility: auto;
+  will-change: transform;           /* helps scrolling */
 `;
   modal.appendChild(grid);
   // Load more trigger
@@ -6093,19 +6073,28 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   let activeTags = new Set();
   let activeLocation = null;
    
- // ==================== RENDER CARDS (Static Thumbnails Only) ====================
-  function renderCards() {
+// ==================== RENDER CARDS (Static Thumbnails Only) ====================
+let renderTimeout = null;
+let isRendering = false;
+
+function renderCards() {
+  if (isRendering) return;
+  isRendering = true;
+
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => {
     grid.innerHTML = "";
     tagContainer.innerHTML = "";
 
+    // === FILTERING (Must be done BEFORE rendering) ===
     let visibleVideos = allVideos.filter(v => {
       const now = Date.now();
       return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
     });
 
     if (activeLocation) {
-      visibleVideos = visibleVideos.filter(v => 
-        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase()
+      visibleVideos = visibleVideos.filter(v =>
+        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
       );
     }
 
@@ -6116,12 +6105,15 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       });
     }
 
-    // Non-location tags
+    // === TAG BUTTONS (from visible videos only) ===
     const visibleTags = new Set();
     visibleVideos.forEach(v => {
       (v.tags || []).forEach(t => {
-        if (t && typeof t === "string" && t.trim() && t.trim() !== v.location?.trim()) {
-          visibleTags.add(t.trim().toLowerCase());
+        if (t && typeof t === "string") {
+          const trimmed = t.trim().toLowerCase();
+          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
+            visibleTags.add(trimmed);
+          }
         }
       });
     });
@@ -6131,11 +6123,17 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       btn.textContent = tag;
       btn.dataset.tag = tag;
       Object.assign(btn.style, {
-        padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "600",
+        padding: "6px 14px", 
+        borderRadius: "24px", 
+        fontSize: "12px", 
+        fontWeight: "600",
         background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
         color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-        border: "1px solid rgba(255,46,120,0.6)", cursor: "pointer", transition: "all 0.25s"
+        border: "1px solid rgba(255,46,120,0.6)", 
+        cursor: "pointer", 
+        transition: "all 0.25s"
       });
+
       btn.onclick = () => {
         if (activeTags.has(tag)) activeTags.delete(tag);
         else activeTags.add(tag);
@@ -6144,58 +6142,67 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       tagContainer.appendChild(btn);
     });
 
+    // === EMPTY STATE ===
     if (visibleVideos.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profiles match your filters...";
+      empty.textContent = activeLocation 
+        ? `No profiles found in ${activeLocation}...` 
+        : "No profiles match your filters...";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
       grid.appendChild(empty);
+      grid.appendChild(loadMoreDiv);
+      isRendering = false;
       return;
     }
 
-visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
-  const card = document.createElement("div");
-  Object.assign(card.style, {
-    position: "relative",
-    aspectRatio: "9/16",
-    borderRadius: "16px",
-    overflow: "hidden",
-    background: "#0f0a1a",
-    cursor: "pointer",
-    boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-    transition: "transform 0.25s ease, box-shadow 0.25s ease",
-    border: "1px solid rgba(138,43,226,0.4)"
-  });
+    // === RENDER CARDS using DocumentFragment ===
+    const fragment = document.createDocumentFragment();
 
-  card.onmouseenter = () => card.style.transform = "scale(1.03)";
-  card.onmouseleave = () => card.style.transform = "scale(1)";
-   
-    // === OPTIMIZED THUMBNAIL (IMG instead of VIDEO) ===
-  const thumbUrl = video.thumbnail || video.thumbnailUrl || video.videoUrl || "";
-  const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
+    visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+      const card = document.createElement("div");
+      Object.assign(card.style, {
+        position: "relative",
+        aspectRatio: "9/16",
+        borderRadius: "16px",
+        overflow: "hidden",
+        background: "#0f0a1a",
+        cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        border: "1px solid rgba(138,43,226,0.4)"
+      });
 
-  const img = document.createElement("img");
-  img.src = thumbUrl || fallback;
-  img.loading = "lazy";
-  img.decoding = "async";
-  img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block;";
-  img.alt = video.uploaderName || "Free Tonight";
+      card.onmouseenter = () => card.style.transform = "scale(1.03)";
+      card.onmouseleave = () => card.style.transform = "scale(1)";
 
-  // Optional: low-res placeholder + fade in
-  img.style.opacity = "0.85";
-  img.onload = () => { img.style.transition = "opacity 0.3s"; img.style.opacity = "1"; };
+      // ==================== ROBUST THUMBNAIL ====================
+      const thumbUrl = (video.thumbnail || video.thumbnailUrl || "").trim();
+      const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
-  const thumbContainer = document.createElement("div");
-  thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-  thumbContainer.appendChild(img);
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = video.uploaderName || "Free Tonight";
+      img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; background:#0a0614;";
 
-  // Click opens full video
-  thumbContainer.onclick = (e) => {
-    e.stopPropagation();
-    openFullScreenVideo(video.videoUrl || "");
-  };
+      img.onerror = () => {
+        img.src = fallback;
+        img.onerror = null;
+      };
 
-  card.appendChild(thumbContainer);
-       
+      img.src = thumbUrl || fallback;
+
+      const thumbContainer = document.createElement("div");
+      thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
+      thumbContainer.appendChild(img);
+
+      thumbContainer.onclick = (e) => {
+        e.stopPropagation();
+        if (video.videoUrl) openFullScreenVideo(video.videoUrl);
+      };
+
+      card.appendChild(thumbContainer);
+
       // ==================== YOUR ORIGINAL INFO, ONELINER, TAGS, FRUITPICK, BADGE ====================
       const info = document.createElement("div");
       info.style.cssText = `
