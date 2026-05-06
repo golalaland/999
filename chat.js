@@ -5830,7 +5830,6 @@ function setGreeting() {
 document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
-
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
 
@@ -5852,21 +5851,15 @@ function initFullScreenVideoModal() {
 
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = true;        // Important for mobile
-  currentFullVideo.style.cssText = `
-    max-width: 100%; 
-    max-height: 100%; 
-    object-fit: contain;
-  `;
+  currentFullVideo.playsInline = true;
+  currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
 
   fullScreenVideoModal.appendChild(currentFullVideo);
   document.body.appendChild(fullScreenVideoModal);
 
-  // Close only when clicking background
+  // Close on background click
   fullScreenVideoModal.addEventListener("click", (e) => {
-    if (e.target === fullScreenVideoModal) {
-      closeFullScreenVideoModal();
-    }
+    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
   });
 
   // ESC support
@@ -5882,43 +5875,36 @@ function openFullScreenVideo(videoUrl) {
 
   initFullScreenVideoModal();
 
-  // Strong cleanup
-  if (currentFullVideo) {
-    currentFullVideo.pause();
-    currentFullVideo.src = "";
-    currentFullVideo.load();
-  }
+  // === SUPER AGGRESSIVE RESET ===
+  closeFullScreenVideoModal(true);
 
-  fullScreenVideoModal.style.display = "flex";
-  currentFullVideo.src = videoUrl;
-
-  // Force load + play with better timing for mobile
-  currentFullVideo.load();
-
-  // Play after a tiny delay (helps mobile)
+  // Small delay to let previous video fully die
   setTimeout(() => {
-    currentFullVideo.play()
-      .then(() => {
-        console.log("✅ Video started playing");
-      })
-      .catch(err => {
-        console.log("Autoplay blocked:", err);
-      });
+    currentFullVideo.src = videoUrl;
+    fullScreenVideoModal.style.display = "flex";
+
+    // Play with better mobile handling
+    setTimeout(() => {
+      currentFullVideo.play()
+        .then(() => console.log("✅ Video playing successfully"))
+        .catch(err => console.log("Play prevented:", err));
+    }, 100);
+
+    // Fullscreen
+    setTimeout(() => {
+      if (!document.fullscreenElement) {
+        currentFullVideo.requestFullscreen?.().catch(() => {
+          currentFullVideo.webkitRequestFullscreen?.();
+        });
+      }
+    }, 500);
   }, 80);
-
-  // Fullscreen request
-  setTimeout(() => {
-    if (!document.fullscreenElement) {
-      currentFullVideo.requestFullscreen?.()
-        .catch(() => currentFullVideo.webkitRequestFullscreen?.())
-        .catch(() => {});
-    }
-  }, 450);
 }
 
-function closeFullScreenVideoModal() {
+function closeFullScreenVideoModal(force = false) {
   if (!fullScreenVideoModal || !currentFullVideo) return;
 
+  // Stop everything
   currentFullVideo.pause();
   currentFullVideo.src = "";
   currentFullVideo.load();
@@ -5928,9 +5914,19 @@ function closeFullScreenVideoModal() {
   document.webkitExitFullscreen?.();
 
   fullScreenVideoModal.style.display = "none";
+
+  // Extra cleanup on force
+  if (force) {
+    setTimeout(() => {
+      if (currentFullVideo) {
+        currentFullVideo.src = "";
+        currentFullVideo.load();
+      }
+    }, 150);
+  }
 }
 
-// Initialize once
+// Initialize
 initFullScreenVideoModal();
 
 window.openFullScreenVideo = openFullScreenVideo;
@@ -6280,8 +6276,9 @@ thumbContainer.appendChild(playOverlay);
 
 // === STRONGER CLICK HANDLER (Mobile Friendly) ===
 thumbContainer.onclick = (e) => {
-  e.stopPropagation();
-  e.preventDefault();           // Added for safety
+  e.stopImmediatePropagation();   // Stronger stop
+  e.preventDefault();
+  
   if (video.videoUrl) {
     openFullScreenVideo(video.videoUrl);
   }
