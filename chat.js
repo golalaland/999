@@ -6145,8 +6145,8 @@ function renderCards() {
     // === EMPTY STATE ===
     if (visibleVideos.length === 0) {
       const empty = document.createElement("div");
-      empty.textContent = activeLocation 
-        ? `No profiles found in ${activeLocation}...` 
+      empty.textContent = activeLocation
+        ? `No profiles found in ${activeLocation}...`
         : "No profiles match your filters...";
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
       grid.appendChild(empty);
@@ -6190,7 +6190,11 @@ function renderCards() {
         img.onerror = null;
       };
 
-      img.src = thumbUrl || fallback;
+      if (thumbUrl) {
+        img.src = thumbUrl;
+      } else {
+        img.src = fallback;
+      }
 
       const thumbContainer = document.createElement("div");
       thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
@@ -6203,55 +6207,49 @@ function renderCards() {
 
       card.appendChild(thumbContainer);
 
-      // ==================== YOUR ORIGINAL INFO, ONELINER, TAGS, FRUITPICK, BADGE ====================
+      // ==================== INFO LAYER ====================
       const info = document.createElement("div");
       info.style.cssText = `
         position:absolute; bottom:0; left:0; right:0;
         background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
         padding:60px 12px 12px;
       `;
-                 // User Click - Centered Spinner (Transparent Background)
+
+      // User name
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
       user.onclick = (e) => {
         e.stopPropagation();
         if (!video.uploaderId) return;
-        // Transparent centered spinner
+
         const fullSpinner = document.createElement("div");
         fullSpinner.id = "profile-loading-spinner";
         fullSpinner.style.cssText = `
-          position: fixed;
-          top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0,0,0,0.4); /* Transparent dark */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999999;
-          backdrop-filter: blur(6px);
+          position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+          background: rgba(0,0,0,0.4); display: flex; align-items: center;
+          justify-content: center; z-index: 999999; backdrop-filter: blur(6px);
         `;
         fullSpinner.innerHTML = `
           <div style="text-align:center;">
             <div style="width:48px; height:48px; border:4px solid #00ffea; border-top-color:transparent; border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 14px;"></div>
-            <div style="color:#fff; font-size:15px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.6);"></div>
           </div>
         `;
         document.body.appendChild(fullSpinner);
+
         getDoc(doc(db, "users", video.uploaderId))
           .then(userSnap => {
             fullSpinner.remove();
-            if (userSnap.exists()) {
-              showSocialCard(userSnap.data());
-            } else {
-              showStarPopup("User profile not found", "error");
-            }
+            if (userSnap.exists()) showSocialCard(userSnap.data());
+            else showStarPopup("User profile not found", "error");
           })
           .catch(err => {
             fullSpinner.remove();
-            console.error("Failed to load user:", err);
+            console.error(err);
             showStarPopup("Failed to load profile", "error");
           });
       };
+
       // One-liner
       const naturePick = video.naturePick || "";
       const genderRaw = (video.gender || "person").toLowerCase().trim();
@@ -6261,19 +6259,22 @@ function renderCards() {
       const oneLinerText = naturePick
         ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
         : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+
       const oneLiner = document.createElement("div");
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
-  
+
       // Tags
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
       if (video.location) {
         const span = document.createElement("span");
         span.textContent = video.location.trim();
         span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
         tagsEl.appendChild(span);
       }
+
       (video.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           const span = document.createElement("span");
@@ -6282,8 +6283,10 @@ function renderCards() {
           tagsEl.appendChild(span);
         }
       });
+
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
+
       // FruitPick
       if (video.fruitPick) {
         const fruitEl = document.createElement("div");
@@ -6291,6 +6294,7 @@ function renderCards() {
         fruitEl.style.cssText = `position:absolute; bottom:10px; right:10px; font-size:16px; line-height:1; color:#fff; text-shadow:0 0 3px rgba(255,255,255,0.5); z-index:3;`;
         card.appendChild(fruitEl);
       }
+
       // Badge
       const badge = document.createElement("div");
       badge.textContent = "Free Tonight ♡";
@@ -6302,10 +6306,16 @@ function renderCards() {
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
       });
       card.appendChild(badge);
-      grid.appendChild(card);
+
+      fragment.appendChild(card);   // ← Use fragment here
     });
+
+    // Append everything at once
+    grid.appendChild(fragment);
     grid.appendChild(loadMoreDiv);
-  }
+    isRendering = false;
+  }, 16);   // ← End of setTimeout
+}
   // ==================== LOCATION MODAL (Only v.location) ====================
   function openLocationModal() {
     const locModal = document.createElement("div");
