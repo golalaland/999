@@ -14,6 +14,7 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
+   deleteField,
   collection,
   addDoc,
   serverTimestamp,
@@ -38,7 +39,6 @@ import {
   ref,
   uploadBytes,
       deleteObject,
-   deleteField,
   uploadBytesResumable,
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -97,6 +97,7 @@ export {
   ref,
   uploadBytes,
   uploadBytesResumable,
+   deleteObject,
   getDownloadURL
 };
 
