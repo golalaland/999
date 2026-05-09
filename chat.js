@@ -5831,7 +5831,6 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
 
-// === SINGLE FULL-SCREEN VIDEO MODAL – SAFE & REUSABLE ===
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
 
@@ -5842,107 +5841,84 @@ function initFullScreenVideoModal() {
   Object.assign(fullScreenVideoModal.style, {
     position: "fixed",
     inset: "0",
-    width: "100vw",
-    height: "100vh",
     background: "#000",
     zIndex: "99999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    cursor: "pointer"
+    cursor: "pointer",
+    touchAction: "none"
   });
 
   currentFullVideo = document.createElement("video");
   currentFullVideo.controls = true;
-  currentFullVideo.playsInline = false;
-  Object.assign(currentFullVideo.style, {
-    maxWidth: "100%",
-    maxHeight: "100%",
-    objectFit: "contain"
+  currentFullVideo.playsInline = true;           // Important for mobile
+  currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
+
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
+
+  // Close when clicking background
+  fullScreenVideoModal.addEventListener("click", (e) => {
+    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
   });
 
-  // Close on click outside video (not on video itself)
-  fullScreenVideoModal.onclick = (e) => {
-    if (e.target === fullScreenVideoModal) {
-      closeFullScreenVideoModal();
-    }
-  };
-
-  // ESC key close
+  // ESC key
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
       closeFullScreenVideoModal();
     }
   });
-
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
 }
 
 function openFullScreenVideo(videoUrl) {
+  if (!videoUrl) return;
+
   initFullScreenVideoModal();
 
-  // Full cleanup before opening new video
-  closeFullScreenVideoModal(true); // force cleanup without delay
+  // Clean previous video
+  if (currentFullVideo) {
+    currentFullVideo.pause();
+    currentFullVideo.src = "";
+    currentFullVideo.load();
+  }
 
-  currentFullVideo.src = videoUrl || "";
-  currentFullVideo.load();
-
+  currentFullVideo.src = videoUrl;
   fullScreenVideoModal.style.display = "flex";
 
-  // Autoplay
-  currentFullVideo.play().catch(err => console.log("Autoplay blocked:", err));
-
-  // Fullscreen (with fallback timing)
+  // Play with small delay (helps mobile browsers)
   setTimeout(() => {
-    const video = currentFullVideo;
-    if (video && document.fullscreenElement !== video) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen().catch(() => {});
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
-      }
+    currentFullVideo.play()
+      .then(() => console.log("✅ Video started"))
+      .catch(err => console.log("Play blocked:", err));
+  }, 100);
+
+  // Request fullscreen
+  setTimeout(() => {
+    if (!document.fullscreenElement) {
+      currentFullVideo.requestFullscreen?.().catch(() => {
+        currentFullVideo.webkitRequestFullscreen?.();
+      });
     }
-  }, 300); // slightly longer delay = more reliable on mobile
+  }, 450);
 }
 
-function closeFullScreenVideoModal(force = false) {
-  if (!fullScreenVideoModal) return;
+function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal || !currentFullVideo) return;
 
-  // Always stop & clear
   currentFullVideo.pause();
   currentFullVideo.src = "";
-  currentFullVideo.load(); // force unload
+  currentFullVideo.load();
 
-  // Exit fullscreen safely
-  if (document.exitFullscreen) {
-    document.exitFullscreen().catch(() => {});
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
+  document.exitFullscreen?.().catch(() => {});
+  document.webkitExitFullscreen?.();
 
   fullScreenVideoModal.style.display = "none";
-
-  // Extra safety: remove from DOM on force close (prevents stale state)
-  if (force) {
-    setTimeout(() => {
-      if (fullScreenVideoModal.parentNode) {
-        fullScreenVideoModal.parentNode.removeChild(fullScreenVideoModal);
-        fullScreenVideoModal = null;
-        currentFullVideo = null;
-      }
-    }, 500);
-  }
 }
 
-// Initialize once
+// Initialize
 initFullScreenVideoModal();
 
-// Optional: expose globally if needed elsewhere
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 
@@ -6312,48 +6288,38 @@ function renderCards() {
 
 
 
-      // ==================== ROBUST THUMBNAIL ====================
-
+            // ==================== ROBUST THUMBNAIL ====================
       const thumbUrl = (video.thumbnail || video.thumbnailUrl || "").trim();
-
       const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
 
       const img = document.createElement("img");
-
       img.loading = "lazy";
-
       img.decoding = "async";
-
       img.alt = video.uploaderName || "Free Tonight";
-
       img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; background:#0a0614;";
 
       img.onerror = () => {
-
         img.src = fallback;
-
         img.onerror = null;
-
       };
-
       img.src = thumbUrl || fallback;
 
       const thumbContainer = document.createElement("div");
-
       thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
 
       thumbContainer.appendChild(img);
 
+      // ==================== IMPROVED CLICK HANDLER ====================
       thumbContainer.onclick = (e) => {
-
-        e.stopPropagation();
-
-        if (video.videoUrl) openFullScreenVideo(video.videoUrl);
-
+        e.stopImmediatePropagation();   // Stronger stop
+        e.preventDefault();
+        if (video.videoUrl) {
+          openFullScreenVideo(video.videoUrl);
+        }
       };
 
       card.appendChild(thumbContainer);
-
+       
      // ==================== INFO LAYER ====================
 
       const info = document.createElement("div");
