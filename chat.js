@@ -156,43 +156,54 @@ document.head.appendChild(style);
 
 
 // ====================== NEW LOGIN FUNCTION (Supports Email OR ChatId) ======================
+// ====================== LOGIN WITH EMAIL OR CHATID (DEBUG ENABLED) ======================
 async function login(identifier, password) {
   if (!identifier || !password) {
     throw new Error("Please enter both username/email and password");
   }
 
   let emailToUse = identifier.trim();
+  console.log(`[Login Attempt] Identifier: "${identifier}"`);
 
   try {
     if (!emailToUse.includes('@')) {
-      // Treat as chatId / username
+      // === USERNAME LOGIN PATH ===
       const chatIdLower = emailToUse.toLowerCase().trim();
-      
+      console.log(`[Username Login] Looking for chatIdLower: "${chatIdLower}"`);
+
       const chatIdRef = doc(db, "chatIds", chatIdLower);
       const snap = await getDoc(chatIdRef);
 
       if (!snap.exists()) {
+        console.error(`[Username Login FAILED] Document "chatIds/${chatIdLower}" does not exist`);
         throw new Error("Invalid username or password");
       }
 
-      emailToUse = snap.data().email;
+      const indexData = snap.data();
+      console.log(`[Username Login SUCCESS] Found email:`, indexData.email);
+
+      emailToUse = indexData.email;
     } else {
+      // Email login
       emailToUse = emailToUse.toLowerCase().trim();
+      console.log(`[Email Login] Using email: ${emailToUse}`);
     }
 
+    // Final Firebase Auth
     return await signInWithEmailAndPassword(auth, emailToUse, password);
 
   } catch (error) {
+    console.error("Login function error:", error);
+    
     if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
       throw new Error("Invalid username or password");
     }
     if (error.code === "auth/too-many-requests") {
-      throw new Error("Too many failed attempts. Please try again later.");
+      throw new Error("Too many attempts. Try again later.");
     }
     throw error;
   }
 }
-
 
 
 // ===============================================
@@ -5914,7 +5925,6 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
 });
 
 
-// === SINGLE FULL-SCREEN VIDEO MODAL – OLD WORKING VERSION ===
 let fullScreenVideoModal = null;
 let currentFullVideo = null;
 
@@ -6003,6 +6013,8 @@ initFullScreenVideoModal();
 
 window.openFullScreenVideo = openFullScreenVideo;
 window.closeFullScreenVideoModal = closeFullScreenVideoModal;
+
+
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
@@ -6392,13 +6404,13 @@ function renderCards() {
 
 
    // ==================== CLICK HANDLER ====================
-      thumbContainer.onclick = (e) => {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-        if (video.videoUrl) {
-          openFullScreenVideo(video.videoUrl);
-        }
-      };
+thumbContainer.onclick = (e) => {
+  e.stopImmediatePropagation();
+  e.preventDefault();
+  if (video.videoUrl) {
+    openFullScreenVideo(video.videoUrl);
+  }
+};
 
       card.appendChild(thumbContainer);
      // ==================== INFO LAYER ====================
