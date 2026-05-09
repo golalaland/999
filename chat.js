@@ -2450,11 +2450,11 @@ const gender     = (user.gender || "person").toLowerCase();
 const isMale     = gender === "male";
 const pronoun    = isMale ? "his" : "her";
 const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-const fruit      = user.fruitPick || "🍇";
-const nature     = user.naturePick || "cool";
+const fruit      = user.fruitPick || "";
+const nature     = user.naturePick || "";
 const bodyType   = user.bodyTypePick || "";
-const city       = user.location || user.city || "Lagos";
-const country    = user.country || "Nigeria";
+const city       = user.city || "Lagos";
+const location    = user.location || "";
 
 // VIP status is controlled ONLY by hasPaid
 const isVIP           = !!user.hasPaid;               // true → show badge
@@ -2472,14 +2472,14 @@ let mainText = "";
 
 if (isPrivilegedMale) {
   // Privileged males (host or VIP) — very clean
-  mainText = `A ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}.`;
+  mainText = `A ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${location}.`;
 } else {
   // Everyone else
   const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
   let intro = `A ${gender}`;
   if (descriptors) intro = `${descriptors} ${gender}`;
 
-  mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}, ${country}`;
+  mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}, ${location}`;
   if (!isMale) mainText += ` ${fruit}`;
   mainText += ".";
 }
@@ -2487,7 +2487,7 @@ if (isPrivilegedMale) {
 // Only apply old-school flair to truly regular users
 if (!user.isHost && !isVIP) {
   const flair = isMale ? " 😎" : " 💋";
-  mainText = `A ${gender} from ${city}, ${country}${flair}.`;
+  mainText = `A ${gender} from ${city}, ${location}${flair}.`;
 }
 
 const mainLine = document.createElement("p");
@@ -5794,6 +5794,7 @@ if (maybeSaveInfo) {
     }
   }); // ready
 })();
+
 /* =======================================
    Dynamic Host Panel Greeting (No Images)
 ========================================== */
@@ -5832,100 +5833,7 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
 });
 
 // === SINGLE FULL-SCREEN VIDEO MODAL – OLD WORKING VERSION ===
-// === SINGLE FULL-SCREEN VIDEO MODAL – FIXED & STABLE ===
 let fullScreenVideoModal = null;
-let currentFullVideo = null;
-
-function initFullScreenVideoModal() {
-  if (fullScreenVideoModal) return;
-
-  fullScreenVideoModal = document.createElement("div");
-  Object.assign(fullScreenVideoModal.style, {
-    position: "fixed",
-    inset: "0",
-    background: "#000",
-    zIndex: "99999",
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer"
-  });
-
-  currentFullVideo = document.createElement("video");
-  currentFullVideo.controls = true;
-  currentFullVideo.playsInline = true;           // Changed to true
-  Object.assign(currentFullVideo.style, {
-    maxWidth: "100%",
-    maxHeight: "100%",
-    objectFit: "contain"
-  });
-
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
-
-  fullScreenVideoModal.onclick = (e) => {
-    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
-  };
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
-      closeFullScreenVideoModal();
-    }
-  });
-}
-
-function openFullScreenVideo(videoUrl) {
-  if (!videoUrl) return;
-
-  initFullScreenVideoModal();
-
-  // Cleanup without destroying the element
-  if (currentFullVideo) {
-    currentFullVideo.pause();
-    currentFullVideo.src = "";
-    currentFullVideo.load();
-  }
-
-  currentFullVideo.src = videoUrl;
-  fullScreenVideoModal.style.display = "flex";
-
-  // Play with delay (critical for mobile)
-  setTimeout(() => {
-    currentFullVideo.play()
-      .then(() => console.log("Video playing"))
-      .catch(err => console.log("Autoplay blocked:", err));
-  }, 150);
-
-  // Fullscreen
-  setTimeout(() => {
-    if (!document.fullscreenElement) {
-      currentFullVideo.requestFullscreen?.().catch(() => {
-        currentFullVideo.webkitRequestFullscreen?.();
-      });
-    }
-  }, 400);
-}
-
-function closeFullScreenVideoModal() {
-  if (!fullScreenVideoModal || !currentFullVideo) return;
-
-  currentFullVideo.pause();
-  currentFullVideo.src = "";
-  currentFullVideo.load();
-
-  document.exitFullscreen?.().catch(() => {});
-  document.webkitExitFullscreen?.();
-
-  fullScreenVideoModal.style.display = "none";
-}
-
-// Initialize once
-initFullScreenVideoModal();
-
-window.openFullScreenVideo = openFullScreenVideo;
-window.closeFullScreenVideoModal = closeFullScreenVideoModal;
-
-
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
