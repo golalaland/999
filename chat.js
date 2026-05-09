@@ -435,7 +435,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     let data = userSnap.data();
 
-    // Sync VIP expiration (hasPaid becomes false, isVIP stays)
+    // Sync VIP expiration
     data = await syncVIPExpiration(userSnap);
 
     // Set currentUser
@@ -492,7 +492,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     setupNotificationsListener?.(uid);
     activateViewBoost?.();
 
-    // Redeem & Tip Links
     if (typeof updateRedeemLink === "function") await updateRedeemLink();
     if (typeof updateTipLink === "function") await updateTipLink();
 
@@ -514,7 +513,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
     showStarPopup(`
       <div style="text-align:center;font-size:13px;">
-        Welcome back, 
+        Welcome back,
         <b style="color:${glow};">${currentUser.chatId.toUpperCase()}</b>
         ${currentUser.isAdmin ? "<br><span style='color:#0f9'>ADMIN MODE</span>" : ""}
       </div>
@@ -527,71 +526,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 });
 
-    // ====================== DAILY STAR BONUS ======================
-    await giveDailyStarBonus(uid);
-
-    // ADMIN MODE
-    if (currentUser.isAdmin) {
-      currentAdmin = { uid, email, chatId: currentUser.chatId };
-      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
-      const pollSection = document.getElementById("polls");
-      if (pollSection) pollSection.style.display = "block";
-    }
-
-    // UI Setup
-    revealHostTabs?.();
-    updateInfoTab?.();
-
-    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
-    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
-
-    localStorage.setItem("userId", uid);
-    localStorage.setItem("lastVipEmail", email);
-
-    setupUsersListener?.();
-    showChatUI?.(currentUser);
-    attachMessagesListener?.();
-    setupPresence?.(currentUser);
-    setupNotificationsListener?.(uid);
-    activateViewBoost?.();
-
-    // Redeem & Tip Links
-    if (typeof updateRedeemLink === "function") await updateRedeemLink();
-    if (typeof updateTipLink === "function") await updateTipLink();
-
-    // Delayed loads
-    setTimeout(() => {
-      syncUserUnlocks?.();
-      loadNotifications?.();
-      if (typeof loadMyClips === "function") loadMyClips();
-    }, 800);
-
-    if (currentUser.chatId.startsWith("GUEST")) {
-      setTimeout(() => promptForChatID?.(userRef, data), 2000);
-    }
-
-    const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) hostFields.style.display = currentUser.isHost ? "block" : "none";
-
-    // Welcome Popup
-    const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
-    showStarPopup(`
-      <div style="text-align:center;font-size:13px;">
-        Welcome back, 
-        <b style="color:${glow};">${currentUser.chatId.toUpperCase()}</b>
-        ${currentUser.isAdmin ? "<br><span style='color:#0f9'>ADMIN MODE</span>" : ""}
-      </div>
-    `);
-
-  } catch (err) {
-    console.error("Login process error:", err);
-    showStarPopup("Login failed — try again");
-    await signOut(auth);
-  }
-});
-
+// ===============================================
+// NOTIFICATIONS LISTENER
+// ===============================================
 function setupNotificationsListener(userId) {
   if (!userId) return;
+
   const list = document.getElementById("notificationsList");
   if (!list) {
     setTimeout(() => setupNotificationsListener(userId), 500);
@@ -613,8 +553,6 @@ function setupNotificationsListener(userId) {
     list.innerHTML = snap.docs.map(doc => {
       const n = doc.data();
       const time = n.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "--:--";
-
-      // Normalize line breaks in message
       const formattedMessage = (n.message || "").replace(/\n/g, "<br>");
 
       return `
@@ -633,15 +571,16 @@ function setupNotificationsListener(userId) {
 document.getElementById("markAllRead")?.addEventListener("click", async () => {
   const userId = localStorage.getItem("userId");
   if (!userId) return;
+
   const q = query(collection(db, "notifications"), where("userId", "==", userId));
   const snap = await getDocs(q);
   if (snap.empty) return;
+
   const batch = writeBatch(db);
   snap.docs.forEach(d => batch.update(d.ref, { read: true }));
   await batch.commit();
   showStarPopup("Marked as read");
 });
-
 
 
 function showStarPopup(text) {
@@ -5974,8 +5913,96 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
 
+
 // === SINGLE FULL-SCREEN VIDEO MODAL – OLD WORKING VERSION ===
 let fullScreenVideoModal = null;
+let currentFullVideo = null;
+
+function initFullScreenVideoModal() {
+  if (fullScreenVideoModal) return;
+
+  fullScreenVideoModal = document.createElement("div");
+  Object.assign(fullScreenVideoModal.style, {
+    position: "fixed",
+    inset: "0",
+    background: "#000",
+    zIndex: "9999999",           // ← Much higher than your highlights modal (999999)
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    touchAction: "none"
+  });
+
+  currentFullVideo = document.createElement("video");
+  currentFullVideo.controls = true;
+  currentFullVideo.playsInline = true;
+  currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
+
+  fullScreenVideoModal.appendChild(currentFullVideo);
+  document.body.appendChild(fullScreenVideoModal);
+
+  // Close on background
+  fullScreenVideoModal.addEventListener("click", (e) => {
+    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
+  });
+
+  // ESC support
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
+      closeFullScreenVideoModal();
+    }
+  });
+}
+
+function openFullScreenVideo(videoUrl) {
+  if (!videoUrl) return;
+
+  initFullScreenVideoModal();
+
+  // Reset previous video
+  currentFullVideo.pause();
+  currentFullVideo.src = "";
+  currentFullVideo.load();
+
+  currentFullVideo.src = videoUrl;
+  fullScreenVideoModal.style.display = "flex";
+
+  // Play
+  setTimeout(() => {
+    currentFullVideo.play()
+      .then(() => console.log("Video started playing"))
+      .catch(err => console.log("Autoplay blocked:", err));
+  }, 100);
+
+  // Fullscreen request
+  setTimeout(() => {
+    if (!document.fullscreenElement) {
+      currentFullVideo.requestFullscreen?.().catch(() => {
+        currentFullVideo.webkitRequestFullscreen?.();
+      });
+    }
+  }, 450);
+}
+
+function closeFullScreenVideoModal() {
+  if (!fullScreenVideoModal || !currentFullVideo) return;
+
+  currentFullVideo.pause();
+  currentFullVideo.src = "";
+  currentFullVideo.load();
+
+  document.exitFullscreen?.().catch(() => {});
+  document.webkitExitFullscreen?.();
+
+  fullScreenVideoModal.style.display = "none";
+}
+
+// Initialize
+initFullScreenVideoModal();
+
+window.openFullScreenVideo = openFullScreenVideo;
+window.closeFullScreenVideoModal = closeFullScreenVideoModal;
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
