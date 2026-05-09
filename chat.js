@@ -155,6 +155,73 @@ style.textContent = `
 document.head.appendChild(style);
 
 
+// ====================== NEW LOGIN FUNCTION (Supports Email OR ChatId) ======================
+async function login(identifier, password) {
+  if (!identifier || !password) {
+    throw new Error("Please enter both username/email and password");
+  }
+
+  let emailToUse = identifier.trim();
+
+  try {
+    if (!emailToUse.includes('@')) {
+      // Treat as chatId / username
+      const chatIdLower = emailToUse.toLowerCase().trim();
+      
+      const chatIdRef = doc(db, "chatIds", chatIdLower);
+      const snap = await getDoc(chatIdRef);
+
+      if (!snap.exists()) {
+        throw new Error("Invalid username or password");
+      }
+
+      emailToUse = snap.data().email;
+    } else {
+      emailToUse = emailToUse.toLowerCase().trim();
+    }
+
+    return await signInWithEmailAndPassword(auth, emailToUse, password);
+
+  } catch (error) {
+    if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
+      throw new Error("Invalid username or password");
+    }
+    if (error.code === "auth/too-many-requests") {
+      throw new Error("Too many failed attempts. Please try again later.");
+    }
+    throw error;
+  }
+}
+
+
+
+// ===============================================
+// SYNC VIP EXPIRATION LOGIC
+// ===============================================
+async function syncVIPExpiration(userSnap) {
+  const data = userSnap.data();
+
+  if (!data.vipExpiresAt || data.hasPaid === false) {
+    return data;
+  }
+
+  const expiresAt = data.vipExpiresAt.toDate 
+    ? data.vipExpiresAt.toDate() 
+    : new Date(data.vipExpiresAt);
+
+  if (expiresAt < new Date()) {
+    await updateDoc(userSnap.ref, { 
+      hasPaid: false 
+      // Do NOT change isVIP
+    });
+
+    return { ...data, hasPaid: false };
+  }
+
+  return data;
+}
+
+
 // SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
 async function syncUserUnlocks() {
   if (!currentUser?.email) {
@@ -326,10 +393,11 @@ async function pushNotification(userId, message) {
 }
 
 
-// ON AUTH STATE CHANGED — FINAL CLEAN VERSION
+// ===============================================
+// ON AUTH STATE CHANGED — FINAL CLEAN & IMPROVED VERSION
+// ===============================================
 onAuthStateChanged(auth, async (firebaseUser) => {
-
-  // Cleanup
+  // Cleanup previous listeners
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -341,8 +409,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
+
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
+
     if (typeof showLoginUI === "function") showLoginUI();
     return;
   }
@@ -365,32 +435,67 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       return;
     }
 
-    const data = userSnap.data();
+    // === SYNC VIP EXPIRATION (hasPaid → false when expired, isVIP stays) ===
+    let data = await syncVIPExpiration(userSnap);
 
+    // Build currentUser object
     currentUser = {
       uid,
       email,
       firebaseUid: firebaseUser.uid,
+
       chatId: data.chatId || email.split("@")[0],
       chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+
       fullName: data.fullName || "VIP",
       gender: data.gender || "person",
-      isVIP: !!data.isVIP,
+
+      isVIP: !!data.isVIP,           // Can remain true even after expiration
+      hasPaid: !!data.hasPaid,       // Becomes false when VIP expires
       isHost: !!data.isHost,
       isAdmin: !!data.isAdmin,
-      hasPaid: !!data.hasPaid,
+
       stars: data.stars || 0,
       cash: data.cash || 0,
       starsToday: data.starsToday || 0,
       lastStarDate: data.lastStarDate || todayDate(),
+
       usernameColor: data.usernameColor || "#ff69b4",
       subscriptionActive: !!data.subscriptionActive,
       subscriptionCount: data.subscriptionCount || 0,
+
       unlockedVideos: data.unlockedVideos || [],
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
-      hostLink: data.hostLink || null
+      hostLink: data.hostLink || null,
+
+      // Optional but useful
+      vipExpiresAt: data.vipExpiresAt || null,
+      phone: data.phone || "",
+      city: data.city || "",
+      country: data.country || ""
     };
+
+    // Store basic info
+    localStorage.setItem("userId", uid);
+
+    // Show/hide UI elements
+    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+
+    // Optional: Refresh VIP countdown if element exists
+    if (typeof showVIPCountdown === "function") {
+      setTimeout(showVIPCountdown, 800);
+    }
+
+  } catch (error) {
+    console.error("Auth state error:", error);
+    showStarPopup("Something went wrong during login. Please try again.");
+    await signOut(auth);
+  }
+});
+
+
 
     // ====================== DAILY STAR BONUS ======================
     await giveDailyStarBonus(uid);
@@ -2718,48 +2823,52 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// FINAL LOGIN BUTTON — NO WHITELIST, ONLY HOST OR PAID VIP
+// FINAL LOGIN BUTTON — Supports Email OR ChatId (Username)
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
-  const email = document.getElementById("emailInput")?.value.trim().toLowerCase();
+  const identifier = document.getElementById("emailInput")?.value.trim(); // Can be email or chatId
   const password = document.getElementById("passwordInput")?.value;
 
-  if (!email || !password) {
-    showStarPopup("Enter email and password");
+  if (!identifier || !password) {
+    showStarPopup("Enter email/username and password");
     return;
   }
 
-  // Start smart accurate loader
   const loader = showLoadingBar();
 
   try {
-    loader.update(18); // Starting login...
+    loader.update(18);
 
-    // STEP 1: Firebase Auth login
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    // === NEW: Login with either Email or ChatId ===
+    const userCredential = await login(identifier, password);
+
     console.log("Firebase Auth Success:", userCredential.user.uid);
+    loader.update(55);
 
-    loader.update(55); // Authenticated, checking profile...
-
-    // STEP 2: Check if allowed
+    // === Rest of your existing logic stays the same ===
+    const email = userCredential.user.email.toLowerCase().trim(); // Always use real email
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
-
-    loader.update(82); // Profile loaded...
+    
+    loader.update(82);
 
     if (!userSnap.exists()) {
       showStarPopup("Profile not found — contact support");
       await signOut(auth);
-      loader.update(100); // finish cleanly
+      loader.update(100);
       return;
     }
 
     const data = userSnap.data();
 
+    // Your whitelist logic
     if (data.isHost || (data.isVIP && data.hasPaid === true)) {
       console.log("Access granted");
-      loader.update(100); // Success → full bar + hide
-      // Chat opens normally via onAuthStateChanged
+      loader.update(100);
+
+      // Optional: You can call your helper here if you want
+      // setCurrentUserFromData(data, uidKey, email);
+
     } else {
       showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
       await signOut(auth);
@@ -2769,14 +2878,17 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
   } catch (err) {
     console.error("Login failed:", err);
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      showStarPopup("Wrong password or email");
+    
+    if (err.message === "Invalid username or password" || 
+        err.code === "auth/wrong-password" || 
+        err.code === "auth/user-not-found") {
+      showStarPopup("Invalid username or password");
     } else if (err.code === "auth/too-many-requests") {
       showStarPopup("Too many attempts. Wait a minute.");
     } else {
-      showStarPopup("Login failed — try again");
+      showStarPopup(err.message || "Login failed — try again");
     }
-    loader.update(100); // Always finish bar on error
+    loader.update(100);
   }
 });
 
