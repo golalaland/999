@@ -155,41 +155,36 @@ style.textContent = `
 document.head.appendChild(style);
 
 
-// ====================== NEW LOGIN FUNCTION (Supports Email OR ChatId) ======================
-// ====================== LOGIN WITH EMAIL OR CHATID (DEBUG ENABLED) ======================
+// ====================== LOGIN WITH EMAIL OR CHATID ======================
 async function login(identifier, password) {
   if (!identifier || !password) {
     throw new Error("Please enter both username/email and password");
   }
 
   let emailToUse = identifier.trim();
-  console.log(`[Login Attempt] Identifier: "${identifier}"`);
+  console.log(`[Login] Attempting login with: "${identifier}"`);
 
   try {
     if (!emailToUse.includes('@')) {
-      // === USERNAME LOGIN PATH ===
+      // Username (chatId) login
       const chatIdLower = emailToUse.toLowerCase().trim();
-      console.log(`[Username Login] Looking for chatIdLower: "${chatIdLower}"`);
+      console.log(`[Username Login] Searching for chatId: "${chatIdLower}"`);
 
       const chatIdRef = doc(db, "chatIds", chatIdLower);
       const snap = await getDoc(chatIdRef);
 
       if (!snap.exists()) {
-        console.error(`[Username Login FAILED] Document "chatIds/${chatIdLower}" does not exist`);
+        console.error(`[FAILED] No index found for chatId "${chatIdLower}". Run the index creation code.`);
         throw new Error("Invalid username or password");
       }
 
-      const indexData = snap.data();
-      console.log(`[Username Login SUCCESS] Found email:`, indexData.email);
-
-      emailToUse = indexData.email;
+      emailToUse = snap.data().email;
+      console.log(`[SUCCESS] Found email: ${emailToUse}`);
     } else {
-      // Email login
       emailToUse = emailToUse.toLowerCase().trim();
-      console.log(`[Email Login] Using email: ${emailToUse}`);
+      console.log(`[Email Login] Using: ${emailToUse}`);
     }
 
-    // Final Firebase Auth
     return await signInWithEmailAndPassword(auth, emailToUse, password);
 
   } catch (error) {
@@ -198,13 +193,9 @@ async function login(identifier, password) {
     if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
       throw new Error("Invalid username or password");
     }
-    if (error.code === "auth/too-many-requests") {
-      throw new Error("Too many attempts. Try again later.");
-    }
     throw error;
   }
 }
-
 
 // ===============================================
 // SYNC VIP EXPIRATION LOGIC
