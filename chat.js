@@ -5944,7 +5944,7 @@ function initVideoModal() {
   Object.assign(videoModal.style, {
     position: "fixed",
     inset: "0",
-    background: "rgba(0,0,0,0.95)",
+    background: "rgba(0,0,0,0.97)",
     zIndex: "9999999",
     display: "none",
     alignItems: "center",
@@ -5956,30 +5956,52 @@ function initVideoModal() {
   const content = document.createElement("div");
   content.style.cssText = `
     position: relative; 
-    max-width: 100%; 
-    max-height: 90vh; 
-    width: 100%;
+    width: 100%; 
+    max-width: 920px;
     background: #000;
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
   `;
 
   modalVideo = document.createElement("video");
   modalVideo.controls = true;
   modalVideo.playsInline = true;
-  modalVideo.style.cssText = "width:100%; height:auto; max-height:85vh; display:block;";
+  modalVideo.style.cssText = "width:100%; height:auto; max-height:82vh; display:block;";
+
+  // Close Button (Very Visible)
+  const closeBtn = document.createElement("div");
+  closeBtn.innerHTML = `✕`;
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    width: "36px",
+    height: "36px",
+    background: "rgba(0,0,0,0.7)",
+    color: "#fff",
+    fontSize: "24px",
+    fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "50%",
+    cursor: "pointer",
+    zIndex: "10",
+    border: "2px solid rgba(255,255,255,0.6)"
+  });
 
   content.appendChild(modalVideo);
+  content.appendChild(closeBtn);
   videoModal.appendChild(content);
   document.body.appendChild(videoModal);
 
-  // Close on background click
+  // Close handlers
+  closeBtn.onclick = () => closeVideoModal();
   videoModal.addEventListener("click", (e) => {
     if (e.target === videoModal) closeVideoModal();
   });
 
-  // ESC key
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && videoModal.style.display === "flex") {
       closeVideoModal();
@@ -5992,19 +6014,16 @@ function openVideoModal(videoUrl) {
 
   initVideoModal();
 
-  // Reset previous video
   modalVideo.pause();
   modalVideo.src = "";
 
   modalVideo.src = videoUrl;
   videoModal.style.display = "flex";
 
-  // Play
   setTimeout(() => {
     modalVideo.play()
-      .then(() => console.log("✅ Mini modal video playing"))
-      .catch(err => console.log("Play blocked:", err));
-  }, 150);
+      .catch(err => console.log("Autoplay blocked:", err));
+  }, 200);
 }
 
 function closeVideoModal() {
@@ -6017,8 +6036,8 @@ function closeVideoModal() {
   videoModal.style.display = "none";
 }
 
-// Expose globally
-window.openFullScreenVideo = openVideoModal;   // Keep same function name so your existing code works
+// Keep same function name so your existing calls still work
+window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
 
 /* Highlights Button – opens Free Tonight (with pagination) */
