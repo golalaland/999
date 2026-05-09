@@ -155,6 +155,24 @@ style.textContent = `
 document.head.appendChild(style);
 
 
+// TEMPORARY CONSOLE HELPER - Add this near the top of chat.js
+window.createChatIdIndex = async (email, chatId) => {
+  try {
+    const chatIdLower = chatId.toLowerCase().trim();
+    
+    await setDoc(doc(db, "chatIds", chatIdLower), {
+      email: email,
+      sanitizedEmail: sanitizeKey(email),
+      createdAt: new Date()
+    });
+    
+    console.log("✅ SUCCESS: Index created for", chatId);
+  } catch (err) {
+    console.error("❌ Failed to create index:", err);
+  }
+};
+
+
 // ====================== LOGIN WITH EMAIL OR CHATID ======================
 async function login(identifier, password) {
   if (!identifier || !password) {
@@ -5916,94 +5934,92 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
 });
 
 
-let fullScreenVideoModal = null;
-let currentFullVideo = null;
+let videoModal = null;
+let modalVideo = null;
 
-function initFullScreenVideoModal() {
-  if (fullScreenVideoModal) return;
+function initVideoModal() {
+  if (videoModal) return;
 
-  fullScreenVideoModal = document.createElement("div");
-  Object.assign(fullScreenVideoModal.style, {
+  videoModal = document.createElement("div");
+  Object.assign(videoModal.style, {
     position: "fixed",
     inset: "0",
-    background: "#000",
-    zIndex: "9999999",           // ← Much higher than your highlights modal (999999)
+    background: "rgba(0,0,0,0.95)",
+    zIndex: "9999999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    cursor: "pointer",
-    touchAction: "none"
+    padding: "15px",
+    boxSizing: "border-box"
   });
 
-  currentFullVideo = document.createElement("video");
-  currentFullVideo.controls = true;
-  currentFullVideo.playsInline = true;
-  currentFullVideo.style.cssText = "max-width:100%; max-height:100%; object-fit:contain;";
+  const content = document.createElement("div");
+  content.style.cssText = `
+    position: relative; 
+    max-width: 100%; 
+    max-height: 90vh; 
+    width: 100%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  `;
 
-  fullScreenVideoModal.appendChild(currentFullVideo);
-  document.body.appendChild(fullScreenVideoModal);
+  modalVideo = document.createElement("video");
+  modalVideo.controls = true;
+  modalVideo.playsInline = true;
+  modalVideo.style.cssText = "width:100%; height:auto; max-height:85vh; display:block;";
 
-  // Close on background
-  fullScreenVideoModal.addEventListener("click", (e) => {
-    if (e.target === fullScreenVideoModal) closeFullScreenVideoModal();
+  content.appendChild(modalVideo);
+  videoModal.appendChild(content);
+  document.body.appendChild(videoModal);
+
+  // Close on background click
+  videoModal.addEventListener("click", (e) => {
+    if (e.target === videoModal) closeVideoModal();
   });
 
-  // ESC support
+  // ESC key
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && fullScreenVideoModal.style.display === "flex") {
-      closeFullScreenVideoModal();
+    if (e.key === "Escape" && videoModal.style.display === "flex") {
+      closeVideoModal();
     }
   });
 }
 
-function openFullScreenVideo(videoUrl) {
+function openVideoModal(videoUrl) {
   if (!videoUrl) return;
 
-  initFullScreenVideoModal();
+  initVideoModal();
 
   // Reset previous video
-  currentFullVideo.pause();
-  currentFullVideo.src = "";
-  currentFullVideo.load();
+  modalVideo.pause();
+  modalVideo.src = "";
 
-  currentFullVideo.src = videoUrl;
-  fullScreenVideoModal.style.display = "flex";
+  modalVideo.src = videoUrl;
+  videoModal.style.display = "flex";
 
   // Play
   setTimeout(() => {
-    currentFullVideo.play()
-      .then(() => console.log("Video started playing"))
-      .catch(err => console.log("Autoplay blocked:", err));
-  }, 100);
-
-  // Fullscreen request
-  setTimeout(() => {
-    if (!document.fullscreenElement) {
-      currentFullVideo.requestFullscreen?.().catch(() => {
-        currentFullVideo.webkitRequestFullscreen?.();
-      });
-    }
-  }, 450);
+    modalVideo.play()
+      .then(() => console.log("✅ Mini modal video playing"))
+      .catch(err => console.log("Play blocked:", err));
+  }, 150);
 }
 
-function closeFullScreenVideoModal() {
-  if (!fullScreenVideoModal || !currentFullVideo) return;
+function closeVideoModal() {
+  if (!videoModal || !modalVideo) return;
 
-  currentFullVideo.pause();
-  currentFullVideo.src = "";
-  currentFullVideo.load();
+  modalVideo.pause();
+  modalVideo.src = "";
+  modalVideo.load();
 
-  document.exitFullscreen?.().catch(() => {});
-  document.webkitExitFullscreen?.();
-
-  fullScreenVideoModal.style.display = "none";
+  videoModal.style.display = "none";
 }
 
-// Initialize
-initFullScreenVideoModal();
-
-window.openFullScreenVideo = openFullScreenVideo;
-window.closeFullScreenVideoModal = closeFullScreenVideoModal;
+// Expose globally
+window.openFullScreenVideo = openVideoModal;   // Keep same function name so your existing code works
+window.closeVideoModal = closeVideoModal;
 
 
 /* Highlights Button – opens Free Tonight (with pagination) */
