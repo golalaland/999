@@ -394,10 +394,10 @@ async function pushNotification(userId, message) {
 
 
 // ===============================================
-// ON AUTH STATE CHANGED — FINAL CLEAN & IMPROVED VERSION
+// ON AUTH STATE CHANGED — FINAL CLEAN VERSION
 // ===============================================
 onAuthStateChanged(auth, async (firebaseUser) => {
-  // Cleanup previous listeners
+  // Cleanup
   if (typeof notificationsUnsubscribe === "function") {
     notificationsUnsubscribe();
     notificationsUnsubscribe = null;
@@ -409,10 +409,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   if (!firebaseUser) {
     localStorage.removeItem("userId");
     localStorage.removeItem("lastVipEmail");
-
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
-
     if (typeof showLoginUI === "function") showLoginUI();
     return;
   }
@@ -435,67 +433,99 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       return;
     }
 
-    // === SYNC VIP EXPIRATION (hasPaid → false when expired, isVIP stays) ===
-    let data = await syncVIPExpiration(userSnap);
+    let data = userSnap.data();
 
-    // Build currentUser object
+    // Sync VIP expiration (hasPaid becomes false, isVIP stays)
+    data = await syncVIPExpiration(userSnap);
+
+    // Set currentUser
     currentUser = {
       uid,
       email,
       firebaseUid: firebaseUser.uid,
-
       chatId: data.chatId || email.split("@")[0],
       chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
-
       fullName: data.fullName || "VIP",
       gender: data.gender || "person",
-
-      isVIP: !!data.isVIP,           // Can remain true even after expiration
-      hasPaid: !!data.hasPaid,       // Becomes false when VIP expires
+      isVIP: !!data.isVIP,
       isHost: !!data.isHost,
       isAdmin: !!data.isAdmin,
-
+      hasPaid: !!data.hasPaid,
       stars: data.stars || 0,
       cash: data.cash || 0,
       starsToday: data.starsToday || 0,
       lastStarDate: data.lastStarDate || todayDate(),
-
       usernameColor: data.usernameColor || "#ff69b4",
       subscriptionActive: !!data.subscriptionActive,
       subscriptionCount: data.subscriptionCount || 0,
-
       unlockedVideos: data.unlockedVideos || [],
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
       hostLink: data.hostLink || null,
-
-      // Optional but useful
-      vipExpiresAt: data.vipExpiresAt || null,
-      phone: data.phone || "",
-      city: data.city || "",
-      country: data.country || ""
+      vipExpiresAt: data.vipExpiresAt || null
     };
 
-    // Store basic info
-    localStorage.setItem("userId", uid);
+    // ====================== DAILY STAR BONUS ======================
+    await giveDailyStarBonus(uid);
 
-    // Show/hide UI elements
+    // ADMIN MODE
+    if (currentUser.isAdmin) {
+      currentAdmin = { uid, email, chatId: currentUser.chatId };
+      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+      const pollSection = document.getElementById("polls");
+      if (pollSection) pollSection.style.display = "block";
+    }
+
+    // UI Setup
+    revealHostTabs?.();
+    updateInfoTab?.();
     document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
     document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
 
-    // Optional: Refresh VIP countdown if element exists
-    if (typeof showVIPCountdown === "function") {
-      setTimeout(showVIPCountdown, 800);
+    localStorage.setItem("userId", uid);
+    localStorage.setItem("lastVipEmail", email);
+
+    setupUsersListener?.();
+    showChatUI?.(currentUser);
+    attachMessagesListener?.();
+    setupPresence?.(currentUser);
+    setupNotificationsListener?.(uid);
+    activateViewBoost?.();
+
+    // Redeem & Tip Links
+    if (typeof updateRedeemLink === "function") await updateRedeemLink();
+    if (typeof updateTipLink === "function") await updateTipLink();
+
+    // Delayed loads
+    setTimeout(() => {
+      syncUserUnlocks?.();
+      loadNotifications?.();
+      if (typeof loadMyClips === "function") loadMyClips();
+    }, 800);
+
+    if (currentUser.chatId?.startsWith("GUEST")) {
+      setTimeout(() => promptForChatID?.(userRef, data), 2000);
     }
 
-  } catch (error) {
-    console.error("Auth state error:", error);
-    showStarPopup("Something went wrong during login. Please try again.");
+    const hostFields = document.getElementById("hostOnlyFields");
+    if (hostFields) hostFields.style.display = currentUser.isHost ? "block" : "none";
+
+    // Welcome Popup
+    const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
+    showStarPopup(`
+      <div style="text-align:center;font-size:13px;">
+        Welcome back, 
+        <b style="color:${glow};">${currentUser.chatId.toUpperCase()}</b>
+        ${currentUser.isAdmin ? "<br><span style='color:#0f9'>ADMIN MODE</span>" : ""}
+      </div>
+    `);
+
+  } catch (err) {
+    console.error("Login process error:", err);
+    showStarPopup("Login failed — try again");
     await signOut(auth);
   }
 });
-
-
 
     // ====================== DAILY STAR BONUS ======================
     await giveDailyStarBonus(uid);
