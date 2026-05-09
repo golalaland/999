@@ -6021,7 +6021,6 @@ function closeVideoModal() {
 window.openFullScreenVideo = openVideoModal;   // Keep same function name so your existing code works
 window.closeVideoModal = closeVideoModal;
 
-
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
   try {
