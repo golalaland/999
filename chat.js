@@ -155,23 +155,40 @@ style.textContent = `
 document.head.appendChild(style);
 
 
-// TEMPORARY CONSOLE HELPER - Add this near the top of chat.js
+// === TEMPORARY CONSOLE HELPERS (Add this near the top) ===
 window.createChatIdIndex = async (email, chatId) => {
   try {
-    const chatIdLower = chatId.toLowerCase().trim();
-    
-    await setDoc(doc(db, "chatIds", chatIdLower), {
+    await setDoc(doc(db, "chatIds", chatId.toLowerCase().trim()), {
       email: email,
       sanitizedEmail: sanitizeKey(email),
       createdAt: new Date()
-    });
-    
-    console.log("✅ SUCCESS: Index created for", chatId);
-  } catch (err) {
-    console.error("❌ Failed to create index:", err);
+    }, { merge: true });
+    console.log("✅ Index created for:", chatId);
+  } catch (e) {
+    console.error("Failed:", e);
   }
 };
 
+window.migrateAllChatIds = async () => {
+  console.log("🚀 Starting full migration...");
+
+  try {
+    const snapshot = await getDocs(collection(db, "users"));
+    let count = 0;
+
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      if (data.email && data.chatId) {
+        await window.createChatIdIndex(data.email, data.chatId);
+        count++;
+        await new Promise(r => setTimeout(r, 600)); // safety delay
+      }
+    }
+    console.log(`🎉 Migration done! Processed ${count} users.`);
+  } catch (err) {
+    console.error("Migration error:", err);
+  }
+};
 
 // ====================== LOGIN WITH EMAIL OR CHATID ======================
 async function login(identifier, password) {
