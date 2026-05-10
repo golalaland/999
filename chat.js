@@ -4980,7 +4980,7 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// OLD RELIABLE UPLOAD + .MOV SUPPORT + THUMBNAIL FIX
+// ORIGINAL WORKING UPLOAD + .MOV SUPPORT + DEBUG
 // ================================
 
 function toCloudflareUrl(firebaseUrl) {
@@ -5000,7 +5000,6 @@ function resetUploadUI() {
   }
   const progressContainer = document.getElementById('progressContainer');
   if (progressContainer) progressContainer.style.opacity = '0';
-  
   resetForm();
 }
 
@@ -5020,7 +5019,6 @@ function resetForm() {
   const cb = document.getElementById('boostTrendingCheckbox');
   if (cb) cb.checked = false;
 
-  // Reset preview
   const videoPreview = document.getElementById('videoPreview');
   const previewContainer = document.getElementById('videoPreviewContainer');
   const placeholder = document.getElementById('uploadPlaceholder');
@@ -5047,18 +5045,16 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   const file = fileInput?.files?.[0];
   if (!file) return showStarPopup('Please select a video', 'error');
 
-  // Support MP4 and MOV
-  const allowedExt = ['mp4', 'mov'];
-  const fileExt = file.name.split('.').pop()?.toLowerCase();
-  if (!allowedExt.includes(fileExt)) {
-    return showStarPopup('Only MP4 and MOV files are allowed', 'error');
+  // Allow MP4 and MOV
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (!['mp4', 'mov'].includes(ext)) {
+    return showStarPopup('Only MP4 and MOV files allowed', 'error');
   }
 
   if (file.size > 50 * 1024 * 1024) {
     return showStarPopup('Maximum file size is 50MB', 'error');
   }
 
-  // One active clip check
   const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
   const snap = await getDoc(highlightsRef);
 
@@ -5082,17 +5078,18 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   try {
     const ts = Date.now();
     const rand = Math.random().toString(36).slice(2, 12);
-    const ext = fileExt;
     const videoName = `${ts}_${rand}.${ext}`;
     const videoPath = `users/${currentUser.uid}/${videoName}`;
     const videoRef = ref(storage, videoPath);
 
-    // Generate Thumbnail (Your old reliable method)
+    // === GENERATE THUMBNAIL ===
     let thumbnailFile = null;
     try {
+      console.log("🎨 Generating thumbnail...");
       thumbnailFile = await generateThumbnail(file);
+      console.log("✅ Thumbnail generated successfully");
     } catch (thumbErr) {
-      console.warn("Thumbnail generation failed:", thumbErr);
+      console.warn("⚠️ Thumbnail generation failed:", thumbErr);
     }
 
     // Upload Video
@@ -5110,7 +5107,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
         if (txt) txt.textContent = `Uploading ${percent}%`;
       },
       (error) => {
-        console.error(error);
+        console.error("Upload error:", error);
         showStarPopup('Upload failed', 'error');
         resetUploadUI();
       },
@@ -5127,8 +5124,9 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
               await uploadBytes(thumbRef, thumbnailFile, { contentType: 'image/jpeg' });
               const rawThumbUrl = await getDownloadURL(thumbRef);
               thumbnailUrl = toCloudflareUrl(rawThumbUrl);
-            } catch (e) {
-              console.warn("Thumbnail upload failed", e);
+              console.log("✅ Thumbnail uploaded successfully");
+            } catch (thumbErr) {
+              console.warn("Thumbnail upload failed:", thumbErr);
             }
           }
 
@@ -5161,6 +5159,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
             });
           }
 
+          console.log("✅ Upload + Thumbnail complete!");
           resetUploadUI();
           showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
           if (typeof loadMyClips === 'function') loadMyClips();
