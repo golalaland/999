@@ -8249,15 +8249,6 @@ paystackNigeriaBanks.forEach(bank => {
   bankSelect.appendChild(option);
 });
 
-
-// At the very beginning of freeTonightBtn click handler
-if (isFreeTonightActive() && !isAdmin()) {
-  const endTime = getFreeTonightEndTime();
-  startCountdown(btn, endTime);
-  return showStarPopup('Free Tonight is already active!', 'info');
-}
-
-
 // ───────────────────────────────────────────────
 // Client-side Free Tonight Toggle + FruitPick Picker (Neon Style)
 // ───────────────────────────────────────────────
