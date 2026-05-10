@@ -901,11 +901,6 @@ locationSelect.addEventListener("change", (e) => {
   loadCities(e.target.value);
 });
 
-   // load cities AFTER country is set
-if (data.location) {
-  loadCities(data.location, data.city || "");
-}
-
 // Load Nabla Font
 const nablaLink = document.createElement("link");
 nablaLink.rel = "stylesheet";
