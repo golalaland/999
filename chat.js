@@ -2382,25 +2382,40 @@ function showLoadingBar() {
   // Return updater so login code can push real progress
   return { update };
 }
- /* ----------------------------
-   🔁 Auto Login Session
+
+/* ----------------------------
+   🔁 Smart Auto Login Session
 ----------------------------- */
 async function autoLogin() {
-  const vipUser = JSON.parse(localStorage.getItem("vipUser"));
-  if (vipUser?.email && vipUser?.password) {
-    showLoadingBar(1200);  // nice bar on auto-login too
-    await sleep(60);
-    const success = await loginWhitelist(vipUser.email, vipUser.password);
-    if (!success) return;
-    await sleep(400);
-    updateRedeemLink();
-    updateTipLink();
+  const vipUser = JSON.parse(localStorage.getItem("vipUser") || "{}");
+
+  // If user is already logged in via Firebase, no need to do anything
+  if (auth.currentUser) {
+    console.log("✅ Already logged in via Firebase");
+    return;
+  }
+
+  if (vipUser?.email) {
+    showLoadingBar(800); // shorter, smoother
+
+    try {
+      // Use the new login function that supports email OR username
+      await login(vipUser.email, vipUser.password);   // ← your new login() function
+
+      console.log("✅ Auto-login successful");
+      // No need for extra sleeps
+
+    } catch (err) {
+      console.warn("Auto-login failed:", err.message);
+      localStorage.removeItem("vipUser"); // clean bad data
+    }
   }
 }
 
-// Call on page load
-autoLogin();
-
+// Call it
+document.addEventListener("DOMContentLoaded", () => {
+  autoLogin();
+});
 
 /* ---------- 🆔 ChatID Modal ---------- */
 async function promptForChatID(userRef, userData) {
@@ -5961,43 +5976,50 @@ function initVideoModal() {
   Object.assign(videoModal.style, {
     position: "fixed",
     inset: "0",
-    background: "rgba(0,0,0,0.97)",
+    background: "rgba(0,0,0,0.96)",
     zIndex: "9999999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    padding: "15px",
+    padding: "10px",
     boxSizing: "border-box"
   });
 
   const content = document.createElement("div");
   content.style.cssText = `
-    position: relative; 
-    width: 100%; 
-    max-width: 920px;
+    position: relative;
+    width: 100%;
+    max-width: 420px;           /* Good for portrait */
     background: #000;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+    box-shadow: 0 10px 50px rgba(0,0,0,0.85);
   `;
 
   modalVideo = document.createElement("video");
   modalVideo.controls = true;
   modalVideo.playsInline = true;
-  modalVideo.style.cssText = "width:100%; height:auto; max-height:82vh; display:block;";
+  modalVideo.style.cssText = `
+    width: 100%;
+    height: auto;
+    max-height: 85vh;
+    display: block;
+    object-fit: contain;
+  `;
 
-  // Close Button (Very Visible)
+  // Close Button - Top Center
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `✕`;
   Object.assign(closeBtn.style, {
     position: "absolute",
-    top: "12px",
-    right: "12px",
-    width: "36px",
-    height: "36px",
-    background: "rgba(0,0,0,0.7)",
+    top: "-18px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "42px",
+    height: "42px",
+    background: "#000",
     color: "#fff",
-    fontSize: "24px",
+    fontSize: "26px",
     fontWeight: "bold",
     display: "flex",
     alignItems: "center",
@@ -6005,7 +6027,8 @@ function initVideoModal() {
     borderRadius: "50%",
     cursor: "pointer",
     zIndex: "10",
-    border: "2px solid rgba(255,255,255,0.6)"
+    border: "3px solid #fff",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.6)"
   });
 
   content.appendChild(modalVideo);
@@ -6014,7 +6037,11 @@ function initVideoModal() {
   document.body.appendChild(videoModal);
 
   // Close handlers
-  closeBtn.onclick = () => closeVideoModal();
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeVideoModal();
+  };
+
   videoModal.addEventListener("click", (e) => {
     if (e.target === videoModal) closeVideoModal();
   });
@@ -6037,10 +6064,10 @@ function openVideoModal(videoUrl) {
   modalVideo.src = videoUrl;
   videoModal.style.display = "flex";
 
+  // Auto play with small delay
   setTimeout(() => {
-    modalVideo.play()
-      .catch(err => console.log("Autoplay blocked:", err));
-  }, 200);
+    modalVideo.play().catch(err => console.log("Autoplay blocked:", err));
+  }, 180);
 }
 
 function closeVideoModal() {
@@ -6053,9 +6080,10 @@ function closeVideoModal() {
   videoModal.style.display = "none";
 }
 
-// Keep same function name so your existing calls still work
+// Keep same name so your code doesn't break
 window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
+
 
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
