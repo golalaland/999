@@ -901,6 +901,11 @@ locationSelect.addEventListener("change", (e) => {
   loadCities(e.target.value);
 });
 
+   // load cities AFTER country is set
+if (data.location) {
+  loadCities(data.location, data.city || "");
+}
+
 // Load Nabla Font
 const nablaLink = document.createElement("link");
 nablaLink.rel = "stylesheet";
@@ -5915,9 +5920,6 @@ window.startStream = startStream;
           safeSet("fullName", data.fullName || "");
           safeSet("city", data.city || "");
           safeSet("location", data.location || "");
-           // load cities AFTER country is set
-if (data.location) {
-  loadCities(data.location, data.city || "");
           safeSet("bio", data.bioPick || "");
           safeSet("bankAccountNumber", data.bankAccountNumber || "");
           safeSet("bankName", data.bankName || "");
