@@ -777,6 +777,160 @@ setTimeout(() => {
   showVIPCountdown();
 }, 2000);
 
+
+
+// ===============================
+// COUNTRY → CITIES
+// ===============================
+const citiesByCountry = {
+  Nigeria: [
+    "Lagos",
+    "Abuja",
+    "Port Harcourt",
+    "Ibadan",
+    "Benin City",
+    "Enugu",
+    "Owerri",
+    "Kano",
+    "Abeokuta",
+    "Uyo",
+    "Calabar",
+    "Warri",
+    "Asaba",
+    "Kaduna",
+    "Jos"
+  ],
+
+  SouthAfrica: [
+    "Johannesburg",
+    "Cape Town",
+    "Durban",
+    "Pretoria",
+    "Bloemfontein",
+    "Port Elizabeth",
+    "Polokwane",
+    "East London"
+  ],
+
+  Ghana: [
+    "Accra",
+    "Kumasi",
+    "Tamale",
+    "Takoradi",
+    "Cape Coast",
+    "Tema",
+    "Ho",
+    "Sunyani"
+  ],
+
+  Kenya: [
+    "Nairobi",
+    "Mombasa",
+    "Kisumu",
+    "Nakuru",
+    "Eldoret",
+    "Thika",
+    "Malindi",
+    "Nyeri"
+  ],
+
+  Tanzania: [
+    "Dar es Salaam",
+    "Dodoma",
+    "Arusha",
+    "Mwanza",
+    "Zanzibar",
+    "Mbeya",
+    "Morogoro",
+    "Tanga"
+  ]
+};
+
+// ===============================
+// ELEMENTS
+// ===============================
+const locationSelect = document.getElementById("location");
+const citySelect = document.getElementById("city");
+
+// ===============================
+// CLEAN COUNTRY NAME
+// Removes emoji flags + spaces
+// ===============================
+function cleanCountryName(value = "") {
+  return value
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+    .trim()
+    .replace(/\s+/g, "");
+}
+
+// ===============================
+// LOAD CITIES
+// ===============================
+function loadCities(countryValue) {
+  const cleanedCountry = cleanCountryName(countryValue);
+
+  citySelect.innerHTML = `
+    <option value="" disabled selected>
+      Select your city
+    </option>
+  `;
+
+  const cities = citiesByCountry[cleanedCountry];
+
+  if (!cities) return;
+
+  cities.forEach((city) => {
+    const option = document.createElement("option");
+
+    option.value = city;
+    option.textContent = city;
+
+    citySelect.appendChild(option);
+  });
+}
+
+// ===============================
+// COUNTRY CHANGE
+// ===============================
+locationSelect.addEventListener("change", (e) => {
+  loadCities(e.target.value);
+});
+
+
+// ===============================
+// GEO AUTO-DETECT COUNTRY
+// ===============================
+async function autoDetectCountry() {
+  try {
+    const response = await fetch("https://ipapi.co/json/");
+    const data = await response.json();
+
+    const detectedCountry = data.country_name;
+
+    Array.from(locationSelect.options).forEach((option) => {
+      const cleanedOption = option.value
+        .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+        .trim();
+
+      if (
+        cleanedOption.toLowerCase() ===
+        detectedCountry.toLowerCase()
+      ) {
+        option.selected = true;
+
+        // Auto-load cities
+        loadCities(option.value);
+      }
+    });
+
+  } catch (err) {
+    console.error("Geo detection failed:", err);
+  }
+}
+
+// Run automatically
+autoDetectCountry();
+
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
    Works perfectly with sanitized IDs • Zero bugs • Instant & reliable
@@ -6228,6 +6382,23 @@ highlightsBtn.onclick = async () => {
     showGoldAlert("Error loading Free Tonight — try again.");
   }
 };
+
+// ===============================
+// HELPERS
+// ===============================
+
+// Extract ONLY flag emoji from location
+function getFlagEmoji(location = "") {
+  const match = location.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
+  return match ? match[0] : "🌍";
+}
+
+// Clean location text
+function cleanLocation(location = "") {
+  return location
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+    .trim();
+}
  
 /* ================================================
    FREE TONIGHT MODAL – FULL CLEAN REWRITE
@@ -6420,73 +6591,78 @@ function renderCards() {
 
     }
 
-    // === TAG BUTTONS (from visible videos only) ===
+   // === TAG BUTTONS (from visible videos only) ===
 
-    const visibleTags = new Set();
+const visibleTags = new Set();
 
-    visibleVideos.forEach(v => {
+visibleVideos.forEach((v) => {
 
-      (v.tags || []).forEach(t => {
+  // Add CITY as tag
+  if (v.city) {
+    visibleTags.add(v.city.trim().toLowerCase());
+  }
 
-        if (t && typeof t === "string") {
+  // Add LOCATION FLAG ONLY as tag
+  if (v.location) {
+    visibleTags.add(getFlagEmoji(v.location));
+  }
 
-          const trimmed = t.trim().toLowerCase();
+  // Other tags
+  (v.tags || []).forEach((t) => {
 
-          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
+    if (t && typeof t === "string") {
 
-            visibleTags.add(trimmed);
+      const trimmed = t.trim().toLowerCase();
 
-          }
+      // Prevent duplicate location text
+      if (
+        trimmed &&
+        trimmed !== cleanLocation(v.location || "").toLowerCase()
+      ) {
+        visibleTags.add(trimmed);
+      }
+    }
+  });
+});
 
-        }
+[...visibleTags]
+  .sort()
+  .forEach((tag) => {
 
-      });
+    const btn = document.createElement("button");
 
+    btn.textContent = tag;
+    btn.dataset.tag = tag;
+
+    Object.assign(btn.style, {
+      padding: "6px 14px",
+      borderRadius: "24px",
+      fontSize: "12px",
+      fontWeight: "600",
+      background: activeTags.has(tag)
+        ? "linear-gradient(135deg, #ff2e78, #ff5e9e)"
+        : "rgba(255,46,120,0.2)",
+      color: activeTags.has(tag)
+        ? "#fff"
+        : "#ff6ab6",
+      border: "1px solid rgba(255,46,120,0.6)",
+      cursor: "pointer",
+      transition: "all 0.25s"
     });
 
-    [...visibleTags].sort().forEach(tag => {
+    btn.onclick = () => {
 
-      const btn = document.createElement("button");
+      if (activeTags.has(tag)) {
+        activeTags.delete(tag);
+      } else {
+        activeTags.add(tag);
+      }
 
-      btn.textContent = tag;
+      renderCards();
+    };
 
-      btn.dataset.tag = tag;
-
-      Object.assign(btn.style, {
-
-        padding: "6px 14px", 
-
-        borderRadius: "24px", 
-
-        fontSize: "12px", 
-
-        fontWeight: "600",
-
-        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
-
-        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-
-        border: "1px solid rgba(255,46,120,0.6)", 
-
-        cursor: "pointer", 
-
-        transition: "all 0.25s"
-
-      });
-
-      btn.onclick = () => {
-
-        if (activeTags.has(tag)) activeTags.delete(tag);
-
-        else activeTags.add(tag);
-
-        renderCards();
-
-      };
-
-      tagContainer.appendChild(btn);
-
-    });
+    tagContainer.appendChild(btn);
+});
 
     // === EMPTY STATE ===
 
@@ -6766,43 +6942,158 @@ oneLiner.style.cssText = `
 }
 
   
-  // ==================== LOCATION MODAL (Only v.location) ====================
-  function openLocationModal() {
-    const locModal = document.createElement("div");
-    locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
-    locModal.innerHTML = `
-      <div style="background:rgba(15,10,26,0.95); border:1px solid #8a2be2; border-radius:20px; padding:32px; max-width:420px; width:90%; text-align:center;">
-        <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
-        <div id="locList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-height:320px; overflow-y:auto; padding:10px;"></div>
-        <button id="clearLocBtn" style="margin-top:20px; padding:10px 30px; background:#333; color:#fff; border:none; border-radius:30px;">Clear Filter</button>
-      </div>
-    `;
-    document.body.appendChild(locModal);
-    const container = locModal.querySelector("#locList");
-    const locations = new Set();
-    allVideos.forEach(v => {
-      if (v.location) locations.add(v.location.trim());
+// ====================
+// LOCATION MODAL
+// ====================
+function openLocationModal() {
+
+  const locModal = document.createElement("div");
+
+  locModal.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.8);
+    backdrop-filter:blur(12px);
+    z-index:1000000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  `;
+
+  locModal.innerHTML = `
+    <div style="
+      background:rgba(15,10,26,0.95);
+      border:1px solid #8a2be2;
+      border-radius:20px;
+      padding:32px;
+      max-width:420px;
+      width:90%;
+      text-align:center;
+    ">
+      <h3 style="
+        color:#fff;
+        margin-bottom:20px;
+        font-size:20px;
+      ">
+        Choose Location
+      </h3>
+
+      <div
+        id="locList"
+        style="
+          display:flex;
+          flex-wrap:wrap;
+          gap:10px;
+          justify-content:center;
+          max-height:320px;
+          overflow-y:auto;
+          padding:10px;
+        "
+      ></div>
+
+      <button
+        id="clearLocBtn"
+        style="
+          margin-top:20px;
+          padding:10px 30px;
+          background:#333;
+          color:#fff;
+          border:none;
+          border-radius:30px;
+          cursor:pointer;
+        "
+      >
+        Clear Filter
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(locModal);
+
+  const container = locModal.querySelector("#locList");
+
+  const locations = new Map();
+
+  // Build unique locations
+  allVideos.forEach((v) => {
+
+    if (!v.location) return;
+
+    const cleanLoc = cleanLocation(v.location);
+    const flag = getFlagEmoji(v.location);
+
+    locations.set(cleanLoc, {
+      flag,
+      city: v.city || "",
+      full: v.location
     });
-    [...locations].sort().forEach(loc => {
+  });
+
+  [...locations.entries()]
+    .sort()
+    .forEach(([locationName, data]) => {
+
       const btn = document.createElement("button");
-      btn.textContent = loc;
-      btn.style.cssText = `padding:10px 20px; border-radius:25px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer;`;
+
+      btn.innerHTML = `
+        <div style="font-size:18px;">
+          ${data.flag}
+        </div>
+
+        <div style="
+          font-size:12px;
+          margin-top:4px;
+          opacity:0.9;
+        ">
+          ${locationName}
+        </div>
+
+        ${
+          data.city
+            ? `
+            <div style="
+              font-size:11px;
+              margin-top:2px;
+              opacity:0.6;
+            ">
+              ${data.city}
+            </div>
+          `
+            : ""
+        }
+      `;
+
+      btn.style.cssText = `
+        min-width:90px;
+        padding:12px 14px;
+        border-radius:18px;
+        background:rgba(255,255,255,0.08);
+        color:#fff;
+        border:1px solid rgba(255,255,255,0.15);
+        cursor:pointer;
+        transition:all 0.25s;
+      `;
+
       btn.onclick = () => {
-        activeLocation = loc;
+
+        activeLocation = locationName;
+
         renderCards();
+
         locModal.remove();
       };
+
       container.appendChild(btn);
-    });
-    locModal.querySelector("#clearLocBtn").onclick = () => {
-      activeLocation = null;
-      renderCards();
-      locModal.remove();
-    };
-  }
-  // Initial render
-  renderCards();
-  document.body.appendChild(modal);
+  });
+
+  locModal.querySelector("#clearLocBtn").onclick = () => {
+
+    activeLocation = null;
+
+    renderCards();
+
+    locModal.remove();
+  };
 }
 
 function showUnlockConfirm(video, onUnlockCallback) {
