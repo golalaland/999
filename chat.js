@@ -6734,6 +6734,7 @@ thumbContainer.onclick = (e) => {
 };
 
       card.appendChild(thumbContainer);
+       
      // ==================== INFO LAYER ====================
 
       const info = document.createElement("div");
@@ -6829,42 +6830,47 @@ oneLiner.style.cssText = `
   color: #aaa;
   margin-top: 4px;
 `;
-      // Tags
-
+           // ==================== TAGS (Emoji + City) ====================
       const tagsEl = document.createElement("div");
-
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
+      // Location Flag + City
       if (video.location) {
-
-        const span = document.createElement("span");
-
-        span.textContent = video.location.trim();
-
-        span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
-
-        tagsEl.appendChild(span);
-
+        const locSpan = document.createElement("span");
+        const flag = getFlagEmoji(video.location);
+        const city = (video.city || cleanLocation(video.location)).trim();
+        
+        locSpan.textContent = `${flag} ${city}`;
+        locSpan.style.cssText = `
+          font-size:11px; 
+          padding:3px 10px; 
+          border-radius:10px; 
+          background: rgba(0,255,234,0.25); 
+          color: #00ffea; 
+          border: 1px solid rgba(0,255,234,0.5);
+          font-weight: 500;
+        `;
+        tagsEl.appendChild(locSpan);
       }
 
+      // Other custom tags
       (video.tags || []).forEach(t => {
-
         if (t && typeof t === "string" && t.trim()) {
-
           const span = document.createElement("span");
-
           span.textContent = t.trim();
-
-          span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(255,46,120,0.22); color: #ff4d8a; border: 1px solid rgba(255,46,120,0.6);`;
-
+          span.style.cssText = `
+            font-size:11px; 
+            padding:2px 8px; 
+            border-radius:10px; 
+            background: rgba(255,46,120,0.22); 
+            color: #ff4d8a; 
+            border: 1px solid rgba(255,46,120,0.6);
+          `;
           tagsEl.appendChild(span);
-
         }
-
       });
 
       info.append(user, oneLiner, tagsEl);
-
       card.appendChild(info);
 
       // FruitPick
