@@ -896,40 +896,11 @@ locationSelect.addEventListener("change", (e) => {
   loadCities(e.target.value);
 });
 
-
-// ===============================
-// GEO AUTO-DETECT COUNTRY
-// ===============================
-async function autoDetectCountry() {
-  try {
-    const response = await fetch("https://ipapi.co/json/");
-    const data = await response.json();
-
-    const detectedCountry = data.country_name;
-
-    Array.from(locationSelect.options).forEach((option) => {
-      const cleanedOption = option.value
-        .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
-        .trim();
-
-      if (
-        cleanedOption.toLowerCase() ===
-        detectedCountry.toLowerCase()
-      ) {
-        option.selected = true;
-
-        // Auto-load cities
-        loadCities(option.value);
-      }
-    });
-
-  } catch (err) {
-    console.error("Geo detection failed:", err);
-  }
-}
-
-// Run automatically
-autoDetectCountry();
+// Load Nabla Font
+const nablaLink = document.createElement("link");
+nablaLink.rel = "stylesheet";
+nablaLink.href = "https://fonts.googleapis.com/css2?family=Nabla&display=swap";
+document.head.appendChild(nablaLink);
 
 /* ----------------------------
    GIFT MODAL — FINAL ETERNAL VERSION (2025+)
@@ -6414,31 +6385,39 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-  // ==================== YOUR ORIGINAL HEADER ====================
-  const intro = document.createElement("div");
-  intro.innerHTML = `
-    <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
-                line-height:1.6; font-size:14px;
-                background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
-                padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
-                box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
-      <div style="margin-bottom:8px;">
-        <span style="background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);
-                     -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-                     font-weight:800; font-size:22px; letter-spacing:0.4px;">
-          Free Tonight?
-        </span>
-      </div>
-      <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-        Real moments, Real matches, No waiting.
-        <br>Just pure connection under the night sky.
-      </p>
-      <p style="margin:0; color:#aaa; font-size:13px;">
-        Tap "Enter Location" or other tags to filter.
-      </p>
+  // ==================== YOUR ORIGINAL HEADER WITH NABLA FONT ====================
+const intro = document.createElement("div");
+intro.innerHTML = `
+  <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
+              line-height:1.6; font-size:14px;
+              background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
+              padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
+              box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
+    
+    <div style="margin-bottom:8px;">
+      <span style="
+        font-family: 'Nabla', system-ui;
+        font-size: 28px;
+        font-weight: 400;
+        background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: 0.5px;
+      ">
+        Free Tonight?
+      </span>
     </div>
-  `;
-  modal.appendChild(intro);
+    
+    <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
+      Real moments, Real matches, No waiting.
+      <br>Just pure connection under the night sky.
+    </p>
+    <p style="margin:0; color:#aaa; font-size:13px;">
+      Tap "Enter Location" or other tags to filter.
+    </p>
+  </div>
+`;
+modal.appendChild(intro);
    
   // ==================== YOUR CLOSE BUTTON ====================
   const closeBtn = document.createElement("div");
