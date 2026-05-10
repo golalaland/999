@@ -7137,17 +7137,19 @@ function openLocationModal() {
   // ====================
   // CLOSE ON BACKDROP CLICK
   // ====================
-
   locModal.onclick = (e) => {
-
     if (e.target === locModal) {
       locModal.remove();
     }
-
   };
+}   // ← This closes openLocationModal()
 
-}
+  // Initial render
+  renderCards();
+  document.body.appendChild(modal);
+}   // ←←← THIS IS THE MISSING CLOSING BRACKET for showHighlightsModal
 
+// ====================== END OF showHighlightsModal ======================
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
     document.getElementById("unlockConfirmModal")?.remove();
