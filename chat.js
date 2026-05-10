@@ -8435,6 +8435,27 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
   videoEl.onloadeddata = () => videoEl.currentTime = 0;
 });
 
+
+  const termsModal = document.getElementById('termsModal');
+  const termsLink = document.getElementById('termsLink');
+  const closeTerms = document.getElementById('closeTerms');
+
+  termsLink.addEventListener('click', () => {
+    termsModal.style.display = 'flex';
+  });
+
+  closeTerms.addEventListener('click', () => {
+    termsModal.style.display = 'none';
+  });
+
+  // close on outside click
+  termsModal.addEventListener('click', (e) => {
+    if (e.target === termsModal) {
+      termsModal.style.display = 'none';
+    }
+  });
+
+
 /*********************************
  * INIT
  *********************************/
