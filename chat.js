@@ -2582,6 +2582,13 @@ card.appendChild(header);
 // Legendary Details Logic (CLEAN)
 // ===============================
 
+
+const cleanLocation = (v) =>
+  (v || "")
+    .toString()
+    .replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s?/gu, "") // removes country flags
+    .trim();
+
 // --- helpers (CRITICAL FIX) ---
 const clean = (v) =>
   (v || "")
@@ -2608,14 +2615,14 @@ const ageGroup =
 const fruit = clean(user.fruitPick);
 const nature = clean(user.naturePick);
 const bodyType = clean(user.bodyTypePick);
-
-const city = clean(user.city || "Lagos");
-const location = clean(user.location);
+const city = cleanLocation(user.city || "Lagos");
+const location = cleanLocation(user.location);
 
 // --- VIP logic ---
 const isVIP = !!user.hasPaid;
-const isPrivilegedMale = isMale && (user.isHost || isVIP);
+const isPrivilegedMale = isMale && user.isHost;
 
+     
 // ===============================
 // BUILD DETAILS WRAPPER
 // ===============================
