@@ -4345,11 +4345,10 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </label>
       </div>
 
-      <!-- Certify Checkbox -->
-<div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
-  <label style="display:inline-flex; align-items:center; gap:10px; cursor:pointer;">
+      <div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
+  <label style="display:inline-flex; align-items:center; gap:12px; cursor:pointer;">
     <input type="checkbox" id="itsMeCheckbox" style="width:20px; height:20px; accent-color:#ff2e78;">
-    I certify this is me in the video & agree to the <span id="termsLink" style="color:#ff2e78; text-decoration:underline; cursor:pointer;">terms</span>
+    I certify it's me in this video
   </label>
 </div>
 
@@ -4364,9 +4363,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
           I'm Free Tonight
         </button>
 
-        <div style="margin-top:12px; font-size:13px; color:#888; opacity:0.7;">
-          By clicking "I'm Free Tonight" you agree to the terms.
-        </div>
+       <div style="text-align:center; margin-top:12px; font-size:13px; color:#888; opacity:0.8;">
+  By clicking "I'm Free Tonight" you agree to the 
+  <span id="termsLink" style="color:#ff2e78; text-decoration:underline; cursor:pointer;">
+    terms
+  </span>.
+</div>
 
         <div id="progressContainer" style="
           margin:14px auto 0;
@@ -4392,8 +4394,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div>
 </div>
 
-  <!-- Terms Modal -->
-<div id="termsModal" style="
+ <div id="termsModal" style="
   display:none;
   position:fixed;
   inset:0;
@@ -4403,6 +4404,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   align-items:center;
   justify-content:center;
   padding:20px;
+  text-align:center;
 ">
 
   <div style="
@@ -4414,18 +4416,19 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     padding:24px;
     color:#e0e0e0;
     box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    text-align:center;
   ">
 
-    <div style="font-size:18px; font-weight:700; margin-bottom:12px;">
+    <div style="font-size:18px; font-weight:700; margin-bottom:14px;">
       Terms & Consent
     </div>
 
-    <div style="font-size:14px; line-height:1.6; color:#aaa;">
-      By uploading this video, you confirm:
+    <div style="font-size:14px; line-height:1.7; color:#aaa; text-align:center;">
+      By uploading this video, you confirm that:
       <br><br>
       • You are the person shown in the content<br>
       • You have full rights to upload and share it<br>
-      • You grant permission for use within this platform<br>
+      • You grant permission for platform use<br>
       • You understand it may be publicly displayed
     </div>
 
