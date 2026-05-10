@@ -2553,34 +2553,54 @@ function sanitizeKey(email) {
     closeBtn.onclick = () => card.remove();
     card.appendChild(closeBtn);
 
-    // Username / chatId header
-    const header = document.createElement("h3");
-    header.textContent = user.chatId
-      ? user.chatId.charAt(0).toUpperCase() + user.chatId.slice(1)
-      : "Guest";
+  // Username / chatId header
+const header = document.createElement("h3");
 
-    const headerColor = user.isHost ? "#ff6b00" : user.isVIP || user.hasPaid ? "#ff00aa" : "#bbbbbb";
-    header.style.cssText = `
-      margin: 0 0 10px;
-      font-size: 19px;
-      font-weight: 700;
-      background: linear-gradient(90deg, ${headerColor}, #ff55cc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    `;
-    card.appendChild(header);
+header.textContent = user.chatId
+  ? `@${user.chatId.charAt(0).toLowerCase()}${user.chatId.slice(1)}`
+  : "@guest";
 
+const headerColor = user.isHost
+  ? "#ff6b00"
+  : user.isVIP || user.hasPaid
+  ? "#ff00aa"
+  : "#bbbbbb";
+
+header.style.cssText = `
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 700;
+  background: linear-gradient(90deg, ${headerColor}, #ff55cc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`;
+
+card.appendChild(header);
+     
 // Legendary details logic
-const gender     = (user.gender || "person").toLowerCase();
-const isMale     = gender === "male";
-const pronoun    = isMale ? "his" : "her";
-const ageGroup   = !user.age ? "20s" : user.age >= 30 ? "30s" : "20s";
-const fruit      = user.fruitPick || "";
-const nature     = user.naturePick || "";
-const bodyType   = user.bodyTypePick || "";
-const city       = user.city || "Lagos";
-const location    = user.location || "";
+const gender   = (user.gender || "person").toLowerCase();
+const isMale   = gender === "male";
+const pronoun  = isMale ? "his" : "her";
+
+// Supports 20s, 30s, 40s, 50s
+const age = Number(user.age);
+
+const ageGroup = !age
+  ? "20s"
+  : age >= 50
+  ? "50s"
+  : age >= 40
+  ? "40s"
+  : age >= 30
+  ? "30s"
+  : "20s";
+
+const fruit     = user.fruitPick || "";
+const nature    = user.naturePick || "";
+const bodyType  = user.bodyTypePick || "";
+const city      = user.city || "Lagos";
+const location  = user.location || "";
 
 // VIP status is controlled ONLY by hasPaid
 const isVIP           = !!user.hasPaid;               // true → show badge
@@ -5965,7 +5985,6 @@ document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
   setGreeting();
 });
 
-
 let videoModal = null;
 let modalVideo = null;
 
@@ -5976,81 +5995,93 @@ function initVideoModal() {
   Object.assign(videoModal.style, {
     position: "fixed",
     inset: "0",
-    background: "rgba(0,0,0,0.96)",
+    background: "rgba(0,0,0,0.97)",
     zIndex: "9999999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    padding: "10px",
+    padding: "15px",
     boxSizing: "border-box"
   });
 
   const content = document.createElement("div");
   content.style.cssText = `
-    position: relative;
-    width: 100%;
-    max-width: 420px;           /* Good for portrait */
+    position: relative; 
+    width: 100%; 
+    max-width: 420px;
     background: #000;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.85);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
   `;
 
   modalVideo = document.createElement("video");
   modalVideo.controls = true;
   modalVideo.playsInline = true;
-  modalVideo.style.cssText = `
-    width: 100%;
-    height: auto;
-    max-height: 85vh;
-    display: block;
-    object-fit: contain;
-  `;
+  modalVideo.loop = true;                    // ← LOOP ENABLED
+  modalVideo.style.cssText = "width:100%; height:auto; max-height:85vh; display:block; object-fit:contain;";
 
-  // Close Button - Top Center
+  // Close Button (Top Center)
   const closeBtn = document.createElement("div");
   closeBtn.innerHTML = `✕`;
   Object.assign(closeBtn.style, {
     position: "absolute",
-    top: "-18px",
+    top: "14px",
     left: "50%",
     transform: "translateX(-50%)",
-    width: "42px",
-    height: "42px",
-    background: "#000",
+    width: "34px",
+    height: "34px",
+    background: "rgba(0,0,0,0.75)",
     color: "#fff",
-    fontSize: "26px",
-    fontWeight: "bold",
+    fontSize: "22px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: "50%",
     cursor: "pointer",
     zIndex: "10",
-    border: "3px solid #fff",
-    boxShadow: "0 4px 15px rgba(0,0,0,0.6)"
+    border: "2px solid rgba(255,255,255,0.7)",
+    transition: "all 0.4s ease",
+    opacity: "0.95"
   });
+
+  // Shimmer effect while loading
+  const shimmer = document.createElement("div");
+  shimmer.style.cssText = `
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 5;
+  `;
 
   content.appendChild(modalVideo);
   content.appendChild(closeBtn);
+  content.appendChild(shimmer);
   videoModal.appendChild(content);
   document.body.appendChild(videoModal);
 
   // Close handlers
-  closeBtn.onclick = (e) => {
-    e.stopPropagation();
-    closeVideoModal();
-  };
-
+  closeBtn.onclick = (e) => { e.stopPropagation(); closeVideoModal(); };
   videoModal.addEventListener("click", (e) => {
     if (e.target === videoModal) closeVideoModal();
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && videoModal.style.display === "flex") {
-      closeVideoModal();
-    }
+    if (e.key === "Escape" && videoModal.style.display === "flex") closeVideoModal();
   });
+
+  // Auto fade close button after 3 seconds
+  modalVideo.onplay = () => {
+    setTimeout(() => {
+      closeBtn.style.opacity = "0.12";
+    }, 3000);
+  };
+
+  modalVideo.onwaiting = () => shimmer.style.opacity = "0.6";
+  modalVideo.onplaying = () => shimmer.style.opacity = "0";
 }
 
 function openVideoModal(videoUrl) {
@@ -6059,12 +6090,9 @@ function openVideoModal(videoUrl) {
   initVideoModal();
 
   modalVideo.pause();
-  modalVideo.src = "";
-
   modalVideo.src = videoUrl;
   videoModal.style.display = "flex";
 
-  // Auto play with small delay
   setTimeout(() => {
     modalVideo.play().catch(err => console.log("Autoplay blocked:", err));
   }, 180);
@@ -6076,14 +6104,12 @@ function closeVideoModal() {
   modalVideo.pause();
   modalVideo.src = "";
   modalVideo.load();
-
   videoModal.style.display = "none";
 }
 
-// Keep same name so your code doesn't break
+// Keep same name for compatibility
 window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
-
 
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
@@ -7160,7 +7186,7 @@ document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () =>
 
   const chatId = currentUser.chatId || 'friend';
   const prettyHandle = chatId.startsWith('@') ? chatId : `@${chatId}`;
-  const message = `Hey! join my Cube and let’s win some together! Sign up using my rare invite link: `;
+  const message = `Hey! join my Cube and let’s win some together! Sign up using my invite link: `;
   const link = `https://cube.xixi.live/sign-up?ref=${encodeURIComponent(prettyHandle)}`;
   const fullText = message + link;
 
@@ -7367,6 +7393,8 @@ function stopPrivateMsgListener() {
 
 document.getElementById("closePrivateMsgBtn")?.addEventListener("click", stopPrivateMsgListener);
 window.addEventListener("beforeunload", stopPrivateMsgListener);
+
+
 
 // WIN $STRZ POLL — FIXED & WORKING VERSION (your original design untouched)
 let pollUnsubscribe = null;
