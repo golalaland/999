@@ -4980,10 +4980,8 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// IMPROVED HIGHLIGHT UPLOAD HANDLER + .mov SUPPORT
+// OLD RELIABLE UPLOAD + .MOV SUPPORT + THUMBNAIL FIX
 // ================================
-
-
 
 function toCloudflareUrl(firebaseUrl) {
   const clean = firebaseUrl.split('?')[0];
@@ -5000,10 +4998,9 @@ function resetUploadUI() {
     btn.textContent = 'Go Live on Free Tonight';
     btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
   }
-
   const progressContainer = document.getElementById('progressContainer');
   if (progressContainer) progressContainer.style.opacity = '0';
-
+  
   resetForm();
 }
 
@@ -5011,7 +5008,8 @@ function resetForm() {
   const fileInput = document.getElementById('highlightUploadInput');
   if (fileInput) fileInput.value = '';
 
-  ['highlightTitleInput', 'highlightDescInput'].forEach(id => {
+  const fields = ['highlightTitleInput', 'highlightDescInput'];
+  fields.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -5022,10 +5020,11 @@ function resetForm() {
   const cb = document.getElementById('boostTrendingCheckbox');
   if (cb) cb.checked = false;
 
-  // Reset video preview
+  // Reset preview
   const videoPreview = document.getElementById('videoPreview');
   const previewContainer = document.getElementById('videoPreviewContainer');
   const placeholder = document.getElementById('uploadPlaceholder');
+  const fileSizeInfo = document.getElementById('fileSizeInfo');
 
   if (videoPreview) {
     videoPreview.pause();
@@ -5034,14 +5033,13 @@ function resetForm() {
   }
   if (previewContainer) previewContainer.style.display = 'none';
   if (placeholder) placeholder.style.display = 'block';
+  if (fileSizeInfo) fileSizeInfo.textContent = '';
 
   document.querySelectorAll('.tag-btn.selected').forEach(el => el.classList.remove('selected'));
 }
 
 // ====================== UPLOAD HANDLER ======================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
-  // Force reset any lingering modal state
-  if (typeof closeVideoModal === 'function') closeVideoModal();
   const btn = e.currentTarget;
   if (btn.disabled) return;
 
@@ -5049,9 +5047,10 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   const file = fileInput?.files?.[0];
   if (!file) return showStarPopup('Please select a video', 'error');
 
-  // Support both .mp4 and .mov
-  if (!file.type.startsWith('video/') || 
-      !['mp4', 'mov'].includes(file.name.split('.').pop()?.toLowerCase())) {
+  // Support MP4 and MOV
+  const allowedExt = ['mp4', 'mov'];
+  const fileExt = file.name.split('.').pop()?.toLowerCase();
+  if (!allowedExt.includes(fileExt)) {
     return showStarPopup('Only MP4 and MOV files are allowed', 'error');
   }
 
@@ -5070,7 +5069,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     }
   }
 
-  // Start Upload UI
+  // Start UI
   btn.disabled = true;
   btn.textContent = 'Uploading...';
   btn.style.background = '#555';
@@ -5083,17 +5082,17 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   try {
     const ts = Date.now();
     const rand = Math.random().toString(36).slice(2, 12);
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
+    const ext = fileExt;
     const videoName = `${ts}_${rand}.${ext}`;
     const videoPath = `users/${currentUser.uid}/${videoName}`;
     const videoRef = ref(storage, videoPath);
 
-    // Generate Thumbnail
+    // Generate Thumbnail (Your old reliable method)
     let thumbnailFile = null;
     try {
       thumbnailFile = await generateThumbnail(file);
-    } catch (err) {
-      console.warn("Thumbnail generation failed:", err);
+    } catch (thumbErr) {
+      console.warn("Thumbnail generation failed:", thumbErr);
     }
 
     // Upload Video
@@ -5135,8 +5134,8 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
 
           const newHighlight = {
             id: `${ts}_${rand}`,
-            videoUrl,
-            thumbnailUrl,
+            videoUrl: videoUrl,
+            thumbnailUrl: thumbnailUrl,
             storagePath: videoPath,
             thumbnailStoragePath: thumbnailUrl ? `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg` : "",
             views: 0,
