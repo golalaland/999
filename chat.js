@@ -5318,11 +5318,10 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     const remainingMs = endTime - Date.now();
     const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
     
-   return showStarPopup(
-  `Free Tonight is already active!
-
-Wait ${remainingMinutes} minute(s)
-or contact an admin.`,
+  return showStarPopup(
+  `Free Tonight is already active!<br><br>
+   Wait ${remainingMinutes} minute(s)<br>
+   or contact an admin.`,
   'error'
 );
   }
