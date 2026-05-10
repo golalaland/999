@@ -899,6 +899,40 @@ locationSelect.addEventListener("change", (e) => {
   loadCities(e.target.value);
 });
 
+// ===============================
+// GEO AUTO-DETECT COUNTRY
+// ===============================
+async function autoDetectCountry() {
+  try {
+    const response = await fetch("https://ipapi.co/json/");
+    const data = await response.json();
+
+    const detectedCountry = data.country_name;
+
+    Array.from(locationSelect.options).forEach((option) => {
+      const cleanedOption = option.value
+        .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+        .trim();
+
+      if (
+        cleanedOption.toLowerCase() ===
+        detectedCountry.toLowerCase()
+      ) {
+        option.selected = true;
+
+        // Auto-load cities
+        loadCities(option.value);
+      }
+    });
+
+  } catch (err) {
+    console.error("Geo detection failed:", err);
+  }
+}
+
+// Run automatically
+autoDetectCountry();
+
 // Load Nabla Font
 const nablaLink = document.createElement("link");
 nablaLink.rel = "stylesheet";
