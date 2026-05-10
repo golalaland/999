@@ -5318,10 +5318,13 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     const remainingMs = endTime - Date.now();
     const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
     
-    return showStarPopup(
-      `Free Tonight is already active!\nWait ${remainingMinutes} minute(s) or contact an admin.`, 
-      'error'
-    );
+   return showStarPopup(
+  `Free Tonight is already active!
+
+Wait ${remainingMinutes} minute(s)
+or contact an admin.`,
+  'error'
+);
   }
 
   // ====================== BASIC VALIDATIONS ======================
