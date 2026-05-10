@@ -3351,8 +3351,7 @@ function getEffectiveDailyCap(userData) {
 
   if (userData.isHost === true) return 600;
   if (userData.hasPaid === true) return 500;
-  if (userData.isVIP === true) return 50;
-
+    if (userData.hasPaid === false) return 50;
   return 50; // Normal user
 }
 
