@@ -5144,6 +5144,25 @@ confirmBtn.onclick = async () => {
     });
   }
 }
+
+
+// ====================== FREE TONIGHT HELPERS ======================
+function isFreeTonightActive() {
+  const savedEndTime = localStorage.getItem('freeTonightEndTime');
+  return !!(savedEndTime && Number(savedEndTime) > Date.now());
+}
+
+function getFreeTonightEndTime() {
+  const saved = localStorage.getItem('freeTonightEndTime');
+  return saved ? Number(saved) : null;
+}
+
+function isAdmin() {
+  // Update this with your actual admin logic (recommended: custom claim or role in user doc)
+  return auth?.currentUser?.email?.includes('@admin') || 
+         localStorage.getItem('isAdmin') === 'true';
+}
+
         
 // ================================
 // THUMBNAIL GENERATOR + UPLOAD HANDLER (COMPLETE)
@@ -5239,15 +5258,29 @@ function resetForm() {
   document.querySelectorAll('.tag-btn.selected').forEach(el => el.classList.remove('selected'));
 }
 
-// ====================== MAIN UPLOAD HANDLER ======================
+// ====================== MAIN UPLOAD HANDLER - FULL REWRITE ======================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
   const btn = e.currentTarget;
   if (btn.disabled) return;
 
   const fileInput = document.getElementById('highlightUploadInput');
   const file = fileInput?.files?.[0];
+
   if (!file) return showStarPopup('Please select a video', 'error');
 
+  // ====================== FREE TONIGHT CHECK ======================
+  if (isFreeTonightActive() && !isAdmin()) {
+    const endTime = getFreeTonightEndTime();
+    const remainingMs = endTime - Date.now();
+    const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
+    
+    return showStarPopup(
+      `Free Tonight is already active!\nWait ${remainingMinutes} minute(s) or contact an admin.`, 
+      'error'
+    );
+  }
+
+  // ====================== BASIC VALIDATIONS ======================
   const ext = file.name.split('.').pop()?.toLowerCase();
   if (!['mp4', 'mov'].includes(ext)) {
     return showStarPopup('Only MP4 and MOV files allowed', 'error');
@@ -5260,14 +5293,17 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
   const snap = await getDoc(highlightsRef);
 
-  if (snap.exists()) {
-    const hasActive = (snap.data().highlights || []).some(v => v.isTrending === true);
+  // Optional strict check: prevent multiple active clips (except for admin)
+  if (snap.exists() && !isAdmin()) {
+    const hasActive = (snap.data().highlights || []).some(v => 
+      v.isTrending === true && (v.trendingUntil || 0) > Date.now()
+    );
     if (hasActive) {
-      return showStarPopup("You already have an active clip.<br>Delete the current one first.", "error");
+      return showStarPopup("You already have an active clip.\nDelete the current one first.", "error");
     }
   }
 
-  // Start UI
+  // ====================== START UPLOAD UI ======================
   btn.disabled = true;
   btn.textContent = 'Uploading...';
   btn.style.background = '#555';
@@ -5280,11 +5316,13 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
   try {
     const ts = Date.now();
     const rand = Math.random().toString(36).slice(2, 12);
-    const videoName = `${ts}_${rand}.${ext}`;
+    const extLower = ext;
+    const videoName = `${ts}_${rand}.${extLower}`;
     const videoPath = `users/${currentUser.uid}/${videoName}`;
+
     const videoRef = ref(storage, videoPath);
 
-    // Generate Thumbnail
+    // ====================== GENERATE THUMBNAIL ======================
     let thumbnailFile = null;
     try {
       console.log("🎨 Generating thumbnail...");
@@ -5294,7 +5332,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
       console.error("❌ Thumbnail generation failed:", err);
     }
 
-    // Upload Video
+    // ====================== UPLOAD VIDEO ======================
     const uploadTask = uploadBytesResumable(videoRef, file, {
       contentType: file.type,
       cacheControl: 'public, max-age=31536000'
@@ -5319,32 +5357,56 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           const videoUrl = toCloudflareUrl(rawVideoUrl);
 
           let thumbnailUrl = "";
+          let thumbnailStoragePath = "";
+
           if (thumbnailFile) {
             try {
-              const thumbPath = `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg`;
+              const thumbName = videoName.replace(/\.[^/.]+$/, "") + ".jpg";
+              const thumbPath = `users/${currentUser.uid}/thumbnails/${thumbName}`;
               const thumbRef = ref(storage, thumbPath);
+
               await uploadBytes(thumbRef, thumbnailFile, { contentType: 'image/jpeg' });
               const rawThumbUrl = await getDownloadURL(thumbRef);
               thumbnailUrl = toCloudflareUrl(rawThumbUrl);
-              console.log("✅ Thumbnail uploaded to Storage!");
+              thumbnailStoragePath = thumbPath;
+              console.log("✅ Thumbnail uploaded!");
             } catch (e) {
               console.warn("Thumbnail upload failed:", e);
             }
           }
 
+          // ====================== CREATE NEW HIGHLIGHT OBJECT ======================
           const newHighlight = {
             id: `${ts}_${rand}`,
             videoUrl,
             thumbnailUrl,
             storagePath: videoPath,
-            thumbnailStoragePath: thumbnailUrl ? `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg` : "",
+            thumbnailStoragePath,
             views: 0,
             isTrending: true,
-            trendingUntil: Date.now() + (86400000 * 7),
+            trendingUntil: Date.now() + (86400000 * 7), // Default 7 days
             uploadedAt: new Date().toISOString(),
             createdAt: new Date().toISOString()
           };
 
+          // ====================== FREE TONIGHT AUTO-ACTIVATION ======================
+          let freeTonightEndTime = null;
+
+          if (!isFreeTonightActive()) {
+            freeTonightEndTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+            newHighlight.trendingUntil = freeTonightEndTime;
+
+            // Save to localStorage and start countdown
+            localStorage.setItem('freeTonightEndTime', freeTonightEndTime);
+
+            const freeBtn = document.getElementById('freeTonightBtn');
+            if (freeBtn) startCountdown(freeBtn, freeTonightEndTime);
+
+            activateViewBoost?.(); // Safe call
+          }
+
+          // ====================== SAVE TO FIRESTORE ======================
           if (snap.exists()) {
             await updateDoc(highlightsRef, {
               highlights: arrayUnion(newHighlight),
@@ -5361,17 +5423,20 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
             });
           }
 
+          // ====================== SUCCESS ======================
           resetUploadUI();
           showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
+
           if (typeof loadMyClips === 'function') loadMyClips();
 
         } catch (err) {
           console.error(err);
-          showStarPopup('Upload succeeded but save failed', 'error');
+          showStarPopup('Upload succeeded but database save failed', 'error');
           resetUploadUI();
         }
       }
     );
+
   } catch (err) {
     console.error(err);
     showStarPopup('Failed to start upload', 'error');
@@ -7185,48 +7250,6 @@ async function unlockVideo(video) {
     }
 }
 
-// ====================== Optimized View Boost (Every 60 seconds) ======================
-let viewBoostInterval = null;
-
-function activateViewBoost() {
-  if (viewBoostInterval) clearInterval(viewBoostInterval);
-
-  viewBoostInterval = setInterval(async () => {
-    if (!auth?.currentUser?.uid) return;
-
-    try {
-      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
-      const snap = await getDoc(docRef);
-      if (!snap.exists()) return;
-
-      let highlights = snap.data().highlights || [];
-      const now = Date.now();
-      let hasUpdates = false;
-
-      highlights = highlights.map(v => {
-        if (v.isTrending === true && v.trendingUntil && v.trendingUntil > now) {
-          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1-9 views
-          v.views = (v.views || 0) + randomAdd;
-          hasUpdates = true;
-        }
-        return v;
-      });
-
-      if (hasUpdates) {
-        await updateDoc(docRef, { highlights });
-      }
-    } catch (err) {
-      console.error("[VIEW BOOST] Error:", err);
-    }
-  }, 60000); // 60 seconds
-}
-
-function stopViewBoost() {
-  if (viewBoostInterval) {
-    clearInterval(viewBoostInterval);
-    viewBoostInterval = null;
-  }
-}
 
 // Main Function - UPDATED & OPTIMIZED
 async function loadMyClips() {
@@ -8225,6 +8248,14 @@ paystackNigeriaBanks.forEach(bank => {
   option.textContent = bank;
   bankSelect.appendChild(option);
 });
+
+
+// At the very beginning of freeTonightBtn click handler
+if (isFreeTonightActive() && !isAdmin()) {
+  const endTime = getFreeTonightEndTime();
+  startCountdown(btn, endTime);
+  return showStarPopup('Free Tonight is already active!', 'info');
+}
 
 
 // ───────────────────────────────────────────────
