@@ -6398,6 +6398,7 @@ function cleanLocation(location = "") {
   return location
     .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
     .trim();
+  } 
  
 /* ================================================
    FREE TONIGHT MODAL – FULL CLEAN REWRITE
@@ -6568,15 +6569,17 @@ function renderCards() {
 
     });
 
-    if (activeLocation) {
+  if (activeLocation) {
 
-      visibleVideos = visibleVideos.filter(v =>
+  visibleVideos = visibleVideos.filter(v =>
 
-        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
+    cleanLocation(v.location || "")
+      .toLowerCase()
+      .trim() === activeLocation.toLowerCase().trim()
 
-      );
+  );
 
-    }
+}
 
     if (activeTags.size > 0) {
 
@@ -6860,7 +6863,7 @@ oneLiner.style.cssText = `
 
         const span = document.createElement("span");
 
-        span.textContent = video.location.trim();
+       span.textContent = getFlagEmoji(video.location);
 
         span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
 
@@ -6940,7 +6943,6 @@ oneLiner.style.cssText = `
 
 }
 
-  
 // ====================
 // LOCATION MODAL
 // ====================
@@ -6949,30 +6951,32 @@ function openLocationModal() {
   const locModal = document.createElement("div");
 
   locModal.style.cssText = `
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.8);
-    backdrop-filter:blur(12px);
-    z-index:1000000;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(12px);
+    z-index: 1000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
 
   locModal.innerHTML = `
     <div style="
-      background:rgba(15,10,26,0.95);
-      border:1px solid #8a2be2;
-      border-radius:20px;
-      padding:32px;
-      max-width:420px;
-      width:90%;
-      text-align:center;
+      background: rgba(15,10,26,0.95);
+      border: 1px solid #8a2be2;
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      position: relative;
     ">
+
       <h3 style="
-        color:#fff;
-        margin-bottom:20px;
-        font-size:20px;
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 20px;
       ">
         Choose Location
       </h3>
@@ -6980,30 +6984,31 @@ function openLocationModal() {
       <div
         id="locList"
         style="
-          display:flex;
-          flex-wrap:wrap;
-          gap:10px;
-          justify-content:center;
-          max-height:320px;
-          overflow-y:auto;
-          padding:10px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          justify-content: center;
+          max-height: 320px;
+          overflow-y: auto;
+          padding: 10px;
         "
       ></div>
 
       <button
         id="clearLocBtn"
         style="
-          margin-top:20px;
-          padding:10px 30px;
-          background:#333;
-          color:#fff;
-          border:none;
-          border-radius:30px;
-          cursor:pointer;
+          margin-top: 20px;
+          padding: 10px 30px;
+          background: #333;
+          color: #fff;
+          border: none;
+          border-radius: 30px;
+          cursor: pointer;
         "
       >
         Clear Filter
       </button>
+
     </div>
   `;
 
@@ -7011,9 +7016,12 @@ function openLocationModal() {
 
   const container = locModal.querySelector("#locList");
 
+  // ====================
+  // BUILD UNIQUE LOCATIONS
+  // ====================
+
   const locations = new Map();
 
-  // Build unique locations
   allVideos.forEach((v) => {
 
     if (!v.location) return;
@@ -7021,28 +7029,41 @@ function openLocationModal() {
     const cleanLoc = cleanLocation(v.location);
     const flag = getFlagEmoji(v.location);
 
-    locations.set(cleanLoc, {
-      flag,
-      city: v.city || "",
-      full: v.location
-    });
+    if (!locations.has(cleanLoc)) {
+
+      locations.set(cleanLoc, {
+        flag,
+        city: (v.city || "").trim(),
+        full: v.location
+      });
+
+    }
+
   });
 
+  // ====================
+  // RENDER LOCATION BUTTONS
+  // ====================
+
   [...locations.entries()]
-    .sort()
+    .sort((a, b) => a[0].localeCompare(b[0]))
     .forEach(([locationName, data]) => {
 
       const btn = document.createElement("button");
 
       btn.innerHTML = `
-        <div style="font-size:18px;">
+        <div style="
+          font-size: 22px;
+          line-height: 1;
+        ">
           ${data.flag}
         </div>
 
         <div style="
-          font-size:12px;
-          margin-top:4px;
-          opacity:0.9;
+          font-size: 12px;
+          margin-top: 6px;
+          opacity: 0.95;
+          font-weight: 600;
         ">
           ${locationName}
         </div>
@@ -7050,40 +7071,58 @@ function openLocationModal() {
         ${
           data.city
             ? `
-            <div style="
-              font-size:11px;
-              margin-top:2px;
-              opacity:0.6;
-            ">
-              ${data.city}
-            </div>
-          `
+              <div style="
+                font-size: 11px;
+                margin-top: 3px;
+                opacity: 0.6;
+              ">
+                ${data.city}
+              </div>
+            `
             : ""
         }
       `;
 
       btn.style.cssText = `
-        min-width:90px;
-        padding:12px 14px;
-        border-radius:18px;
-        background:rgba(255,255,255,0.08);
-        color:#fff;
-        border:1px solid rgba(255,255,255,0.15);
-        cursor:pointer;
-        transition:all 0.25s;
+        min-width: 95px;
+        padding: 12px 14px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.15);
+        cursor: pointer;
+        transition: all 0.25s ease;
       `;
+
+      btn.onmouseenter = () => {
+        btn.style.transform = "translateY(-2px)";
+        btn.style.background = "rgba(255,255,255,0.14)";
+      };
+
+      btn.onmouseleave = () => {
+        btn.style.transform = "translateY(0)";
+        btn.style.background = "rgba(255,255,255,0.08)";
+      };
 
       btn.onclick = () => {
 
+        // IMPORTANT:
+        // Store CLEAN LOCATION ONLY
         activeLocation = locationName;
 
         renderCards();
 
         locModal.remove();
+
       };
 
       container.appendChild(btn);
-  });
+
+    });
+
+  // ====================
+  // CLEAR FILTER
+  // ====================
 
   locModal.querySelector("#clearLocBtn").onclick = () => {
 
@@ -7092,7 +7131,21 @@ function openLocationModal() {
     renderCards();
 
     locModal.remove();
+
   };
+
+  // ====================
+  // CLOSE ON BACKDROP CLICK
+  // ====================
+
+  locModal.onclick = (e) => {
+
+    if (e.target === locModal) {
+      locModal.remove();
+    }
+
+  };
+
 }
 
 function showUnlockConfirm(video, onUnlockCallback) {
