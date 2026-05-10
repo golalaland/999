@@ -3084,9 +3084,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// FINAL LOGIN BUTTON — Supports Email OR ChatId (Username)
+// FINAL LOGIN BUTTON — Hosts & VIPs can enter regardless of hasPaid
 document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
-  const identifier = document.getElementById("emailInput")?.value.trim(); // Can be email or chatId
+  const identifier = document.getElementById("emailInput")?.value.trim();
   const password = document.getElementById("passwordInput")?.value;
 
   if (!identifier || !password) {
@@ -3099,18 +3099,16 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
   try {
     loader.update(18);
 
-    // === NEW: Login with either Email or ChatId ===
     const userCredential = await login(identifier, password);
-
     console.log("Firebase Auth Success:", userCredential.user.uid);
+
     loader.update(55);
 
-    // === Rest of your existing logic stays the same ===
-    const email = userCredential.user.email.toLowerCase().trim(); // Always use real email
+    const email = userCredential.user.email?.toLowerCase().trim();
     const uidKey = sanitizeKey(email);
     const userRef = doc(db, "users", uidKey);
     const userSnap = await getDoc(userRef);
-    
+
     loader.update(82);
 
     if (!userSnap.exists()) {
@@ -3122,16 +3120,23 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
     const data = userSnap.data();
 
-    // Your whitelist logic
-    if (data.isHost || (data.isVIP && data.hasPaid === true)) {
-      console.log("Access granted");
+    // UPDATED LOGIC: Hosts & VIPs have full access
+    if (data.isHost || data.isVIP) {
+      console.log(`✅ Access granted to ${data.isHost ? 'Host' : 'VIP'}`);
       loader.update(100);
+      
+      // Optional: Show welcome message
+      if (data.isHost) {
+        showStarPopup("Welcome Host! 👑", "success");
+      } else {
+        showStarPopup("Welcome VIP! ✨", "success");
+      }
 
-      // Optional: You can call your helper here if you want
+      // Continue with your normal login flow
       // setCurrentUserFromData(data, uidKey, email);
 
     } else {
-      showStarPopup("Access denied.\nOnly Hosts and paid VIPs can enter.");
+      showStarPopup("Access denied.\nOnly Hosts and VIPs can enter.");
       await signOut(auth);
       loader.update(100);
       return;
@@ -3139,9 +3144,9 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
   } catch (err) {
     console.error("Login failed:", err);
-    
-    if (err.message === "Invalid username or password" || 
-        err.code === "auth/wrong-password" || 
+
+    if (err.message === "Invalid username or password" ||
+        err.code === "auth/wrong-password" ||
         err.code === "auth/user-not-found") {
       showStarPopup("Invalid username or password");
     } else if (err.code === "auth/too-many-requests") {
@@ -3351,8 +3356,8 @@ function getEffectiveDailyCap(userData) {
 
   if (userData.isHost === true) return 600;
   if (userData.hasPaid === true) return 500;
-    if (userData.hasPaid === false) return 50;
-  return 50; // Normal user
+    if (userData.hasPaid === false) return 25;
+  return 5; // Normal user
 }
 
 // ====================== SMOOTH ANIMATION HELPER ======================
