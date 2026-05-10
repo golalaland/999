@@ -4980,7 +4980,7 @@ confirmBtn.onclick = async () => {
 }
         
 // ================================
-// DEBUGGED UPLOAD HANDLER (Thumbnails Fix)
+// THUMBNAIL GENERATOR + UPLOAD HANDLER (COMPLETE)
 // ================================
 
 function toCloudflareUrl(firebaseUrl) {
@@ -4991,6 +4991,46 @@ function toCloudflareUrl(firebaseUrl) {
     .replace(/%2F/g, '/') + '?alt=media';
 }
 
+// ====================== GENERATE THUMBNAIL ======================
+async function generateThumbnail(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const objectUrl = URL.createObjectURL(file);
+    
+    video.preload = 'metadata';
+    video.muted = true;
+    video.src = objectUrl;
+
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.min(2, video.duration * 0.08 || 1);
+    };
+
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 480;
+      canvas.height = Math.round(480 * (video.videoHeight / video.videoWidth));
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(objectUrl);
+        if (blob) {
+          resolve(new File([blob], 'thumb.jpg', { type: 'image/jpeg' }));
+        } else {
+          reject(new Error('Canvas toBlob failed'));
+        }
+      }, 'image/jpeg', 0.85);
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Video load error'));
+    };
+  });
+}
+
+// ====================== RESET FUNCTIONS ======================
 function resetUploadUI() {
   const btn = document.getElementById('uploadHighlightBtn');
   if (btn) {
@@ -5003,7 +5043,37 @@ function resetUploadUI() {
   resetForm();
 }
 
-// ====================== UPLOAD HANDLER ======================
+function resetForm() {
+  const fileInput = document.getElementById('highlightUploadInput');
+  if (fileInput) fileInput.value = '';
+
+  ['highlightTitleInput', 'highlightDescInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const priceInput = document.getElementById('highlightPriceInput');
+  if (priceInput) priceInput.value = '50';
+
+  const cb = document.getElementById('boostTrendingCheckbox');
+  if (cb) cb.checked = false;
+
+  const videoPreview = document.getElementById('videoPreview');
+  const previewContainer = document.getElementById('videoPreviewContainer');
+  const placeholder = document.getElementById('uploadPlaceholder');
+
+  if (videoPreview) {
+    videoPreview.pause();
+    videoPreview.src = '';
+    videoPreview.load();
+  }
+  if (previewContainer) previewContainer.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'block';
+
+  document.querySelectorAll('.tag-btn.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// ====================== MAIN UPLOAD HANDLER ======================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
   const btn = e.currentTarget;
   if (btn.disabled) return;
@@ -5031,6 +5101,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     }
   }
 
+  // Start UI
   btn.disabled = true;
   btn.textContent = 'Uploading...';
   btn.style.background = '#555';
@@ -5047,16 +5118,14 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     const videoPath = `users/${currentUser.uid}/${videoName}`;
     const videoRef = ref(storage, videoPath);
 
-    console.log("🚀 Starting upload for:", videoName);
-
-    // === THUMBNAIL GENERATION (with heavy logging) ===
+    // Generate Thumbnail
     let thumbnailFile = null;
     try {
-      console.log("🎨 Starting thumbnail generation...");
+      console.log("🎨 Generating thumbnail...");
       thumbnailFile = await generateThumbnail(file);
-      console.log("✅ Thumbnail generated successfully! Size:", thumbnailFile.size);
-    } catch (thumbErr) {
-      console.error("❌ Thumbnail generation FAILED:", thumbErr);
+      console.log("✅ Thumbnail generated!");
+    } catch (err) {
+      console.error("❌ Thumbnail generation failed:", err);
     }
 
     // Upload Video
@@ -5074,7 +5143,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
         if (txt) txt.textContent = `Uploading ${percent}%`;
       },
       (error) => {
-        console.error("Upload error:", error);
+        console.error(error);
         showStarPopup('Upload failed', 'error');
         resetUploadUI();
       },
@@ -5084,31 +5153,23 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           const videoUrl = toCloudflareUrl(rawVideoUrl);
 
           let thumbnailUrl = "";
-
-          // Try to upload thumbnail if we have it
           if (thumbnailFile) {
             try {
               const thumbPath = `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg`;
               const thumbRef = ref(storage, thumbPath);
-              
-              console.log("📤 Uploading thumbnail...");
               await uploadBytes(thumbRef, thumbnailFile, { contentType: 'image/jpeg' });
-              
               const rawThumbUrl = await getDownloadURL(thumbRef);
               thumbnailUrl = toCloudflareUrl(rawThumbUrl);
-              
-              console.log("✅ Thumbnail uploaded successfully!");
-            } catch (thumbErr) {
-              console.error("❌ Failed to upload thumbnail:", thumbErr);
+              console.log("✅ Thumbnail uploaded to Storage!");
+            } catch (e) {
+              console.warn("Thumbnail upload failed:", e);
             }
-          } else {
-            console.warn("⚠️ No thumbnail file available to upload");
           }
 
           const newHighlight = {
             id: `${ts}_${rand}`,
-            videoUrl: videoUrl,
-            thumbnailUrl: thumbnailUrl,
+            videoUrl,
+            thumbnailUrl,
             storagePath: videoPath,
             thumbnailStoragePath: thumbnailUrl ? `users/${currentUser.uid}/thumbnails/${videoName.replace(/\.[^/.]+$/, "")}.jpg` : "",
             views: 0,
@@ -5134,20 +5195,19 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
             });
           }
 
-          console.log("🎉 Upload completed successfully!");
           resetUploadUI();
           showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
           if (typeof loadMyClips === 'function') loadMyClips();
 
         } catch (err) {
-          console.error("Save error:", err);
+          console.error(err);
           showStarPopup('Upload succeeded but save failed', 'error');
           resetUploadUI();
         }
       }
     );
   } catch (err) {
-    console.error("Critical upload error:", err);
+    console.error(err);
     showStarPopup('Failed to start upload', 'error');
     resetUploadUI();
   }
