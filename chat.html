@@ -4083,7 +4083,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 <!-- 🔥 FREE TONIGHT – Tiny Neon Glow Panel -->
 <div id="freeTonightCard" class="neon-mini-card">
   <div class="neon-title-container">
-    <div class="neon-title">◑△◐ Free Tonight ◑△◐?</div>
+    <div class="neon-title">◑△◐ Free Tonight? ◑△◐</div>
   </div>
 
   <div class="neon-sub">
@@ -4097,6 +4097,9 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
   <div id="freeTonightMessage" class="neon-msg"></div>
 </div>
+
+
+  
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
   <h4 style="
@@ -4242,7 +4245,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     line-height: 1.45;
   ">
     Share your INVITE link and grow your influence.<br>
-   Get <strong>100 STRZ</strong> for each new host that joins you on cube & <strong>500 STRZ</strong> for each VIP invite!
+   Get <strong>STRZ</strong> for each new host that joins you on cube & <strong>more</strong> for each VIP invite!
   </p>
 
   <div style="display: flex; justify-content: center;">
@@ -4301,6 +4304,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
                  opacity:0.6;"></div>
 
     <div style="position:relative; z-index:2;">
+
+      
       <!-- Video Upload -->
       <div style="margin-bottom:32px; text-align:center;">
         <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
@@ -4341,12 +4346,12 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       </div>
 
       <!-- Certify Checkbox -->
-      <div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
-        <label style="display:inline-flex; align-items:center; gap:12px; cursor:pointer;">
-          <input type="checkbox" id="itsMeCheckbox" style="width:20px; height:20px; accent-color:#ff2e78;">
-          I certify it's me in this video
-        </label>
-      </div>
+<div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
+  <label style="display:inline-flex; align-items:center; gap:10px; cursor:pointer;">
+    <input type="checkbox" id="itsMeCheckbox" style="width:20px; height:20px; accent-color:#ff2e78;">
+    I certify this is me in the video & agree to the <span id="termsLink" style="color:#ff2e78; text-decoration:underline; cursor:pointer;">terms</span>
+  </label>
+</div>
 
       <!-- Upload Button + Progress + Disclaimer -->
       <div style="text-align:center; margin-top:32px;">
@@ -4384,6 +4389,59 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+  <!-- Terms Modal -->
+<div id="termsModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  backdrop-filter:blur(10px);
+  z-index:999999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+
+  <div style="
+    background:#111;
+    border:1px solid #333;
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+    padding:24px;
+    color:#e0e0e0;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+  ">
+
+    <div style="font-size:18px; font-weight:700; margin-bottom:12px;">
+      Terms & Consent
+    </div>
+
+    <div style="font-size:14px; line-height:1.6; color:#aaa;">
+      By uploading this video, you confirm:
+      <br><br>
+      • You are the person shown in the content<br>
+      • You have full rights to upload and share it<br>
+      • You grant permission for use within this platform<br>
+      • You understand it may be publicly displayed
+    </div>
+
+    <button id="closeTerms" style="
+      margin-top:20px;
+      width:100%;
+      padding:12px;
+      background:#ff2e78;
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      font-weight:700;
+      cursor:pointer;
+    ">
+      Got it
+    </button>
   </div>
 </div>
   
