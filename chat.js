@@ -6382,23 +6382,6 @@ highlightsBtn.onclick = async () => {
     showGoldAlert("Error loading Free Tonight — try again.");
   }
 };
-
-// ===============================
-// HELPERS
-// ===============================
-
-// Extract ONLY flag emoji from location
-function getFlagEmoji(location = "") {
-  const match = location.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
-  return match ? match[0] : "🌍";
-}
-
-// Clean location text
-function cleanLocation(location = "") {
-  return location
-    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
-    .trim();
-  } 
  
 /* ================================================
    FREE TONIGHT MODAL – FULL CLEAN REWRITE
@@ -6569,17 +6552,15 @@ function renderCards() {
 
     });
 
-  if (activeLocation) {
+    if (activeLocation) {
 
-  visibleVideos = visibleVideos.filter(v =>
+      visibleVideos = visibleVideos.filter(v =>
 
-    cleanLocation(v.location || "")
-      .toLowerCase()
-      .trim() === activeLocation.toLowerCase().trim()
+        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
 
-  );
+      );
 
-}
+    }
 
     if (activeTags.size > 0) {
 
@@ -6593,78 +6574,73 @@ function renderCards() {
 
     }
 
-   // === TAG BUTTONS (from visible videos only) ===
+    // === TAG BUTTONS (from visible videos only) ===
 
-const visibleTags = new Set();
+    const visibleTags = new Set();
 
-visibleVideos.forEach((v) => {
+    visibleVideos.forEach(v => {
 
-  // Add CITY as tag
-  if (v.city) {
-    visibleTags.add(v.city.trim().toLowerCase());
-  }
+      (v.tags || []).forEach(t => {
 
-  // Add LOCATION FLAG ONLY as tag
-  if (v.location) {
-    visibleTags.add(getFlagEmoji(v.location));
-  }
+        if (t && typeof t === "string") {
 
-  // Other tags
-  (v.tags || []).forEach((t) => {
+          const trimmed = t.trim().toLowerCase();
 
-    if (t && typeof t === "string") {
+          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
 
-      const trimmed = t.trim().toLowerCase();
+            visibleTags.add(trimmed);
 
-      // Prevent duplicate location text
-      if (
-        trimmed &&
-        trimmed !== cleanLocation(v.location || "").toLowerCase()
-      ) {
-        visibleTags.add(trimmed);
-      }
-    }
-  });
-});
+          }
 
-[...visibleTags]
-  .sort()
-  .forEach((tag) => {
+        }
 
-    const btn = document.createElement("button");
+      });
 
-    btn.textContent = tag;
-    btn.dataset.tag = tag;
-
-    Object.assign(btn.style, {
-      padding: "6px 14px",
-      borderRadius: "24px",
-      fontSize: "12px",
-      fontWeight: "600",
-      background: activeTags.has(tag)
-        ? "linear-gradient(135deg, #ff2e78, #ff5e9e)"
-        : "rgba(255,46,120,0.2)",
-      color: activeTags.has(tag)
-        ? "#fff"
-        : "#ff6ab6",
-      border: "1px solid rgba(255,46,120,0.6)",
-      cursor: "pointer",
-      transition: "all 0.25s"
     });
 
-    btn.onclick = () => {
+    [...visibleTags].sort().forEach(tag => {
 
-      if (activeTags.has(tag)) {
-        activeTags.delete(tag);
-      } else {
-        activeTags.add(tag);
-      }
+      const btn = document.createElement("button");
 
-      renderCards();
-    };
+      btn.textContent = tag;
 
-    tagContainer.appendChild(btn);
-});
+      btn.dataset.tag = tag;
+
+      Object.assign(btn.style, {
+
+        padding: "6px 14px", 
+
+        borderRadius: "24px", 
+
+        fontSize: "12px", 
+
+        fontWeight: "600",
+
+        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
+
+        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
+
+        border: "1px solid rgba(255,46,120,0.6)", 
+
+        cursor: "pointer", 
+
+        transition: "all 0.25s"
+
+      });
+
+      btn.onclick = () => {
+
+        if (activeTags.has(tag)) activeTags.delete(tag);
+
+        else activeTags.add(tag);
+
+        renderCards();
+
+      };
+
+      tagContainer.appendChild(btn);
+
+    });
 
     // === EMPTY STATE ===
 
@@ -6863,7 +6839,7 @@ oneLiner.style.cssText = `
 
         const span = document.createElement("span");
 
-       span.textContent = getFlagEmoji(video.location);
+        span.textContent = video.location.trim();
 
         span.style.cssText = `font-size:11px; padding:2px 8px; border-radius:10px; background: rgba(0,255,234,0.3); color: #00ffea; border: 1px solid rgba(0,255,234,0.6);`;
 
@@ -6943,213 +6919,46 @@ oneLiner.style.cssText = `
 
 }
 
-// ====================
-// LOCATION MODAL
-// ====================
-function openLocationModal() {
-
-  const locModal = document.createElement("div");
-
-  locModal.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(12px);
-    z-index: 1000000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
-
-  locModal.innerHTML = `
-    <div style="
-      background: rgba(15,10,26,0.95);
-      border: 1px solid #8a2be2;
-      border-radius: 20px;
-      padding: 32px;
-      max-width: 420px;
-      width: 90%;
-      text-align: center;
-      position: relative;
-    ">
-
-      <h3 style="
-        color: #fff;
-        margin-bottom: 20px;
-        font-size: 20px;
-      ">
-        Choose Location
-      </h3>
-
-      <div
-        id="locList"
-        style="
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          justify-content: center;
-          max-height: 320px;
-          overflow-y: auto;
-          padding: 10px;
-        "
-      ></div>
-
-      <button
-        id="clearLocBtn"
-        style="
-          margin-top: 20px;
-          padding: 10px 30px;
-          background: #333;
-          color: #fff;
-          border: none;
-          border-radius: 30px;
-          cursor: pointer;
-        "
-      >
-        Clear Filter
-      </button>
-
-    </div>
-  `;
-
-  document.body.appendChild(locModal);
-
-  const container = locModal.querySelector("#locList");
-
-  // ====================
-  // BUILD UNIQUE LOCATIONS
-  // ====================
-
-  const locations = new Map();
-
-  allVideos.forEach((v) => {
-
-    if (!v.location) return;
-
-    const cleanLoc = cleanLocation(v.location);
-    const flag = getFlagEmoji(v.location);
-
-    if (!locations.has(cleanLoc)) {
-
-      locations.set(cleanLoc, {
-        flag,
-        city: (v.city || "").trim(),
-        full: v.location
-      });
-
-    }
-
-  });
-
-  // ====================
-  // RENDER LOCATION BUTTONS
-  // ====================
-
-  [...locations.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .forEach(([locationName, data]) => {
-
-      const btn = document.createElement("button");
-
-      btn.innerHTML = `
-        <div style="
-          font-size: 22px;
-          line-height: 1;
-        ">
-          ${data.flag}
-        </div>
-
-        <div style="
-          font-size: 12px;
-          margin-top: 6px;
-          opacity: 0.95;
-          font-weight: 600;
-        ">
-          ${locationName}
-        </div>
-
-        ${
-          data.city
-            ? `
-              <div style="
-                font-size: 11px;
-                margin-top: 3px;
-                opacity: 0.6;
-              ">
-                ${data.city}
-              </div>
-            `
-            : ""
-        }
-      `;
-
-      btn.style.cssText = `
-        min-width: 95px;
-        padding: 12px 14px;
-        border-radius: 18px;
-        background: rgba(255,255,255,0.08);
-        color: #fff;
-        border: 1px solid rgba(255,255,255,0.15);
-        cursor: pointer;
-        transition: all 0.25s ease;
-      `;
-
-      btn.onmouseenter = () => {
-        btn.style.transform = "translateY(-2px)";
-        btn.style.background = "rgba(255,255,255,0.14)";
-      };
-
-      btn.onmouseleave = () => {
-        btn.style.transform = "translateY(0)";
-        btn.style.background = "rgba(255,255,255,0.08)";
-      };
-
-      btn.onclick = () => {
-
-        // IMPORTANT:
-        // Store CLEAN LOCATION ONLY
-        activeLocation = locationName;
-
-        renderCards();
-
-        locModal.remove();
-
-      };
-
-      container.appendChild(btn);
-
+  
+  // ==================== LOCATION MODAL (Only v.location) ====================
+  function openLocationModal() {
+    const locModal = document.createElement("div");
+    locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
+    locModal.innerHTML = `
+      <div style="background:rgba(15,10,26,0.95); border:1px solid #8a2be2; border-radius:20px; padding:32px; max-width:420px; width:90%; text-align:center;">
+        <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
+        <div id="locList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-height:320px; overflow-y:auto; padding:10px;"></div>
+        <button id="clearLocBtn" style="margin-top:20px; padding:10px 30px; background:#333; color:#fff; border:none; border-radius:30px;">Clear Filter</button>
+      </div>
+    `;
+    document.body.appendChild(locModal);
+    const container = locModal.querySelector("#locList");
+    const locations = new Set();
+    allVideos.forEach(v => {
+      if (v.location) locations.add(v.location.trim());
     });
-
-  // ====================
-  // CLEAR FILTER
-  // ====================
-
-  locModal.querySelector("#clearLocBtn").onclick = () => {
-
-    activeLocation = null;
-
-    renderCards();
-
-    locModal.remove();
-
-  };
-
-  // ====================
-  // CLOSE ON BACKDROP CLICK
-  // ====================
-  locModal.onclick = (e) => {
-    if (e.target === locModal) {
+    [...locations].sort().forEach(loc => {
+      const btn = document.createElement("button");
+      btn.textContent = loc;
+      btn.style.cssText = `padding:10px 20px; border-radius:25px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer;`;
+      btn.onclick = () => {
+        activeLocation = loc;
+        renderCards();
+        locModal.remove();
+      };
+      container.appendChild(btn);
+    });
+    locModal.querySelector("#clearLocBtn").onclick = () => {
+      activeLocation = null;
+      renderCards();
       locModal.remove();
-    }
-  };
-}   // ← This closes openLocationModal()
-
+    };
+  }
   // Initial render
   renderCards();
   document.body.appendChild(modal);
-}   // ←←← THIS IS THE MISSING CLOSING BRACKET for showHighlightsModal
+}
 
-// ====================== END OF showHighlightsModal ======================
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
     document.getElementById("unlockConfirmModal")?.remove();
