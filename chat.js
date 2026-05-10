@@ -6287,10 +6287,29 @@ grid.style.cssText = `
 `;
   modal.appendChild(grid);
   // Load more trigger
+    // ==================== LOAD MORE TRIGGER (Nice Spinner) ====================
   const loadMoreDiv = document.createElement("div");
   loadMoreDiv.id = "loadMoreTrigger";
-  loadMoreDiv.style.cssText = "height:200px; width:100%; text-align:center; padding:40px; color:#888;";
-  loadMoreDiv.innerHTML = "Loading more...";
+  loadMoreDiv.style.cssText = `
+    grid-column: 1 / -1;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 15px;
+    padding: 40px 20px;
+  `;
+
+  loadMoreDiv.innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <div style="width:28px; height:28px; border:3px solid rgba(0,255,234,0.2); 
+                  border-top-color:#00ffea; border-radius:50%; 
+                  animation:spin 1s linear infinite;"></div>
+      <span style="opacity:0.7;">Loading more clips...</span>
+    </div>
+  `;
+
   grid.appendChild(loadMoreDiv);
   // State
   let allVideos = [...initialVideos];
@@ -6567,30 +6586,43 @@ thumbContainer.onclick = (e) => {
 
       };
 
-    // One-liner
+   // One-liner
+const naturePick = video.naturePick || "";
 
-      const naturePick = video.naturePick || "";
+const genderRaw = (video.gender || "person")
+  .toLowerCase()
+  .trim();
 
-      const genderRaw = (video.gender || "person").toLowerCase().trim();
+const isMale = genderRaw === "male";
 
-      const isMale = genderRaw === "male";
+const pronoun = isMale ? "his" : "her";
 
-      const pronoun = isMale ? "his" : "her";
+// Supports 20s, 30s, 40s, 50s
+const age = Number(video.age);
 
-      const ageGroup = !video.age ? "20s" : video.age >= 30 ? "30s" : "20s";
+const ageGroup = !age
+  ? "20s"
+  : age >= 50
+  ? "50s"
+  : age >= 40
+  ? "40s"
+  : age >= 30
+  ? "30s"
+  : "20s";
 
-      const oneLinerText = naturePick
+const oneLinerText = naturePick
+  ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+  : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
-        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+const oneLiner = document.createElement("div");
 
-        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+oneLiner.textContent = oneLinerText;
 
-      const oneLiner = document.createElement("div");
-
-      oneLiner.textContent = oneLinerText;
-
-      oneLiner.style.cssText = "font-size:11px; color:#aaa; margin-top:4px;";
-
+oneLiner.style.cssText = `
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 4px;
+`;
       // Tags
 
       const tagsEl = document.createElement("div");
