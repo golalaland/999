@@ -950,6 +950,33 @@ const userData = {
 
 await setDoc(userRef, userData);
 
+// ====================== CREATE chatIds INDEX ======================
+const chatIdLower = chatId.toLowerCase().trim();
+await setDoc(doc(db, "chatIds", chatIdLower), {
+  email: email,
+  sanitizedEmail: docId,
+
+  chatId: chatId,           // important
+  fullName: fullName,
+  usernameColor: userData.usernameColor,
+  gender: gender,
+  phone: phone || "",
+
+  invitedBy: inviterDocId,
+  referral: rawRef || null,
+
+  // === Keep these (important for fast UI) ===
+  isVIP: !!isVIP,
+  hasPaid: false,
+  isHost: isHost,
+  isAdmin: false,
+
+  createdAt: serverTimestamp(),
+  lastUpdated: serverTimestamp()
+});
+
+console.log(`✅ chatIds index created for: ${chatId}`);
+    
 // === UPDATE INVITER ON SIGNUP ===
 if (inviterDocId) {
   if (isVIP) {
