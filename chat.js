@@ -5146,6 +5146,50 @@ confirmBtn.onclick = async () => {
 }
 
 
+// ====================== Optimized View Boost (Every 60 seconds) ======================
+let viewBoostInterval = null;
+
+function activateViewBoost() {
+  if (viewBoostInterval) clearInterval(viewBoostInterval);
+
+  viewBoostInterval = setInterval(async () => {
+    if (!auth?.currentUser?.uid) return;
+
+    try {
+      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return;
+
+      let highlights = snap.data().highlights || [];
+      const now = Date.now();
+      let hasUpdates = false;
+
+      highlights = highlights.map(v => {
+        if (v.isTrending === true && v.trendingUntil && v.trendingUntil > now) {
+          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1-9 views
+          v.views = (v.views || 0) + randomAdd;
+          hasUpdates = true;
+        }
+        return v;
+      });
+
+      if (hasUpdates) {
+        await updateDoc(docRef, { highlights });
+      }
+    } catch (err) {
+      console.error("[VIEW BOOST] Error:", err);
+    }
+  }, 60000); // 60 seconds
+}
+
+function stopViewBoost() {
+  if (viewBoostInterval) {
+    clearInterval(viewBoostInterval);
+    viewBoostInterval = null;
+  }
+}
+
+
 // ====================== FREE TONIGHT HELPERS ======================
 function isFreeTonightActive() {
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
@@ -5443,6 +5487,9 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     resetUploadUI();
   }
 });
+
+
+
 
 (function() {
   const onlineCountEl = document.getElementById('onlineCount');
