@@ -6055,8 +6055,8 @@ function initVideoModal() {
 
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
-    position: relative; 
-    width: 100%; 
+    position: relative;
+    width: 100%;
     max-width: 440px;
     background: #000;
     border-radius: 18px;
@@ -6074,7 +6074,7 @@ function initVideoModal() {
   closeBtn.textContent = "✕";
   Object.assign(closeBtn.style, {
     position: "absolute",
-    top: "12px",
+    top: "14px",
     left: "50%",
     transform: "translateX(-50%)",
     background: "rgba(0,0,0,0.8)",
@@ -6088,18 +6088,44 @@ function initVideoModal() {
     fontSize: "24px",
     cursor: "pointer",
     zIndex: "10",
-    border: "2px solid #fff"
+    border: "2px solid #fff",
+    transition: "opacity 0.4s ease"
   });
+
+  // Shimmer Loading Effect
+  const shimmer = document.createElement("div");
+  shimmer.style.cssText = `
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 5;
+  `;
 
   wrapper.appendChild(modalVideo);
   wrapper.appendChild(closeBtn);
+  wrapper.appendChild(shimmer);
   videoModal.appendChild(wrapper);
   document.body.appendChild(videoModal);
 
+  // Close handlers
   closeBtn.onclick = () => closeVideoModal();
   videoModal.onclick = (e) => {
     if (e.target === videoModal) closeVideoModal();
   };
+
+  // Auto fade close button after 3 seconds
+  modalVideo.onplay = () => {
+    setTimeout(() => {
+      closeBtn.style.opacity = "0.12";
+    }, 3000);
+  };
+
+  // Shimmer while loading
+  modalVideo.onwaiting = () => shimmer.style.opacity = "0.6";
+  modalVideo.onplaying = () => shimmer.style.opacity = "0";
 }
 
 function openVideoModal(videoUrl) {
@@ -6107,11 +6133,8 @@ function openVideoModal(videoUrl) {
 
   initVideoModal();
 
-  // Clean previous state
-  if (modalVideo) {
-    modalVideo.pause();
-    modalVideo.src = "";
-  }
+  modalVideo.pause();
+  modalVideo.src = "";
 
   modalVideo.src = videoUrl;
   videoModal.style.display = "flex";
@@ -6125,10 +6148,13 @@ function closeVideoModal() {
   if (!videoModal || !modalVideo) return;
   modalVideo.pause();
   modalVideo.src = "";
+  modalVideo.load();
   videoModal.style.display = "none";
 }
 
+// Global access
 window.openFullScreenVideo = openVideoModal;
+window.closeVideoModal = closeVideoModal;
 
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
