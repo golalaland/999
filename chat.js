@@ -870,7 +870,7 @@ function loadCities(countryValue, selectedCity = "") {
   const cleanedCountry = cleanCountryName(countryValue);
 
   citySelect.innerHTML = `
-    <option value="" disabled selected>
+    <option value="" disabled>
       Select your city
     </option>
   `;
@@ -881,11 +881,9 @@ function loadCities(countryValue, selectedCity = "") {
 
   cities.forEach((city) => {
     const option = document.createElement("option");
-
     option.value = city;
     option.textContent = city;
 
-    // 👇 KEEP PRESELECTED CITY
     if (city === selectedCity) {
       option.selected = true;
     }
@@ -5915,6 +5913,9 @@ window.startStream = startStream;
           safeSet("fullName", data.fullName || "");
           safeSet("city", data.city || "");
           safeSet("location", data.location || "");
+           if (data.location) {
+  loadCities(data.location, data.city || "");
+}
           safeSet("bio", data.bioPick || "");
           safeSet("bankAccountNumber", data.bankAccountNumber || "");
           safeSet("bankName", data.bankName || "");
