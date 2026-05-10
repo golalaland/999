@@ -866,7 +866,7 @@ function cleanCountryName(value = "") {
 // ===============================
 // LOAD CITIES
 // ===============================
-function loadCities(countryValue) {
+function loadCities(countryValue, selectedCity = "") {
   const cleanedCountry = cleanCountryName(countryValue);
 
   citySelect.innerHTML = `
@@ -884,6 +884,11 @@ function loadCities(countryValue) {
 
     option.value = city;
     option.textContent = city;
+
+    // 👇 KEEP PRESELECTED CITY
+    if (city === selectedCity) {
+      option.selected = true;
+    }
 
     citySelect.appendChild(option);
   });
@@ -5910,6 +5915,9 @@ window.startStream = startStream;
           safeSet("fullName", data.fullName || "");
           safeSet("city", data.city || "");
           safeSet("location", data.location || "");
+           // load cities AFTER country is set
+if (data.location) {
+  loadCities(data.location, data.city || "");
           safeSet("bio", data.bioPick || "");
           safeSet("bankAccountNumber", data.bankAccountNumber || "");
           safeSet("bankName", data.bankName || "");
