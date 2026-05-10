@@ -2578,34 +2578,47 @@ header.style.cssText = `
 
 card.appendChild(header);
      
-// Legendary details logic
-const gender   = (user.gender || "person").toLowerCase();
-const isMale   = gender === "male";
-const pronoun  = isMale ? "his" : "her";
+// ===============================
+// Legendary Details Logic (CLEAN)
+// ===============================
 
-// Supports 20s, 30s, 40s, 50s
+// --- helpers (CRITICAL FIX) ---
+const clean = (v) =>
+  (v || "")
+    .toString()
+    .trim()
+    .replace(/^(a|an)\s+/i, "")   // removes "A / An"
+    .replace(/\s+/g, " ");
+
+const genderRaw = clean(user.gender || "person").toLowerCase();
+const isMale = genderRaw === "male";
+const pronoun = isMale ? "his" : "her";
+
+// --- age grouping (20s → 50s) ---
 const age = Number(user.age);
 
-const ageGroup = !age
-  ? "20s"
-  : age >= 50
-  ? "50s"
-  : age >= 40
-  ? "40s"
-  : age >= 30
-  ? "30s"
+const ageGroup =
+  !age ? "20s"
+  : age >= 50 ? "50s"
+  : age >= 40 ? "40s"
+  : age >= 30 ? "30s"
   : "20s";
 
-const fruit     = user.fruitPick || "";
-const nature    = user.naturePick || "";
-const bodyType  = user.bodyTypePick || "";
-const city      = user.city || "Lagos";
-const location  = user.location || "";
+// --- clean attributes ---
+const fruit = clean(user.fruitPick);
+const nature = clean(user.naturePick);
+const bodyType = clean(user.bodyTypePick);
 
-// VIP status is controlled ONLY by hasPaid
-const isVIP           = !!user.hasPaid;               // true → show badge
+const city = clean(user.city || "Lagos");
+const location = clean(user.location);
+
+// --- VIP logic ---
+const isVIP = !!user.hasPaid;
 const isPrivilegedMale = isMale && (user.isHost || isVIP);
 
+// ===============================
+// BUILD DETAILS WRAPPER
+// ===============================
 const detailsWrapper = document.createElement("div");
 detailsWrapper.style.cssText = `
   margin: 0 0 12px;
@@ -2614,38 +2627,66 @@ detailsWrapper.style.cssText = `
   color: #d0d0d0;
 `;
 
+// ===============================
+// BUILD MAIN TEXT (NO OVERWRITES)
+// ===============================
+
 let mainText = "";
 
+// descriptors (safe join)
+const descriptors = [nature, bodyType]
+  .filter(Boolean)
+  .join(" ")
+  .trim();
+
+// intro builder (NO DUPLICATE "A")
+const intro = descriptors
+  ? `${descriptors} ${genderRaw}`
+  : `${genderRaw}`;
+
+// base sentence
 if (isPrivilegedMale) {
-  // Privileged males (host or VIP) — very clean
-  mainText = `A ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${location}.`;
+  mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}, currently in ${city}`;
 } else {
-  // Everyone else
-  const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
-  let intro = `A ${gender}`;
-  if (descriptors) intro = `${descriptors} ${gender}`;
-
-  mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}, ${location}`;
-  if (!isMale) mainText += ` ${fruit}`;
-  mainText += ".";
+  mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}`;
 }
 
-// Only apply old-school flair to truly regular users
+// add location safely
+if (location) {
+  mainText += `, ${location}`;
+}
+
+// add female-only fruit tag
+if (!isMale && fruit) {
+  mainText += ` ${fruit}`;
+}
+
+// final full stop
+mainText += ".";
+
+// ===============================
+// OPTIONAL FLAIR (NO OVERRIDE BUG)
+// ===============================
 if (!user.isHost && !isVIP) {
-  const flair = isMale ? " 😎" : " 💋";
-  mainText = `A ${gender} from ${city}, ${location}${flair}.`;
+  mainText += isMale ? " 😎" : " 💋";
 }
 
+// ===============================
+// RENDER TEXT
+// ===============================
 const mainLine = document.createElement("p");
 mainLine.textContent = mainText;
 mainLine.style.margin = "0";
 detailsWrapper.appendChild(mainLine);
 
-// VIP badge only when hasPaid is true
+// ===============================
+// VIP BADGE
+// ===============================
 if (isVIP) {
   const vipBadge = document.createElement("div");
   vipBadge.textContent = "VIP";
   vipBadge.className = "vip-badge";
+
   Object.assign(vipBadge.style, {
     margin: "8px auto 4px",
     width: "fit-content",
@@ -2661,9 +2702,13 @@ if (isVIP) {
     boxShadow: "0 2px 10px rgba(255,215,0,0.35)",
     animation: "vipShimmer 4s ease-in-out infinite"
   });
+
   detailsWrapper.appendChild(vipBadge);
 }
 
+// ===============================
+// APPEND
+// ===============================
 card.appendChild(detailsWrapper);
 
 // Shimmer keyframes (only inject once)
@@ -6613,8 +6658,8 @@ const ageGroup = !age
   : "20s";
 
 const oneLinerText = naturePick
-  ? `${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
-  : `${genderRaw} in ${pronoun} ${ageGroup}`;
+  ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+  : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
 const oneLiner = document.createElement("div");
 
