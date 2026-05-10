@@ -4983,6 +4983,8 @@ confirmBtn.onclick = async () => {
 // IMPROVED HIGHLIGHT UPLOAD HANDLER + .mov SUPPORT
 // ================================
 
+
+
 function toCloudflareUrl(firebaseUrl) {
   const clean = firebaseUrl.split('?')[0];
   return clean
@@ -5038,6 +5040,8 @@ function resetForm() {
 
 // ====================== UPLOAD HANDLER ======================
 document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
+  // Force reset any lingering modal state
+  if (typeof closeVideoModal === 'function') closeVideoModal();
   const btn = e.currentTarget;
   if (btn.disabled) return;
 
@@ -6008,93 +6012,61 @@ function initVideoModal() {
   Object.assign(videoModal.style, {
     position: "fixed",
     inset: "0",
-    background: "rgba(0,0,0,0.97)",
+    background: "rgba(0,0,0,0.95)",
     zIndex: "9999999",
     display: "none",
     alignItems: "center",
     justifyContent: "center",
-    padding: "15px",
-    boxSizing: "border-box"
+    padding: "12px",
   });
 
-  const content = document.createElement("div");
-  content.style.cssText = `
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = `
     position: relative; 
     width: 100%; 
-    max-width: 420px;
+    max-width: 440px;
     background: #000;
-    border-radius: 20px;
+    border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
   `;
 
   modalVideo = document.createElement("video");
   modalVideo.controls = true;
   modalVideo.playsInline = true;
-  modalVideo.loop = true;                    // ← LOOP ENABLED
-  modalVideo.style.cssText = "width:100%; height:auto; max-height:85vh; display:block; object-fit:contain;";
+  modalVideo.loop = true;
+  modalVideo.style.cssText = "width:100%; height:auto; max-height:82vh; display:block;";
 
-  // Close Button (Top Center)
+  // Close Button
   const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `✕`;
+  closeBtn.textContent = "✕";
   Object.assign(closeBtn.style, {
     position: "absolute",
-    top: "14px",
+    top: "12px",
     left: "50%",
     transform: "translateX(-50%)",
-    width: "34px",
-    height: "34px",
-    background: "rgba(0,0,0,0.75)",
+    background: "rgba(0,0,0,0.8)",
     color: "#fff",
-    fontSize: "22px",
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: "50%",
+    fontSize: "24px",
     cursor: "pointer",
     zIndex: "10",
-    border: "2px solid rgba(255,255,255,0.7)",
-    transition: "all 0.4s ease",
-    opacity: "0.95"
+    border: "2px solid #fff"
   });
 
-  // Shimmer effect while loading
-  const shimmer = document.createElement("div");
-  shimmer.style.cssText = `
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    pointer-events: none;
-    opacity: 0;
-    z-index: 5;
-  `;
-
-  content.appendChild(modalVideo);
-  content.appendChild(closeBtn);
-  content.appendChild(shimmer);
-  videoModal.appendChild(content);
+  wrapper.appendChild(modalVideo);
+  wrapper.appendChild(closeBtn);
+  videoModal.appendChild(wrapper);
   document.body.appendChild(videoModal);
 
-  // Close handlers
-  closeBtn.onclick = (e) => { e.stopPropagation(); closeVideoModal(); };
-  videoModal.addEventListener("click", (e) => {
+  closeBtn.onclick = () => closeVideoModal();
+  videoModal.onclick = (e) => {
     if (e.target === videoModal) closeVideoModal();
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && videoModal.style.display === "flex") closeVideoModal();
-  });
-
-  // Auto fade close button after 3 seconds
-  modalVideo.onplay = () => {
-    setTimeout(() => {
-      closeBtn.style.opacity = "0.12";
-    }, 3000);
   };
-
-  modalVideo.onwaiting = () => shimmer.style.opacity = "0.6";
-  modalVideo.onplaying = () => shimmer.style.opacity = "0";
 }
 
 function openVideoModal(videoUrl) {
@@ -6102,27 +6074,28 @@ function openVideoModal(videoUrl) {
 
   initVideoModal();
 
-  modalVideo.pause();
+  // Clean previous state
+  if (modalVideo) {
+    modalVideo.pause();
+    modalVideo.src = "";
+  }
+
   modalVideo.src = videoUrl;
   videoModal.style.display = "flex";
 
   setTimeout(() => {
-    modalVideo.play().catch(err => console.log("Autoplay blocked:", err));
-  }, 180);
+    modalVideo.play().catch(() => {});
+  }, 200);
 }
 
 function closeVideoModal() {
   if (!videoModal || !modalVideo) return;
-
   modalVideo.pause();
   modalVideo.src = "";
-  modalVideo.load();
   videoModal.style.display = "none";
 }
 
-// Keep same name for compatibility
 window.openFullScreenVideo = openVideoModal;
-window.closeVideoModal = closeVideoModal;
 
 /* Highlights Button – opens Free Tonight (with pagination) */
 highlightsBtn.onclick = async () => {
@@ -7463,43 +7436,49 @@ async function openPollModal() {
   showLoader("Loading poll...");
 
   try {
-    cleanupPollListeners();
+    if (pollUnsubscribe) pollUnsubscribe();
+    if (votesUnsubscribe) votesUnsubscribe();
 
-    const pollRef = doc(db, "polls", "current");
-
-    pollUnsubscribe = onSnapshot(pollRef, async (pollSnap) => {
-      hideLoader();
-
+    pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
       if (!pollSnap.exists()) {
-        closePollUI();
+        hideLoader();
+        document.getElementById("pollModal").style.display = "none";
         showStarPopup("No active poll right now");
         return;
       }
 
       const poll = pollSnap.data();
 
-      const endTime =
-        poll.endsAt?.toMillis?.() ||
-        poll.endsAt?.getTime?.() ||
-        poll.endsAt ||
-        0;
+      // Safe endTime conversion (handles Timestamp, Date, number, null)
+      let endTime = 0;
+      if (poll.endsAt) {
+        if (poll.endsAt.toMillis) {
+          endTime = poll.endsAt.toMillis(); // Firestore Timestamp
+        } else if (poll.endsAt.getTime) {
+          endTime = poll.endsAt.getTime(); // JS Date
+        } else if (typeof poll.endsAt === 'number') {
+          endTime = poll.endsAt; // milliseconds
+        }
+      }
 
-      if (Date.now() > endTime) {
-        closePollUI();
+      const now = Date.now();
+      if (now > endTime) {
+        hideLoader();
+        document.getElementById("pollModal").style.display = "none";
         showStarPopup("Poll has ended!");
         return;
       }
 
-      renderPoll(poll, endTime);
-      document.getElementById("pollModal").style.display = "flex";
+      startVotesListener(poll, endTime);
+    }, (err) => {
+      hideLoader();
+      console.error("Poll load error:", err);
     });
-
   } catch (err) {
     hideLoader();
-    console.error("Poll error:", err);
+    console.error(err);
   }
 }
-
 
 function startVotesListener(poll, endTime) {
   votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
@@ -7522,9 +7501,6 @@ function startVotesListener(poll, endTime) {
   });
 }
 
-// =====================
-// RENDER POLL
-// =====================
 function renderPoll(poll, endTime) {
   document.getElementById("pollQuestion").textContent = poll.question;
 
@@ -7537,50 +7513,32 @@ function renderPoll(poll, endTime) {
     </div>
   `;
 
-  startTimer(endTime);
+  startPollTimer(endTime);
 
-  const userVoteRef = doc(db, "polls", "current", "votes", currentUser.uid);
-
-  getDoc(userVoteRef)
-    .then((snap) => {
-      if (snap.exists()) {
-        showResults(poll, snap.data().choice);
-      } else {
-        showVotingOptions(poll);
-      }
-    })
-    .catch(() => showVotingOptions(poll));
+  getDoc(doc(db, "pollVotes", currentUser.uid)).then((voteSnap) => {
+    if (voteSnap.exists()) {
+      const userChoice = voteSnap.data().choice;
+      showLiveResults(poll, userChoice);
+    } else {
+      showVotingOptions(poll);
+    }
+  }).catch((error) => {
+    console.error("Error checking user vote:", error);
+    showVotingOptions(poll);
+  });
 }
 
-// =====================
-// VOTING UI
-// =====================
 function showVotingOptions(poll) {
   const container = document.getElementById("pollOptions");
   container.innerHTML = "";
 
-  poll.options.forEach((option) => {
+  poll.options.forEach(option => {
     const btn = document.createElement("button");
-
     btn.textContent = option;
-    btn.style.cssText = `
-      width:100%;
-      padding:18px;
-      margin:12px 0;
-      background:#222;
-      color:#fff;
-      border:2px solid #444;
-      border-radius:16px;
-      font-size:18px;
-      font-weight:bold;
-      cursor:pointer;
-    `;
-
+    btn.style.cssText = "width:100%;padding:18px;margin:12px 0;background:#222;color:#fff;border:2px solid #444;border-radius:16px;font-size:18px;font-weight:bold;cursor:pointer;transition:all 0.2s;";
     btn.onclick = async () => {
       try {
-        const voteRef = doc(db, "polls", "current", "votes", currentUser.uid);
-
-        await setDoc(voteRef, {
+        await setDoc(doc(db, "pollVotes", currentUser.uid), {
           choice: option,
           votedAt: serverTimestamp()
         });
@@ -7589,132 +7547,150 @@ function showVotingOptions(poll) {
           stars: increment(poll.reward)
         });
 
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#ff1493', '#ff69b4', '#0f9', '#ffd700'],
+          zIndex: 100000
+        });
+
         showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
-        showResults(poll, option);
+        showLiveResults(poll, option);
       } catch (err) {
-        console.error(err);
         showStarPopup("Vote failed");
+        console.error(err);
       }
     };
-
     container.appendChild(btn);
   });
 
   document.getElementById("pollResult").style.display = "none";
 }
 
-// =====================
-// RESULTS
-// =====================
-function showResults(poll, yourChoice) {
+function showLiveResults(poll, yourChoice) {
   document.getElementById("pollResult").style.display = "block";
   document.getElementById("yourChoice").textContent = yourChoice;
+
   document.getElementById("pollOptions").innerHTML = "";
 
-  const container = document.getElementById("resultBars");
-  container.innerHTML = "";
+  const barsContainer = document.getElementById("resultBars");
+  barsContainer.innerHTML = "";
 
-  const votes = poll.votes || {};
-  const total = Object.values(votes).reduce((a, b) => a + b, 0);
+  const totalVotes = Object.values(poll.liveVotes || {}).reduce((a, b) => a + b, 0);
 
-  if (!total) {
-    container.innerHTML = `<p style="color:#888;">No votes yet</p>`;
+  if (totalVotes === 0) {
+    barsContainer.innerHTML = "<p style='color:#888;font-style:italic;'>No votes yet — be the first!</p>";
     return;
   }
 
-  poll.options.forEach((opt) => {
-    const count = votes[opt] || 0;
-    const percent = Math.round((count / total) * 100);
+  poll.options.forEach(option => {
+    const votes = poll.liveVotes[option] || 0;
+    const percentage = Math.round((votes / totalVotes) * 100);
 
-    const el = document.createElement("div");
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;">
-        <strong>${opt}</strong>
-        <span>${count} (${percent}%)</span>
+    const bar = document.createElement("div");
+    bar.innerHTML = `
+      <div class="result-bar-label">
+        <strong>${option}</strong>
+        <span>${votes} votes (${percentage}%)</span>
       </div>
-      <div style="height:6px;background:#333;border-radius:6px;overflow:hidden;">
-        <div style="width:${percent}%;height:100%;background:#c3f60c;"></div>
+      <div class="result-bar">
+        <div class="result-bar-fill" style="width: ${percentage}%;"></div>
       </div>
     `;
-    el.style.margin = "14px 0";
-    container.appendChild(el);
+    bar.style.margin = "16px 0";
+    barsContainer.appendChild(bar);
   });
 }
 
-// =====================
-// TIMER
-// =====================
-function startTimer(endTime) {
-  const el = document.getElementById("countdown");
-
-  pollTimer = setInterval(() => {
+function startPollTimer(endTime) {
+  const countdownEl = document.getElementById("countdown");
+  const interval = setInterval(() => {
     const left = endTime - Date.now();
-
     if (left <= 0) {
-      el.textContent = "ENDED";
-      clearInterval(pollTimer);
+      countdownEl.textContent = "ENDED";
+      clearInterval(interval);
       return;
     }
-
-    const h = Math.floor(left / 3600000);
-    const m = Math.floor((left % 3600000) / 60000);
-    const s = Math.floor((left % 60000) / 1000);
-
-    el.textContent = `${h}h ${m}m ${s}s`;
+    const hours = Math.floor(left / 3600000);
+    const mins = Math.floor((left % 3600000) / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+    countdownEl.textContent = `${hours}h ${mins}m ${secs}s`;
   }, 1000);
 }
 
-// =====================
-// CLOSE
-// =====================
-document.getElementById("closePollBtn").onclick = closePollUI;
+document.getElementById("closePollBtn").onclick = () => {
+  document.getElementById("pollModal").style.display = "none";
+  if (pollUnsubscribe) pollUnsubscribe();
+  if (votesUnsubscribe) votesUnsubscribe();
+  pollUnsubscribe = null;
+  votesUnsubscribe = null;
+};
 
-
-// =====================
-// CREATE POLL (UNCHANGED LOGIC, CLEANED ONLY)
-// =====================
+// === CREATE NEW POLL (fixed endsAt with Timestamp)
 document.getElementById("create-new-poll")?.addEventListener("click", async () => {
-  if (!currentAdmin?.uid) {
-    showGoldAlert("Admin login required!");
+  if (!currentAdmin || !currentAdmin.uid) {
+    showGoldAlert("Admin login required to create poll!");
     return;
   }
 
   const question = document.getElementById("poll-question").value.trim();
   const optionInputs = document.querySelectorAll(".poll-option-input");
-
   const options = Array.from(optionInputs)
-    .map(i => i.value.trim())
-    .filter(Boolean);
-
+    .map(input => input.value.trim())
+    .filter(v => v.length > 0);
   const reward = parseInt(document.getElementById("poll-reward").value) || 50;
   const hours = parseInt(document.getElementById("poll-duration").value) || 24;
 
-  if (!question) return showGoldAlert("Enter question");
-  if (options.length < 2) return showGoldAlert("Need 2+ options");
+  if (!question) return showGoldAlert("Please enter a poll question ♡");
+  if (options.length < 2) return showGoldAlert("Need at least 2 cute options!");
 
   const btn = document.getElementById("create-new-poll");
+  const originalText = btn.innerHTML;
+  const originalStyle = btn.style.cssText;
 
+  btn.innerHTML = '<span class="btn-spinner visible"></span>';
   btn.disabled = true;
 
   try {
-    const endsAt = Timestamp.fromMillis(Date.now() + hours * 3600000);
+    // Use Timestamp for endsAt (fixes toMillis crash)
+    const endsAt = Timestamp.fromMillis(Date.now() + hours * 60 * 60 * 1000);
 
     await setDoc(doc(db, "polls", "current"), {
       question,
       options,
-      votes: options.reduce((a, o) => ({ ...a, [o]: 0 }), {}),
-      endsAt,
+      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+      endsAt, // now a Timestamp
       reward,
       createdAt: serverTimestamp(),
       createdBy: currentAdmin.uid
     });
 
-    showGoldAlert("Poll Live!");
+    btn.innerHTML = '✓ Created!';
+    btn.style.background = 'linear-gradient(90deg, #40c057, #69db7c)';
+    showGoldAlert(`Poll live! ♡\n${options.length} options • ${reward} $STRZ reward`, "SUCCESS");
+
+    document.getElementById("poll-question").value = "";
+    optionInputs.forEach(input => input.value = "");
+    document.getElementById("poll-reward").value = "50";
+    document.getElementById("poll-duration").value = "24";
+
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.style.cssText = originalStyle;
+      btn.disabled = false;
+    }, 1500);
   } catch (err) {
-    console.error(err);
-    showGoldAlert("Failed");
-  } finally {
-    btn.disabled = false;
+    btn.innerHTML = '✗ Failed';
+    btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
+    showGoldAlert("Failed to create poll — try again");
+    console.error("Poll creation error:", err);
+
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.style.cssText = originalStyle;
+      btn.disabled = false;
+    }, 2000);
   }
 });
 
@@ -7839,6 +7815,7 @@ function loadPollCarousel() {
     updateCarousel();
   }, 4000);
 }
+
 
 
 /*********************************
