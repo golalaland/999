@@ -87,6 +87,18 @@ const cashCountEl = document.getElementById('cashCount');
 const profileNameEl = document.getElementById('profileName');
 
 
+// ==================== CONFIRM PLAY SOUND ====================
+const confirmPlaySound = document.getElementById('confirmPlaySound');
+
+function playConfirmSound() {
+  if (!confirmPlaySound) return;
+  
+  confirmPlaySound.currentTime = 0;
+  confirmPlaySound.volume = 0.85;        // Nice and prominent
+  confirmPlaySound.play().catch(() => {});
+}
+
+
 // make sure inner exists so RedHot never crashes
 if (tapButton && !tapButton.querySelector('.inner')) {
   const span = document.createElement('span');
@@ -1073,7 +1085,11 @@ cancelPlay?.addEventListener("click", () => {
   if (playModal) playModal.style.display = "none";
 });
 
-confirmPlay?.addEventListener("click", async () => {
+confirmPlay?.addEventListener('click', async () => {
+  
+  // 🔥 Play special sound immediately
+  playConfirmSound();
+
   const result = await tryDeductStarsForJoin(STAR_COST);
 
   if (!result.ok) {
@@ -1085,7 +1101,15 @@ confirmPlay?.addEventListener("click", async () => {
     starCountEl.textContent = formatNumber(currentUser.stars);
   }
 
-  playModal.style.display = "none";
+  playModal.style.display = 'none';
+  if (startPage) startPage.classList.add('hidden');
+  if (bannerPage) bannerPage.classList.add('hidden');
+  if (gamePage) gamePage.classList.remove('hidden');
+  
+  document.body.classList.remove('start-mode');
+  document.body.classList.add('game-mode');
+  
+  hideActionBar();        // if you have this function
   startSession();
 });
 
