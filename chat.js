@@ -2646,121 +2646,88 @@ function sanitizeKey(email) {
   return email.toLowerCase().replace(/[@.]/g, "_").trim();
 }
 // ===============================================
-// OPTIMIZED SOCIAL CARD SYSTEM (No full users load)
+// OPTIMIZED SOCIAL CARD SYSTEM (Light + Fast)
 // ===============================================
 let usersByChatId = new Map();
 
 async function loadActiveUsersForSocial() {
   try {
-    // Only load active users in this room (much lighter)
     const activeSnap = await getDocs(collection(db, `rooms/${ROOM_ID}/activeUsers`));
     
     usersByChatId.clear();
     activeSnap.forEach(docSnap => {
       const data = docSnap.data();
       if (data.chatId) {
-        const chatIdLower = data.chatId.toLowerCase();
+        const chatIdLower = data.chatId.toLowerCase().trim();
         usersByChatId.set(chatIdLower, {
           ...data,
           _docId: docSnap.id,
-          chatIdLower: chatIdLower
+          chatIdLower
         });
       }
     });
-    console.log(`[Social] Loaded ${usersByChatId.size} active users`);
+    console.log(`[Social] Loaded ${usersByChatId.size} active users for cards`);
   } catch (err) {
     console.warn("[Social] Failed to load active users:", err);
   }
 }
 
-// Optimized showSocialCard
 function showSocialCard(user) {
   if (!user) return;
   document.getElementById('socialCard')?.remove();
   showUnifiedCard(user);
 }
 
-// Keep your showUnifiedCard() function as-is (it's fine)
+// Unified Card (kept mostly as you had it, just cleaned)
+function showUnifiedCard(user) {
+  const card = document.createElement("div");
+  card.id = "socialCard";
+  Object.assign(card.style, {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    background: "linear-gradient(135deg, rgba(20,20,22,0.92), rgba(25,25,27,0.92))",
+    backdropFilter: "blur(12px)",
+    borderRadius: "16px",
+    padding: "16px 20px",
+    color: "#ffffff",
+    width: "260px",
+    maxWidth: "92vw",
+    zIndex: "999999",
+    textAlign: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+    fontFamily: "Poppins, system-ui, sans-serif",
+    opacity: "0",
+    transition: "opacity 0.22s ease, transform 0.22s ease"
+  });
 
-  // ==================== UNIFIED CARD FOR HOSTS & VIPs ====================
-  function showUnifiedCard(user) {
-    const card = document.createElement("div");
-    card.id = "socialCard";
-    Object.assign(card.style, {
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      background: "linear-gradient(135deg, rgba(20,20,22,0.92), rgba(25,25,27,0.92))",
-      backdropFilter: "blur(12px)",
-      borderRadius: "16px",
-      padding: "16px 20px",
-      color: "#ffffff",
-      width: "260px",
-      maxWidth: "92vw",
-      zIndex: "999999",
-      textAlign: "center",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
-      fontFamily: "Poppins, system-ui, sans-serif",
-      opacity: "0",
-      transition: "opacity 0.22s ease, transform 0.22s ease"
-    });
+  setTimeout(() => {
+    card.style.opacity = "1";
+    card.style.transform = "translate(-50%, -50%) scale(1)";
+  }, 50);
 
-    // Fade in
-    setTimeout(() => {
-      card.style.opacity = "1";
-      card.style.transform = "translate(-50%, -50%) scale(1)";
-    }, 50);
+  // Close button
+  const closeBtn = document.createElement("div");
+  closeBtn.innerHTML = "×";
+  Object.assign(closeBtn.style, {
+    position: "absolute", top: "8px", right: "12px", fontSize: "20px",
+    fontWeight: "700", cursor: "pointer", color: "#aaa"
+  });
+  closeBtn.onclick = () => card.remove();
+  card.appendChild(closeBtn);
 
-    // Close button
-    const closeBtn = document.createElement("div");
-    closeBtn.innerHTML = "×";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "8px",
-      right: "12px",
-      fontSize: "20px",
-      fontWeight: "700",
-      cursor: "pointer",
-      color: "#aaa",
-      opacity: "0.7",
-      transition: "opacity 0.15s, color 0.15s"
-    });
-    closeBtn.onmouseenter = () => { closeBtn.style.opacity = "1"; closeBtn.style.color = "#ff4d4d"; };
-    closeBtn.onmouseleave = () => { closeBtn.style.opacity = "0.7"; closeBtn.style.color = "#aaa"; };
-    closeBtn.onclick = () => card.remove();
-    card.appendChild(closeBtn);
-
- 
-// Username / chatId header
-const header = document.createElement("h3");
-
-// keep original system value exactly as stored
-const rawName = user.chatId?.trim();
-
-// format: @username (no forced casing changes)
-header.textContent = rawName ? `@${rawName}` : "@Guest";
-
-// color logic (unchanged)
-const headerColor =
-  user.isHost
-    ? "#ff6b00"
-    : user.isVIP || user.hasPaid
-    ? "#ff00aa"
-    : "#bbbbbb";
-
-// styling
-header.style.cssText = `
-  margin: 0 0 10px;
-  font-size: 19px;
-  font-weight: 700;
-  background: linear-gradient(90deg, ${headerColor}, #ff55cc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-card.appendChild(header);
+  // Header
+  const header = document.createElement("h3");
+  const rawName = user.chatId?.trim();
+  header.textContent = rawName ? `@${rawName}` : "@Guest";
+  header.style.cssText = `
+    margin: 0 0 10px; font-size: 19px; font-weight: 700;
+    background: linear-gradient(90deg, ${user.isHost ? '#ff6b00' : (user.isVIP || user.hasPaid) ? '#ff00aa' : '#bbbbbb'}, #ff55cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  `;
+  card.appendChild(header);
      
 // ===============================
 // Legendary Details Logic (CLEAN)
