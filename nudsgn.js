@@ -2530,3 +2530,29 @@ function returnToStart() {
   document.body.classList.add('start-mode');
   showActionBar();
 }
+
+// elements
+const tutorialModal = document.getElementById("tutorialModal");
+const openTutorialVideo = document.getElementById("openTutorialVideo");
+const closeTutorialVideo = document.getElementById("closeTutorialVideo");
+const tutorialVideo = document.getElementById("tutorialVideo");
+
+// open modal
+openTutorialVideo.addEventListener("click", () => {
+  tutorialModal.style.display = "flex";
+  tutorialVideo.play();
+});
+
+// close modal
+closeTutorialVideo.addEventListener("click", () => {
+  tutorialModal.style.display = "none";
+  tutorialVideo.pause();
+});
+
+// close if background clicked
+tutorialModal.addEventListener("click", (e) => {
+  if (e.target === tutorialModal) {
+    tutorialModal.style.display = "none";
+    tutorialVideo.pause();
+  }
+});
