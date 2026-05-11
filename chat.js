@@ -139,6 +139,44 @@ function setupPresence(user) {
   }
 }
 
+// ===============================================
+// GLOBAL CACHE SYSTEM — ONE SOURCE OF TRUTH
+// ===============================================
+const userCache = new Map();     // uid → {data, timestamp}
+let userColors = new Map();      // uid → color
+
+// Main cached user fetch function
+async function getCachedUserDoc(uid, forceFresh = false) {
+  if (!uid) return null;
+
+  const now = Date.now();
+  const cached = userCache.get(uid);
+
+  // Use cache if fresh (5 minutes)
+  if (!forceFresh && cached && (now - cached.timestamp < 300000)) {
+    return cached.data;
+  }
+
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      userCache.set(uid, { data, timestamp: now });
+
+      // Update color cache
+      if (data.usernameColor) {
+        userColors.set(uid, data.usernameColor);
+      }
+      return data;
+    }
+    return null;
+  } catch (err) {
+    console.error("getCachedUserDoc error:", err);
+    return null;
+  }
+}
+
+
 
 // Add this once at the top of your script (after consts)
 const style = document.createElement('style');
@@ -154,6 +192,43 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+
+
+// ===============================================
+// OPTIMIZED USER COLORS LISTENER
+// ===============================================
+function setupUsersListener() {
+  if (!currentUser) return;
+
+  // Cleanup old listener
+  if (window.userColorsUnsubscribe) {
+    window.userColorsUnsubscribe();
+  }
+
+  console.log("[OPTIMIZED] Starting active users colors listener");
+
+  const activeRef = collection(db, `rooms/${ROOM_ID}/activeUsers`);
+
+  window.userColorsUnsubscribe = onSnapshot(activeRef, (snap) => {
+    let changed = false;
+
+    snap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      const color = data?.usernameColor || "#ff69b4";
+
+      if (userColors.get(docSnap.id) !== color) {
+        userColors.set(docSnap.id, color);
+        changed = true;
+      }
+    });
+
+    if (changed && lastMessagesArray?.length > 0) {
+      renderMessagesFromArray(lastMessagesArray);
+    }
+  }, (err) => {
+    console.error("[COLORS] Listener error:", err);
+  });
+}
 
 
 // ====================== LOGIN WITH EMAIL OR CHATID ======================
@@ -198,42 +273,6 @@ async function login(identifier, password) {
   }
 }
 
-
-// ===============================================
-// GLOBAL USER CACHE — Reduces repeated getDoc calls
-// ===============================================
-const userCache = new Map();
-let userColors = new Map();   // uid → color
-
-async function getCachedUserDoc(uid, forceFresh = false) {
-  if (!uid) return null;
-
-  const now = Date.now();
-  const cached = userCache.get(uid);
-
-  // Return from cache if fresh
-  if (!forceFresh && cached && (now - cached.timestamp < 300000)) { // 5 minutes
-    return cached.data;
-  }
-
-  try {
-    const snap = await getDoc(doc(db, "users", uid));
-    if (snap.exists()) {
-      const data = snap.data();
-      userCache.set(uid, { data, timestamp: now });
-      
-      // Also update color cache
-      if (data.usernameColor) {
-        userColors.set(uid, data.usernameColor);
-      }
-      return data;
-    }
-    return null;
-  } catch (err) {
-    console.error("getCachedUserDoc error:", err);
-    return null;
-  }
-}
 
 // ===============================================
 // SYNC VIP EXPIRATION LOGIC
@@ -641,67 +680,6 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
-
-// ===============================================
-// OPTIMIZED USER COLORS + ACTIVE USERS (Major Read Saver)
-// ===============================================
-let userColors = new Map();           // uid → color
-let userCache = new Map();            // uid → {data, timestamp}
-
-async function getCachedUser(uid, forceFresh = false) {
-  if (!uid) return null;
-  const now = Date.now();
-  const cached = userCache.get(uid);
-
-  if (!forceFresh && cached && (now - cached.timestamp < 5 * 60 * 1000)) {
-    return cached.data;
-  }
-
-  try {
-    const userRef = doc(db, "users", uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      userCache.set(uid, { data, timestamp: now });
-      if (data.usernameColor) userColors.set(uid, data.usernameColor);
-      return data;
-    }
-    return null;
-  } catch (e) {
-    console.error("getCachedUser error:", e);
-    return null;
-  }
-}
-
-// Optimized listener — only active users in this room
-function setupUsersListener() {
-  if (!currentUser) return;
-
-  // Cleanup
-  if (window.userColorsUnsubscribe) {
-    window.userColorsUnsubscribe();
-  }
-
-  console.log("[OPTIMIZED] Starting active users colors listener");
-
-  const activeRef = collection(db, `rooms/${ROOM_ID}/activeUsers`);
-
-  window.userColorsUnsubscribe = onSnapshot(activeRef, (snap) => {
-    let changed = false;
-    snap.docs.forEach(docSnap => {
-      const data = docSnap.data();
-      const color = data.usernameColor || "#ff69b4";
-      if (userColors.get(docSnap.id) !== color) {
-        userColors.set(docSnap.id, color);
-        changed = true;
-      }
-    });
-
-    if (changed && lastMessagesArray?.length > 0) {
-      renderMessagesFromArray(lastMessagesArray);
-    }
-  });
-}
 
 
 // ===============================================
