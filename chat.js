@@ -536,6 +536,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     localStorage.setItem("lastVipEmail", email);
 
     setupUsersListener?.();
+     loadActiveUsersForSocial();           // ← ADD THIS
      setTimeout(loadActiveUsersForSocial, 1500);   // ← Add this
     showChatUI?.(currentUser);
     attachMessagesListener?.();
@@ -2623,9 +2624,9 @@ function sanitizeKey(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/[@.]/g, "_").trim();
 }
-// ===============================================
-// OPTIMIZED SOCIAL CARD SYSTEM (Light + Fast)
-// ===============================================
+/* ===============================================
+   OPTIMIZED SOCIAL CARD SYSTEM (Fixed + Fast)
+   =============================================== */
 let usersByChatId = new Map();
 
 async function loadActiveUsersForSocial() {
@@ -6805,38 +6806,23 @@ thumbContainer.onclick = (e) => {
 
       };
 
-   // One-liner
+  // One-liner — FIXED & MORE RELIABLE
 const naturePick = video.naturePick || "";
-
-const genderRaw = (video.gender || "person")
-  .toLowerCase()
-  .trim();
-
+const genderRaw = (video.gender || "person").toLowerCase().trim();
 const isMale = genderRaw === "male";
-
 const pronoun = isMale ? "his" : "her";
 
-// Supports 20s, 30s, 40s, 50s
-const age = Number(video.age);
+const age = Number(video.age) || 25;
+const ageGroup = age >= 50 ? "50s" : 
+                 age >= 40 ? "40s" : 
+                 age >= 30 ? "30s" : "20s";
 
-const ageGroup = !age
-  ? "20s"
-  : age >= 50
-  ? "50s"
-  : age >= 40
-  ? "40s"
-  : age >= 30
-  ? "30s"
-  : "20s";
-
-const oneLinerText = naturePick
+const oneLinerText = naturePick 
   ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
   : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
 const oneLiner = document.createElement("div");
-
 oneLiner.textContent = oneLinerText;
-
 oneLiner.style.cssText = `
   font-size: 11px;
   color: #aaa;
