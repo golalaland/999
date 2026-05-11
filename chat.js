@@ -156,34 +156,6 @@ document.head.appendChild(style);
 
 
 
-// ── GLOBAL CACHE (Add after global state) ──
-const userCache = new Map(); // uid → {data, timestamp}
-
-// Strong cached user fetch
-async function getCachedUserDoc(uid, forceFresh = false) {
-  if (!uid) return null;
-
-  const cached = userCache.get(uid);
-  const now = Date.now();
-
-  if (!forceFresh && cached && (now - cached.timestamp < 300000)) { // 5 min
-    return cached.data;
-  }
-
-  try {
-    const snap = await getDoc(doc(db, "users", uid));
-    if (snap.exists()) {
-      const data = snap.data();
-      userCache.set(uid, { data, timestamp: now });
-      return data;
-    }
-    return null;
-  } catch (err) {
-    console.error("getCachedUserDoc failed:", err);
-    return null;
-  }
-}
-
 // ====================== LOGIN WITH EMAIL OR CHATID ======================
 async function login(identifier, password) {
   if (!identifier || !password) {
