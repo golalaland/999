@@ -6322,27 +6322,16 @@ function closeVideoModal() {
 window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
 
-/* ===============================================
-   BEST FREE TONIGHT LOADER — Full Data Guaranteed
-   =============================================== */
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
     showGoldAlert("Please log in to view Free Tonight");
     return;
   }
 
-  showLoader("Loading Free Tonight profiles... 🔥");
+  showLoader("Loading Free Tonight... 🔥");
 
   try {
-    const colRef = collection(db, "highlightVideos");
-    const snap = await getDocs(colRef);
-
-    if (snap.empty) {
-      hideLoader();
-      showGoldAlert("No clips in Free Tonight yet");
-      return;
-    }
-
+    const snap = await getDocs(collection(db, "highlightVideos"));
     const allClips = [];
 
     snap.forEach(userDoc => {
@@ -6351,19 +6340,16 @@ highlightsBtn.onclick = async () => {
 
       highlights.forEach(clip => {
         if (clip.isTrending !== true) return;
-        const now = Date.now();
-        if (clip.trendingUntil && clip.trendingUntil < now) return;
+        if (clip.trendingUntil && clip.trendingUntil < Date.now()) return;
 
-        // Merge everything cleanly at root level
         allClips.push({
-          ...clip,                    // clip data (id, videoUrl, thumbnail, etc.)
+          ...clip,
           uploaderId: userDoc.id,
           uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-          
-          // Explicitly map all important profile fields
-          fruitPick: userData.fruitPick || clip.fruitPick,
-          naturePick: userData.naturePick || clip.naturePick,
-          bodyTypePick: userData.bodyTypePick,
+
+          // FORCE ALL FIELDS NEEDED BY renderCards()
+          fruitPick: userData.fruitPick,
+          naturePick: userData.naturePick,
           gender: userData.gender,
           age: userData.age,
           location: userData.location,
@@ -6378,13 +6364,11 @@ highlightsBtn.onclick = async () => {
       return;
     }
 
-    allClips.sort((a, b) => (b.trendingUntil || 0) - (a.trendingUntil || 0));
-
     showHighlightsModal(allClips);
 
   } catch (err) {
-    console.error("Highlights load error:", err);
-    showGoldAlert("Error loading Free Tonight — try again.");
+    console.error(err);
+    showGoldAlert("Error loading Free Tonight");
   } finally {
     hideLoader();
   }
