@@ -1671,11 +1671,9 @@ async function reportMessage(msgData) {
 }
 
 // =============================
-// TAP MODAL — MINIMAL, CLEAN & MOBILE-PERFECT (2026 FINAL)
+// TAP MODAL — FIXED (No Social Card Trigger)
 // =============================
-
 function showTapModal(targetEl, msgData) {
-  // Remove existing modal
   if (tapModalEl) {
     tapModalEl.remove();
     tapModalEl = null;
@@ -1684,23 +1682,22 @@ function showTapModal(targetEl, msgData) {
   tapModalEl = document.createElement("div");
   tapModalEl.className = "tap-modal";
 
-  // Reply button
   const replyBtn = document.createElement("button");
   replyBtn.textContent = "Reply";
- replyBtn.onclick = (e) => {
-  e.stopPropagation();
-  currentReplyTarget = {
-    id: msgData.id,
-    chatId: msgData.chatId,
-    content: msgData.content
+  replyBtn.onclick = (e) => {
+    e.stopPropagation();
+    currentReplyTarget = {
+      id: msgData.id,
+      chatId: msgData.chatId,
+      content: msgData.content
+    };
+    refs.messageInputEl.placeholder = `Replying to ${msgData.chatId}: ${msgData.content.substring(0, 30)}...`;
+    refs.messageInputEl.focus();
+    showReplyCancelButton();
+    tapModalEl.remove();
+    tapModalEl = null;
   };
-  refs.messageInputEl.placeholder = `Replying to ${msgData.chatId}: ${msgData.content.substring(0, 30)}...`;
-  refs.messageInputEl.focus();
-  showReplyCancelButton(); // ← This is your original working function
-  tapModalEl.remove();
-  tapModalEl = null;
-};
-  // Report button
+
   const reportBtn = document.createElement("button");
   reportBtn.textContent = "Report";
   reportBtn.onclick = async (e) => {
@@ -1710,7 +1707,6 @@ function showTapModal(targetEl, msgData) {
     tapModalEl = null;
   };
 
-  // Cancel "×" — grey backdrop + neon accent
   const cancelBtn = document.createElement("button");
   cancelBtn.textContent = "×";
   cancelBtn.onclick = (e) => {
@@ -1719,11 +1715,9 @@ function showTapModal(targetEl, msgData) {
     tapModalEl = null;
   };
 
-  // Assemble
   tapModalEl.append(replyBtn, reportBtn, cancelBtn);
   document.body.appendChild(tapModalEl);
 
-  // Position above tapped message
   const rect = targetEl.getBoundingClientRect();
   tapModalEl.style.cssText = `
     position: absolute;
@@ -1739,52 +1733,17 @@ function showTapModal(targetEl, msgData) {
     align-items: center;
     z-index: 99999;
     box-shadow: 0 4px 16px rgba(0,0,0,0.7);
-    -webkit-tap-highlight-color: transparent;
   `;
 
-  // Buttons — clean & minimal
-  replyBtn.style.cssText = `
-    background: transparent;
-    color: #ffffff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-  `;
+  replyBtn.style.cssText = `background:transparent;color:#fff;padding:6px 12px;border-radius:8px;font-weight:500;cursor:pointer;`;
+  reportBtn.style.cssText = `background:transparent;color:#fff;padding:6px 12px;border-radius:8px;font-weight:500;cursor:pointer;`;
+  cancelBtn.style.cssText = `background:rgba(255,255,255,0.12);color:#FF1493;font-size:18px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;`;
 
-  reportBtn.style.cssText = `
-    background: transparent;
-    color: #ffffff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-  `;
-
-  // "×" — grey circle + neon
-  cancelBtn.style.cssText = `
-    background: rgba(255,255,255,0.12);
-    color: var(--accent, #FF1493);
-    font-size: 16px;
-    font-weight: 700;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
-
-  // Auto-remove after 4 seconds
   setTimeout(() => {
-    if (tapModalEl) {
-      tapModalEl.remove();
-      tapModalEl = null;
-    }
-  }, 4000);
+    if (tapModalEl) tapModalEl.remove();
+  }, 4500);
 }
+
 // =============================
 // EXTRACT COLORS FROM GRADIENT — USED FOR CONFETTI
 // =============================
@@ -1878,7 +1837,7 @@ function renderMessagesFromArray(messages) {
     wrapper.className = "msg";
     wrapper.id = id;
 
-    // === USERNAME — TAP → SOCIAL CARD (SAFARI-FRIENDLY) ===
+       // === USERNAME — TAP → SOCIAL CARD (FINAL SAFE VERSION) ===
     const nameSpan = document.createElement("span");
     nameSpan.className = "chat-username";
     nameSpan.textContent = (m.chatId || "Guest") + " ";
@@ -1887,44 +1846,62 @@ function renderMessagesFromArray(messages) {
       .replace(/[.@/\\]/g, '_');
     nameSpan.dataset.userId = realUid;
 
-const usernameColor = userColors.get(m.uid) || m.usernameColor || "#ffffff";
+    const usernameColor = userColors.get(m.uid) || m.usernameColor || "#ffffff";
 
     nameSpan.style.cssText = `
       cursor: pointer;
       font-weight: 600;
-      font-size: 13.5px;           /* Slightly smaller — cleaner look */
+      font-size: 13.5px;
       color: ${usernameColor};
       opacity: 0.9;
       user-select: none;
       display: inline;
       margin-right: 4px;
-      -webkit-tap-highlight-color: transparent; /* Removes Safari blue flash */
+      -webkit-tap-highlight-color: transparent;
     `;
 
-    // SAFARI-PROOF TAP
-nameSpan.addEventListener("touchend", (e) => {
-  e.preventDefault();
-  const chatIdLower = (m.chatId || "").toLowerCase().trim();
-  const user = usersByChatId.get(chatIdLower);
-  
-  if (user && user._docId !== currentUser?.uid) {
-    showSocialCard(user);
-  }
-});
+    // SAFE OPEN FUNCTION
+    const openUserProfile = () => {
+      const chatIdLower = (m.chatId || "").toLowerCase().trim();
+      const cachedUser = usersByChatId.get(chatIdLower);
+      
+      if (cachedUser && cachedUser._docId !== currentUser?.uid) {
+        showSocialCard(cachedUser);
+        return;
+      }
 
-// Desktop click
-nameSpan.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const chatIdLower = (m.chatId || "").toLowerCase().trim();
-  const user = usersByChatId.get(chatIdLower);
-  
-  if (user && user._docId !== currentUser?.uid) {
-    showSocialCard(user);
-  }
-});
+      // Fallback direct fetch (safe)
+      if (realUid) {
+        const spinner = document.createElement("div");
+        spinner.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(6px);`;
+        spinner.innerHTML = `<div style="text-align:center;"><div style="width:48px;height:48px;border:4px solid #00ffea;border-top-color:transparent;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div></div>`;
+        document.body.appendChild(spinner);
+
+        getDoc(doc(db, "users", realUid))
+          .then(snap => {
+            spinner.remove();
+            if (snap.exists()) showSocialCard(snap.data());
+            else showStarPopup("User profile not found", "error");
+          })
+          .catch(() => {
+            spinner.remove();
+            showStarPopup("Failed to load profile", "error");
+          });
+      }
+    };
+
+    nameSpan.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openUserProfile();
+    });
+
+    nameSpan.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      openUserProfile();
+    });
 
     wrapper.appendChild(nameSpan);
-
+     
     // === REPLY PREVIEW ===
     let preview = null;
     if (m.replyTo) {
