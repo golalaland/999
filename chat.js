@@ -198,6 +198,43 @@ async function login(identifier, password) {
   }
 }
 
+
+// ===============================================
+// GLOBAL USER CACHE — Reduces repeated getDoc calls
+// ===============================================
+const userCache = new Map();
+let userColors = new Map();   // uid → color
+
+async function getCachedUserDoc(uid, forceFresh = false) {
+  if (!uid) return null;
+
+  const now = Date.now();
+  const cached = userCache.get(uid);
+
+  // Return from cache if fresh
+  if (!forceFresh && cached && (now - cached.timestamp < 300000)) { // 5 minutes
+    return cached.data;
+  }
+
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      userCache.set(uid, { data, timestamp: now });
+      
+      // Also update color cache
+      if (data.usernameColor) {
+        userColors.set(uid, data.usernameColor);
+      }
+      return data;
+    }
+    return null;
+  } catch (err) {
+    console.error("getCachedUserDoc error:", err);
+    return null;
+  }
+}
+
 // ===============================================
 // SYNC VIP EXPIRATION LOGIC
 // ===============================================
