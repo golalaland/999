@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Tap Master • Tap the screen, Win real life </title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0e0e0e;
+  --glass-bg: rgba(255,255,255,0.04);
+  --accent1:#FF1493;
+  --accent2:#FF8C00;
+  --green1:#00e676;
+  --muted:#aaa;
+  --glass-border: rgba(255,255,255,0.08);
+}
+  
+*{box-sizing:border-box}
+html,body {height:100%;margin:0;background:var(--bg);color:#fff;font-family:'Montserrat',sans-serif; -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body {display:flex;justify-content:center;align-items:flex-start;padding:18px 0 120px; touch-action:manipulation; -webkit-tap-highlight-color: transparent; overflow-x:hidden;}
+#appWrapper {width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;}
+
+/* header */
+#gameHeader{text-align:center;margin-top:6px;}
+#welcomeText{font-family:'Press Start 2P',cursive;font-size:11px;color:var(--accent1)}
+#scrambleText{font-family:'Press Start 2P',cursive;font-size:20px;color:var(--accent1);margin-top:4px}
+
+/* glass terminal (tap stats + timer etc) */
+.glass-terminal {
+  width: 90%;
+  max-width: 420px;
+  margin: 18px auto;
+  padding: 14px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.terminal-header { text-align:center; color:var(--accent1); font-size:11px; letter-spacing:2px; margin-bottom:8px; font-weight:700; }
+.terminal-line { font-size:13px; line-height:1.6; letter-spacing:1px; color:#fff; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
+.terminal-line span { color:#00FF99; text-shadow:0 0 6px rgba(0,255,153,0.08); font-weight:700; }
+
+/* train bar (timer visual) */
+#trainBarContainer {
+  width:100%;
+  height:14px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 999px;
+  overflow:hidden;
+  margin-top:8px;
+}
+#trainBar {
+  height:100%;
+  width:100%;
+  background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  transform-origin: left center;
+  transition: width 0.2s linear;
+}
+
+/* stats row inside terminal */
+.stats-row { display:flex; justify-content:space-between; gap:12px; margin-top:8px; align-items:center; }
+.stat { flex:1; background: rgba(255,255,255,0.02); padding:8px; border-radius:8px; text-align:center; }
+.stat .label { font-size:11px; color:var(--muted); }
+.stat .value { font-size:16px; font-weight:800; color:#fff; }
+
+/* bonus bar (progress toward next bonus level) */
+#bonusContainer { width:100%; height:10px; background:#111; border-radius:999px; overflow:hidden; margin-top:12px; box-shadow:0 6px 16px rgba(0,0,0,0.6) inset; }
+#bonusBar { height:100%; width:0%; background:linear-gradient(90deg,var(--green1),#00b0ff); transition:width .15s linear; }
+
+
+/* =================================================
+   RED-HOT APOCALYPSE MODE – Touch Me & Burn Edition
+   ================================================= */
+#tapButton.red-hot {
+  --hot-core: #ff1a1a;
+  --hot-glow: #ff0044;
+  --lava: #ff6600;
+  --hell: #880000;
+
+  position: relative;
+  overflow: hidden;
+  animation: 
+    redHotFury 0.6s infinite alternate,
+    heatWave 2.8s infinite ease-in-out;
+  background: 
+    radial-gradient(circle at 40% 30%, #ffffff 0%, var(--hot-core) 20%, var(--hell) 70%),
+    repeating-radial-gradient(circle at 60% 70%, transparent 0%, transparent 10%, rgba(255,80,0,0.4) 11%, transparent 12%);
+  box-shadow: 
+    0 0 60px 15px var(--hot-glow),
+    0 0 100px 30px var(--lava),
+    inset 0 0 40px #ff0033,
+    inset 0 -10px 30px rgba(0,0,0,0.7) !important;
+  border: 6px solid #ff0000 !important;
+  border-image: linear-gradient(45deg, #ff0000, #ff6600, #ff0000) 1;
+  transform-origin: center;
+  will-change: transform, box-shadow, filter;
+}
+
+/* Intense inner lava glow + crackle effect */
+#tapButton.red-hot::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.4) 0%, transparent 60%);
+  opacity: 0.6;
+  animation: lavaShine 3s infinite linear;
+  filter: blur(12px);
+}
+
+@keyframes lavaShine {
+  0%   { transform: translate(-60%, -60%) rotate(0deg); }
+  100% { transform: translate(60%, 60%) rotate(360deg); }
+}
+
+/* Hellish breathing + violent shake */
+@keyframes redHotFury {
+  from { transform: scale(1) rotate(-1.5deg); }
+  to   { transform: scale(1.18) rotate(1.5deg); }
+}
+
+@keyframes heatWave {
+  0%, 100%   { filter: brightness(1) saturate(1.4); }
+  50%        { filter: brightness(1.6) saturate(2.2); }
+}
+
+/* Screaming hot text */
+#tapButton.red-hot .inner {
+  color: #ffff00 !important;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  text-shadow: 
+    0 0 20px #ffff00,
+    0 0 40px #ff6600,
+    0 0 60px #ff0000;
+  animation: 
+    textBurn 0.35s infinite alternate,
+    flickerHell 0.12s infinite alternate;
+}
+
+@keyframes textBurn {
+  from { transform: scale(1.05); opacity: 0.85; }
+  to   { transform: scale(1.18); opacity: 1; }
+}
+
+@keyframes flickerHell {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+
+/* PUNISHMENT MODE – when player taps too much */
+#tapButton.red-punish {
+  animation: 
+    punishViolent 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97),
+    redFlash 0.4s ease-out;
+  filter: hue-rotate(10deg) brightness(1.8) contrast(1.4);
+  transform: scale(1.1);
+}
+
+@keyframes punishViolent {
+  0%   { transform: translate(0,0) rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-12px, -6px) rotate(-4deg); }
+  20%, 40%, 60%, 80%      { transform: translate(12px, 6px) rotate(4deg); }
+  100% { transform: translate(0,0) rotate(0deg); }
+}
+
+@keyframes redFlash {
+  0%   { background: #ff0000; }
+  40%  { background: #ff3300; }
+  100% { background: transparent; }
+}
+
+/* Extra hell sparks (optional – add to .red-hot::after if you want max chaos) */
+#tapButton.red-hot::after {
+  content: "";
+  position: absolute;
+  width: 100%; height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, #ffff00 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, #ff6600 0%, transparent 50%);
+  opacity: 0.4;
+  animation: sparks 1.2s infinite;
+  pointer-events: none;
+}
+
+@keyframes sparks {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%      { opacity: 0.8; transform: scale(1.15); }
+}
+/* -------------------------------------------------
+   3D Gem Tap Button – unique, addictive, mobile-ready
+   ------------------------------------------------- */
+#tapButton {
+  --gem: #00e676;          /* main gem color */
+  --glow: #00ffd0;         /* glow highlight */
+  --shadow: rgba(0,230,118,.35);
+  --pulse: 1.5s;
+
+  position: relative;
+  width: 103px; height: 103px;          /* a bit larger for 3D feel */
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    #fff    0%,
+    var(--gem) 30%,
+    #008b47 100%
+  );
+  box-shadow:
+    0 8px 20px var(--shadow),
+    inset 0 -4px 8px rgba(0,0,0,.2),
+    inset 0 4px 8px rgba(255,255,255,.4);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .08s ease-out;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Inner text – slightly lifted for depth */
+#tapButton .inner {
+  position: relative;
+  z-index: 2;
+  font: 800 20px/1 "Arial", sans-serif;
+  color: #000;
+  text-shadow: 0 1px 1px rgba(255,255,255,.6);
+}
+
+/* Hover / Ready pulse (desktop) */
+#tapButton::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 60%, var(--glow) 100%);
+  opacity: 0;
+  animation: pulse var(--pulse) infinite ease-out;
+  pointer-events: none;
+}
+#tapButton:hover::before { opacity: .4; }
+
+/* Mobile “ready” glow (no hover) */
+@media (hover: none) {
+  #tapButton::before { animation: pulse-mobile var(--pulse) infinite ease-out; }
+}
+
+/* 3D press animation */
+#tapButton:active {
+  transform: translateY(4px) scale(.94);
+  box-shadow:
+    0 4px 10px var(--shadow),
+    inset 0 -2px 4px rgba(0,0,0,.2),
+    inset 0 2px 4px rgba(255,255,255,.4);
+}
+
+/* Ripple effect */
+#tapButton .ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.6) 10%, transparent 70%);
+  transform: scale(0);
+  animation: ripple .6s ease-out;
+  pointer-events: none;
+}
+#tapButton:active .ripple {
+  inset: 0;
+}
+
+/* -------------------------------------------------
+   Keyframes
+   ------------------------------------------------- */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0; }
+  50%      { transform: scale(1.3); opacity: .4; }
+}
+@keyframes pulse-mobile {
+  0%, 100% { opacity: .15; }
+  50%      { opacity: .35; }
+}
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* Optional: tiny particle burst on tap (pure CSS) */
+#tapButton:active::after {
+  content: "";
+  position: absolute;
+  inset: 50%;
+  width: 6px; height: 6px;
+  margin: -3px;
+  background: var(--glow);
+  border-radius: 50%;
+  box-shadow:
+    0 0 8px 2px var(--glow),
+    20px -20px 0 -2px var(--glow),
+    -20px 20px 0 -2px var(--glow),
+    20px 20px 0 -2px var(--glow),
+    -20px -20px 0 -2px var(--glow);
+  animation: burst .4s ease-out forwards;
+}
+@keyframes burst {
+  to { transform: translateY(-30px); opacity: 0; }
+}
+
+/* ─────── 4 DOPE CONFETTI STYLES ─────── */
+.confetti-dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 1;
+}
+
+/* 1. Classic rainbow */
+.confetti-rainbow { background: hsl(var(--h),80%,60%); }
+@keyframes rainbowFall {
+  to { transform: translate(var(--dx), var(--dy)) rotate(720deg); opacity:0; }
+}
+
+/* 2. Neon spark */
+.confetti-spark { background:#0ff; box-shadow:0 0 6px #0ff; }
+@keyframes sparkBurst {
+  to { transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; }
+}
+
+/* 3. Gold coin */
+.confetti-coin { background:#ff0; border-radius:0; width:8px; height:4px; }
+@keyframes coinFlip {
+  to { transform: translate(var(--dx), var(--dy)) rotateY(720deg); opacity:0; }
+}
+
+/* 4. Firework star */
+.confetti-star {
+  background: transparent;
+  width:0; height:0;
+  border-left: 4px solid transparent;
+  border-right:4px solid transparent;
+  border-bottom:8px solid #ff0;
+}
+@keyframes starBoom {
+  to { transform: translate(var(--dx), var(--dy)) rotate(360deg) scale(2); opacity:0; }
+}
+/* modal (normal fade-in centered) */
+  .modal-backdrop {
+    position:fixed; inset:0; background: rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999;
+  }
+  .modal {
+  width:92%; max-width:420px; background:#0f0f0f; border-radius:12px; padding:16px; border:1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+.modal h3{ margin:0 0 8px 0; color:var(--accent1); font-size:16px; }
+.modal .list { text-align:left; margin-top:12px; max-height:320px; overflow:auto; }
+.modal .list li { padding:8px 6px; border-bottom:1px dashed rgba(255,255,255,0.03); font-weight:700; }
+
+/* result panel (small) */
+#resultModalInner { display:none; margin-top:18px; }
+
+/* small helpers */
+.hidden { display:none!important; }
+button, input { font-size:16px; } /* prevents iOS zoom on tap */
+
+/* ——— ACTIVE TAB: COLD GOLD UNDERLINE + SHIMMER ——— */
+.lb-tab.active {
+  background: #222 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-bottom: 4px solid #FFD700 !important;
+  border-top: 4px solid transparent !important;
+  padding-bottom: 7px !important;
+  box-shadow: 0 4px 16px rgba(255,215,0,0.3) !important;
+}
+
+/* ——— THE SHIMMER YOU ASKED FOR ——— */
+.lb-tab.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.25), transparent);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0%   { left: -100%; }
+  100% { left: 100%; }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: -1; /* behind content */
+}
+
+body.start-mode::before {
+  display: none;
+}
+
+/* NEW CSS – paste this and delete everything you just showed me */
+body.start-mode,
+body.game-mode {
+  background: #000 no-repeat center center fixed; /* fallback black */
+  background-size: cover;
+  transition: background-image 0.6s ease-in-out; /* nice fade between wallpapers – optional but looks great */
+}
+
+body.start-mode::before {
+  display: none; /* you can keep this if you still use it for something */
+}
+
+/* ———————————————————————
+   LEADERBOARD ROWS — PREMIUM GOLD EDITION
+   ——————————————————————— */
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  margin: 8px 12px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(30,30,30,0.6), rgba(20,20,20,0.8));
+  border: 1px solid rgba(80,80,80,0.3);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover glow effect */
+.lb-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255,215,0,0.15);
+  border-color: rgba(255,215,0,0.3);
+}
+
+/* TOP 3 — ROYAL TREATMENT */
+.lb-row:nth-child(1) { /* 1st place */
+  background: linear-gradient(135deg, #2c2400, #4a3800);
+  border: 2px solid #FFD700;
+  box-shadow: 0 0 30px rgba(255,215,0,0.4);
+}
+.lb-row:nth-child(2) { /* 2nd */
+  background: linear-gradient(135deg, #2c2c35, #3a3a45);
+  border: 2px solid #C0C0C0;
+  box-shadow: 0 0 25px rgba(192,192,192,0.3);
+}
+.lb-row:nth-child(3) { /* 3rd */
+  background: linear-gradient(135deg, #352020, #453030);
+  border: 2px solid #CD7F32;
+  box-shadow: 0 0 25px rgba(205,127,50,0.3);
+}
+
+/* Golden shimmer animation for top 3 */
+.lb-row:nth-child(-n+3)::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  animation: shimmer 4s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Avatar — premium circular glow */
+.lb-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  transition: all 0.3s ease;
+}
+
+/* Top 3 avatars get colored borders */
+.lb-row:nth-child(1) .lb-avatar { border-color: #FFD700; box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+.lb-row:nth-child(2) .lb-avatar { border-color: #C0C0C0; box-shadow: 0 0 20px rgba(192,192,192,0.5); }
+.lb-row:nth-child(3) .lb-avatar { border-color: #CD7F32; box-shadow: 0 0 20px rgba(205,127,50,0.5); }
+
+.lb-row:hover .lb-avatar {
+  transform: scale(1.1);
+}
+
+/* Text */
+.lb-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lb-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.lb-score {
+  font-size: 13px;
+  color: #00ff9d;
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* Your rank highlight when outside top 10 */
+.lb-row[style*="background:#111"] {
+  background: linear-gradient(90deg, #0a2e1f, #003322) !important;
+  border: 2px dashed #00ff9d !important;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+/* ——— TAB CONTAINER — tighter & perfectly centered ——— */
+.lb-tabs {
+  display: flex;
+  gap: 4px;                    /* reduced from 6px */
+  padding: 7px;                /* reduced from 8px */
+  background: #111;
+  border-radius: 12px;
+  justify-content: center;
+  margin: 16px auto;
+  width: fit-content;
+}
+
+/* ——— TAB BUTTONS — smaller, tighter, perfectly balanced ——— */
+.lb-tab {
+  position: relative;
+  overflow: hidden;
+  padding: 9px 14px;           /* ← reduced from 11px 18px → much tighter */
+  border: none;
+  border-radius: 10px;
+  font-size: 9px;           /* ← slightly smaller font */
+  font-weight: 600;
+  background: #222;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: unset;            /* ← remove forced width */
+  flex: 1;                     /* ← all tabs same width automatically */
+  max-width: 110px;            /* ← prevents "This Month" from being too wide */
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ——— ACTIVE TAB — your exact gold style, no change ——— */
+.lb-tab.active {
+  background: #FFD700 !important;
+  color: #000 !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+}
+
+/* iOS Haptic Fallback - Shake Effect */
+@keyframes shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(2px, 0); }
+  50% { transform: translate(-2px, 0); }
+  75% { transform: translate(2px, 0); }
+  100% { transform: translate(0, 0); }
+}
+.shake { 
+  animation: shake 0.1s ease-in-out; 
+}
+/* Add inside <style> */
+#bonusBar.flash {
+  animation: bonusFlash 0.4s ease-out;
+}
+@keyframes bonusFlash {
+  0%   { box-shadow: 0 0 0 rgba(0,255,100,0); }
+  50%  { box-shadow: 0 0 20px rgba(0,255,100,0.9); }
+  100% { box-shadow: 0 0 0 rgba(0,255,100,0); }
+}
+.tiny-action-btn {
+  width: 40px;          /* Reduced from 52px */
+  height: 40px;         /* Reduced from 52px */
+  border-radius: 50%;
+  border: none;
+  font-size: 18px;      /* Reduced from 28px to fit better */
+  background: linear-gradient(135deg, #FFD700, #FF4500);
+  color: #000;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4); /* Slightly smaller shadow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tiny-action-btn:nth-child(2) {
+  background: linear-gradient(135deg, #00D4FF, #0078FF);
+}
+
+.tiny-action-btn:nth-child(3) {
+  background: linear-gradient(135deg, #00FFA3, #00C853);
+}
+
+.tiny-action-btn:active {
+  transform: scale(0.88);
+  filter: brightness(1.4);
+}
+
+/* Fixed the broken part you had at the end */
+footer {
+  min-height: 100vh;
+}
+
+#appWrapper {
+  padding-bottom: 100px;
+}
+#endGameModal {
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+/* STAR MARKETPLACE – GORGEOUS 2025 DESIGN */
+.sm-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(14px); display: flex;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+}
+
+.sm-modal {
+  width: 92%; max-width: 420px; max-height: 92vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-radius: 28px; border: 1.5px solid #ffd70033;
+  overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  display: flex; flex-direction: column; color: white;
+  font-family: -apple-system, sans-serif;
+}
+
+.sm-header {
+  padding: 20px; text-align: center;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #000; font-weight: 900; font-size: 22px; letter-spacing: 1px;
+  position: relative;
+}
+
+.sm-close {
+  position: absolute; top: 14px; right: 16px;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(0,0,0,0.4); border: none; color: white;
+  font-size: 24px; font-weight: bold; cursor: pointer;
+}
+
+.sm-tabs { display: flex; background: rgba(255,255,255,0.08); }
+.sm-tab-btn {
+  flex: 1; padding: 16px; background: none; border: none;
+  color: #ccc; font-size: 17px; font-weight: 600; cursor: pointer;
+}
+.sm-tab-btn.sm-active {
+  background: #ffd700; color: #000; font-weight: bold;
+}
+
+.sm-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.sm-tab-content { display: none; flex-direction: column; height: 100%; }
+.sm-tab-content.sm-active { display: flex; }
+
+.sm-scroll {
+  flex: 1; overflow-y: auto; padding: 0 20px 20px;
+  scrollbar-width: thin; scrollbar-color: #ffd700 #333;
+}
+.sm-scroll::-webkit-scrollbar { width: 6px; }
+.sm-scroll::-webkit-scrollbar-thumb { background: #ffd700; border-radius: 3px; }
+
+/* LISTING CARD – BEAUTIFUL */
+.sm-listing {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 18px; padding: 18px; margin-top: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.sm-listing strong {
+  font-size: 24px; color: #ffd700; font-weight: 900;
+}
+.sm-listing .seller {
+  font-size: 16px; font-weight: bold; color: #00ff9d; margin-top: 6px;
+}
+
+.sm-buy-btn, .sm-cancel-btn {
+  padding: 12px 24px; border-radius: 16px; border: none;
+  font-weight: bold; font-size: 16px; cursor: pointer;
+}
+.sm-buy-btn { background: #ffd700; color: #000; }
+.sm-cancel-btn { background: #ff4444; color: white; }
+
+/* SELL FORM */
+.sm-sell-form {
+  background: rgba(255,255,255,0.08); padding: 20px; border-radius: 20px;
+  margin: 20px; border: 1px solid rgba(255,215,0,0.3);
+}
+.sm-sell-form input {
+  width: 100%; padding: 16px; margin: 12px 0;
+  background: rgba(0,0,0,0.4); border: 1px solid #ffd70066;
+  border-radius: 16px; color: white; font-size: 17px;
+}
+.sm-btn-primary {
+  width: 100%; padding: 18px; margin-top: 16px;
+  background: #ffd700; color: #000; border: none;
+  border-radius: 18px; font-size: 19px; font-weight: 900; cursor: pointer;
+}
+
+.sm-balance { font-size: 18px; text-align: center; margin: 0 0 20px; }
+.sm-section-title { margin: 30px 20px 10px; color: #ffd700; font-size: 19px; font-weight: bold; }
+.sm-empty { text-align: center; padding: 80px 20px; opacity: 0.7; font-size: 18px; }
+
+     /* Spinner inside button */
+  .btn-spinner {
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+@keyframes scroll {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+#liveBannerText { min-width: 200vw; }
+.streak-day-mini {display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;color:#00ff88;font-weight:800;opacity:0.6;transition:all .4s;}
+.streak-dot {width:12px;height:12px;border-radius:50%;background:#333;border:2px solid #00ff88;box-shadow:0 0 8px rgba(0,255,136,.4);transition:all .5s;}
+.streak-dot.active {background:#00ff88;box-shadow:0 0 20px #00ff88,0 0 30px #00ff88;transform:scale(1.4);animation:pulse 1.5s infinite alternate;}
+.streak-day-mini.active {opacity:1;transform:translateY(-3px);}
+@keyframes pulse {from{box-shadow:0 0 20px #00ff88;}to{box-shadow:0 0 40px #00ff88;}}
+/* Slider container */
+.slider-wrapper {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* Track that moves */
+.slider-track {
+  display: flex;
+  transition: transform 0.6s ease; /* smooth sliding */
+  width: 100%;
+}
+
+/* Each slide */
+.leaderboard-slide {
+  width: 100%;
+  flex-shrink: 0;
+}
+@keyframes realAlertPop {
+  0% { transform:translate(-50%,-50%) scale(0.3); opacity:0; }
+  70% { transform:translate(-50%,-50%) scale(1.05); }
+  100% { transform:translate(-50%,-50%) scale(1); opacity:1; }
+}
+  
+/* Hide/show the action bar WITHOUT using an ID – 100% safe for your modals */
+div[style*="max-width:320px"][style*="border-radius:24px"] {
+  position: relative;                           /* keeps modal centering working */
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: auto;
+}
+
+/* Hide during gameplay */
+body.game-mode div[style*="max-width:320px"][style*="border-radius:24px"] {
+  opacity: 0;
+  transform: translateY(50px);
+  pointer-events: none;
+}
+
+/* Show on start screen */
+body.start-mode div[style*="max-width:320px"][style*="border-radius:24px"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Profile Card – hide in game-mode, show in start-mode – NO ID NEEDED */
+div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"] {
+  position: relative;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: auto;
+}
+
+body.game-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"] {
+  opacity: 0;
+  transform: translateY(30px);
+  pointer-events: none;
+}
+
+body.start-mode div[style*="max-width:420px"][style*="box-shadow:0 8px 32px"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes amountPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+</style>
+</head>
+</body>
+
+<div id="appWrapper">
+  
+
+  <!-- Header -->
+  <div id="gameHeader">
+    <div id="welcomeText">WELCOME TO</div>
+    <div id="scrambleText">TAP MASTER</div>
+  </div>
+  
+<!-- PERFECT BANNER — instant, slow, colored, live, uses your #bannerPage -->
+<div id="bannerPage" style="background:linear-gradient(90deg,#000,#1a0033,#000);
+                           padding:12px 0;
+                           border-bottom:3px solid #00FFA3;
+                           box-shadow:0 4px 25px rgba(0,255,163,0.5);
+                           overflow:hidden;
+                           margin:0 auto 20px;
+                           max-width:93%;
+                           border-radius:12px;">
+  
+  <div id="liveBannerText" style="display:inline-block; white-space:nowrap;
+                                  font-size:11px; font-weight:800; letter-spacing:0.6px;
+                                  animation:scroll 200s linear infinite;
+                                  min-width:200vw;">
+    
+    <!-- DEFAULT FULL + COLORED FALLBACK — looks fire from second 0 -->
+    <span style="color:#00FFA3;text-shadow:0 0 12px #00FFA3;">LIVE • ₦4.82M POT</span><span style="color:#666;"> • </span>
+    <span style="color:#FF2D55;font-weight:900;">1ST WINS ₦1.9M</span><span style="color:#666;"> • </span>
+    <span style="color:#00FFA3;text-shadow:0 0 12px #00FFA3;">Trojan IS EATING • 5,252 TAPS</span><span style="color:#666;"> • </span>
+    <span style="color:#FFD700;">Jennifer #2 CHASING HARD</span><span style="color:#666;"> • </span>
+    <span style="color:#00FFA3;">₦5.4M PAID OUT THIS WEEK</span><span style="color:#666;"> • </span>
+    <span style="color:#FF2D55;">BID ROYALE PEAKED • 11 MINS AGO</span><span style="color:#666;"> • </span>
+    <span style="color:#FFD700;">TOP 30 CASHING OUT DAILY</span><span style="color:#666;"> • </span>
+    <span style="color:#00FFA3;text-shadow:0 0 12px #00FFA3;">YOU’RE ~1,200 TAPS FROM TOP-30 • MOVE!</span><span style="color:#666;"> • </span>
+    <span style="color:#FF2D55;">RESET IN 6HRS • WAR DON START</span>
+    <!-- repeat once more for instant full look -->
+    <span style="color:#00FFA3;text-shadow:0 0 12px #00FFA3;">LIVE • ₦4.82M POT</span><span style="color:#666;"> • </span>
+    <span style="color:#FF2D55;font-weight:900;">1ST WINS ₦1.9M</span><span style="color:#666;"> • </span>
+    <span style="color:#00FFA3;text-shadow:0 0 12px #00FFA3;">Trojan IS EATING • 5,252 TAPS</span><span style="color:#666;"> • </span>
+    <span style="color:#FFD700;">Jennifer #2 CHASING HARD</span><span style="color:#666;"> • </span>
+    <span style="color:#00FFA3;">₦5.4M PAID OUT THIS WEEK</span><span style="color:#666;"> • </span>
+    <span style="color:#FF2D55;">BID ROYALE PEAKED • 11 MINS AGO</span><span style="color:#666;"> • </span>
+    <span style="color:#FFD700;">TOP 30 CASHING OUT DAILY</span><span style="color:#666;"> • </span>
+    <span style="color:#00FFA3;text-shadow:0 0 12px #00FFA3;">YOU’RE ~1,200 TAPS FROM TOP-30 • MOVE!</span><span style="color:#666;"> • </span>
+    <span style="color:#FF2D55;">RESET IN 6HRS • WAR DON START</span>
+    
+  </div>
+</div>
+  
+
+<!-- Start Page -->
+<div id="startPage" style="width:100%;display:flex;flex-direction:column;align-items:center;margin-top:18px;">
+  <button id="startBtn" style="padding:12px 22px;border-radius:12px;background:linear-gradient(90deg,#00e676,#00b0ff);color:#000;font-weight:800;font-size:16px;border:none;cursor:pointer;">Play</button>
+</div>
+
+
+<!-- Play Confirmation Modal -->
+<div id="playModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;display:flex;">
+  <div style="background:#111;color:#fff;padding:20px;border-radius:12px;width:90%;max-width:320px;text-align:center;">
+    <h3 style="margin-bottom:12px;">Confirm Play</h3>
+    <p>Play Tap Master for <strong>  50 STRZ ⭐️ </strong>?</p>
+    <div style="display:flex;justify-content:space-between;margin-top:18px;">
+      <button id="cancelPlay" style="flex:1;margin-right:6px;padding:10px 12px;border:none;border-radius:8px;background:#444;color:#fff;font-weight:700;cursor:pointer;">Cancel</button>
+      <button id="confirmPlay" style="flex:1;margin-left:6px;padding:10px 12px;border:none;border-radius:8px;background:linear-gradient(90deg,#00e676,#00b0ff);color:#000;font-weight:700;cursor:pointer;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Spinner (loading animation) -->
+  <div id="spinner" class="hidden" style="margin-top:18px;">
+    <div style="width:44px;height:44px;border-radius:50%;border:6px solid #222;border-top:6px solid #00e676; animation:spin 1s linear infinite;margin:0 auto"></div>
+    <div style="margin-top:10px;color:#aaa;font-size:13px">Loading Tap Arena…</div>
+  </div>
+  
+
+  <!-- Game UI -->
+  <div id="gamePage" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+
+    <!-- Glass terminal -->
+    <div id="tapTerminal" class="glass-terminal" aria-live="polite">
+      <div class="terminal-header">TAP TERMINAL</div>
+
+      <div class="terminal-line">
+        <div>⏱ Time Left</div>
+        <div><span id="timer">90</span>s</div>
+      </div>
+
+      <div class="terminal-line">
+        <div>✋🏽 Taps</div>
+        <div><span id="tapCount">0</span></div>
+      </div>
+
+      <div class="terminal-line">
+        <div>💵 Earnings</div>
+        <div><span id="earnings">0.00</span></div>
+      </div>
+
+      <div id="trainBarContainer" style="margin-top:10px;">
+        <div id="trainBar" style="width:100%"></div>
+      </div>
+
+      <div class="stats-row" style="margin-top:10px">
+        <div class="stat">
+          <div class="label">TAP LVL</div>
+          <div class="value" id="bonusLevelVal"></div>
+        </div>
+        <div class="stat">
+          <div class="label">SPEED</div>
+          <div class="value" id="speedVal">—</div>
+        </div>
+      </div>
+
+      <div id="bonusContainer" style="margin-top:12px;">
+        <div id="bonusBar"></div>
+      </div>
+    </div>
+
+<!-- TAP button (replace your old one) -->
+<button id="tapButton" aria-label="Tap" title="Tap fast!">
+  <span class="inner">TAP</span>
+  <div class="ripple"></div>
+</button>
+  
+    <!-- Result modal -->
+<div id="resultModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal" style="padding:16px;border-radius:12px;max-width:380px;text-align:center;position:relative;">
+    <button id="closeResult" style="position:absolute;top:8px;right:8px;font-size:18px;border:none;background:none;cursor:pointer;">✖</button>
+    <div id="resultMessage" style="margin-top:10px;font-size:16px;font-weight:600;"></div>
+    <button id="playAgainBtn" style="margin-top:16px;padding:10px 16px;border-radius:8px;border:none;background:linear-gradient(90deg,#00e676,#00b0ff);color:#000;font-weight:800;cursor:pointer;">Play Again</button>
+  </div>
+</div>
+
+  </div> <!-- end gamePage -->
+
+<!-- FINAL BOTTOM-LOCKED BAR (Profile + Action Buttons) - FIXED & CLEAN -->
+<div id="bottomBar" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:14px 0 20px;background:transparent;z-index:997;pointer-events:none;">
+  <div style="pointer-events:auto;">
+    
+    
+    
+  
+
+  <!-- Profile Card -->
+    <div style="background:rgba(255,255,255,0.05);padding:14px 16px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px);width:90%;max-width:420px;margin:0 auto 16px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+      <div id="profileName" style="font-size:16px;font-weight:700;color:#fff;">GUEST 0000</div>
+      <div style="margin-top:8px;font-size:14px;">
+        <strong style="background:linear-gradient(90deg,#00e676,#00b0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">STARS COLLECTED:</strong>
+        <span id="starCount" style="color:#fff;">50</span>⭐️
+      </div>
+      <div style="margin-top:4px;font-size:14px;">
+        <strong style="background:linear-gradient(90deg,#00e676,#00b0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CASH EARNED:</strong>
+        <span id="cashCount" style="color:#fff;">₦0</span>
+      </div>
+    </div>
+
+<!-- Tiny Action Bar (Leaderboard + Rules + Bid + STORE) -->
+    <div style="display:flex;justify-content:center;gap:18px;padding:10px 18px;background:rgba(255,255,255,0.09);border-radius:24px;border:1px solid rgba(255,255,255,0.14);backdrop-filter:blur(16px);width:88%;max-width:320px;margin:0 auto;box-shadow:0 -8px 30px rgba(0,0,0,0.6);">
+      <button id="leaderboardBtn" class="tiny-action-btn" data-title="Leaderboard">🏆</button>
+      <button id="rulesBtn"        class="tiny-action-btn" data-title="Game Rules">🏁</button>
+      <button id="starMarketBtn"   class="tiny-action-btn" data-title="Star Market">🏪</button>
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- FINAL UNIFORM GOLDEN LEADERBOARD MODAL – SCROLLABLE + BIGGER SLIDER -->
+<div id="leaderboardModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:88%;max-width:360px;max-height:88vh;display:flex;flex-direction:column;background:#0f0f0f;border:2px solid #FFD700;border-radius:18px;box-shadow:0 0 60px rgba(255,215,0,0.55);">
+    
+    <!-- HEADER – FIXED -->
+    <div style="padding:18px 16px 12px;text-align:center;border-bottom:1px solid rgba(255,215,0,0.3);background:rgba(255,215,0,0.07);flex-shrink:0;">
+      <h3 style="margin:0;font-family:'Press Start 2P',cursive;font-size:16px;color:#FFD700;line-height:1.2;">
+        LEADERBOARD
+      </h3>
+      <p style="margin:8px 0 0;font-size:13px;color:#FF8C00;font-weight:700;">
+        Only the fastest survive
+      </p>
+    </div>
+
+    <!-- SCROLLABLE CONTENT -->
+    <div style="flex:1;overflow-y:auto;padding:16px 18px 10px;font-size:14px;color:#eee;display:flex;flex-direction:column;">
+
+      <!-- Tabs -->
+      <div id="leaderboardTabs" style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="lb-tab active" data-period="weekly"
+          style="flex:1;padding:10px 0;border-radius:10px;border:none;background:#FFD700;color:#000;font-weight:800;font-size:11.5px;cursor:pointer;box-shadow:0 4px 15px rgba(255,215,0,0.5);letter-spacing:0.5px;">
+          THIS WEEK
+        </button>
+        <button class="lb-tab" data-period="daily"
+          style="flex:1;padding:10px 0;border-radius:10px;border:none;background:#222;color:#ccc;font-weight:700;font-size:11.5px;cursor:pointer;">
+          TODAY
+        </button>
+        <button class="lb-tab" data-period="monthly"
+          style="flex:1;padding:10px 0;border-radius:10px;border:none;background:#222;color:#ccc;font-weight:700;font-size:11.5px;cursor:pointer;">
+          THIS MONTH
+        </button>
+      </div>
+
+      <!-- Timer -->
+      <div id="dailyTimer" style="text-align:center;font-size:13.5px;font-weight:700;color:#FF8C00;margin:10px 0;">
+        Reset in: <span id="dailyTimerValue">23:59:59</span>
+      </div>
+
+<!-- IMAGE SLIDER – FIXED HEIGHT (WORKS + MODAL STILL WORKS) -->
+<div id="leaderboardImageSlider" class="leaderboardImageSlider" 
+     style="position:relative;width:100%;height:280px;flex-shrink:0;border-radius:12px;margin-bottom:12px;
+            box-shadow:0 0 20px rgba(255,215,0,0.5);border:2px solid rgba(255,215,0,0.4);overflow:hidden;">
+  
+  <div class="slider-track" 
+       style="display:flex;width:100%;height:100%;transition:transform 0.6s ease;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+    
+    <!-- Duplicate first slide for seamless infinite loop -->
+    <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110" 
+         class="leaderboard-slide" 
+         style="width:100%;height:100%;object-fit:contain;flex-shrink:0;">
+  </div>
+</div>
+
+      <!-- Description -->
+      <p id="leaderboardDescription" style="font-size:13.8px;color:#ddd;line-height:1.5;margin:10px 0;text-align:center;">
+        Checkout today's top tappers who dominate the leaderboard.
+      </p>
+
+
+        <!-- WEEKLY STREAK BAR – GUARANTEED TO SHOW -->
+<div id="weeklyStreakBar" style="margin:16px 0 8px;padding:14px 16px;background:rgba(0,255,136,0.08);border:1.5px solid rgba(0,255,136,0.4);border-radius:16px;box-shadow:0 0 20px rgba(0,255,136,0.25);text-align:center;">
+  <div style="font-size:11px;color:#00ff88;font-weight:800;letter-spacing:1px;text-shadow:0 0 8px #00ff88;">WEEKLY FIRE STREAK</div>
+  <div style="font-size:19px;font-weight:900;color:#00ff88;text-shadow:0 0 16px #00ff88;margin:6px 0;">
+    <span id="streakDayCount">0</span>/7 DAYS
+  </div>
+
+  <!-- 7 DAYS – HARD CODED SO IT ALWAYS SHOWS -->
+  <div style="display:flex;justify-content:space-between;gap:4px;margin:10px 0;">
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">SUN</span></div>
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">MON</span></div>
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">TUE</span></div>
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">WED</span></div>
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">THU</span></div>
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">FRI</span></div>
+    <div class="streak-day-mini"><span class="streak-dot"></span><span class="streak-label">SAT</span></div>
+  </div>
+
+  <button id="claimStreakRewardBtn" style="margin-top:12px;width:100%;padding:10px 0;border:none;border-radius:12px;background:#333;color:#666;font-weight:900;font-size:14px;opacity:0.4;pointer-events:none;">
+    CLAIM 350 STRZ
+  </button>
+</div>
+              <!-- MY TAPS TODAY – 2nd 1st 3rd PERFECTLY JOINED -->
+      <div id="myTapsToday" style="background:linear-gradient(135deg,rgba(255,215,0,0.18),rgba(255,140,0,0.08));border:1.5px solid #FFD700;border-radius:14px;padding:11px 13px;margin:16px 0 6px;display:flex;align-items:center;gap:10px;box-shadow:0 3px 12px rgba(255,215,0,0.25);">
+        <div style="flex-shrink:0;font-size:28px;opacity:0.9;">✨</div>
+        
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:11px;color:#FF8C00;font-weight:800;letter-spacing:0.6px;">
+            YOUR TAPS COUNT
+          </div>
+          
+          <div style="margin-top:4px;font-size:19px;font-weight:900;color:#FFD700;display:inline-flex;align-items:baseline;gap:8px;flex-wrap:nowrap;justify-content:center;">
+            <span id="myDailyTapsValue">0</span>
+            <span style="font-size:13px;font-weight:700;opacity:0.9;align-self:center;">taps</span>
+            
+            <!-- BIG RANK + SUFFIX TOGETHER IN ONE SPAN SO NO GAP -->
+            <span id="myRankFull" style="font-size:19px;font-weight:900;line-height:1;"></span>
+            
+            <span style="font-size:13px;font-weight:700;opacity:0.9;align-self:center;">position</span>
+          </div>
+        </div>
+        
+        <div style="flex-shrink:0;font-size:24px;opacity:0.7;">✨</div>
+      </div>
+      
+      <!-- Leaderboard list -->
+      <ol id="leaderboardList" style="list-style:none;padding:0;margin:12px 0 8px;">
+      <!-- Leaderboard list -->
+      <ol id="leaderboardList" style="list-style:none;padding:0;margin:14px 0 10px;">
+        <!-- JS fills this -->
+      </ol>
+
+      <!-- Footer note -->
+      <div style="text-align:center;font-size:12.5px;color:#777;font-style:italic;padding-bottom:10px;">
+        自分の雰囲気を自分のものにしよう
+      </div>
+
+    </div>
+
+    <!-- FOOTER – FIXED -->
+    <div style="padding:16px 20px 20px;text-align:center;background:rgba(0,0,0,0.35);flex-shrink:0;">
+      <button id="closeLeaderboard" style="padding:13px 40px;border:none;border-radius:12px;background:linear-gradient(90deg,#FFD700,#FF8C00);color:#000;font-weight:800;font-size:16px;cursor:pointer;min-width:180px;box-shadow:0 8px 25px rgba(255,215,0,0.6);">
+        CLOSE THE RANKS
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- FINAL COMPACT DETTYVERSE RULES MODAL - REVAMPED -->
+<div id="rulesModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:88%;max-width:360px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;background:#0f0f0f;border:2px solid #FF1493;border-radius:18px;box-shadow:0 0 50px rgba(255,20,147,0.5);">
+   
+    <!-- Header -->
+    <div style="padding:18px 16px 12px;text-align:center;border-bottom:1px solid rgba(255,20,147,0.3);background:rgba(255,20,147,0.05);">
+      <h3 style="margin:0;font-family:'Press Start 2P',cursive;font-size:17px;color:#FF1493;line-height:1.2;">
+        TAPMASTER
+      </h3>
+      <p style="margin:8px 0 0;font-size:13px;color:#00e676;font-weight:600;">
+   Tap the screen, Win real life.
+      </p>
+    </div>
+
+    <!-- Scrollable Content -->
+<div style="flex:1;overflow-y:auto;padding:18px 20px;font-size:14.5px;line-height:1.7;color:#eee;">
+  
+  <div style="background:rgba(255,20,147,0.15);padding:14px;border-radius:12px;margin-bottom:16px;">
+    <strong style="color:#FF1493;">1. Entry</strong><br>
+    No STRZ ⭐️ = No entry. 
+  </div>
+
+  <div style="background:rgba(0,230,118,0.15);padding:14px;border-radius:12px;margin-bottom:16px;">
+    <strong style="color:#00e676;">2. Gameplay</strong><br>
+    You've got 90 seconds, Tap fast! <strong>THE TAP BUTTON</strong> may heat up during taps.<br>
+    <strong>DO NOT</strong> Tap the button while it’s blazing red hot or you will lose TAPS<br>
+    Be on alert & master the pause-cool rhythm to dominate the leaderboard.
+  </div>
+
+  <div style="background:rgba(255,215,0,0.15);padding:14px;border-radius:12px;margin-bottom:16px;">
+    <strong style="color:#FFD700;">3. Rewards</strong><br>
+    • Top 100 tappers every day get <strong>GUARANTEED CASH</strong><br>
+    • Train your reflexes, WIN real rewards & Unlock real experiences.<br>
+    <span style="font-size:13px;color:#ccc;">Winners are responsible for any personal taxes on cash prizes.</span>
+  </div>
+
+  <div style="background:rgba(255,0,0,0.25);padding:14px;border-radius:12px;border:1px solid #ff4444;">
+    <strong style="color:#ff4444;">4. THE LAW</strong><br>
+    TapMaster is a <strong>skill-based promotional contest</strong>. Outcomes depend solely on player reflexes and timing.<br>
+    No purchase necessary, earn free $STRZ via logins/polls.<br><br>
+    No bots.<br>
+    Transparent Payouts.<br>
+    We detect <strong>EVERYTHING</strong><br>
+    Cheaters = <strong>INSTANT BAN!</strong><br><br>
+    <strong style="color:#00e676;">Play clean. Tap like a Master & Stack rewards.</strong>
+  </div>
+
+  <div style="margin-top:20px;text-align:center;font-size:13px;color:#777;font-style:italic;">
+    自分の雰囲気を自分のものにしよう
+  </div>
+</div>
+
+<!-- Close Button -->
+<div style="padding:16px 20px 20px;text-align:center;background:rgba(0,0,0,0.3);">
+  <button id="closeRulesBtn" style="padding:13px 36px;border:none;border-radius:12px;background:linear-gradient(90deg,#FF1493,#FF8C00);color:#fff;font-weight:800;font-size:16px;cursor:pointer;min-width:180px;">
+    I’M READY 
+  </button>
+   </div>
+  </div>
+</div>
+
+<!-- DETTYVERSE BID MODAL — FINAL CLEAN VERSION (Prize ₦50,000 + ₦100 per player) -->
+<div id="bidModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:90%;max-width:380px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;background:#0f0f0f;border:3px solid #00FFA3;border-radius:18px;box-shadow:0 0 60px rgba(0,255,163,0.6);">
+    
+    <!-- HEADER -->
+    <div style="padding:18px 16px 12px;text-align:center;border-bottom:1px solid rgba(0,255,163,0.4);background:rgba(0,255,163,0.08);">
+      <h3 style="margin:0;font-family:'Press Start 2P',cursive;font-size:16px;color:#00FFA3;line-height:1.2;">
+        JOIN BID ROYALE
+      </h3>
+      <div style="margin-top:6px;font-size:13px;color:#00ff88;font-weight:bold;">
+        Starts 00:33 • Ends 23:59 Daily
+      </div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:18px 20px;color:#eee;">
+
+      <!-- LIVE PRIZE POOL -->
+      <div style="background:rgba(0,255,163,0.15);padding:18px;border-radius:14px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:13px;color:#aaa;">Today's Prize Reward</div>
+        <div id="livePrize" style="font-size:32px;font-weight:900;color:#00FFA3;margin:6px 0;">₦50,000</div>
+        <div style="font-size:12px;color:#00ff88;">Tap your way to bigger Funds Today</div>
+      </div>
+
+      <!-- LIVE STATS -->
+      <div style="background:rgba(255,215,0,0.15);padding:16px;border-radius:14px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;color:#FFD700;font-weight:bold;">
+          <span>Entry Fee:</span>
+          <span>50 STRZ ⭐️</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#FFD700;font-weight:bold;margin-top:8px;">
+          <span>Joined In:</span>
+          <span id="livePlayers">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#FFD700;font-weight:bold;margin-top:8px;">
+          <span>Royale Ends In:</span>
+          <span id="countdownTimer" style="color:#00FFA3;font-weight:900;">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- BID LEADERBOARD — REAL TAPS ONLY -->
+      <div style="background:rgba(138,43,226,0.15);padding:18px;border-radius:14px;border:2px solid #8A2BE2;">
+        <h4 style="margin:0 0 14px;text-align:center;color:#E0B0FF;font-weight:900;font-size:15px;letter-spacing:1px;">
+          LIVE BID LEADERBOARD
+        </h4>
+        <div id="bidLeaderboard" style="max-height:260px;overflow-y:auto;font-size:14px;">
+          <div style="text-align:center;color:#888;padding:30px 0;">
+            Bid opens at 00:33<br>Join and start tapping!
+          </div>
+        </div>
+      </div>
+
+      <!-- PRIZE SPLIT -->
+      <div style="margin-top:20px;background:rgba(255,20,147,0.15);padding:16px;border-radius:14px;text-align:center;font-size:13px;">
+        <strong style="color:#FF1493;font-size:14px;">Top 5 split the pot:</strong><br><br>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;color:#fff;">
+          <div>1st → 40%</div> <div>4th → 15%</div>
+          <div>2nd → 25%</div> <div>5th → 10%</div>
+          <div>3rd → 20%</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER BUTTONS -->
+    <div style="padding:18px 20px 22px;text-align:center;background:rgba(0,0,0,0.4);">
+      <button id="confirmBidBtn" style="padding:15px 50px;border:none;border-radius:14px;background:linear-gradient(90deg,#00FFA3,#00C853);color:#000;font-weight:900;font-size:18px;cursor:pointer;min-width:220px;box-shadow:0 4px 20px rgba(0,255,163,0.4);">
+        ENTER
+      </button>
+      <br><br>
+      <button id="closeBidBtn" style="color:#666;background:none;border:none;font-size:14px;cursor:pointer;">
+        maybe tomorrow
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMATION MODAL – COMPACT & DEADLY EDITION -->
+<div id="confirmBidModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:88%;max-width:340px;background:#0f0f0f;border:3px solid #ff2d55;border-radius:18px;box-shadow:0 0 60px rgba(255,45,85,0.5);">
+    <div style="padding:20px 18px;text-align:center;">
+      
+      <!-- Title -->
+      <h3 style="margin:0 0 10px;color:#ff2d55;font-size:16px;font-family:'Press Start 2P',cursive;letter-spacing:0.5px;">
+        LOCK IN BID?
+      </h3>
+      
+      <!-- Warning Text -->
+      <p style="margin:12px 0 18px;color:#ff6b6b;font-size:14px;line-height:1.5;font-weight:500;">
+        This deducts <strong style="color:#fff;">50 STRZ ⭐️</strong> permanently.<br>
+        <span style="color:#ff2d55;font-size:13px;">No refund. No escape.</span>
+      </p>
+      
+      <!-- Buttons – Smaller, Sleeker, Deadly -->
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="finalConfirmBtn" style="
+          flex:1;
+          padding:11px 16px;
+          background:#ff2d55;
+          color:#fff;
+          border:none;
+          border-radius:10px;
+          font-weight:900;
+          font-size:14px;
+          letter-spacing:0.5px;
+          cursor:pointer;
+          box-shadow:0 4px 12px rgba(255,45,85,0.4);
+          transition:all 0.2s;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          Yeah!
+        </button>
+        
+        <button id="finalCancelBtn" style="
+          flex:1;
+          padding:11px 16px;
+          background:#222;
+          color:#999;
+          border:1px solid #444;
+          border-radius:10px;
+          font-weight:600;
+          font-size:14px;
+          cursor:pointer;
+          transition:all 0.2s;
+        " onmouseover="this.style.background='#333'" onmouseout="this.style.background='#222'">
+          Not Ready
+        </button>
+      </div>
+      
+      <!-- Tiny evil footer -->
+      <div style="margin-top:16px;font-size:11px;color:#666;font-style:italic;">
+        What's tapping yo! 
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIMPLE CLEAN ALERT — matches your bidModal style -->
+<div id="niceAlert" class="modal-backdrop" style="display:none;z-index:9999;">
+  <div class="modal" style="width:88%;max-width:340px;background:#0f0f0f;border:3px solid #00FFA3;border-radius:18px;box-shadow:0 0 60px rgba(0,255,163,0.6);">
+    <div style="padding:24px 20px;text-align:center;">
+      <p id="niceAlertMessage" style="margin:0 0 20px;color:#eee;font-size:15px;line-height:1.5;">Message</p>
+      <button id="niceAlertBtn" style="padding:12px 50px;background:linear-gradient(90deg,#00FFA3,#00C853);color:#000;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;">
+        OKAY
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- STAR MARKET / BANK MODAL -->
+<div id="starMarketModal" class="modal-backdrop" style="display:none;">
+  <div class="modal" style="width:92%;max-width:380px;background:#0f0f0f;border:3px solid #00ff88;border-radius:20px;box-shadow:0 0 70px rgba(0,255,136,0.4);padding:20px 18px;text-align:center;">
+    
+    <h2 style="margin:0 0 16px;color:#00ff88;font-size:18px;font-family:'Press Start 2P',cursive;letter-spacing:1px;text-shadow:0 0 12px #00ff88;">
+      스트리즈 은행 지구 최고의 은행
+    </h2>
+
+    <!-- USER BALANCE – BANK STYLE -->
+    <div style="background:rgba(0,255,136,0.12);border:2px dashed #00ff88;border-radius:16px;padding:18px 16px;margin:16px 0;">
+      <div style="font-size:13px;color:#00ff88;opacity:0.9;letter-spacing:0.8px;">WELCOME</div>
+      <div style="font-size:22px;font-weight:900;color:#fff;margin:6px 0;">
+        @<span id="bankUsername">player</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:15px;">
+        <div>
+          <div style="color:#aaa;font-size:11px;">CASH REWARD</div>
+          <div style="color:#00ff88;font-size:20px;font-weight:900;">₦<span id="bankCash">0</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:#aaa;font-size:11px;">STRZ BALANCE</div>
+          <div style="color:#FFD700;font-size:20px;font-weight:900;"><span id="bankStars">0</span> ⭐</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WITHDRAW SECTION -->
+    <div style="margin:20px 0;">
+      <p style="margin:0 0 12px;color:#fff;font-size:14px;">Withdraw Cash (min ₦5,000)</p>
+      <input type="text" id="withdrawAmount" placeholder="Enter amount" style="width:100%;padding:14px;background:#111;border:2px solid #444;border-radius:12px;color:#fff;font-size:16px;text-align:center;">
+      
+      <button id="withdrawBtn" style="margin-top:16px;width:100%;padding:14px;background:#00ff88;color:#000;font-weight:900;font-size:16px;border:none;border-radius:12px;cursor:not-allowed;opacity:0.5;">
+        WITHDRAW
+      </button>
+      
+      <div style="margin-top:10px;font-size:12px;color:#666;">
+        Processing: 24 Hrs  • Fast Track available
+      </div>
+    </div>
+
+    <button id="closeStarMarket" style="width:100%;padding:12px;background:#222;color:#999;border:1px solid #444;border-radius:12px;font-weight:600;font-size:14px;">
+      CLOSE
+    </button>
+  </div>
+</div>
+
+ <!-- LUXURY SUCCESS OVERLAY — GOLDEN MONEY RAIN 2.0 -->
+<div id="withdrawSuccessOverlay" class="modal-backdrop" style="display:none; z-index:9999999; background:rgba(0,0,0,0.96);">
+  <!-- Golden particle rain background -->
+  <div id="goldenRain" style="position:absolute; inset:0; overflow:hidden; pointer-events:none;"></div>
+
+  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; width:90%; max-width:420px;">
+    
+    <!-- Elegant "PAID" with subtle glow -->
+    <div style="
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: #FFD700;
+      text-shadow: 0 0 30px rgba(255,215,0,0.6);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 0.3s forwards;
+    ">
+      PAID
+    </div>
+
+    <!-- Amount with falling animation and glow -->
+    <div style="
+      font-family: 'Montserrat', sans-serif;
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(180deg, #FFEB3B, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 10px 40px rgba(255,215,0,0.4);
+      margin: 20px 0;
+      opacity: 0;
+      animation: fadeInUp 1.2s ease-out 0.6s forwards, amountPulse 2s ease-in-out infinite alternate 1.8s;
+    ">
+      ₦<span id="goldenAmount">0</span>
+    </div>
+
+    <!-- Success message -->
+    <div id="successMessage" style="
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #b3ffab;
+      margin: 24px 0 40px;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 1s forwards;
+    ">
+      Withdrawal requested successfully!
+    </div>
+
+    <!-- Premium close button -->
+    <button id="closeSuccessBtn" style="
+      padding: 16px 48px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #000;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(255,215,0,0.4);
+      transition: all 0.3s ease;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 1.3s forwards;
+    "
+    onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(255,215,0,0.6)'"
+    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 30px rgba(255,215,0,0.4)'">
+      GOT IT
+    </button>
+  </div>
+</div>
+
+<!-- CHEERING SOUND (you can change the URL) -->
+<audio id="cheerSound" src="https://cdn.glitch.global/8f8e1f45-7e3f-4b5c-9f0a-4d8e9f1a2b3c/cheer.mp3"></audio>
+
+
+  
+
+<style>
+@keyframes pulseGlow {
+  0%, 100% { text-shadow: 0 0 40px #FFD700; }
+  50% { text-shadow: 0 0 80px #FFD700, 0 0 120px #FF8C00; }
+}
+</style>
+
+<!-- WITHDRAWAL CONFIRM MODAL — CUTE & DEADLY (NO BANK DETAILS) -->
+<div id="withdrawConfirmModal" class="modal-backdrop" style="display:none;z-index:99999;">
+  <div class="modal" style="width:88%;max-width:340px;background:#0f0f0f;border:3px solid #00ff88;border-radius:20px;box-shadow:0 0 80px rgba(0,255,136,0.55);padding:26px 20px;text-align:center;">
+    
+   <h2 style="
+  margin:0 0 18px;
+  color:#00ff88;
+  font-size:16px;
+  font-family:'Press Start 2P',cursive;
+  letter-spacing:1px;
+  text-shadow:0 0 0.12px #00ff88;
+">
+  WITHDRAW CASH?
+</h2>
+
+
+    <div style="background:rgba(0,255,136,0.12);border:2px dashed #00ff88;border-radius:16px;padding:20px;margin:16px 0;">
+      <div style="font-size:36px;font-weight:900;color:#fff;">
+        ₦<span id="confirmAmount">0</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button id="standardWithdrawBtn" style="flex:1;padding:14px;background:#222;color:#ccc;border:2px solid #444;border-radius:14px;font-weight:900;font-size:14px;">
+        STANDARD<br><small style="opacity:0.7;font-size:10px;">24 hrs • FREE</small>
+      </button>
+      
+      <button id="fastTrackWithdrawBtn" style="flex:1;padding:14px;background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:14px;font-weight:900;font-size:14px;box-shadow:0 0 30px rgba(0,255,136,0.6);">
+        FAST TRACK<br><small style="opacity:0.9;font-size:10px;">30 mins • 21 STRZ</small>
+      </button>
+    </div>
+
+    <button id="cancelWithdrawBtn" style="margin-top:16px;width:100%;padding:12px;background:#111;color:#666;border:1px solid #333;border-radius:12px;font-weight:600;font-size:13px;">
+      CANCEL
+    </button>
+  </div>
+</div>
+  
+  <!-- FAST TRACK CONFIRM MODAL -->
+<div id="fastTrackConfirmModal" class="modal-backdrop" style="display:none;z-index:999999;">
+  <div class="modal" style="width:88%;max-width:320px;background:#0f0f0f;border:3px solid #FFD700;border-radius:18px;padding:24px 20px;text-align:center;box-shadow:0 0 80px rgba(255,215,0,0.6);">
+    
+    <h3 style="margin:0 0 16px;color:#FFD700;font-size:17px;font-family:'Press Start 2P',cursive;">
+      FAST TRACK?
+    </h3>
+    
+    <p style="margin:14px 0 20px;color:#fff;font-size:15px;line-height:1.5;">
+      Pay <strong style="color:#FFD700;">21 STRZ ⭐️</strong> for<br> priority payment processing?
+    </p>
+    
+    <div style="display:flex;gap:12px;">
+      <button id="cancelFastTrack" style="flex:1;padding:12px;background:#333;color:#999;border:1px solid #555;border-radius:12px;font-weight:700;font-size:14px;">
+        NO
+      </button>
+      <button id="confirmFastTrack" style="flex:1;padding:12px;background:linear-gradient(90deg,#FFD700,#FF8C00);color:#000;border:none;border-radius:12px;font-weight:900;font-size:14px;box-shadow:0 6px 20px rgba(255,215,0,0.5);">
+        YES!
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- REAL ALERT — ALWAYS ON TOP, CANNOT BE HIDDEN -->
+<div id="realAlert" class="modal-backdrop" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.94);z-index:9999999 !important;">
+  <div class="modal" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:360px;background:#0f0f0f;border:4px solid #00FFA3;border-radius:20px;box-shadow:0 0 80px rgba(0,255,163,0.8),inset 0 0 30px rgba(0,255,163,0.2);padding:28px 20px;text-align:center;animation:realAlertPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);">
+    
+    <div style="font-size:48px;margin-bottom:16px;"></div>
+    
+    <p id="realAlertMessage" style="margin:20px 0;color:#eee;font-size:16px;line-height:1.6;font-weight:500;">
+      Message goes here
+    </p>
+    
+    <button id="realAlertBtn" style="padding:9px 33px;background:linear-gradient(90deg,#00FFA3,#00E676);color:#000;border:none;border-radius:14px;font-weight:900;font-size:16px;cursor:pointer;box-shadow:0 8px 30px rgba(0,255,163,0.5);min-width:180px;">
+      OKAY
+    </button>
+  </div>
+</div>
+
+<!-- AUDIO ASSETS — preload metadata only -->
+<audio id="tapSound" src="/assets/pop-reverb-423718.mp3" preload="metadata"></audio>
+<audio id="confettiSound" src="/assets/material-mold-394512.mp3" preload="metadata"></audio>
+<audio id="comboSound" src="/assets/clear-combo-7-394494.mp3" preload="metadata"></audio>
+<audio id="uiClickSound" src="/assets/click-sound-432501.mp3" preload="metadata"></audio>
+
+   <!-- Your game HTML above -->
+<script type="module" src="e05b44cf59f8548cc0a2d34d9b122cf86cc44b18.js?t=20251123"></script>
+</body>
+</html>
+  
