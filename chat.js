@@ -6303,7 +6303,7 @@ window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
 
 /* ===============================================
-   FIXED FREE TONIGHT — Full Profile Data Restored
+   BEST FREE TONIGHT LOADER — Full Data Guaranteed
    =============================================== */
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
@@ -6326,29 +6326,28 @@ highlightsBtn.onclick = async () => {
     const allClips = [];
 
     snap.forEach(userDoc => {
-      const userData = userDoc.data();           // This contains fruitPick, naturePick, etc.
+      const userData = userDoc.data();
       const highlights = userData.highlights || [];
 
       highlights.forEach(clip => {
         if (clip.isTrending !== true) return;
-
         const now = Date.now();
         if (clip.trendingUntil && clip.trendingUntil < now) return;
 
+        // Merge everything cleanly at root level
         allClips.push({
-          ...clip,
+          ...clip,                    // clip data (id, videoUrl, thumbnail, etc.)
           uploaderId: userDoc.id,
           uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
           
-          // === RESTORED FULL USER DATA ===
-          fruitPick: userData.fruitPick,
-          naturePick: userData.naturePick,
+          // Explicitly map all important profile fields
+          fruitPick: userData.fruitPick || clip.fruitPick,
+          naturePick: userData.naturePick || clip.naturePick,
           bodyTypePick: userData.bodyTypePick,
           gender: userData.gender,
           age: userData.age,
           location: userData.location,
           city: userData.city,
-          // Add any other fields you use in the card
         });
       });
     });
