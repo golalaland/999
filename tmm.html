@@ -1148,6 +1148,18 @@ footer { min-height: 100vh; }
 .sm-balance { font-size: 18px; text-align: center; margin: 0 0 20px; }
 .sm-section-title { margin: 30px 20px 10px; color: var(--gold); font-size: 19px; font-weight: 700; }
 .sm-empty { text-align: center; padding: 80px 20px; opacity: 0.5; font-size: 18px; }
+   .tiny-action-bar {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body.game-mode .tiny-action-bar {
+  opacity: 0;
+  transform: translateY(40px);
+  pointer-events: none;
+  visibility: hidden;   /* extra safety */
+}
 </style>
 </head>
 <body>
@@ -1319,18 +1331,19 @@ footer { min-height: 100vh; }
         </div>
       </div>
 
-      <!-- Tiny Action Bar -->
-      <div style="display:flex;justify-content:center;gap:14px;padding:10px 18px;
-        background:rgba(6,12,20,0.88);border-radius:20px;
-        border:1px solid rgba(255,255,255,0.07);backdrop-filter:blur(20px);
-        width:88%;max-width:320px;margin:0 auto;
-        box-shadow:0 -8px 30px rgba(0,0,0,0.5);">
-        <button id="leaderboardBtn" class="tiny-action-btn" data-title="Leaderboard">🏆</button>
-        <button id="rulesBtn"       class="tiny-action-btn" data-title="Game Rules">🏁</button>
-        <button id="starMarketBtn"  class="tiny-action-btn" data-title="Star Market">🏪</button>
-      </div>
-
-    </div>
+ <!-- Tiny Action Bar -->
+<div id="tinyActionBar" class="tiny-action-bar">
+  <div style="display:flex;justify-content:center;gap:14px;padding:10px 18px;
+    background:rgba(6,12,20,0.88);border-radius:20px;
+    border:1px solid rgba(255,255,255,0.07);backdrop-filter:blur(20px);
+    width:88%;max-width:320px;margin:0 auto;
+    box-shadow:0 -8px 30px rgba(0,0,0,0.5);">
+    
+    <button id="leaderboardBtn" class="tiny-action-btn" data-title="Leaderboard">🏆</button>
+    <button id="rulesBtn" class="tiny-action-btn" data-title="Game Rules">🏁</button>
+    <button id="starMarketBtn" class="tiny-action-btn" data-title="Star Market">🏪</button>
+  </div>
+</div>
   </div>
 
   <!-- ══════════════════════════════════════════════
@@ -1889,7 +1902,7 @@ footer { min-height: 100vh; }
 
 </div><!-- /appWrapper -->
 
-<script type="module" src="e05b44cf59f8548cc0a2d34d9b122cf86cc44b18.js?t=20251123"></script>
+<script type="module" src="nudsgn.js?t=20251123"></script>
 
 </body>
 </html>
