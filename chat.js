@@ -1886,7 +1886,7 @@ function renderMessagesFromArray(messages) {
       .replace(/[.@/\\]/g, '_');
     nameSpan.dataset.userId = realUid;
 
-    const usernameColor = refs.userColors?.[m.uid] || "#ffffff";
+const usernameColor = userColors.get(m.uid) || m.usernameColor || "#ffffff";
 
     nameSpan.style.cssText = `
       cursor: pointer;
@@ -2075,107 +2075,82 @@ function renderMessagesFromArray(messages) {
   ✔ Proper unsubscribe handling
 */
 
+// ===============================================
+// OPTIMIZED MESSAGES LISTENER — Major Read Saver
+// ===============================================
 let messagesUnsubscribe = null;
 
 function attachMessagesListener() {
-  // ---- Cleanup existing listener (prevents duplicates)
+  // Prevent duplicate listeners
   if (typeof messagesUnsubscribe === "function") {
     messagesUnsubscribe();
     messagesUnsubscribe = null;
   }
 
-  const CHAT_LIMIT = 21;
+  const CHAT_LIMIT = 30; // Increased a bit for better UX, still controlled
 
-  // ---- Correct chronological query
   const q = query(
     collection(db, CHAT_COLLECTION),
-    orderBy("timestamp", "asc"), // ← OLDEST → NEWEST (correct chat order)
+    orderBy("timestamp", "asc"),
     limit(CHAT_LIMIT)
   );
 
-  // ---- Persisted gift alerts
   const shownGiftAlerts = new Set(
     JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
   );
 
-  function saveShownGift(id) {
-    shownGiftAlerts.add(id);
-    localStorage.setItem(
-      "shownGiftAlerts",
-      JSON.stringify([...shownGiftAlerts])
-    );
-  }
-
-  // ---- Local optimistic messages
   let localPendingMsgs = JSON.parse(
     localStorage.getItem("localPendingMsgs") || "{}"
   );
 
-  messagesUnsubscribe = onSnapshot(
-    q,
+  messagesUnsubscribe = onSnapshot(q, 
     { includeMetadataChanges: true },
     (snapshot) => {
-      console.log(
-        `Messages snapshot | ${snapshot.metadata.fromCache ? "✓ cache" : "server"} | ` +
-        `docs: ${snapshot.size} | changes: ${snapshot.docChanges().length}`
-      );
+      console.log(`[Messages] ${snapshot.metadata.fromCache ? 'CACHE' : 'SERVER'} | ${snapshot.size} msgs`);
 
       snapshot.docChanges().forEach((change) => {
         if (change.type !== "added") return;
 
         const msgId = change.doc.id;
-        const msg   = change.doc.data();
+        const msg = change.doc.data();
 
-        // ---- Skip temp echoes
+        // Skip temp/echo messages
         if (msg.tempId?.startsWith("temp_")) return;
-
-        // ---- Defensive: already rendered
         if (document.getElementById(msgId)) return;
 
-        // ---- Match optimistic message
+        // Optimistic UI reconciliation
         for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
-          const sameUser = pending.uid === msg.uid;
-          const sameText = pending.content === msg.content;
-
-          const timeDiff = Math.abs(
-            (msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)
-          );
-
-          if (sameUser && sameText && timeDiff < 7000) {
+          if (pending.uid === msg.uid && 
+              pending.content === msg.content && 
+              Math.abs((msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)) < 8000) {
+            
             const tempEl = document.getElementById(tempId);
             if (tempEl) tempEl.remove();
 
             delete localPendingMsgs[tempId];
-            localStorage.setItem(
-              "localPendingMsgs",
-              JSON.stringify(localPendingMsgs)
-            );
+            localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
             break;
           }
         }
 
-        // ---- Render message (append → bottom)
+        // Render the new message
         renderMessagesFromArray([{ id: msgId, data: msg }]);
 
-        // ---- Gift alert (receiver only)
+        // Gift alert (only for receiver)
         if (msg.highlight && msg.content?.includes("gifted")) {
           const myChatId = currentUser?.chatId?.toLowerCase();
-          if (!myChatId) return;
-
-          const [sender, , receiver, amount] = msg.content.split(" ");
-
-          if (
-            receiver?.toLowerCase() === myChatId &&
-            amount &&
-            !shownGiftAlerts.has(msgId)
-          ) {
-            showGiftAlert(`${sender} gifted you ${amount} stars ⭐️`);
-            saveShownGift(msgId);
+          if (myChatId) {
+            const parts = msg.content.split(" ");
+            if (parts[2]?.toLowerCase() === myChatId && !shownGiftAlerts.has(msgId)) {
+              showGiftAlert(`${parts[0]} gifted you ${parts[3]} stars ⭐️`);
+              shownGiftAlerts.add(msgId);
+              localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
+            }
           }
         }
 
-        // ---- Auto-scroll only when YOU send
-        if (refs.messagesEl && msg.uid === currentUser?.uid) {
+        // Auto-scroll when current user sends
+        if (msg.uid === currentUser?.uid && refs.messagesEl) {
           refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
         }
       });
@@ -2185,6 +2160,7 @@ function attachMessagesListener() {
     }
   );
 }
+
 /* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
 let notificationsUnsubscribe = null; // ← one true source of truth
 
@@ -6336,7 +6312,7 @@ highlightsBtn.onclick = async () => {
   }
 
   // Show nice transparent page spinner
-  showLoader("Loading Free Tonight profiles... 🔥");
+  showLoader("Entering Free Tonight...🔥");
 
   try {
     const colRef = collection(db, "highlightVideos");
