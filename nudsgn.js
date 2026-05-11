@@ -2484,24 +2484,6 @@ setBg();
 new MutationObserver(setBg).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 // Re-apply whenever class changes
 new MutationObserver(setBg).observe(document.body, {attributes:true, attributeFilter:['class']});
-// =============== ACTION BAR CONTROL ===============
-const tinyActionBar = document.getElementById('tinyActionBar');
-
-function hideActionBar() {
-  if (tinyActionBar) {
-    tinyActionBar.classList.add('hidden');        // or just rely on body.game-mode
-    // Alternative: direct style for emergency
-    // tinyActionBar.style.opacity = '0';
-    // tinyActionBar.style.transform = 'translateY(40px)';
-    // tinyActionBar.style.pointerEvents = 'none';
-  }
-}
-
-function showActionBar() {
-  if (tinyActionBar) {
-    tinyActionBar.classList.remove('hidden');
-  }
-}
 
 // Improved game start handler
 confirmPlay?.addEventListener('click', async () => {
