@@ -1207,7 +1207,7 @@ body.game-mode .tiny-action-bar {
       font-weight:800;font-size:22px;letter-spacing:4px;cursor:pointer;">PLAY</button>
   </div>
 
-  <!-- ─── PLAY CONFIRM MODAL ─── -->
+<!-- ─── PLAY CONFIRM MODAL ─── -->
 <div id="playModal" style="
   display:none;
   position:fixed;
@@ -1236,7 +1236,7 @@ body.game-mode .tiny-action-bar {
     overflow:hidden;
   ">
 
-    <!-- subtle glow -->
+    <!-- subtle top glow -->
     <div style="
       position:absolute;
       top:-80px;
@@ -1247,7 +1247,7 @@ body.game-mode .tiny-action-bar {
       pointer-events:none;
     "></div>
 
-    <!-- title -->
+    <!-- TITLE -->
     <h3 style="
       margin-bottom:12px;
       font-family:'Bebas Neue',cursive;
@@ -1256,19 +1256,22 @@ body.game-mode .tiny-action-bar {
       color:#00FFB2;
       position:relative;
       z-index:2;
+      text-shadow:0 0 12px rgba(0,255,178,0.4);
     ">
       Confirm Play
     </h3>
 
-    <!-- description -->
+    <!-- DESCRIPTION -->
     <p style="
       color:#9ca3af;
       font-size:14px;
       line-height:1.6;
       position:relative;
       z-index:2;
+      margin-bottom:0;
     ">
       Play Tap Master for
+
       <strong style="
         color:#FFD700;
         text-shadow:0 0 10px rgba(255,215,0,0.5);
@@ -1280,90 +1283,94 @@ body.game-mode .tiny-action-bar {
     <!-- ⚠️ WARNING BOX -->
     <div style="
       margin-top:16px;
-      padding:12px 14px;
-      border-radius:16px;
-      background:linear-gradient(
-        135deg,
-        rgba(255,0,0,0.18),
-        rgba(255,60,0,0.08)
-      );
+      padding:14px;
+      border-radius:18px;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255,0,0,0.20),
+          rgba(255,50,0,0.08)
+        );
       border:1px solid rgba(255,60,60,0.45);
       box-shadow:
-        0 0 20px rgba(255,0,0,0.18),
+        0 0 25px rgba(255,0,0,0.18),
         inset 0 0 12px rgba(255,80,80,0.08);
       position:relative;
       overflow:hidden;
-      text-align:left;
     ">
 
-      <!-- moving danger glow -->
+      <!-- animated danger sweep -->
       <div style="
         position:absolute;
         inset:0;
         background:linear-gradient(
           90deg,
           transparent,
-          rgba(255,0,0,0.08),
+          rgba(255,0,0,0.10),
           transparent
         );
         animation:dangerSlide 2.8s linear infinite;
       "></div>
 
+      <!-- warning content -->
       <div style="
         position:relative;
         z-index:2;
-        display:flex;
-        align-items:flex-start;
-        gap:10px;
       ">
 
+        <!-- centered warning title -->
         <div style="
-          font-size:20px;
-          filter:drop-shadow(0 0 8px red);
+          color:#ff3b3b;
+          font-weight:900;
+          font-size:12px;
+          letter-spacing:2px;
+          text-transform:uppercase;
+          margin-bottom:10px;
+          font-family:'Rajdhani',sans-serif;
+          text-align:center;
+          width:100%;
+          text-shadow:
+            0 0 10px rgba(255,0,0,0.7),
+            0 0 20px rgba(255,0,0,0.35);
         ">
-          ⚠️
+          ⚠️ RED HOT WARNING ⚠️
         </div>
 
-        <div>
+        <!-- warning text -->
         <div style="
-  color:#ff3b3b;
-  font-weight:900;
-  font-size:12px;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  margin-bottom:6px;
-  font-family:'Rajdhani',sans-serif;
-  text-align:center;
-  width:100%;
-  text-shadow:0 0 10px rgba(255,0,0,0.7);
-">
-  ⚠️ RED HOT WARNING ⚠️
-</div>
+          color:#ffd5d5;
+          font-size:13px;
+          line-height:1.6;
+          font-family:'Rajdhani',sans-serif;
+          text-align:center;
+        ">
 
-          <div style="
-            color:#ffd5d5;
-            font-size:13px;
-            line-height:1.5;
-            font-family:'Rajdhani',sans-serif;
+          <strong style="
+            color:#ffffff;
+            text-shadow:0 0 10px rgba(255,255,255,0.25);
           ">
-            <strong style="color:#fff;">DO NOT TAP</strong>
-            when the button turns
+            DO NOT TAP
+          </strong>
 
-            <span style="
-              color:#ff2b2b;
-              font-weight:900;
-              text-shadow:0 0 10px red;
-            ">
-              RED HOT
-            </span>
+          when the button turns
 
-            — you'll lose taps instantly.
-          </div>
+          <span style="
+            color:#ff2b2b;
+            font-weight:900;
+            text-shadow:
+              0 0 10px red,
+              0 0 20px rgba(255,0,0,0.5);
+          ">
+            RED HOT
+          </span>
+
+          — you'll lose taps instantly.
         </div>
+
       </div>
     </div>
 
-    <!-- buttons -->
+    <!-- BUTTONS -->
     <div style="
       display:flex;
       justify-content:space-between;
@@ -1373,6 +1380,7 @@ body.game-mode .tiny-action-bar {
       z-index:2;
     ">
 
+      <!-- cancel -->
       <button id="cancelPlay" style="
         flex:1;
         padding:12px;
@@ -1388,6 +1396,7 @@ body.game-mode .tiny-action-bar {
         Cancel
       </button>
 
+      <!-- confirm -->
       <button id="confirmPlay" style="
         flex:1;
         padding:12px;
@@ -1405,6 +1414,7 @@ body.game-mode .tiny-action-bar {
       </button>
 
     </div>
+
   </div>
 </div>
 
