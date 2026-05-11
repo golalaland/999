@@ -6303,50 +6303,15 @@ window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
 
 /* ===============================================
-   RANDOM MULTI-LANGUAGE LOADER TEXTS
+   FIXED FREE TONIGHT — Full Profile Data Restored
    =============================================== */
-
-const freeTonightTexts = [
-  "Entering Free Tonight...🔥",                  // English
-  "Entrando a Free Tonight...🔥",                // Spanish
-  "Bienvenue dans Free Tonight...🔥",            // French
-  "Free Tonight에 입장하는 중...🔥",              // Korean
-  "Benvenuto su Free Tonight...🔥",              // Italian
-  "Willkommen bei Free Tonight...🔥",            // German
-  "Bem-vindo ao Free Tonight...🔥",              // Portuguese
-  "フリー・トゥナイトへ入場中...🔥",                // Japanese
-  "Добро пожаловать в Free Tonight...🔥",        // Russian
-  "正在进入 Free Tonight...🔥",                    // Chinese
-  "Karibu Free Tonight...🔥",                    // Swahili
-  "مرحبا بك في Free Tonight...🔥",                // Arabic
-  "Welkom bij Free Tonight...🔥",                // Dutch
-  "Vítejte ve Free Tonight...🔥",                // Czech
-  "Selamat datang ke Free Tonight...🔥",         // Malay
-  "Gẹgẹ bi Free Tonight...🔥",                   // Yoruba-style vibe
-  "Bienvenue à la nuit libre...🔥",
-  "밤은 이제 시작이다...🔥",                        // "The night begins now"
-  "La noche apenas comienza...🔥",               // "The night just started"
-  "Tonight just got hotter...🔥"
-];
-
-function randomFreeTonightText() {
-  return freeTonightTexts[
-    Math.floor(Math.random() * freeTonightTexts.length)
-  ];
-}
-
-/* ===============================================
-   FREE TONIGHT BUTTON — WITH PAGE SPINNER
-   =============================================== */
-
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
     showGoldAlert("Please log in to view Free Tonight");
     return;
   }
 
-  // Random language every tap
-  showLoader(randomFreeTonightText());
+  showLoader("Loading Free Tonight profiles... 🔥");
 
   try {
     const colRef = collection(db, "highlightVideos");
@@ -6361,31 +6326,29 @@ highlightsBtn.onclick = async () => {
     const allClips = [];
 
     snap.forEach(userDoc => {
-      const data = userDoc.data();
-      const highlights = data.highlights || [];
+      const userData = userDoc.data();           // This contains fruitPick, naturePick, etc.
+      const highlights = userData.highlights || [];
 
       highlights.forEach(clip => {
         if (clip.isTrending !== true) return;
 
         const now = Date.now();
-
         if (clip.trendingUntil && clip.trendingUntil < now) return;
 
         allClips.push({
-          id: clip.id,
-          videoUrl: clip.videoUrl || "",
-          previewClip: clip.previewClip || "",
-          thumbnail: clip.thumbnailUrl || "",
-          uploaderName: data.uploaderName || data.chatId || "Anonymous",
+          ...clip,
           uploaderId: userDoc.id,
-          isTrending: true,
-          tags: clip.tags || [],
-          location: data.location || data.city || "",
-          city: data.city || "",
-          fruitPick: data.fruitPick || null,
-          naturePick: data.naturePick || "",
-          gender: data.gender || "person",
-          age: data.age || null
+          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+          
+          // === RESTORED FULL USER DATA ===
+          fruitPick: userData.fruitPick,
+          naturePick: userData.naturePick,
+          bodyTypePick: userData.bodyTypePick,
+          gender: userData.gender,
+          age: userData.age,
+          location: userData.location,
+          city: userData.city,
+          // Add any other fields you use in the card
         });
       });
     });
@@ -6401,7 +6364,7 @@ highlightsBtn.onclick = async () => {
     showHighlightsModal(allClips);
 
   } catch (err) {
-    console.error("Error fetching Free Tonight clips:", err);
+    console.error("Highlights load error:", err);
     showGoldAlert("Error loading Free Tonight — try again.");
   } finally {
     hideLoader();
