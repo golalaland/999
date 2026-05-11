@@ -6304,7 +6304,7 @@ highlightsBtn.onclick = async () => {
     return;
   }
 
-  showLoader("Loading Free Tonight... 🔥");
+  showLoader("Entering Free Tonight... 🔥");
 
   try {
     const snap = await getDocs(collection(db, "highlightVideos"));
