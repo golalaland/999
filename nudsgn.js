@@ -103,6 +103,33 @@ document.getElementById('leaderboardBtn').onclick = () => {
   document.getElementById('sideTab').classList.toggle('closed');
 };
 
+
+// =============== TINY ACTION BAR HIDING ===============
+let tinyActionBar = null;
+
+function findAndCacheActionBar() {
+  // Smart selector: finds the bar by its unique inline style + buttons
+  tinyActionBar = document.querySelector('div[style*="background:rgba(6,12,20,0.88)"][style*="border-radius:20px"]');
+}
+
+function hideActionBar() {
+  if (!tinyActionBar) findAndCacheActionBar();
+  if (tinyActionBar) {
+    tinyActionBar.style.opacity = '0';
+    tinyActionBar.style.transform = 'translateY(30px)';
+    tinyActionBar.style.pointerEvents = 'none';
+    tinyActionBar.style.transition = 'all 0.35s ease';
+  }
+}
+
+function showActionBar() {
+  if (tinyActionBar) {
+    tinyActionBar.style.opacity = '1';
+    tinyActionBar.style.transform = 'translateY(0)';
+    tinyActionBar.style.pointerEvents = 'all';
+  }
+}
+
 // ========= ULTRA-RELIABLE BLACK CUTE MODAL (TAPS + ₦) =========
 const endGameModal = document.createElement('div');
 endGameModal.id = "endGameModal";
@@ -747,8 +774,10 @@ function startSession() {
   trainBar && (trainBar.style.width = "100%");
 
   // Update UI immediately with correct level + 0% progress
+  hideActionBar();        // ← Add this
   updateBonusBar();  // ← This now also updates #bonusLevelVal text!
   updateUI();
+
 
   if (intervalId) clearInterval(intervalId);
   intervalId = setInterval(() => {
