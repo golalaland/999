@@ -155,40 +155,34 @@ style.textContent = `
 document.head.appendChild(style);
 
 
-// === TEMPORARY CONSOLE HELPERS (Add this near the top) ===
-window.createChatIdIndex = async (email, chatId) => {
-  try {
-    await setDoc(doc(db, "chatIds", chatId.toLowerCase().trim()), {
-      email: email,
-      sanitizedEmail: sanitizeKey(email),
-      createdAt: new Date()
-    }, { merge: true });
-    console.log("✅ Index created for:", chatId);
-  } catch (e) {
-    console.error("Failed:", e);
+
+// ── GLOBAL CACHE (Add after global state) ──
+const userCache = new Map(); // uid → {data, timestamp}
+
+// Strong cached user fetch
+async function getCachedUserDoc(uid, forceFresh = false) {
+  if (!uid) return null;
+
+  const cached = userCache.get(uid);
+  const now = Date.now();
+
+  if (!forceFresh && cached && (now - cached.timestamp < 300000)) { // 5 min
+    return cached.data;
   }
-};
-
-window.migrateAllChatIds = async () => {
-  console.log("🚀 Starting full migration...");
 
   try {
-    const snapshot = await getDocs(collection(db, "users"));
-    let count = 0;
-
-    for (const docSnap of snapshot.docs) {
-      const data = docSnap.data();
-      if (data.email && data.chatId) {
-        await window.createChatIdIndex(data.email, data.chatId);
-        count++;
-        await new Promise(r => setTimeout(r, 600)); // safety delay
-      }
+    const snap = await getDoc(doc(db, "users", uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      userCache.set(uid, { data, timestamp: now });
+      return data;
     }
-    console.log(`🎉 Migration done! Processed ${count} users.`);
+    return null;
   } catch (err) {
-    console.error("Migration error:", err);
+    console.error("getCachedUserDoc failed:", err);
+    return null;
   }
-};
+}
 
 // ====================== LOGIN WITH EMAIL OR CHATID ======================
 async function login(identifier, password) {
@@ -259,71 +253,42 @@ async function syncVIPExpiration(userSnap) {
 }
 
 
-// SYNC UNLOCKED VIDEOS — 100% Secure & Reliable
-async function syncUserUnlocks() {
-  if (!currentUser?.email) {
-    console.log("No user email — skipping unlock sync");
-    return JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-  }
-
-  const userId = getUserId(currentUser.email);  // ← CRITICAL: use sanitized ID
-  const userRef = doc(db, "users", userId);
-  const localKey = "userUnlockedVideos"; // consistent key
+// OPTIMIZED SYNC — ONE READ MAX
+async function syncUserData() {
+  if (!currentUser?.uid) return;
 
   try {
-    const snap = await getDoc(userRef);
-    
-    // Get unlocks from Firestore (default empty array)
-    const firestoreUnlocks = snap.exists() 
-      ? (snap.data()?.unlockedVideos || []) 
-      : [];
+    const userData = await getCachedUserDoc(currentUser.uid, true); // force fresh on login
 
-    // Get local unlocks
-    const localUnlocks = JSON.parse(localStorage.getItem(localKey) || "[]");
+    if (!userData) return;
 
-    // Merge & deduplicate (local wins if conflict)
-    const merged = [...new Set([...localUnlocks, ...firestoreUnlocks])];
+    // VIP Expiration
+    if (userData.vipExpiresAt) {
+      const expiresAt = userData.vipExpiresAt.toDate ? userData.vipExpiresAt.toDate() : new Date(userData.vipExpiresAt);
+      if (expiresAt < new Date()) {
+        await updateDoc(doc(db, "users", currentUser.uid), { hasPaid: false });
+        currentUser.hasPaid = false;
+      }
+    }
 
-    // Only update Firestore if local has new ones
-    const hasNew = merged.some(id => !firestoreUnlocks.includes(id));
-    if (hasNew && merged.length > firestoreUnlocks.length) {
-      await updateDoc(userRef, {
+    // Unlocks sync
+    const localUnlocks = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+    const merged = [...new Set([...localUnlocks, ...(userData.unlockedVideos || [])])];
+
+    if (merged.length > (userData.unlockedVideos?.length || 0)) {
+      await updateDoc(doc(db, "users", currentUser.uid), {
         unlockedVideos: merged,
         lastUnlockSync: serverTimestamp()
       });
-      console.log("Firestore unlocks updated:", merged);
     }
 
-    // Always sync localStorage to latest truth
-    localStorage.setItem(localKey, JSON.stringify(merged));
-    currentUser.unlockedVideos = merged; // ← keep currentUser in sync too!
-
-    console.log("Unlocks synced successfully:", merged.length, "videos");
-    return merged;
+    currentUser.unlockedVideos = merged;
+    localStorage.setItem("userUnlockedVideos", JSON.stringify(merged));
 
   } catch (err) {
-    console.error("Unlock sync failed:", err.message || err);
-
-    // On error: trust localStorage as source of truth
-    const fallback = JSON.parse(localStorage.getItem(localKey) || "[]");
-    showStarPopup("Sync failed. Using local unlocks.");
-    return fallback;
+    console.error("syncUserData failed:", err);
   }
 }
-
-if (rtdb) {
-  onValue(
-    rtdbRef(rtdb, `presence/${ROOM_ID}`),
-    snap => {
-      const users = snap.val() || {};
-      if (refs?.onlineCountEl) {
-        refs.onlineCountEl.innerText = `(${Object.keys(users).length} online)`;
-      }
-    }
-  );
-}
-
-
 /* ===============================
    GLOBAL DOM REFERENCES — POPULATE THE refs OBJECT (ONLY ONCE!)
    THIS RUNS IMMEDIATELY — NO DUPLICATE DECLARATION
@@ -473,7 +438,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     let data = userSnap.data();
 
     // Sync VIP expiration
-    data = await syncVIPExpiration(userSnap);
+ await syncUserData();
 
     // Set currentUser
     currentUser = {
@@ -534,7 +499,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
 
     // Delayed loads
     setTimeout(() => {
-      syncUserUnlocks?.();
+await syncUserData();
       loadNotifications?.();
       if (typeof loadMyClips === "function") loadMyClips();
     }, 800);
@@ -659,42 +624,94 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
-// USER COLORS — FINAL & PERFECT
+
+// ── USER DOCUMENT CACHE (Reduces repeated getDoc calls) ──
+const userCache = new Map();
+
+async function getCachedUserDoc(uid, forceFresh = false) {
+  if (!uid) return null;
+
+  const now = Date.now();
+  const cached = userCache.get(uid);
+
+  if (!forceFresh && cached && (now - cached.timestamp < 300000)) { // 5 minutes cache
+    return cached.data;
+  }
+
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    
+    if (snap.exists()) {
+      const data = snap.data();
+      userCache.set(uid, { data, timestamp: now });
+      return data;
+    }
+    return null;
+  } catch (err) {
+    console.error("getCachedUserDoc error:", err);
+    return null;
+  }
+}
+// ===============================================
+// OPTIMIZED USER COLORS + ACTIVE USERS (Major Read Saver)
+// ===============================================
+let userColors = new Map();           // uid → color
+let userCache = new Map();            // uid → {data, timestamp}
+
+async function getCachedUser(uid, forceFresh = false) {
+  if (!uid) return null;
+  const now = Date.now();
+  const cached = userCache.get(uid);
+
+  if (!forceFresh && cached && (now - cached.timestamp < 5 * 60 * 1000)) {
+    return cached.data;
+  }
+
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      userCache.set(uid, { data, timestamp: now });
+      if (data.usernameColor) userColors.set(uid, data.usernameColor);
+      return data;
+    }
+    return null;
+  } catch (e) {
+    console.error("getCachedUser error:", e);
+    return null;
+  }
+}
+
+// Optimized listener — only active users in this room
 function setupUsersListener() {
   if (!currentUser) return;
 
-  console.log("[COLORS] Starting user colors listener");
-
-  // Cleanup old listener
+  // Cleanup
   if (window.userColorsUnsubscribe) {
     window.userColorsUnsubscribe();
   }
 
-  window.userColorsUnsubscribe = onSnapshot(
-    collection(db, "users"),
-    (snap) => {
-      refs.userColors = refs.userColors || {};
+  console.log("[OPTIMIZED] Starting active users colors listener");
 
-      let updated = false;
-      snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const color = data?.usernameColor;
-        if (color && refs.userColors[docSnap.id] !== color) {
-          refs.userColors[docSnap.id] = color;
-          updated = true;
-        }
-      });
+  const activeRef = collection(db, `rooms/${ROOM_ID}/activeUsers`);
 
-      if (updated || Object.keys(refs.userColors).length === snap.size) {
-        console.log("[COLORS] Colors updated — re-rendering messages");
-        // Re-render all messages to apply new colors
-        renderMessagesFromArray(lastMessagesArray || []);
+  window.userColorsUnsubscribe = onSnapshot(activeRef, (snap) => {
+    let changed = false;
+    snap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      const color = data.usernameColor || "#ff69b4";
+      if (userColors.get(docSnap.id) !== color) {
+        userColors.set(docSnap.id, color);
+        changed = true;
       }
-    },
-    (err) => {
-      console.error("[COLORS] Listener error:", err);
+    });
+
+    if (changed && lastMessagesArray?.length > 0) {
+      renderMessagesFromArray(lastMessagesArray);
     }
-  );
+  });
 }
 
 
@@ -704,31 +721,21 @@ function setupUsersListener() {
 async function showVIPCountdown() {
   const countdownEl = document.getElementById('vipCountdown');
   const textEl = document.getElementById('countdownText');
-
   if (!countdownEl || !textEl) return;
 
-  if (!auth || !auth.currentUser) {
+  if (!currentUser) {
     countdownEl.style.display = 'none';
     return;
   }
 
   try {
-    const email = auth.currentUser.email.trim().toLowerCase();
-    const docId = sanitizeKey(email);
-    const userRef = doc(db, "users", docId);
-    const snap = await getDoc(userRef);
+    const userData = await getCachedUserDoc(currentUser.uid);
+    if (!userData) return;
 
-    if (!snap.exists()) {
-      countdownEl.style.display = 'none';
-      return;
-    }
+    const inviterName = (userData.invitedBy || "someone").split('_')[0];
 
-    const data = snap.data();
-    const inviterName = data.invitedBy ? data.invitedBy.split('_')[0] : "someone";
-
-    if (!data.vipExpiresAt) {
-      textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
-        <span style="color:#ff9999;">No active boost</span>`;
+    if (!userData.vipExpiresAt) {
+      textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br><span style="color:#ff9999;">No active boost</span>`;
       countdownEl.style.display = 'block';
       return;
     }
