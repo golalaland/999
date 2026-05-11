@@ -1900,25 +1900,27 @@ const usernameColor = userColors.get(m.uid) || m.usernameColor || "#ffffff";
       -webkit-tap-highlight-color: transparent; /* Removes Safari blue flash */
     `;
 
-    // SAFARI-PROOF TAP: use 'touchend' + preventDefault + manual click
-    nameSpan.addEventListener("touchend", (e) => {
-      e.preventDefault(); // Stops Safari from ignoring the click
-      const chatIdLower = (m.chatId || "").toLowerCase();
-      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
-      if (user && user._docId !== currentUser?.uid) {
-        showSocialCard(user);
-      }
-    });
+    // SAFARI-PROOF TAP
+nameSpan.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  const chatIdLower = (m.chatId || "").toLowerCase().trim();
+  const user = usersByChatId.get(chatIdLower);
+  
+  if (user && user._docId !== currentUser?.uid) {
+    showSocialCard(user);
+  }
+});
 
-    // Desktop click still works
-    nameSpan.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const chatIdLower = (m.chatId || "").toLowerCase();
-      const user = usersByChatId?.[chatIdLower] || allUsers.find(u => u.chatIdLower === chatIdLower);
-      if (user && user._docId !== currentUser?.uid) {
-        showSocialCard(user);
-      }
-    });
+// Desktop click
+nameSpan.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const chatIdLower = (m.chatId || "").toLowerCase().trim();
+  const user = usersByChatId.get(chatIdLower);
+  
+  if (user && user._docId !== currentUser?.uid) {
+    showSocialCard(user);
+  }
+});
 
     wrapper.appendChild(nameSpan);
 
@@ -2829,10 +2831,11 @@ function typeWriterEffect(el, text, speed = 40) {
   }, speed);
 }
 
-// Username click handler
+// Click listener to open card
 document.addEventListener("pointerdown", e => {
   const el = e.target.closest("[data-user-id]") || e.target;
   if (!el.textContent) return;
+  
   const text = el.textContent.trim();
   if (!text || text.includes(":")) return;
 
