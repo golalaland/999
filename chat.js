@@ -6762,50 +6762,62 @@ thumbContainer.onclick = (e) => {
 
       `;
 
-      const user = document.createElement("div");
-
+          const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
-
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
 
       user.onclick = (e) => {
-
         e.stopPropagation();
+        
+        if (!video.uploaderId) {
+          showStarPopup("Profile ID missing", "error");
+          return;
+        }
 
-        if (!video.uploaderId) return;
-
-        // Spinner code...
-
+        // Spinner
         const fullSpinner = document.createElement("div");
-
         fullSpinner.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(6px);`;
-
         fullSpinner.innerHTML = `<div style="text-align:center;"><div style="width:48px;height:48px;border:4px solid #00ffea;border-top-color:transparent;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div></div>`;
-
         document.body.appendChild(fullSpinner);
 
-        getDoc(doc(db, "users", video.uploaderId))
+        // Try multiple possible ID formats
+        const tryIds = [
+          video.uploaderId,
+          video.uploaderId.toLowerCase ? video.uploaderId.toLowerCase() : null,
+          video.uploaderId.replace(/[@.]/g, '_')
+        ].filter(Boolean);
 
-          .then(userSnap => {
+        let attempts = 0;
 
-            fullSpinner.remove();
+        const tryFetch = (id) => {
+          getDoc(doc(db, "users", id))
+            .then(userSnap => {
+              if (userSnap.exists()) {
+                fullSpinner.remove();
+                showSocialCard(userSnap.data());
+                return;
+              }
+              attempts++;
+              if (attempts < tryIds.length) {
+                tryFetch(tryIds[attempts]);
+              } else {
+                fullSpinner.remove();
+                showStarPopup("User profile not found", "error");
+              }
+            })
+            .catch(err => {
+              attempts++;
+              if (attempts < tryIds.length) {
+                tryFetch(tryIds[attempts]);
+              } else {
+                fullSpinner.remove();
+                showStarPopup("Failed to load profile", "error");
+              }
+            });
+        };
 
-            if (userSnap.exists()) showSocialCard(userSnap.data());
-
-            else showStarPopup("User profile not found", "error");
-
-          })
-
-          .catch(err => {
-
-            fullSpinner.remove();
-
-            showStarPopup("Failed to load profile", "error");
-
-          });
-
+        tryFetch(tryIds[0]);
       };
-
   // One-liner — FIXED & MORE RELIABLE
 const naturePick = video.naturePick || "";
 const genderRaw = (video.gender || "person").toLowerCase().trim();
