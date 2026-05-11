@@ -6303,16 +6303,50 @@ window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
 
 /* ===============================================
+   RANDOM MULTI-LANGUAGE LOADER TEXTS
+   =============================================== */
+
+const freeTonightTexts = [
+  "Entering Free Tonight...🔥",                  // English
+  "Entrando a Free Tonight...🔥",                // Spanish
+  "Bienvenue dans Free Tonight...🔥",            // French
+  "Free Tonight에 입장하는 중...🔥",              // Korean
+  "Benvenuto su Free Tonight...🔥",              // Italian
+  "Willkommen bei Free Tonight...🔥",            // German
+  "Bem-vindo ao Free Tonight...🔥",              // Portuguese
+  "フリー・トゥナイトへ入場中...🔥",                // Japanese
+  "Добро пожаловать в Free Tonight...🔥",        // Russian
+  "正在进入 Free Tonight...🔥",                    // Chinese
+  "Karibu Free Tonight...🔥",                    // Swahili
+  "مرحبا بك في Free Tonight...🔥",                // Arabic
+  "Welkom bij Free Tonight...🔥",                // Dutch
+  "Vítejte ve Free Tonight...🔥",                // Czech
+  "Selamat datang ke Free Tonight...🔥",         // Malay
+  "Gẹgẹ bi Free Tonight...🔥",                   // Yoruba-style vibe
+  "Bienvenue à la nuit libre...🔥",
+  "밤은 이제 시작이다...🔥",                        // "The night begins now"
+  "La noche apenas comienza...🔥",               // "The night just started"
+  "Tonight just got hotter...🔥"
+];
+
+function randomFreeTonightText() {
+  return freeTonightTexts[
+    Math.floor(Math.random() * freeTonightTexts.length)
+  ];
+}
+
+/* ===============================================
    FREE TONIGHT BUTTON — WITH PAGE SPINNER
    =============================================== */
+
 highlightsBtn.onclick = async () => {
   if (!currentUser?.uid) {
     showGoldAlert("Please log in to view Free Tonight");
     return;
   }
 
-  // Show nice transparent page spinner
-  showLoader("Entering Free Tonight...🔥");
+  // Random language every tap
+  showLoader(randomFreeTonightText());
 
   try {
     const colRef = collection(db, "highlightVideos");
@@ -6332,7 +6366,9 @@ highlightsBtn.onclick = async () => {
 
       highlights.forEach(clip => {
         if (clip.isTrending !== true) return;
+
         const now = Date.now();
+
         if (clip.trendingUntil && clip.trendingUntil < now) return;
 
         allClips.push({
@@ -6368,7 +6404,7 @@ highlightsBtn.onclick = async () => {
     console.error("Error fetching Free Tonight clips:", err);
     showGoldAlert("Error loading Free Tonight — try again.");
   } finally {
-    hideLoader();   // Always hide spinner when done
+    hideLoader();
   }
 };
 
