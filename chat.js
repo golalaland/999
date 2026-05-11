@@ -497,19 +497,27 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (typeof updateRedeemLink === "function") await updateRedeemLink();
     if (typeof updateTipLink === "function") await updateTipLink();
 
-    // Delayed loads
-    setTimeout(() => {
-await syncUserData();
-      loadNotifications?.();
-      if (typeof loadMyClips === "function") loadMyClips();
-    }, 800);
+   
+   // Even better version (less delay)
+setTimeout(async () => {
+  await syncUserData();
+  loadNotifications?.();
+  if (typeof loadMyClips === "function") loadMyClips();
+}, 400);
 
+    // GUEST ChatID Prompt
     if (currentUser.chatId?.startsWith("GUEST")) {
-      setTimeout(() => promptForChatID?.(userRef, data), 2000);
+      setTimeout(() => {
+        // We no longer have userRef/data from old flow, so we reconstruct
+        const userRef = doc(db, "users", currentUser.uid);
+        promptForChatID?.(userRef, currentUser);
+      }, 2000);
     }
 
     const hostFields = document.getElementById("hostOnlyFields");
-    if (hostFields) hostFields.style.display = currentUser.isHost ? "block" : "none";
+    if (hostFields) {
+      hostFields.style.display = currentUser.isHost ? "block" : "none";
+    }
 
     // Welcome Popup
     const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
