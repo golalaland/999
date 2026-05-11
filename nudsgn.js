@@ -2549,6 +2549,14 @@ closeTutorialVideo.addEventListener("click", () => {
   tutorialVideo.pause();
 });
 
+// loop after 3 seconds when video ends
+tutorialVideo.addEventListener("ended", () => {
+  setTimeout(() => {
+    tutorialVideo.currentTime = 0;
+    tutorialVideo.play();
+  }, 3000);
+});
+
 // close if background clicked
 tutorialModal.addEventListener("click", (e) => {
   if (e.target === tutorialModal) {
