@@ -1185,18 +1185,18 @@ body.game-mode .tiny-action-bar {
       <span style="color:#00FFB2;text-shadow:0 0 10px #00FFB2;">LIVE • ₦4.82M POT</span><span style="color:#333;"> • </span>
       <span style="color:#FF2D6B;font-weight:900;">1ST WINS ₦1.9M</span><span style="color:#333;"> • </span>
       <span style="color:#00FFB2;">Trojan IS EATING • 5,252 TAPS</span><span style="color:#333;"> • </span>
-      <span style="color:#FFD700;">Jennifer #2 CHASING HARD</span><span style="color:#333;"> • </span>
-      <span style="color:#00FFB2;">₦5.4M PAID OUT THIS WEEK</span><span style="color:#333;"> • </span>
+      <span style="color:#FFD700;"> #2 CHASING HARD</span><span style="color:#333;"> • </span>
+      <span style="color:#00FFB2;">₦2.4M PAID OUT THIS WEEK</span><span style="color:#333;"> • </span>
       <span style="color:#FF2D6B;">BID ROYALE PEAKED • 11 MINS AGO</span><span style="color:#333;"> • </span>
-      <span style="color:#FFD700;">TOP 30 CASHING OUT DAILY</span><span style="color:#333;"> • </span>
+      <span style="color:#FFD700;">TOP 100 CASHING OUT DAILY</span><span style="color:#333;"> • </span>
       <span style="color:#00FFB2;">YOU'RE ~1,200 TAPS FROM TOP-30 • MOVE!</span><span style="color:#333;"> • </span>
-      <span style="color:#FF2D6B;">RESET IN 6HRS • WAR DON START</span><span style="color:#333;"> • </span>
+      <span style="color:#FF2D6B;">RESET IN 6HRS • E DON START</span><span style="color:#333;"> • </span>
       <span style="color:#00FFB2;text-shadow:0 0 10px #00FFB2;">LIVE • ₦4.82M POT</span><span style="color:#333;"> • </span>
       <span style="color:#FF2D6B;font-weight:900;">1ST WINS ₦1.9M</span><span style="color:#333;"> • </span>
       <span style="color:#00FFB2;">Trojan IS EATING • 5,252 TAPS</span><span style="color:#333;"> • </span>
-      <span style="color:#FFD700;">Jennifer #2 CHASING HARD</span><span style="color:#333;"> • </span>
+      <span style="color:#FFD700;">#2 CHASING HARD</span><span style="color:#333;"> • </span>
       <span style="color:#00FFB2;">₦5.4M PAID OUT THIS WEEK</span><span style="color:#333;"> • </span>
-      <span style="color:#FF2D6B;">RESET IN 6HRS • WAR DON START</span>
+      <span style="color:#FF2D6B;">RESET IN 6HRS • E DON START</span>
     </div>
   </div>
 
@@ -1566,81 +1566,84 @@ body.game-mode .tiny-action-bar {
       <div style="flex:1;overflow-y:auto;padding:16px 16px 10px;
         display:flex;flex-direction:column;">
 
-   <!-- Tabs -->
+ <!-- Tabs -->
 <div id="leaderboardTabs" style="
-  display:flex;
-  gap:6px;
-  margin-bottom:12px;
-  width:100%;
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  width: 100%;
 ">
-
   <button class="lb-tab active" data-period="weekly"
     style="
-      flex:1;
-      padding:10px 6px;
-      border-radius:10px;
-      border:1px solid rgba(255,215,0,0.4);
-      background:#FFD700;
-      color:#000;
-      font-weight:800;
-      font-size:11px;
-      letter-spacing:0.5px;
-      cursor:pointer;
-      white-space:nowrap;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      min-width:0;
+      flex: 1;
+      padding: 10px 4px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,215,0,0.4);
+      background: #FFD700;
+      color: #000;
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 1.1;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
     ">
     THIS WEEK
   </button>
 
   <button class="lb-tab" data-period="daily"
     style="
-      flex:1;
-      padding:10px 6px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.07);
-      background:rgba(255,255,255,0.03);
-      color:#6B7280;
-      font-weight:800;
-      font-size:11px;
-      cursor:pointer;
-      white-space:nowrap;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      min-width:0;
+      flex: 1;
+      padding: 10px 4px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03);
+      color: #6B7280;
+      font-weight: 800;
+      font-size: 10.5px;
+      line-height: 1.1;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
     ">
     TODAY
   </button>
 
   <button class="lb-tab" data-period="monthly"
     style="
-      flex:1;
-      padding:10px 6px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.07);
-      background:rgba(255,255,255,0.03);
-      color:#6B7280;
-      font-weight:800;
-      font-size:11px;
-      letter-spacing:0.5px;
-      cursor:pointer;
-      white-space:nowrap;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      min-width:0;
+      flex: 1;
+      padding: 10px 4px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03);
+      color: #6B7280;
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 1.1;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
     ">
     THIS MONTH
   </button>
-
 </div>
-
         <!-- Timer -->
         <div id="dailyTimer" style="text-align:center;font-size:13px;font-weight:700;
           color:#FF8C00;margin:8px 0;font-family:'Rajdhani',sans-serif;">
