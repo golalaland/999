@@ -536,6 +536,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     localStorage.setItem("lastVipEmail", email);
 
     setupUsersListener?.();
+     setTimeout(loadActiveUsersForSocial, 1500);   // ← Add this
     showChatUI?.(currentUser);
     attachMessagesListener?.();
     setupPresence?.(currentUser);
@@ -1147,15 +1148,52 @@ document.addEventListener("DOMContentLoaded", updateInfoTab);
 const loaderOverlay = document.getElementById("loaderOverlay");
 const loaderText = document.getElementById("loaderText");
 
-function showLoader(text = "Working...") {
-  if (loaderText) loaderText.textContent = text;
-  if (loaderOverlay) loaderOverlay.style.display = "flex";
+// IMPROVED LOADER — Light Transparent Overlay
+function showLoader(text = "Loading...") {
+  let loaderOverlay = document.getElementById("loaderOverlay");
+  
+  if (!loaderOverlay) {
+    loaderOverlay = document.createElement("div");
+    loaderOverlay.id = "loaderOverlay";
+    loaderOverlay.style.cssText = `
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.65);     /* Almost transparent dark */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+      backdrop-filter: blur(4px);
+    `;
+
+    loaderOverlay.innerHTML = `
+      <div style="text-align:center; color:#fff;">
+        <div style="width:48px; height:48px; margin:0 auto 16px;
+                    border:5px solid rgba(255,255,255,0.2);
+                    border-top-color:#00ffea; border-radius:50%;
+                    animation:spin 0.9s linear infinite;"></div>
+        <div id="loaderText" style="font-size:15px; font-weight:500;">${text}</div>
+      </div>
+    `;
+    document.body.appendChild(loaderOverlay);
+
+    // Add spinner animation if not exists
+    if (!document.getElementById("spinner-style")) {
+      const style = document.createElement("style");
+      style.id = "spinner-style";
+      style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+      document.head.appendChild(style);
+    }
+  }
+
+  document.getElementById("loaderText").textContent = text;
+  loaderOverlay.style.display = "flex";
 }
 
 function hideLoader() {
+  const loaderOverlay = document.getElementById("loaderOverlay");
   if (loaderOverlay) loaderOverlay.style.display = "none";
 }
-
 
 // MODERN CONFIRM MODAL — MATCHES MEET MODAL DESIGN
 async function showConfirm(title, msg) {
@@ -2607,38 +2645,42 @@ function sanitizeKey(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/[@.]/g, "_").trim();
 }
-/* ======================================================
-  SOCIAL CARD SYSTEM — UNIFIED HOST & VIP STYLE (Dec 2025)
-  • Hosts now use exact same compact VIP card style
-  • No video, no gift slider for Hosts
-  • Meet button centered
-  • bioPick + typewriter effect for both
-====================================================== */
-(async function initSocialCardSystem() {
-  const allUsers = [];
-  const usersByChatId = {};
+// ===============================================
+// OPTIMIZED SOCIAL CARD SYSTEM (No full users load)
+// ===============================================
+let usersByChatId = new Map();
 
-  // Load all users
+async function loadActiveUsersForSocial() {
   try {
-    const snaps = await getDocs(collection(db, "users"));
-    snaps.forEach(doc => {
-      const data = doc.data();
-      data._docId = doc.id;
-      data.chatIdLower = (data.chatId || "").toString().toLowerCase();
-      allUsers.push(data);
-      usersByChatId[data.chatIdLower] = data;
+    // Only load active users in this room (much lighter)
+    const activeSnap = await getDocs(collection(db, `rooms/${ROOM_ID}/activeUsers`));
+    
+    usersByChatId.clear();
+    activeSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.chatId) {
+        const chatIdLower = data.chatId.toLowerCase();
+        usersByChatId.set(chatIdLower, {
+          ...data,
+          _docId: docSnap.id,
+          chatIdLower: chatIdLower
+        });
+      }
     });
-    console.log("Social card: loaded", allUsers.length, "users");
+    console.log(`[Social] Loaded ${usersByChatId.size} active users`);
   } catch (err) {
-    console.error("Failed to load users:", err);
+    console.warn("[Social] Failed to load active users:", err);
   }
+}
 
-  function showSocialCard(user) {
-    if (!user) return;
-    document.getElementById('socialCard')?.remove();
-    // Both isHost and isVIP (and others) now use the same clean compact card
-    showUnifiedCard(user);
-  }
+// Optimized showSocialCard
+function showSocialCard(user) {
+  if (!user) return;
+  document.getElementById('socialCard')?.remove();
+  showUnifiedCard(user);
+}
+
+// Keep your showUnifiedCard() function as-is (it's fine)
 
   // ==================== UNIFIED CARD FOR HOSTS & VIPs ====================
   function showUnifiedCard(user) {
@@ -6413,76 +6455,73 @@ function closeVideoModal() {
 window.openFullScreenVideo = openVideoModal;
 window.closeVideoModal = closeVideoModal;
 
-/* Highlights Button – opens Free Tonight (with pagination) */
+/* ===============================================
+   FREE TONIGHT BUTTON — WITH PAGE SPINNER
+   =============================================== */
 highlightsBtn.onclick = async () => {
+  if (!currentUser?.uid) {
+    showGoldAlert("Please log in to view Free Tonight");
+    return;
+  }
+
+  // Show nice transparent page spinner
+  showLoader("Loading Free Tonight profiles... 🔥");
+
   try {
-    if (!currentUser?.uid) {
-      showGoldAlert("Please log in to view Free Tonight");
-      return;
-    }
     const colRef = collection(db, "highlightVideos");
     const snap = await getDocs(colRef);
+
     if (snap.empty) {
+      hideLoader();
       showGoldAlert("No clips in Free Tonight yet");
       return;
     }
-    const allUploaderIds = [];
-    const highlightsByUploader = {};
+
+    const allClips = [];
+
     snap.forEach(userDoc => {
       const data = userDoc.data();
-      const uploaderId = data.uploaderId || userDoc.id;
-      allUploaderIds.push(uploaderId);
-      highlightsByUploader[uploaderId] = data.highlights || [];
-    });
-    // Fetch user profiles in batches (15 at a time to save reads)
-    const PAGE_SIZE = 15;
-    const allClips = [];
-    let currentPage = 0;
-    async function loadPage() {
-      const start = currentPage * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const pageIds = allUploaderIds.slice(start, end);
-      if (pageIds.length === 0) return false;
-      const userPromises = pageIds.map(id => getDoc(doc(db, "users", id)));
-      const userSnaps = await Promise.all(userPromises);
-      userSnaps.forEach((userSnap, index) => {
-        const userData = userSnap.exists() ? userSnap.data() : {};
-        const clips = highlightsByUploader[pageIds[index]] || [];
-        clips.forEach(clip => {
-          if (clip.isTrending !== true) return;
-          const now = Date.now();
-          if (clip.trendingUntil && clip.trendingUntil < now) return;
-          allClips.push({
-            id: clip.id,
-            videoUrl: clip.videoUrl || "",
-            previewClip: clip.previewClip || "",
-            thumbnail: clip.thumbnailUrl || "",
-            uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
-            uploaderId: pageIds[index],
-            isTrending: true,
-            tags: clip.tags || [],
-            location: userData.location || userData.city || "",
-            city: userData.city || "",
-            fruitPick: userData.fruitPick || null,
-            naturePick: userData.naturePick || "",
-            gender: userData.gender || "person",
-            age: userData.age || null
-          });
+      const highlights = data.highlights || [];
+
+      highlights.forEach(clip => {
+        if (clip.isTrending !== true) return;
+        const now = Date.now();
+        if (clip.trendingUntil && clip.trendingUntil < now) return;
+
+        allClips.push({
+          id: clip.id,
+          videoUrl: clip.videoUrl || "",
+          previewClip: clip.previewClip || "",
+          thumbnail: clip.thumbnailUrl || "",
+          uploaderName: data.uploaderName || data.chatId || "Anonymous",
+          uploaderId: userDoc.id,
+          isTrending: true,
+          tags: clip.tags || [],
+          location: data.location || data.city || "",
+          city: data.city || "",
+          fruitPick: data.fruitPick || null,
+          naturePick: data.naturePick || "",
+          gender: data.gender || "person",
+          age: data.age || null
         });
       });
-      currentPage++;
-      return true;
-    }
-    // Load first page
-    await loadPage();
+    });
+
     if (allClips.length === 0) {
+      hideLoader();
       showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
       return;
     }
-    showHighlightsModal(allClips, loadPage);
+
+    allClips.sort((a, b) => (b.trendingUntil || 0) - (a.trendingUntil || 0));
+
+    showHighlightsModal(allClips);
+
   } catch (err) {
     console.error("Error fetching Free Tonight clips:", err);
     showGoldAlert("Error loading Free Tonight — try again.");
+  } finally {
+    hideLoader();   // Always hide spinner when done
   }
 };
 
