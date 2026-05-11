@@ -6816,16 +6816,18 @@ oneLiner.style.cssText = `
   color: #aaa;
   margin-top: 4px;
 `;
-        // ==================== TAGS (Emoji + City) ====================
+               // ==================== TAGS (Emoji + City) ====================
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      if (video.location) {
+      // Location Badge
+      const locValue = video.location || video.city;
+      if (locValue) {
         const locSpan = document.createElement("span");
-        const flag = getFlagEmoji(video.location);
-        const city = (video.city || cleanLocation(video.location)).trim();
-        
-        locSpan.textContent = `${flag} ${city || "Unknown"}`;
+        const flag = getFlagEmoji(locValue);
+        const cityName = (video.city || cleanLocation(locValue)).trim() || "Unknown";
+
+        locSpan.textContent = `${flag} ${cityName}`;
         locSpan.style.cssText = `
           font-size:11px; 
           padding:3px 10px; 
@@ -6854,22 +6856,28 @@ oneLiner.style.cssText = `
           tagsEl.appendChild(span);
         }
       });
-
+       
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
 
-      // FruitPick
-
-      if (video.fruitPick) {
-
+            // FruitPick Badge — Top Right or Bottom Right
+      if (video.fruitPick && video.fruitPick.trim()) {
         const fruitEl = document.createElement("div");
-
         fruitEl.textContent = video.fruitPick.trim();
-
-        fruitEl.style.cssText = `position:absolute; bottom:10px; right:10px; font-size:16px; line-height:1; color:#fff; text-shadow:0 0 3px rgba(255,255,255,0.5); z-index:3;`;
-
+        fruitEl.style.cssText = `
+          position:absolute; 
+          bottom:12px; 
+          right:12px; 
+          font-size:18px; 
+          line-height:1; 
+          color:#fff; 
+          text-shadow:0 0 4px rgba(0,0,0,0.8);
+          z-index:3;
+          background:rgba(0,0,0,0.4);
+          padding:2px 6px;
+          border-radius:8px;
+        `;
         card.appendChild(fruitEl);
-
       }
 
       // Badge
