@@ -1715,7 +1715,8 @@ body.game-mode .tiny-action-bar {
           No STRZ ⭐️ = No entry.
         </div>
 
-       <div style="
+   <!-- ───────── GAMEPLAY BOX ───────── -->
+<div style="
   background:rgba(0,255,178,0.08);
   padding:14px;
   border-radius:14px;
@@ -1731,6 +1732,7 @@ body.game-mode .tiny-action-bar {
 
   <strong>DO NOT</strong>
   tap the button while it's blazing
+
   <span style="
     color:#ff3b3b;
     font-weight:900;
@@ -1738,37 +1740,130 @@ body.game-mode .tiny-action-bar {
   ">
     RED HOT
   </span>
+
   or you will lose TAPS.<br>
 
   Master the pause-cool rhythm to dominate the leaderboard.
 
-  <!-- VIDEO BUTTON -->
-  <a href="YOUR_VIDEO_LINK_HERE"
-     target="_blank"
-     style="
-      margin-top:14px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      text-decoration:none;
-      padding:12px;
-      border-radius:12px;
-      background:linear-gradient(135deg,#ff2b2b,#ff6a00);
-      color:white;
-      font-weight:900;
-      font-size:13px;
-      letter-spacing:1px;
-      box-shadow:0 0 18px rgba(255,0,0,0.28);
-      font-family:'Rajdhani',sans-serif;
-      text-transform:uppercase;
-     ">
-
-     ▶ Watch Visual Tutorial
-
-  </a>
+  <!-- OPEN VIDEO BUTTON -->
+  <button id="openTutorialVideo" style="
+    margin-top:14px;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:none;
+    padding:12px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#ff2b2b,#ff6a00);
+    color:white;
+    font-weight:900;
+    font-size:13px;
+    letter-spacing:1px;
+    box-shadow:0 0 18px rgba(255,0,0,0.28);
+    font-family:'Rajdhani',sans-serif;
+    text-transform:uppercase;
+    cursor:pointer;
+  ">
+    ▶ Watch Visual Tutorial
+  </button>
 
 </div>
+
+<!-- ───────── VIDEO MODAL ───────── -->
+<div id="tutorialModal" style="
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.88);
+  backdrop-filter:blur(10px);
+  z-index:9999;
+  justify-content:center;
+  align-items:center;
+  padding:18px;
+  box-sizing:border-box;
+">
+
+  <!-- modal box -->
+  <div style="
+    width:100%;
+    max-width:420px;
+    background:#070b11;
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.5);
+    position:relative;
+  ">
+
+    <!-- HEADER -->
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,0.08);
+    ">
+
+      <div style="
+        color:#00FFB2;
+        font-family:'Bebas Neue',cursive;
+        letter-spacing:2px;
+        font-size:20px;
+      ">
+        Tutorial Video
+      </div>
+
+      <!-- CLOSE BUTTON -->
+      <button id="closeTutorialVideo" style="
+        border:none;
+        width:34px;
+        height:34px;
+        border-radius:10px;
+        background:rgba(255,255,255,0.08);
+        color:#fff;
+        cursor:pointer;
+        font-size:18px;
+        font-weight:900;
+      ">
+        ✕
+      </button>
+
+    </div>
+
+    <!-- VIDEO -->
+    <div style="
+      position:relative;
+      width:100%;
+      padding-top:177%;
+      background:#000;
+    ">
+
+      <<video
+  id="tutorialVideo"
+  controls
+  playsinline
+  webkit-playsinline
+  preload="metadata"
+  style="
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    background:#000;
+  "
+>
+  <source src="https://media.visitcube.xyz/dettyverse.firebasestorage.app/users/adukeohema_gmail_com/1778448167641_kciip9ts76.mp4?alt=media" type="video/mp4">
+</video>
+    </div>
+
+
 
         <div style="background:rgba(255,215,0,0.08);padding:14px;border-radius:14px;
           margin-bottom:14px;border:1px solid rgba(255,215,0,0.15);">
