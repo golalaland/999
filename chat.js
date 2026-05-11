@@ -2624,8 +2624,9 @@ function sanitizeKey(email) {
   if (!email) return "";
   return email.toLowerCase().replace(/[@.]/g, "_").trim();
 }
+
 /* ===============================================
-   OPTIMIZED SOCIAL CARD SYSTEM (Fixed + Fast)
+   FINAL SOCIAL CARD SYSTEM (Reliable + Fallback)
    =============================================== */
 let usersByChatId = new Map();
 
@@ -2637,7 +2638,7 @@ async function loadActiveUsersForSocial() {
     activeSnap.forEach(docSnap => {
       const data = docSnap.data();
       if (data.chatId) {
-        const chatIdLower = data.chatId.toLowerCase().trim();
+        const chatIdLower = (data.chatId || "").toLowerCase().trim();
         usersByChatId.set(chatIdLower, {
           ...data,
           _docId: docSnap.id,
@@ -2645,9 +2646,9 @@ async function loadActiveUsersForSocial() {
         });
       }
     });
-    console.log(`[Social] Loaded ${usersByChatId.size} active users`);
+    console.log(`[Social] Loaded ${usersByChatId.size} active users for cards`);
   } catch (err) {
-    console.warn("[Social] Failed to load active users:", err);
+    console.warn("[Social] Load failed:", err);
   }
 }
 
@@ -2832,26 +2833,41 @@ function typeWriterEffect(el, text, speed = 40) {
   }, speed);
 }
 
-// Click listener to open card
+// Global Click Handler (Main Chat)
 document.addEventListener("pointerdown", e => {
   const el = e.target.closest("[data-user-id]") || e.target;
   if (!el.textContent) return;
-  
   const text = el.textContent.trim();
   if (!text || text.includes(":")) return;
 
   const chatId = text.split(" ")[0].toLowerCase().trim();
-  const user = usersByChatId.get(chatId);
+  let user = usersByChatId.get(chatId);
 
-  if (user && user._docId !== currentUser?.uid) {
-    el.style.background = "#ffcc00";
-    setTimeout(() => el.style.background = "", 200);
+  if (user) {
     showSocialCard(user);
+  } else {
+    // Fallback: Direct fetch (like in Free Tonight)
+    const fullSpinner = document.createElement("div");
+    fullSpinner.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(6px);`;
+    fullSpinner.innerHTML = `<div style="text-align:center;"><div style="width:48px;height:48px;border:4px solid #00ffea;border-top-color:transparent;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div></div>`;
+    document.body.appendChild(fullSpinner);
+
+    getDoc(doc(db, "users", el.dataset.userId || chatId))
+      .then(snap => {
+        fullSpinner.remove();
+        if (snap.exists()) showSocialCard(snap.data());
+        else showStarPopup("User profile not found", "error");
+      })
+      .catch(() => {
+        fullSpinner.remove();
+        showStarPopup("Failed to load profile", "error");
+      });
   }
 });
 
-console.log("✅ Optimized Social Card System Loaded");
+console.log("✅ Social Card System v2 Loaded");
 window.showSocialCard = showSocialCard;
+window.typeWriterEffect = typeWriterEffect;
 
 // ────────────────────────────────────────────────
 // sendStarsToUser function (unchanged — placed outside IIFE)
