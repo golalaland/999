@@ -605,34 +605,6 @@ window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
 
-// ── USER DOCUMENT CACHE (Reduces repeated getDoc calls) ──
-const userCache = new Map();
-
-async function getCachedUserDoc(uid, forceFresh = false) {
-  if (!uid) return null;
-
-  const now = Date.now();
-  const cached = userCache.get(uid);
-
-  if (!forceFresh && cached && (now - cached.timestamp < 300000)) { // 5 minutes cache
-    return cached.data;
-  }
-
-  try {
-    const userRef = doc(db, "users", uid);
-    const snap = await getDoc(userRef);
-    
-    if (snap.exists()) {
-      const data = snap.data();
-      userCache.set(uid, { data, timestamp: now });
-      return data;
-    }
-    return null;
-  } catch (err) {
-    console.error("getCachedUserDoc error:", err);
-    return null;
-  }
-}
 // ===============================================
 // OPTIMIZED USER COLORS + ACTIVE USERS (Major Read Saver)
 // ===============================================
