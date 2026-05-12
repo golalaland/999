@@ -8110,6 +8110,107 @@ function loadPollCarousel() {
     }, 4500);
   });
 }
+
+// ==================== CREATE NEW POLL - ROBUST VERSION ====================
+
+function initCreatePollButton() {
+  const createBtn = document.getElementById("create-new-poll");
+
+  if (!createBtn) {
+    console.warn("⚠️ Create Poll button (#create-new-poll) not found in DOM yet.");
+    // Retry after a short delay (in case modal loads late)
+    setTimeout(initCreatePollButton, 800);
+    return;
+  }
+
+  // Remove old listener if exists to prevent duplicates
+  createBtn.removeEventListener("click", handleCreatePoll);
+
+  createBtn.addEventListener("click", handleCreatePoll);
+  console.log("✅ Create Poll button initialized successfully");
+}
+
+// Main Handler
+async function handleCreatePoll() {
+  const btn = document.getElementById("create-new-poll");
+  if (!btn) return;
+
+  if (!currentAdmin || !currentAdmin.uid) {
+    showGoldAlert("Admin login required to create poll!");
+    return;
+  }
+
+  const question = document.getElementById("poll-question")?.value.trim();
+  const optionInputs = document.querySelectorAll(".poll-option-input");
+  const options = Array.from(optionInputs)
+    .map(input => input.value.trim())
+    .filter(v => v.length > 0);
+
+  const reward = parseInt(document.getElementById("poll-reward")?.value) || 50;
+  const hours = parseInt(document.getElementById("poll-duration")?.value) || 24;
+
+  // Validation
+  if (!question) {
+    showGoldAlert("Please enter a poll question ♡");
+    return;
+  }
+  if (options.length < 2) {
+    showGoldAlert("Need at least 2 options!");
+    return;
+  }
+
+  // UI Feedback
+  const originalText = btn.innerHTML;
+  const originalStyle = btn.style.cssText || "";
+  btn.innerHTML = '<span class="btn-spinner visible"></span> Creating...';
+  btn.disabled = true;
+
+  try {
+    const endsAt = Timestamp.fromMillis(Date.now() + hours * 60 * 60 * 1000);
+
+    await setDoc(doc(db, "polls", "current"), {
+      question,
+      options,
+      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+      endsAt,
+      reward,
+      createdAt: serverTimestamp(),
+      createdBy: currentAdmin.uid,
+      status: "active"
+    });
+
+    btn.innerHTML = '✓ Poll Created Successfully!';
+    btn.style.background = 'linear-gradient(90deg, #40c057, #69db7c)';
+
+    showGoldAlert(`New poll is now live!\n${options.length} options • ${reward} $STRZ`, "SUCCESS");
+
+    // Clear form
+    document.getElementById("poll-question").value = "";
+    optionInputs.forEach(input => input.value = "");
+    document.getElementById("poll-reward").value = "50";
+    document.getElementById("poll-duration").value = "24";
+
+  } catch (err) {
+    console.error("Create Poll Error:", err);
+    btn.innerHTML = '✗ Failed';
+    btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
+    showGoldAlert("Failed to create poll. Check console.");
+  }
+
+  // Reset button after 2.5 seconds
+  setTimeout(() => {
+    btn.innerHTML = originalText;
+    btn.style.cssText = originalStyle;
+    btn.disabled = false;
+  }, 2500);
+}
+
+// Initialize when page loads
+document.addEventListener("DOMContentLoaded", initCreatePollButton);
+
+// Also try initializing immediately (in case script loads late)
+initCreatePollButton();
+
 /*********************************
  * fruity punch!!
  *********************************/
