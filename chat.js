@@ -7776,12 +7776,12 @@ async function openPollModal() {
 
       startVotesListener(poll, endTime);
     }, (err) => {
-      hideLoader();
+      hideLoaderBlack();
       console.error("Poll snapshot error:", err);
       showStarPopup("Failed to load poll");
     });
   } catch (err) {
-    hideLoader();
+    hideLoaderBlack();
     console.error(err);
   }
 }
