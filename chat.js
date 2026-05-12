@@ -1421,11 +1421,11 @@ async function updateRedeemLink() {
 
   try {
     const token = await createLoginToken(currentUser.uid);
-    refs.redeemBtn.href = token ? `/tm?t=${token}` : "/tm";
+    refs.redeemBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
     console.log("[REDEEM] Link updated successfully");
   } catch (err) {
     console.warn("[REDEEM] Failed to update link:", err);
-    refs.redeemBtn.href = "/tm";
+    refs.redeemBtn.href = "/tapmaster";
   }
 
   refs.redeemBtn.style.display = "inline-block";
@@ -1448,11 +1448,11 @@ async function updateTipLink() {
 
   try {
     const token = await createLoginToken(currentUser.uid);
-    refs.tipBtn.href = token ? `/tm?t=${token}` : "/tm";
+    refs.tipBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
     console.log("[TIP] Link updated successfully");
   } catch (err) {
     console.warn("[TIP] Failed to update link:", err);
-    refs.tipBtn.href = "/tm";
+    refs.tipBtn.href = "/tapmaster";
   }
 
   refs.tipBtn.style.display = "inline-block";
