@@ -322,18 +322,54 @@ function updateInfoTab() {
   }
 }
 
-// ---------- CLEANUP EXPIRED TOKENS ----------
-async function cleanupExpiredTokens() {
-  const tokensRef = collection(db, "loginTokens");
-  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
-  const snap = await getDocs(q);
+// ==================== EXPERT 7-DAY TOKEN SYSTEM ====================
 
-  snap.forEach(async docSnap => {
-    await deleteDoc(docSnap.ref);
-  });
+/**
+ * Create / Reuse 7-day login token (very low write frequency)
+ */
+async function createLoginToken(uid) {
+  if (!uid) return null;
+
+  // 1. Return cached token if still valid
+  const cached = localStorage.getItem('loginToken');
+  if (cached) {
+    try {
+      const data = JSON.parse(cached);
+      if (data.expiresAt > Date.now()) {
+        return data.token;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Generate new token
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+
+  try {
+    await setDoc(doc(db, "loginTokens", token), {
+      uid,
+      createdAt: serverTimestamp(),
+      expiresAt,
+      lastUsed: serverTimestamp()
+    });
+
+    // Cache locally
+    localStorage.setItem('loginToken', JSON.stringify({ token, expiresAt, uid }));
+
+    console.log("[TOKEN] New 7-day token created successfully");
+    return token;
+  } catch (err) {
+    console.error("[TOKEN] Creation failed:", err);
+    return null;
+  }
 }
 
-
+/**
+ * Load user from token - DOES NOT delete token (7-day lifespan)
+ */
 async function loadUserFromToken(token) {
   if (!token) return null;
 
@@ -341,104 +377,154 @@ async function loadUserFromToken(token) {
     const tokenRef = doc(db, "loginTokens", token);
     const snap = await getDoc(tokenRef);
 
-    if (!snap.exists()) throw new Error("Invalid or expired token");
+    if (!snap.exists()) {
+      console.warn("[TOKEN] Token not found");
+      return null;
+    }
 
     const data = snap.data();
 
     if (Date.now() > data.expiresAt) {
       await deleteDoc(tokenRef);
-      throw new Error("Token expired");
+      console.warn("[TOKEN] Expired token deleted");
+      return null;
     }
 
-    // Valid token — store UID in localStorage for reload safety
+    // Update last used time (helps with analytics + optional auto-extend)
+    await updateDoc(tokenRef, { 
+      lastUsed: serverTimestamp() 
+    });
+
+    // Save UID for session persistence
     localStorage.setItem("vipUser", JSON.stringify({ uid: data.uid }));
 
-    // Delete the token for security (optional — still works on reload)
-    await deleteDoc(tokenRef);
-
+    console.log("%c✅ Token authentication successful (7 days)", "color:#00ffaa", data.uid);
     return data.uid;
 
   } catch (err) {
-    console.warn("Token login error:", err);
+    console.warn("[TOKEN] Validation error:", err);
     return null;
   }
 }
 
+/**
+ * Smart Cleanup - Runs rarely and efficiently
+ */
+async function cleanupExpiredTokens() {
+  const lastCleanup = localStorage.getItem('lastTokenCleanup');
+  
+  // Max once every 6 hours
+  if (lastCleanup && Date.now() - Number(lastCleanup) < 6 * 60 * 60 * 1000) {
+    return;
+  }
 
-// ---------- LOAD USER — FINAL SECURE + TOKEN VERSION ----------
+  try {
+    const q = query(
+      collection(db, "loginTokens"), 
+      where("expiresAt", "<", Date.now())
+    );
+    
+    const snap = await getDocs(q);
+    
+    if (snap.empty) {
+      localStorage.setItem('lastTokenCleanup', Date.now().toString());
+      return;
+    }
+
+    const batch = writeBatch(db);
+    snap.forEach((docSnap) => batch.delete(docSnap.ref));
+
+    await batch.commit();
+    
+    localStorage.setItem('lastTokenCleanup', Date.now().toString());
+    console.log(`[CLEANUP] Removed ${snap.size} expired tokens`);
+    
+  } catch (err) {
+    console.error("[CLEANUP] Failed:", err);
+  }
+}
+
+/**
+ * MAIN USER LOADER - Final Expert Version
+ */
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1️⃣ Try token from URL
+    // 1️⃣ Priority: Token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
+
     if (token) {
       uid = await loadUserFromToken(token);
-      if (uid) console.log("%cLogged in via token", "color:#ff6600", uid);
+      if (uid) console.log("%cLogged in via shareable token", "color:#ff6600");
     }
 
-    // 2️⃣ Fallback to localStorage
+    // 2️⃣ Fallback: localStorage
     if (!uid) {
-      const vipRaw = localStorage.getItem("vipUser");
-      const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
-      if (storedUser?.uid) {
-        uid = storedUser.uid;
-        console.log("%cLoaded from localStorage", "color:#00ffaa");
+      const stored = localStorage.getItem("vipUser");
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          if (data?.uid) {
+            uid = data.uid;
+            console.log("%cLoaded from localStorage cache", "color:#00ffaa");
+          }
+        } catch (e) {}
       }
     }
 
-    // 3️⃣ Guest mode
+    // 3️⃣ Guest Mode
     if (!uid) {
       currentUser = null;
       profileNameEl && (profileNameEl.textContent = "GUEST 0000");
       starCountEl && (starCountEl.textContent = "50");
       cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined; // prevents flashing 1
+      persistentBonusLevel = 1;
       return;
     }
 
-    // Store UID for persistence
-    localStorage.setItem("vipUser", JSON.stringify({ uid }));
+    // Load full user profile from Firestore
+    const userSnap = await getDoc(doc(db, "users", uid));
 
-    // Load user data from Firestore
-    const userRef = doc(db, "users", uid);
-    const snap = await getDoc(userRef);
-
-    if (!snap.exists()) {
-      alert("Profile not found");
+    if (!userSnap.exists()) {
+      console.warn("User document not found");
+      alert("Profile not found. Please try again.");
+      localStorage.removeItem("vipUser");
       currentUser = null;
-      persistentBonusLevel = undefined;
       return;
     }
 
-    const data = snap.data();
+    const data = userSnap.data();
 
     currentUser = {
       uid,
-      chatId: data.chatId || uid.split('_')[0],
-      email: uid.replace(/_/g, "@"),
+      chatId: data.chatId || uid.split('_')[0] || "Player",
       stars: Number(data.stars || 0),
       cash: Number(data.cash || 0),
       totalTaps: Number(data.totalTaps || 0),
-      bonusLevel: Number(data.bonusLevel || 1)
+      bonusLevel: Number(data.bonusLevel || 1),
+      bankName: data.bankName || null,
+      bankAccountNumber: data.bankAccountNumber || null
     };
 
-    // Set bonus level only after data loads
-    persistentBonusLevel = currentUser.bonusLevel;
-    if (!persistentBonusLevel || persistentBonusLevel < 1) persistentBonusLevel = 1;
+    persistentBonusLevel = currentUser.bonusLevel || 1;
 
     // Update UI
     profileNameEl && (profileNameEl.textContent = currentUser.chatId);
     starCountEl && (starCountEl.textContent = formatNumber(currentUser.stars));
     cashCountEl && (cashCountEl.textContent = '₦' + formatNumber(currentUser.cash));
-    updateInfoTab();
+
+    updateInfoTab?.();
+
+    // Optional: Refresh token cache
+    localStorage.setItem("vipUser", JSON.stringify({ uid }));
 
   } catch (err) {
-    console.warn("Load error:", err);
-    alert("Failed to load");
+    console.error("Critical load error:", err);
+    alert("Failed to load game data. Please refresh.");
     currentUser = null;
-    persistentBonusLevel = undefined;
+    persistentBonusLevel = 1;
   }
 }
 
