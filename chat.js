@@ -1335,59 +1335,85 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Create a secure token (your original, with safety)
+// ==================== EXPERT 7-DAY TOKEN SYSTEM ====================
+
+let currentLoginToken = null;     // In-memory cache for current session
+
+/**
+ * Creates or reuses a secure 7-day login token
+ * Extremely optimized for high traffic (minimal writes)
+ */
 async function createLoginToken(uid) {
   if (!uid) {
-    console.warn("[TOKEN] No UID — cannot create token");
+    console.warn("[TOKEN] No UID provided");
     return null;
   }
 
-  const token = crypto.getRandomValues(new Uint8Array(16))
-                     .reduce((s, b) => s + b.toString(16).padStart(2,'0'), '');
+  // 1. Return from in-memory cache (fastest)
+  if (currentLoginToken) {
+    return currentLoginToken;
+  }
+
+  // 2. Check localStorage for valid token
+  const stored = localStorage.getItem('loginToken');
+  if (stored) {
+    try {
+      const data = JSON.parse(stored);
+      if (data.expiresAt > Date.now()) {
+        currentLoginToken = data.token;
+        return data.token;
+      }
+    } catch (e) {
+      localStorage.removeItem('loginToken'); // clean corrupted data
+    }
+  }
+
+  // 3. Generate new token only when necessary
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
+
+  const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+
   const tokenRef = doc(db, "loginTokens", token);
 
   try {
     await setDoc(tokenRef, {
       uid,
       createdAt: serverTimestamp(),
-      expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutes
+      expiresAt: expiresAt,
+      lastUsed: serverTimestamp(),
+      version: 2   // for future compatibility
     });
-    console.log("[TOKEN] Created for UID:", uid);
+
+    // Cache both in memory and localStorage
+    currentLoginToken = token;
+    localStorage.setItem('loginToken', JSON.stringify({
+      token,
+      expiresAt,
+      uid,
+      createdAt: Date.now()
+    }));
+
+    console.log(`[TOKEN] New 7-day token created for ${uid}`);
     return token;
+
   } catch (err) {
-    console.error("[TOKEN] Failed:", err);
+    console.error("[TOKEN] Failed to create token:", err);
     return null;
   }
 }
 
-// Cleanup expired tokens (run on login or periodically)
-async function cleanupExpiredTokens() {
-  const tokensRef = collection(db, "loginTokens");
-  const q = query(tokensRef, where("expiresAt", "<", Date.now()));
-  const snap = await getDocs(q);
-
-  if (snap.empty) return;
-
-  const batch = writeBatch(db);
-  snap.forEach(docSnap => batch.delete(docSnap.ref));
-
-  try {
-    await batch.commit();
-    console.log("[CLEANUP] Deleted", snap.size, "expired tokens");
-  } catch (err) {
-    console.error("[CLEANUP] Failed:", err);
-  }
-}
-
-// REDEEM BUTTON — SAFE & ALWAYS SHOWS
+/**
+ * Update Redeem Button Link (Smart + Efficient)
+ */
 async function updateRedeemLink() {
   if (!refs.redeemBtn) {
-    console.log("[REDEEM] No redeem button found");
+    console.warn("[REDEEM] Button element not found");
     return;
   }
 
   if (!currentUser?.uid) {
-    console.warn("[REDEEM] No currentUser — fallback");
     refs.redeemBtn.href = "/tm";
     refs.redeemBtn.style.display = "inline-block";
     return;
@@ -1396,25 +1422,25 @@ async function updateRedeemLink() {
   try {
     const token = await createLoginToken(currentUser.uid);
     refs.redeemBtn.href = token ? `/tm?t=${token}` : "/tm";
-    console.log("[REDEEM] Success");
+    console.log("[REDEEM] Link updated successfully");
   } catch (err) {
-    console.warn("[REDEEM] Error:", err);
+    console.warn("[REDEEM] Failed to update link:", err);
     refs.redeemBtn.href = "/tm";
   }
 
   refs.redeemBtn.style.display = "inline-block";
-  console.log("[REDEEM] Button shown");
 }
 
-// TIP BUTTON — SAFE & ALWAYS SHOWS
+/**
+ * Update Tip Button Link (Smart + Efficient)
+ */
 async function updateTipLink() {
   if (!refs.tipBtn) {
-    console.log("[TIP] No tip button found");
+    console.warn("[TIP] Button element not found");
     return;
   }
 
   if (!currentUser?.uid) {
-    console.warn("[TIP] No currentUser — fallback");
     refs.tipBtn.href = "/tm";
     refs.tipBtn.style.display = "inline-block";
     return;
@@ -1423,14 +1449,13 @@ async function updateTipLink() {
   try {
     const token = await createLoginToken(currentUser.uid);
     refs.tipBtn.href = token ? `/tm?t=${token}` : "/tm";
-    console.log("[TIP] Success");
+    console.log("[TIP] Link updated successfully");
   } catch (err) {
-    console.warn("[TIP] Error:", err);
+    console.warn("[TIP] Failed to update link:", err);
     refs.tipBtn.href = "/tm";
   }
 
   refs.tipBtn.style.display = "inline-block";
-  console.log("[TIP] Button shown");
 }
 
 /* ----------------------------
