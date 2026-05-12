@@ -1335,129 +1335,162 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ==================== EXPERT 7-DAY TOKEN SYSTEM ====================
+// ==================== SECURE ONE-TIME TOKEN + LONG SESSION SYSTEM ====================
 
-let currentLoginToken = null;     // In-memory cache for current session
+let currentLoginToken = null;
 
 /**
- * Creates or reuses a secure 7-day login token
- * Extremely optimized for high traffic (minimal writes)
+ * Create One-Time Shareable Token (15 minutes)
  */
 async function createLoginToken(uid) {
-  if (!uid) {
-    console.warn("[TOKEN] No UID provided");
-    return null;
-  }
+  if (!uid) return null;
 
-  // 1. Return from in-memory cache (fastest)
-  if (currentLoginToken) {
-    return currentLoginToken;
-  }
+  if (currentLoginToken) return currentLoginToken;
 
-  // 2. Check localStorage for valid token
-  const stored = localStorage.getItem('loginToken');
-  if (stored) {
-    try {
-      const data = JSON.parse(stored);
-      if (data.expiresAt > Date.now()) {
-        currentLoginToken = data.token;
-        return data.token;
-      }
-    } catch (e) {
-      localStorage.removeItem('loginToken'); // clean corrupted data
-    }
-  }
-
-  // 3. Generate new token only when necessary
   const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
-    .map(byte => byte.toString(16).padStart(2, '0'))
+    .map(b => b.toString(16).padStart(2, '0'))
     .join('');
 
-  const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
-
-  const tokenRef = doc(db, "loginTokens", token);
+  const expiresAt = Date.now() + (15 * 60 * 1000); // 15 minutes
 
   try {
-    await setDoc(tokenRef, {
+    await setDoc(doc(db, "loginTokens", token), {
       uid,
       createdAt: serverTimestamp(),
-      expiresAt: expiresAt,
-      lastUsed: serverTimestamp(),
-      version: 2   // for future compatibility
+      expiresAt,
+      used: false,
+      type: "one_time"
     });
 
-    // Cache both in memory and localStorage
     currentLoginToken = token;
-    localStorage.setItem('loginToken', JSON.stringify({
-      token,
-      expiresAt,
-      uid,
-      createdAt: Date.now()
-    }));
-
-    console.log(`[TOKEN] New 7-day token created for ${uid}`);
+    console.log("[TOKEN] One-time shareable token created");
     return token;
-
   } catch (err) {
-    console.error("[TOKEN] Failed to create token:", err);
+    console.error("[TOKEN] Failed:", err);
     return null;
   }
 }
 
 /**
- * Update Redeem Button Link (Smart + Efficient)
+ * Load User from One-Time Token
  */
-async function updateRedeemLink() {
-  if (!refs.redeemBtn) {
-    console.warn("[REDEEM] Button element not found");
-    return;
-  }
+async function loadUserFromToken(token) {
+  if (!token) return null;
 
+  try {
+    const tokenRef = doc(db, "loginTokens", token);
+    const snap = await getDoc(tokenRef);
+
+    if (!snap.exists()) return null;
+
+    const data = snap.data();
+
+    if (Date.now() > data.expiresAt || data.used === true) {
+      await deleteDoc(tokenRef);
+      return null;
+    }
+
+    // Mark as used and delete immediately
+    await deleteDoc(tokenRef);
+
+    // Create Long-Lived Session
+    await createLongLivedSession(data.uid);
+
+    console.log("%c✅ One-time token redeemed successfully", "color:#00ffaa");
+    return data.uid;
+
+  } catch (err) {
+    console.warn("Token redemption error:", err);
+    return null;
+  }
+}
+
+/**
+ * Create Long-Lived Session (30 days)
+ */
+async function createLongLivedSession(uid) {
+  const sessionId = `sess_${uid}_${Date.now()}`;
+  const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days
+
+  try {
+    await setDoc(doc(db, "userSessions", sessionId), {
+      uid,
+      createdAt: serverTimestamp(),
+      expiresAt,
+      lastUsed: serverTimestamp(),
+      deviceInfo: navigator.userAgent.substring(0, 100) // optional
+    });
+
+    // Save to localStorage
+    localStorage.setItem("vipUser", JSON.stringify({ 
+      uid, 
+      sessionId,
+      expiresAt 
+    }));
+
+    console.log("[SESSION] Long-lived session created (30 days)");
+  } catch (err) {
+    console.error("[SESSION] Failed to create session:", err);
+  }
+}
+
+/**
+ * Validate Long-Lived Session
+ */
+async function validateLongLivedSession(storedData) {
+  if (!storedData?.uid || !storedData?.sessionId) return null;
+
+  try {
+    const sessionRef = doc(db, "userSessions", storedData.sessionId);
+    const snap = await getDoc(sessionRef);
+
+    if (!snap.exists()) return null;
+
+    const data = snap.data();
+    if (Date.now() > data.expiresAt) {
+      await deleteDoc(sessionRef);
+      return null;
+    }
+
+    // Update last used
+    await updateDoc(sessionRef, { lastUsed: serverTimestamp() });
+
+    return data.uid;
+  } catch (err) {
+    console.warn("Session validation failed:", err);
+    return null;
+  }
+}
+
+/* ====================== LINK UPDATERS ====================== */
+
+async function updateRedeemLink() {
+  if (!refs.redeemBtn) return;
+  
   if (!currentUser?.uid) {
-    refs.redeemBtn.href = "/tm";
+    refs.redeemBtn.href = "/tapmaster";
     refs.redeemBtn.style.display = "inline-block";
     return;
   }
 
-  try {
-    const token = await createLoginToken(currentUser.uid);
-    refs.redeemBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
-    console.log("[REDEEM] Link updated successfully");
-  } catch (err) {
-    console.warn("[REDEEM] Failed to update link:", err);
-    refs.redeemBtn.href = "/tapmaster";
-  }
-
+  const token = await createLoginToken(currentUser.uid);
+  refs.redeemBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
   refs.redeemBtn.style.display = "inline-block";
 }
 
-/**
- * Update Tip Button Link (Smart + Efficient)
- */
 async function updateTipLink() {
-  if (!refs.tipBtn) {
-    console.warn("[TIP] Button element not found");
-    return;
-  }
-
+  if (!refs.tipBtn) return;
+  
   if (!currentUser?.uid) {
-    refs.tipBtn.href = "/tm";
+    refs.tipBtn.href = "/tapmaster";
     refs.tipBtn.style.display = "inline-block";
     return;
   }
 
-  try {
-    const token = await createLoginToken(currentUser.uid);
-    refs.tipBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
-    console.log("[TIP] Link updated successfully");
-  } catch (err) {
-    console.warn("[TIP] Failed to update link:", err);
-    refs.tipBtn.href = "/tapmaster";
-  }
-
+  const token = await createLoginToken(currentUser.uid);
+  refs.tipBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
   refs.tipBtn.style.display = "inline-block";
 }
-
 /* ----------------------------
    GIFT ALERT (ON-SCREEN CELEBRATION)
 ----------------------------- */
