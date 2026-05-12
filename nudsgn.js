@@ -40,6 +40,12 @@ const firebaseConfig = {
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+// CALL THIS BEFORE ANYTHING ELSE
+document.addEventListener("DOMContentLoaded", () => {
+  loadCurrentUserForGame();         // ← THEN LOAD FULL DATA
+  updateInfoTab();                  // ← BALANCE SHOWS
+});
+
 // LEADERBOARD CACHE + AVATAR FUNCTION (GLOBAL – must be here!)
 const leaderboardCache = {
   daily:   { data: null, timestamp: 0 },
@@ -248,9 +254,9 @@ setTimeout(() => {
   const realName = currentUser?.chatId || 
                    currentUser?.username || 
                    currentUser?.email?.replace(/,/g, '_').split('@')[0] || 
-                   "A Warrior";
+                   "Tapper";
 
-  const text = `${realName} just smashed ${taps.toLocaleString()} taps and earned ₦${earnings.toLocaleString()}! Can you beat that?`;
+  const text = `${realName} just smashed ${taps.toLocaleString()} taps in 90 seconds ! Can you beat that?`;
 
   if (navigator.share) {
     navigator.share({ 
@@ -297,12 +303,6 @@ function initializePot(){
 function randomInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function formatNumber(n){ return n.toLocaleString(); }
 
-
-// CALL THIS BEFORE ANYTHING ELSE
-document.addEventListener("DOMContentLoaded", () => {
-  loadCurrentUserForGame();         // ← THEN LOAD FULL DATA
-  updateInfoTab();                  // ← BALANCE SHOWS
-});
 
 
 // INFO TAB BALANCE UPDATE — SAFE FOR TAPMASTER
@@ -527,15 +527,37 @@ function updateBonusBar() {
   const percentage = tapsForNext > 0 ? (progress / tapsForNext) * 100 : 0;
   bonusBar.style.width = Math.min(100, percentage) + '%';
 
-  // === RANDOM BEAUTIFUL GRADIENT BACKGROUND ===
-  const colors = [
-    `linear-gradient(90deg, #ff416c, #ff4b2b)`,   // Fiery red-orange
-    `linear-gradient(90deg, #00c6ff, #0072ff)`,   // Electric blue
-    `linear-gradient(90deg, #f7971e, #ffd200)`,   // Sunny gold
-    `linear-gradient(90deg, #a1ffce, #faffd1)`,   // Mint fresh
-    `linear-gradient(90deg, #ff9a9e, #fad0c4)`,   // Soft peach
-    `linear-gradient(90deg, #ffecd2, #fcb69f)`    // Warm sunset
-  ];
+ const colors = [
+  // 🔥 Luxury Fire (premium red-orange, deeper tone)
+  `linear-gradient(135deg, #ff3d00, #ff006a, #ff4d00)`,
+
+  // 🌌 Deep Ocean Electric (clean fintech blue)
+  `linear-gradient(135deg, #00c6ff, #0072ff, #001eff)`,
+
+  // 💰 Gold Wealth Pulse (stronger gold depth)
+  `linear-gradient(135deg, #ffd200, #ffb300, #ff7a00)`,
+
+  // 🌿 Neon Mint Glow (fresh + modern + soft luxury)
+  `linear-gradient(135deg, #00ffb2, #7cffcb, #d0ffe6)`,
+
+  // 🌸 Luxury Pink Silk (soft but expensive vibe)
+  `linear-gradient(135deg, #ff9a9e, #fad0c4, #ffd1ff)`,
+
+  // 🌅 Sunset Premium (more cinematic depth)
+  `linear-gradient(135deg, #ffecd2, #fcb69f, #ff6f61)`,
+
+  // ⚡ Neon Night Energy (your “Tap Master” identity vibe)
+  `linear-gradient(135deg, #0f0c29, #302b63, #ff2e63)`,
+
+  // 🖤 Dark Luxury Gold (VERY premium fintech look)
+  `linear-gradient(135deg, #141e30, #243b55, #ffd700)`,
+
+  // 🧊 Ice Glass Glow (clean modern UI aesthetic)
+  `linear-gradient(135deg, #e0f7ff, #ffffff, #a8edea)`,
+
+  // 🔮 Cyber Purple Flow (gaming / crypto energy)
+  `linear-gradient(135deg, #8e2de2, #4a00e0, #ff00cc)`
+];
   const idx = randomInt(0, colors.length - 1);
   bonusBar.style.background = colors[idx];
 
@@ -1339,6 +1361,7 @@ function startDailyCountdown() {
   tick();
   setInterval(tick, 1000);
 }
+
 /* -------------------------------------------
    MODAL OPEN/CLOSE
 -------------------------------------------- */
