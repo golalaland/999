@@ -1198,6 +1198,8 @@ function hideLoader() {
 
 // ==================== PREMIUM BLACK FROSTED GLASS LOADER ====================
 
+// ==================== PREMIUM BLACK FROSTED GLASS LOADER (Small Spinner) ====================
+
 function showLoaderBlack(text = "Loading...") {
   let loader = document.getElementById("loaderBlack");
 
@@ -1217,22 +1219,22 @@ function showLoaderBlack(text = "Loading...") {
       justify-content: center;
       z-index: 9999999;
       opacity: 0;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.35s ease;
     `;
 
     loader.innerHTML = `
       <div style="text-align:center; color:#fff;">
-        <!-- Premium Spinner -->
-        <div style="width:56px; height:56px; margin:0 auto 20px;
-                    border: 4px solid rgba(255,255,255,0.1);
+        <!-- Smaller Premium Spinner -->
+        <div style="width:42px; height:42px; margin:0 auto 18px;
+                    border: 4px solid rgba(255,255,255,0.12);
                     border-top-color: #c3f60c;
                     border-radius: 50%;
-                    animation: spin 1s linear infinite;"></div>
+                    animation: spin 0.95s linear infinite;"></div>
         
         <div id="loaderBlackText" style="
-          font-size: 15.5px; 
+          font-size: 15px; 
           font-weight: 600; 
-          letter-spacing: 0.5px;
+          letter-spacing: 0.4px;
           color: #e0e0e0;
         ">${text}</div>
       </div>
@@ -1240,7 +1242,7 @@ function showLoaderBlack(text = "Loading...") {
 
     document.body.appendChild(loader);
 
-    // Add keyframes if not already present
+    // Add animation keyframes
     if (!document.getElementById("frosted-loader-style")) {
       const style = document.createElement("style");
       style.id = "frosted-loader-style";
@@ -1253,11 +1255,9 @@ function showLoaderBlack(text = "Loading...") {
     }
   }
 
-  // Update text and show with smooth fade
   document.getElementById("loaderBlackText").textContent = text;
   loader.style.display = "flex";
   
-  // Trigger fade-in
   setTimeout(() => {
     loader.style.opacity = "1";
   }, 10);
@@ -1267,13 +1267,11 @@ function hideLoaderBlack() {
   const loader = document.getElementById("loaderBlack");
   if (loader) {
     loader.style.opacity = "0";
-    
-    // Fully hide after transition
     setTimeout(() => {
       if (loader.style.opacity === "0") {
         loader.style.display = "none";
       }
-    }, 400);
+    }, 350);
   }
 }
 
