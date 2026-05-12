@@ -7896,25 +7896,8 @@ function showVotingOptions(poll) {
           stars: increment(poll.reward || 50)
         });
 
-        // 🔥 FULL CONFETTI RESTORED
-        confetti({
-          particleCount: 180,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#ff1493', '#ff69b4', '#00ffea', '#c3f60c', '#ffd700'],
-          zIndex: 100000
-        });
-
-        // Extra burst for more celebration
-        setTimeout(() => {
-          confetti({
-            particleCount: 120,
-            angle: 60,
-            spread: 70,
-            origin: { x: 0.7, y: 0.6 },
-            colors: ['#ff1493', '#ffd700']
-          });
-        }, 180);
+        // ==================== NUCLEAR CONFETTI ====================
+        nuclearConfettiBurst();
 
         showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
         showLiveResults(poll, option);
@@ -7929,6 +7912,59 @@ function showVotingOptions(poll) {
   });
 
   document.getElementById("pollResult").style.display = "none";
+}
+
+// ====================== NUCLEAR CONFETTI FUNCTION ======================
+function nuclearConfettiBurst() {
+  const colors = ['#ff1493', '#ff69b4', '#c3f60c', '#00ffea', '#ffd700', '#ff00ff', '#00ffff'];
+
+  // Main heavy burst
+  confetti({
+    particleCount: 280,
+    spread: 100,
+    origin: { y: 0.55 },
+    colors: colors,
+    zIndex: 100000,
+    ticks: 300
+  });
+
+  // Left cannon
+  confetti({
+    particleCount: 160,
+    angle: 60,
+    spread: 55,
+    origin: { x: 0.1, y: 0.6 },
+    colors: colors
+  });
+
+  // Right cannon
+  confetti({
+    particleCount: 160,
+    angle: 120,
+    spread: 55,
+    origin: { x: 0.9, y: 0.6 },
+    colors: colors
+  });
+
+  // Extra top burst
+  setTimeout(() => {
+    confetti({
+      particleCount: 200,
+      spread: 120,
+      origin: { y: 0.4 },
+      colors: colors
+    });
+  }, 120);
+
+  // Final shower
+  setTimeout(() => {
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.7 },
+      colors: ['#ffd700', '#c3f60c', '#ff1493']
+    });
+  }, 350);
 }
 
 // Show Results
@@ -8002,9 +8038,9 @@ function loadPollCarousel() {
   carousel.innerHTML = "";
 
   const images = [
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741",
-    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741"
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356"
   ];
 
   // Main Wrapper - Instagram Square Ratio
