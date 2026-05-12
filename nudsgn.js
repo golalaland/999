@@ -444,36 +444,26 @@ async function cleanupExpiredTokens() {
   }
 }
 
-/**
- * MAIN USER LOADER - Final Expert Version
- */
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1️⃣ Priority: Token from URL
+    // 1. Token from URL (One-time)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
 
     if (token) {
       uid = await loadUserFromToken(token);
-      if (uid) console.log("%cLogged in via shareable token", "color:#ff6600");
     }
 
-    // 2️⃣ Fallback: localStorage
+    // 2. Long-lived session from localStorage
     if (!uid) {
       const stored = localStorage.getItem("vipUser");
       if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          if (data?.uid) {
-            uid = data.uid;
-            console.log("%cLoaded from localStorage cache", "color:#00ffaa");
-          }
-        } catch (e) {}
+        const data = JSON.parse(stored);
+        uid = await validateLongLivedSession(data);
       }
     }
-
     // 3️⃣ Guest Mode
     if (!uid) {
       currentUser = null;
