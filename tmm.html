@@ -1160,6 +1160,29 @@ body.game-mode .tiny-action-bar {
   pointer-events: none;
   visibility: hidden;   /* extra safety */
 }
+ /* CASH ICON */
+@keyframes floatCash {
+  0% {
+    transform:translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform:translateY(-6px) rotate(-2deg);
+  }
+  100% {
+    transform:translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    transform:scale(1);
+    opacity:0.6;
+  }
+  100% {
+    transform:scale(1.2);
+    opacity:1;
+  }
+}
 </style>
 </head>
 <body>
@@ -2133,14 +2156,40 @@ body.game-mode .tiny-action-bar {
       opacity:0.6;
     "></div>
 
-    <!-- ICON -->
-    <div style="
-      font-size:34px;
-      margin-bottom:10px;
-      filter:drop-shadow(0 0 10px rgba(255,215,0,0.5));
-    ">
-      💸
-    </div>
+    <!-- ICON (ANIMATED MONEY WITH WINGS) -->
+<div style="
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin-bottom:12px;
+  position:relative;
+">
+
+  <!-- floating glow behind -->
+  <div style="
+    position:absolute;
+    width:70px;
+    height:70px;
+    background:radial-gradient(circle, rgba(255,215,0,0.25), transparent 70%);
+    filter:blur(6px);
+    animation:pulseGlow 2s ease-in-out infinite alternate;
+  "></div>
+
+  <!-- TELEGRAM ANIMATED ASSET -->
+  <img
+    src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Money%20With%20Wings.webp"
+    alt="Money With Wings"
+    style="
+      width:62px;
+      height:62px;
+      position:relative;
+      z-index:2;
+      animation:floatCash 2.5s ease-in-out infinite;
+      filter:drop-shadow(0 0 12px rgba(255,215,0,0.4));
+    "
+  />
+
+</div>
 
     <!-- STATUS -->
     <div style="
@@ -2152,7 +2201,7 @@ body.game-mode .tiny-action-bar {
       margin-bottom:14px;
       text-transform:uppercase;
     ">
-      Payment Successful
+      SUCCESSFUL
     </div>
 
     <!-- AMOUNT -->
