@@ -6475,7 +6475,7 @@ highlightsBtn.onclick = async () => {
     });
 
     if (allClips.length === 0) {
-      hideLoader();
+      hideLoaderBlack();
       showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
       return;
     }
@@ -6486,7 +6486,7 @@ highlightsBtn.onclick = async () => {
     console.error(err);
     showGoldAlert("Error loading Free Tonight");
   } finally {
-    hideLoader();
+    hideLoaderBlack();
   }
 };
 
