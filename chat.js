@@ -7864,7 +7864,6 @@ function renderPoll(poll, endTime) {
   });
 }
 
-// Voting Options
 function showVotingOptions(poll) {
   const container = document.getElementById("pollOptions");
   container.innerHTML = "";
@@ -7897,13 +7896,32 @@ function showVotingOptions(poll) {
           stars: increment(poll.reward || 50)
         });
 
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        // 🔥 FULL CONFETTI RESTORED
+        confetti({
+          particleCount: 180,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#ff1493', '#ff69b4', '#00ffea', '#c3f60c', '#ffd700'],
+          zIndex: 100000
+        });
+
+        // Extra burst for more celebration
+        setTimeout(() => {
+          confetti({
+            particleCount: 120,
+            angle: 60,
+            spread: 70,
+            origin: { x: 0.7, y: 0.6 },
+            colors: ['#ff1493', '#ffd700']
+          });
+        }, 180);
 
         showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
         showLiveResults(poll, option);
+
       } catch (err) {
-        showStarPopup("Vote failed. Try again.");
         console.error(err);
+        showStarPopup("Vote failed. Try again.");
       }
     };
 
