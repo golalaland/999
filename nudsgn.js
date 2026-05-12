@@ -1679,90 +1679,6 @@ document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
 
-// MAIN WITHDRAWAL + GOLDEN COUNT-UP + CHEER + CONFETTI
-async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
-  const userRef = doc(db, "users", currentUser.uid);
-  const withdrawalRef = doc(collection(db, "withdrawals"));
-
-  try {
-    await runTransaction(db, async (t) => {
-      const snap = await t.get(userRef);
-      if (!snap.exists()) throw "User not found";
-      const data = snap.data();
-
-      if (data.cash < amount) throw "Not enough cash";
-      if (isFastTrack && data.stars < 21) throw "Not enough STRZ";
-
-      t.update(userRef, {
-        cash: data.cash - amount,
-        stars: isFastTrack ? data.stars - 21 : data.stars,
-        updatedAt: serverTimestamp()
-      });
-
-      t.set(withdrawalRef, {
-        uid: currentUser.uid,
-        username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
-        amount,
-        bankName: data.bankName || "Not set",
-        bankAccountNumber: data.bankAccountNumber || "Not set",
-        status: isFastTrack ? "fast_track" : "pending",
-        isFastTrack,
-        requestedAt: serverTimestamp(),
-        note: isFastTrack ? "User paid 21 STRZ for priority" : "Standard"
-      });
-    });
-
-    // UPDATE LOCAL
-    currentUser.cash -= amount;
-    if (isFastTrack) currentUser.stars -= 21;
-    updateBankDisplay();
-
-    // LUXURY GOLDEN COUNTER (counts UP from 0)
-    const counter = document.getElementById('goldenAmount');
-    counter.textContent = '0';
-
-    document.getElementById('successMessage').textContent = isFastTrack
-      ? "FAST TRACKED! Support notified"
-      : "Withdrawal requested!";
-
-    document.getElementById('withdrawSuccessOverlay').style.display = 'flex';
-
-    // CHEERING SOUND + CONFETTI
-    document.getElementById('cheerSound')?.play();
-    triggerConfetti();
-
-    // COUNT UP ANIMATION
-    let current = 0;
-    const step = Math.ceil(amount / 60);
-    const timer = setInterval(() => {
-      current += step;
-      if (current >= amount) {
-        current = amount;
-        clearInterval(timer);
-      }
-      counter.textContent = current.toLocaleString();
-    }, 30);
-
-    // FAST TRACK → AUTO MESSAGE TO ADMIN
-    if (isFastTrack) {
-      setTimeout(() => {
-        const msg = encodeURIComponent(
-          `FAST TRACK WITHDRAWAL\n` +
-          `User: @${currentUser.chatId || 'unknown'}\n` +
-          `Amount: ₦${amount.toLocaleString()}\n` +
-          `Bank: ${currentUser.bankName || 'Not set'}\n` +
-          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
-          `Process urgently!`
-        );
-        window.open(`https://t.me/YOUR_ADMIN_USERNAME?text=${msg}`, '_blank');
-      }, 1500);
-    }
-
-  } catch (err) {
-    console.error("Withdrawal failed:", err);
-    realAlert("Withdrawal failed!\nPlease try again.");
-  }
-}
 /* ============================================================
    TAPMASTER CORE — CLEAN, MODERN, FULLY WORKING (2025+)
    ALL SETTINGS IN ONE PLACE — CHANGE IN 5 SECONDS
@@ -2587,3 +2503,98 @@ tutorialModal.addEventListener("click", (e) => {
     tutorialVideo.pause();
   }
 });
+// MAIN WITHDRAWAL + GOLDEN COUNT-UP + CHEER + CONFETTI
+async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
+  const userRef = doc(db, "users", currentUser.uid);
+  const withdrawalRef = doc(collection(db, "withdrawals"));
+
+  try {
+    await runTransaction(db, async (t) => {
+      const snap = await t.get(userRef);
+      if (!snap.exists()) throw "User not found";
+      
+      const data = snap.data();
+      if (data.cash < amount) throw "Not enough cash";
+      if (isFastTrack && data.stars < 500) throw "Not enough STRZ";
+
+      t.update(userRef, {
+        cash: data.cash - amount,
+        stars: isFastTrack ? data.stars - 500 : data.stars,
+        updatedAt: serverTimestamp()
+      });
+
+      t.set(withdrawalRef, {
+        uid: currentUser.uid,
+        username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
+        amount,
+        bankName: data.bankName || "Not set",
+        bankAccountNumber: data.bankAccountNumber || "Not set",
+        status: isFastTrack ? "fast_track" : "pending",
+        isFastTrack,
+        requestedAt: serverTimestamp(),
+        note: isFastTrack ? "User paid 500 STRZ for priority" : "Standard"
+      });
+    });
+
+    // UPDATE LOCAL USER
+    currentUser.cash -= amount;
+    if (isFastTrack) currentUser.stars -= 500;   // ← You had 21 earlier, changed to 500
+    updateBankDisplay();
+
+    // === SUCCESS OVERLAY ===
+    const successOverlay = document.getElementById('withdrawSuccessOverlay');
+    const goldenAmount = document.getElementById('goldenAmount');
+    const successMessage = document.getElementById('successMessage');
+
+    if (!successOverlay || !goldenAmount) {
+      console.error("Success overlay elements not found!");
+      realAlert("Withdrawal successful, but display failed.");
+      return;
+    }
+
+    // Reset and show
+    goldenAmount.textContent = '0';
+    if (successMessage) {
+      successMessage.textContent = isFastTrack 
+        ? "FAST TRACKED! Support notified" 
+        : "Withdrawal requested!";
+    }
+
+    successOverlay.style.display = 'flex';
+
+    // CHEER + CONFETTI
+    document.getElementById('cheerSound')?.play();
+    triggerConfetti();
+
+    // GOLDEN COUNT-UP ANIMATION
+    let current = 0;
+    const step = Math.ceil(amount / 55);
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= amount) {
+        current = amount;
+        clearInterval(timer);
+      }
+      goldenAmount.textContent = current.toLocaleString();
+    }, 28);
+
+    // FAST TRACK TELEGRAM
+    if (isFastTrack) {
+      setTimeout(() => {
+        const msg = encodeURIComponent(
+          `FAST TRACK WITHDRAWAL\n` +
+          `User: @${currentUser.chatId || 'unknown'}\n` +
+          `Amount: ₦${amount.toLocaleString()}\n` +
+          `Bank: ${currentUser.bankName || 'Not set'}\n` +
+          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
+          `Process urgently!`
+        );
+        window.open(`https://t.me/YOUR_ADMIN_USERNAME?text=${msg}`, '_blank');
+      }, 1600);
+    }
+
+  } catch (err) {
+    console.error("Withdrawal failed:", err);
+    realAlert("Withdrawal failed!\nPlease try again.");
+  }
+}
