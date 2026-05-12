@@ -2,7 +2,7 @@
   "rewrites": [
     { "source": "/tm", "destination": "/tm.html" },
        { "source": "/tm1", "destination": "/tm1.html" },
-       { "source": "/tapmaster", "destination": "/tm.html" },
+       { "source": "/tapmaster", "destination": "/tapmaster.html" },
     { "source": "/sign-up", "destination": "/qO0MyUROl4CoH8Wo1UDa1DrCtEKmVQuZ.html" },
         { "source": "/vip-access-apply", "destination": "/S3DhUDjn7yuHqtqmLFIPSrbGAYqZGUN4.html" },
         { "source": "/tapmaster4hosts", "destination": "/host$tapmaster.html" },
