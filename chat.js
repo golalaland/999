@@ -6934,6 +6934,7 @@ thumbContainer.onclick = (e) => {
 
         tryFetch(tryIds[0]);
       };
+       
   // One-liner — FIXED & MORE RELIABLE
 const naturePick = video.naturePick || "";
 const genderRaw = (video.gender || "person").toLowerCase().trim();
@@ -7753,7 +7754,7 @@ async function openPollModal() {
   try {
     pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
       if (!pollSnap.exists()) {
-        hideLoader();
+        hideLoaderBlack();
         document.getElementById("pollModal").style.display = "none";
         showStarPopup("No active poll right now");
         return;
@@ -7765,7 +7766,7 @@ async function openPollModal() {
       const now = Date.now();
 
       if (now > endTime) {
-        hideLoader();
+        hideLoaderBlack();
         document.getElementById("pollModal").style.display = "none";
         showStarPopup("This poll has ended!");
         return;
@@ -7818,7 +7819,7 @@ function startVotesListener(poll, endTime) {
   if (votesUnsubscribe) votesUnsubscribe();
 
   votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
-    hideLoader();
+    hideLoaderBlack();
 
     const voteCounts = {};
     poll.options.forEach(opt => voteCounts[opt] = 0);
