@@ -1196,6 +1196,88 @@ function hideLoader() {
   if (loaderOverlay) loaderOverlay.style.display = "none";
 }
 
+// ==================== PREMIUM BLACK FROSTED GLASS LOADER ====================
+
+function showLoaderBlack(text = "Loading...") {
+  let loader = document.getElementById("loaderBlack");
+
+  if (!loader) {
+    loader = document.createElement("div");
+    loader.id = "loaderBlack";
+    loader.style.cssText = `
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999999;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    `;
+
+    loader.innerHTML = `
+      <div style="text-align:center; color:#fff;">
+        <!-- Premium Spinner -->
+        <div style="width:56px; height:56px; margin:0 auto 20px;
+                    border: 4px solid rgba(255,255,255,0.1);
+                    border-top-color: #c3f60c;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;"></div>
+        
+        <div id="loaderBlackText" style="
+          font-size: 15.5px; 
+          font-weight: 600; 
+          letter-spacing: 0.5px;
+          color: #e0e0e0;
+        ">${text}</div>
+      </div>
+    `;
+
+    document.body.appendChild(loader);
+
+    // Add keyframes if not already present
+    if (!document.getElementById("frosted-loader-style")) {
+      const style = document.createElement("style");
+      style.id = "frosted-loader-style";
+      style.textContent = `
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  // Update text and show with smooth fade
+  document.getElementById("loaderBlackText").textContent = text;
+  loader.style.display = "flex";
+  
+  // Trigger fade-in
+  setTimeout(() => {
+    loader.style.opacity = "1";
+  }, 10);
+}
+
+function hideLoaderBlack() {
+  const loader = document.getElementById("loaderBlack");
+  if (loader) {
+    loader.style.opacity = "0";
+    
+    // Fully hide after transition
+    setTimeout(() => {
+      if (loader.style.opacity === "0") {
+        loader.style.display = "none";
+      }
+    }, 400);
+  }
+}
+
+
 // MODERN CONFIRM MODAL — MATCHES MEET MODAL DESIGN
 async function showConfirm(title, msg) {
   return new Promise(resolve => {
@@ -6362,7 +6444,7 @@ highlightsBtn.onclick = async () => {
     return;
   }
 
-  showLoader("Entering Free Tonight... 🔥");
+  showLoaderBlack("Entering Free Tonight... 🔥");
 
   try {
     const snap = await getDocs(collection(db, "highlightVideos"));
@@ -7663,7 +7745,7 @@ async function openPollModal() {
     return;
   }
 
-  showLoader("Loading poll...");
+  showLoaderBlack("Loading poll...");
 
   // Clean up previous listeners
   cleanupPollListeners();
@@ -7895,8 +7977,7 @@ document.getElementById("closePollBtn").onclick = () => {
   cleanupPollListeners();
 };
 
-// ==================== POLL CAROUSEL — INSTAGRAM STYLE ====================
-
+// ==================== POLL CAROUSEL - INSTAGRAM STYLE (Fixed) ====================
 function loadPollCarousel() {
   const carousel = document.getElementById("pollCarousel");
   if (!carousel) return;
@@ -7909,28 +7990,37 @@ function loadPollCarousel() {
     "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/VISIT_CUBE.jpg?v=1767737741"
   ];
 
+  // Main Wrapper - Instagram Square Ratio
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;           /* Instagram square ratio */
+    aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: 14px;
-    background: #111;
+    background: #0a0a0a;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   `;
 
+  // Slides Track
   const track = document.createElement("div");
   track.id = "carouselSlides";
   track.style.cssText = `
     display: flex;
     width: ${images.length * 100}%;
     height: 100%;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+    transform: translateX(0%);
   `;
 
   images.forEach(src => {
     const slide = document.createElement("div");
-    slide.style.cssText = `width: 100%; height: 100%; flex-shrink: 0;`;
+    slide.style.cssText = `
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+      position: relative;
+    `;
 
     const img = document.createElement("img");
     img.src = src;
@@ -7949,45 +8039,78 @@ function loadPollCarousel() {
   wrapper.appendChild(track);
   carousel.appendChild(wrapper);
 
-   
-  // Swipe & slide logic
+  // ==================== DOTS & CONTROLS ====================
   let currentIndex = 0;
   const totalSlides = images.length;
 
+  const dotsContainer = document.createElement("div");
+  dotsContainer.style.cssText = `
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    z-index: 20;
+  `;
+
+  dotsContainer.innerHTML = images.map((_, i) => `
+    <div class="carousel-dot" data-index="${i}" 
+         style="width:8px;height:8px;border-radius:50%;background:${i===0?'#c3f60c':'rgba(255,255,255,0.5)'};transition:all 0.3s;cursor:pointer;">
+    </div>
+  `).join('');
+
+  wrapper.appendChild(dotsContainer);
+
+  const dots = dotsContainer.querySelectorAll('.carousel-dot');
+
   function updateCarousel() {
-    slidesTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
-    dotsContainer.querySelectorAll("div").forEach((dot, i) => {
-      dot.style.background = i === currentIndex ? '#c3f60c' : 'rgba(255,255,255,0.4)';
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    dots.forEach((dot, i) => {
+      dot.style.background = i === currentIndex ? '#c3f60c' : 'rgba(255,255,255,0.5)';
     });
   }
 
-  // Touch swipe
+  // Dot Click
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentIndex = parseInt(dot.dataset.index);
+      updateCarousel();
+    });
+  });
+
+  // Touch Swipe
   let touchStartX = 0;
-  carouselWrapper.addEventListener("touchstart", (e) => {
+  wrapper.addEventListener("touchstart", e => {
     touchStartX = e.touches[0].clientX;
   });
 
-  carouselWrapper.addEventListener("touchend", (e) => {
+  wrapper.addEventListener("touchend", e => {
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX - touchEndX;
+
     if (Math.abs(diff) > 50) {
-      if (diff > 0 && currentIndex < totalSlides - 1) {
-        currentIndex++;
-      } else if (diff < 0 && currentIndex > 0) {
-        currentIndex--;
-      }
+      if (diff > 0 && currentIndex < totalSlides - 1) currentIndex++;
+      else if (diff < 0 && currentIndex > 0) currentIndex--;
       updateCarousel();
     }
   });
 
-  // Auto-play
-  setInterval(() => {
+  // Auto Play
+  let autoPlayInterval = setInterval(() => {
     currentIndex = (currentIndex + 1) % totalSlides;
     updateCarousel();
-  }, 4000);
+  }, 4500);
+
+  // Pause on hover/touch (optional improvement)
+  wrapper.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+  wrapper.addEventListener('mouseleave', () => {
+    autoPlayInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % totalSlides;
+      updateCarousel();
+    }, 4500);
+  });
 }
-
-
 /*********************************
  * fruity punch!!
  *********************************/
