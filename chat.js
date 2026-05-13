@@ -6647,315 +6647,251 @@ function cleanLocation(location = "") {
    ================================================ */
 function showHighlightsModal(initialVideos, loadMoreFn) {
   document.getElementById("highlightsModal")?.remove();
-  
+
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
-  
-Object.assign(modal.style, {
-  position: "fixed", 
-  top: 0, 
-  left: 0, 
-  width: "100vw", 
-  height: "100vh",
-  
-  /* Deep Black + Subtle WhatsApp-style Texture */
-  background: "rgba(6, 2, 18, 0.98)",
-  backgroundImage: `
-    radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
-    radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
-    radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
-    radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
-  `,
-  backgroundSize: "90px 90px",
-  
-  backdropFilter: "blur(22px)",
-  WebkitBackdropFilter: "blur(22px)",
-  
-  display: "flex", 
-  flexDirection: "column",
-  alignItems: "center", 
-  justifyContent: "flex-start",
-  zIndex: "999999", 
-  overflowY: "auto", 
-  padding: "20px 12px", 
-  boxSizing: "border-box",
-  fontFamily: "system-ui, sans-serif",
-  color: "#e0d0ff"
-});
 
-// ==================== GLASSY LUXE HEADER - ONE LINER ====================
-const intro = document.createElement("div");
-intro.innerHTML = `
-  <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
-    
-    <div style="
-      background: rgba(15, 8, 35, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 255, 159, 0.25);
-      border-radius: 24px;
-      padding: 26px 48px 24px;           /* Reduced top padding + more right padding */
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.7),
-        inset 0 1px 0 rgba(255,255,255,0.08);
-      display: inline-block;
-    ">
-      
-      <!-- ONE LINER - STRONG & CLEAN -->
-      <span id="freeTonightText" style="
-        font-family: 'Architects Daughter', cursive;
-        font-size: 32px;
-        font-weight: 400;
-        letter-spacing: 5px;
-        background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-size: 200% 200%;
-        display: block;
-        margin-bottom: 18px;
-        text-shadow:
-          0 0 25px #00ff9f,
-          0 0 45px #00ff9f,
-          0 6px 15px rgba(0,0,0,0.9),
-          0 10px 25px rgba(0,0,0,0.85);
-        animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
-                   tonightShift 7s linear infinite;
+  Object.assign(modal.style, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+
+    /* Deep Black + Subtle WhatsApp-style Texture */
+    background: "rgba(6, 2, 18, 0.98)",
+    backgroundImage: `
+      radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
+      radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+      radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
+      radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
+    `,
+    backgroundSize: "90px 90px",
+
+    backdropFilter: "blur(22px)",
+    WebkitBackdropFilter: "blur(22px)",
+
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    zIndex: "999999",
+    overflowY: "auto",
+    padding: "20px 12px",
+    boxSizing: "border-box",
+    fontFamily: "system-ui, sans-serif",
+    color: "#e0d0ff"
+  });
+
+  // ==================== GLASSY LUXE HEADER ====================
+  const intro = document.createElement("div");
+  intro.innerHTML = `
+    <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
+      <div style="
+        background: rgba(15, 8, 35, 0.65);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 255, 159, 0.25);
+        border-radius: 24px;
+        padding: 26px 52px 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.08);
+        display: inline-block;
       ">
-        Free Tonight?
-      </span>
-      
-      <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
-        Real moments • Real desire • Right now
-      </p>
-      <p style="margin:0; color:#8899aa; font-size:13.5px;">
-        www.freetonight.app
-      </p>
+        <span id="freeTonightText" style="
+          font-family: 'Architects Daughter', cursive;
+          font-size: 32px;
+          font-weight: 400;
+          letter-spacing: 5px;
+          background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-size: 200% 200%;
+          display: block;
+          margin-bottom: 18px;
+          text-shadow: 0 0 25px #00ff9f, 0 0 45px #00ff9f, 0 6px 15px rgba(0,0,0,0.9), 0 10px 25px rgba(0,0,0,0.85);
+          animation: cubeNeonGreen 2.5s ease-in-out infinite alternate, tonightShift 7s linear infinite;
+        ">
+          Free Tonight?
+        </span>
+        
+        <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+          Real moments • Real desire • Right now
+        </p>
+        <p style="margin:0; color:#8899aa; font-size:13.5px;">
+          www.freetonight.app
+        </p>
+      </div>
     </div>
-  </div>
-`;
+  `;
+  modal.appendChild(intro);
 
-modal.appendChild(intro);
+  // ==================== CLOSE BUTTON ====================
+  const closeBtn = document.createElement("div");
+  closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
 
-// ==================== CLOSE BUTTON - BETTER POSITION ====================
-const closeBtn = document.createElement("div");
-closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-  <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
-</svg>`;
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "8px",
+    right: "12px",
+    width: "44px",
+    height: "44px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: "1002",
+    filter: "drop-shadow(0 0 12px #00ff9f)",
+    transition: "all 0.25s ease"
+  });
 
-Object.assign(closeBtn.style, {
-  position: "absolute",
-  top: "8px",           // Moved further up
-  right: "12px",        // Shifted more to the right
-  width: "44px",        // Slightly bigger touch area
-  height: "44px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  zIndex: "1002",
-  filter: "drop-shadow(0 0 12px #00ff9f)",
-  transition: "all 0.25s ease"
-});
+  closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+  closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+    setTimeout(() => modal.remove(), 280);
+  };
 
-closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
-closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
+  intro.firstElementChild.appendChild(closeBtn);
 
-closeBtn.onclick = (e) => {
-  e.stopPropagation();
-  closeBtn.style.transform = "rotate(180deg) scale(1.35)";
-  setTimeout(() => modal.remove(), 280);
-};
+  // ==================== CONTROLS ====================
+  const controls = document.createElement("div");
+  controls.style.cssText = `
+    width: 100%; max-width: 640px; margin: 0 auto 32px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  `;
 
-intro.firstElementChild.appendChild(closeBtn);
+  const locationBtn = document.createElement("button");
+  locationBtn.textContent = "Enter Location";
+  Object.assign(locationBtn.style, {
+    padding: "14px 32px",
+    borderRadius: "50px",
+    fontSize: "15px",
+    fontWeight: "700",
+    letterSpacing: "0.5px",
+    background: "rgba(15, 8, 35, 0.75)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+    border: "1px solid rgba(0, 255, 159, 0.35)",
+    color: "#00ff9f",
+    cursor: "pointer",
+    transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 8px 25px rgba(0, 0, 0, 0.5)",
+    textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)"
+  });
 
-   
- // ==================== CONTROLS - GLASSY LUXE STYLE ====================
-const controls = document.createElement("div");
-controls.style.cssText = `
-  width: 100%; 
-  max-width: 640px; 
-  margin: 0 auto 32px;
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  gap: 20px;
-`;
+  locationBtn.onmouseenter = () => {
+    locationBtn.style.background = "rgba(0, 255, 159, 0.12)";
+    locationBtn.style.borderColor = "#00ff9f";
+    locationBtn.style.transform = "translateY(-3px)";
+    locationBtn.style.boxShadow = "0 12px 30px rgba(0, 255, 159, 0.25)";
+  };
+  locationBtn.onmouseleave = () => {
+    locationBtn.style.background = "rgba(15, 8, 35, 0.75)";
+    locationBtn.style.borderColor = "rgba(0, 255, 159, 0.35)";
+    locationBtn.style.transform = "translateY(0)";
+    locationBtn.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.5)";
+  };
+  locationBtn.onclick = () => openLocationModal();
+  controls.appendChild(locationBtn);
 
-const locationBtn = document.createElement("button");
-locationBtn.textContent = "Enter Location";
-Object.assign(locationBtn.style, {
-  padding: "14px 32px",
-  borderRadius: "50px",
-  fontSize: "15px",
-  fontWeight: "700",
-  letterSpacing: "0.5px",
-  
-  /* Glassy Luxe Look */
-  background: "rgba(15, 8, 35, 0.75)",
-  backdropFilter: "blur(16px)",
-  WebkitBackdropFilter: "blur(16px)",
-  border: "1px solid rgba(0, 255, 159, 0.35)",
-  color: "#00ff9f",
-  
-  cursor: "pointer", 
-  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-  boxShadow: "0 8px 25px rgba(0, 0, 0, 0.5)",
-  textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)"
-});
+  const tagContainer = document.createElement("div");
+  tagContainer.id = "tagButtons";
+  tagContainer.style.cssText = `
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    max-width: 520px; padding: 8px 0;
+  `;
+  controls.appendChild(tagContainer);
+  modal.appendChild(controls);
 
-locationBtn.onmouseenter = () => {
-  locationBtn.style.background = "rgba(0, 255, 159, 0.12)";
-  locationBtn.style.borderColor = "#00ff9f";
-  locationBtn.style.transform = "translateY(-3px)";
-  locationBtn.style.boxShadow = "0 12px 30px rgba(0, 255, 159, 0.25)";
-};
-
-locationBtn.onmouseleave = () => {
-  locationBtn.style.background = "rgba(15, 8, 35, 0.75)";
-  locationBtn.style.borderColor = "rgba(0, 255, 159, 0.35)";
-  locationBtn.style.transform = "translateY(0)";
-  locationBtn.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.5)";
-};
-
-locationBtn.onclick = () => openLocationModal();
-controls.appendChild(locationBtn);
-
-// ==================== TAG CONTAINER ====================
-const tagContainer = document.createElement("div");
-tagContainer.id = "tagButtons";
-tagContainer.style.cssText = `
-  display: flex; 
-  flex-wrap: wrap; 
-  gap: 10px; 
-  justify-content: center; 
-  max-width: 520px;
-  padding: 8px 0;
-`;
-controls.appendChild(tagContainer);
-
-modal.appendChild(controls);
-   
   // ==================== GRID ====================
-const grid = document.createElement("div");
-grid.id = "highlightsGrid";
-grid.style.cssText = `
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 14px;
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-  padding-bottom: 120px;
-  contain: content;
-  content-visibility: auto;
-  will-change: transform;           /* helps scrolling */
-`;
+  const grid = document.createElement("div");
+  grid.id = "highlightsGrid";
+  grid.style.cssText = `
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding-bottom: 120px;
+    contain: content;
+  `;
   modal.appendChild(grid);
-  // Load more trigger
-    // ==================== LOAD MORE TRIGGER (Nice Spinner) ====================
+
+  // Load More Trigger
   const loadMoreDiv = document.createElement("div");
   loadMoreDiv.id = "loadMoreTrigger";
   loadMoreDiv.style.cssText = `
-    grid-column: 1 / -1;
-    height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #aaa;
-    font-size: 15px;
-    padding: 40px 20px;
+    grid-column: 1 / -1; height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-size: 15px; padding: 40px 20px;
   `;
-
   loadMoreDiv.innerHTML = `
     <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-      <div style="width:28px; height:28px; border:3px solid rgba(0,255,234,0.2); 
-                  border-top-color:#00ffea; border-radius:50%; 
-                  animation:spin 1s linear infinite;"></div>
+      <div style="width:28px; height:28px; border:3px solid rgba(0,255,234,0.2);
+                  border-top-color:#00ffea; border-radius:50%; animation:spin 1s linear infinite;"></div>
       <span style="opacity:0.7;">Loading more profiles...</span>
     </div>
   `;
-
   grid.appendChild(loadMoreDiv);
 
-   // After rendering cards, if you know there's no more data:
-loadMoreDiv.style.display = "none";   // or change text to "No more clips"
-
-   
   // State
   let allVideos = [...initialVideos];
   let activeTags = new Set();
   let activeLocation = null;
    
-// ==================== RENDER CARDS (Static Thumbnails Only) ====================
+// ==================== RENDER CARDS ====================
+  let renderTimeout = null;
+  let isRendering = false;
 
-let renderTimeout = null;
+  function renderCards() {
+    if (isRendering) return;
+    isRendering = true;
+    clearTimeout(renderTimeout);
 
-let isRendering = false;
+    renderTimeout = setTimeout(() => {
+      grid.innerHTML = "";
+      tagContainer.innerHTML = "";
 
-function renderCards() {
-
-  if (isRendering) return;
-
-  isRendering = true;
-
-  clearTimeout(renderTimeout);
-
-  renderTimeout = setTimeout(() => {
-
-    grid.innerHTML = "";
-
-    tagContainer.innerHTML = "";
-
-    // === FILTERING (Must be done BEFORE rendering) ===
-
-    let visibleVideos = allVideos.filter(v => {
-
-      const now = Date.now();
-
-      return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
-
-    });
-
-    if (activeLocation) {
-
-      visibleVideos = visibleVideos.filter(v =>
-
-        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
-
-      );
-
-    }
-
-    if (activeTags.size > 0) {
-
-      visibleVideos = visibleVideos.filter(v => {
-
-        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-
-        return [...activeTags].every(tag => videoTags.includes(tag));
-
+      // Filtering
+      let visibleVideos = allVideos.filter(v => {
+        const now = Date.now();
+        return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
       });
 
-    }
+      if (activeLocation) {
+        visibleVideos = visibleVideos.filter(v =>
+          (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
+        );
+      }
 
-     // === TAG BUTTONS (from visible videos only) ===
-    const visibleTags = new Set();
-    visibleVideos.forEach(v => {
-      (v.tags || []).forEach(t => {
-        if (t && typeof t === "string") {
-          const trimmed = t.trim().toLowerCase();
-          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
-            visibleTags.add(trimmed);
+      if (activeTags.size > 0) {
+        visibleVideos = visibleVideos.filter(v => {
+          const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+          return [...activeTags].every(tag => videoTags.includes(tag));
+        });
+      }
+
+      // Tag Buttons
+      const visibleTags = new Set();
+      visibleVideos.forEach(v => {
+        (v.tags || []).forEach(t => {
+          if (t && typeof t === "string") {
+            const trimmed = t.trim().toLowerCase();
+            if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
+              visibleTags.add(trimmed);
+            }
           }
-        }
+        });
       });
-    });
 
-    // ==================== TAG BUTTONS - GLASSY NEON GREEN ====================
-    [...visibleTags].sort().forEach(tag => {
-      const btn = document.createElement("button");
-      btn.textContent = tag;
-      btn.dataset.tag = tag;
+      [...visibleTags].sort().forEach(tag => {
+        const btn = document.createElement("button");
+        btn.textContent = tag;
+        btn.dataset.tag = tag;
 
       Object.assign(btn.style, {
         padding: "8px 18px",
@@ -7010,19 +6946,17 @@ function renderCards() {
       tagContainer.appendChild(btn);
     });
 
-    // === EMPTY STATE ===
-    if (visibleVideos.length === 0) {
-      const empty = document.createElement("div");
-      empty.textContent = activeLocation
-        ? `No profiles found in ${activeLocation}...`
-        : "No profiles match your filters...";
-      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
-      grid.appendChild(empty);
-      grid.appendChild(loadMoreDiv);
-      isRendering = false;
-      return;
-    }
-
+    // Empty State
+      if (visibleVideos.length === 0) {
+        const empty = document.createElement("div");
+        empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profiles match your filters...";
+        empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
+        grid.appendChild(empty);
+        grid.appendChild(loadMoreDiv);
+        isRendering = false;
+        return;
+      }
+       
        // === RENDER CARDS - GLASSY LUXE STYLE ===
     const fragment = document.createDocumentFragment();
     
@@ -7398,6 +7332,7 @@ function openLocationModal() {
     if (e.target === locModal) locModal.remove();
   };
 }
+   
 
   // Initial render
   renderCards();
