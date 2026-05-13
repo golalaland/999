@@ -6848,7 +6848,7 @@ intro.innerHTML = `
         animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
                    tonightShift 7s linear infinite;
       ">
-        Free T✺night?
+        Free Tonight?
       </span>
       
      <p style="margin:0 0 7px; font-size:15.5px; font-weight:400; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
@@ -6857,10 +6857,6 @@ intro.innerHTML = `
       <p style="margin:0; color:#8899aa; font-size:13.5px;">
         www.freetonight.app
       </p>
-
-<p style="margin:0; color:#8595a5; font-size:13px; letter-spacing:1px;">
-  www.freetonight.app
-</p>
     </div>
   </div>
 `;
