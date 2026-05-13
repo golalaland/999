@@ -184,23 +184,20 @@ link.href = 'https://fonts.googleapis.com/css2?family=Architects+Daughter&displa
 document.head.appendChild(link);
 
 
-// Add this once at the top of your script (after consts)
-style.textContent = `
+// ==================== COMBINED STYLES (Media Queries + Tonight Animations) ====================
+const combinedStyle = document.createElement('style');
+combinedStyle.textContent = `
+  /* ====================== MEDIA QUERIES ====================== */
   @media (max-width: 768px) {
     #livePlayerContainer {
-      font-size: 14px !important; /* fallback base size */
+      font-size: 14px !important;
     }
     #livePlayerContainer img {
       max-height: 65vh !important;
     }
   }
-`;
-document.head.appendChild(style);
 
-
-// Add neon night animations
-const style = document.createElement('style');
-style.textContent = `
+  /* ====================== FREE TONIGHT ANIMATIONS ====================== */
   @keyframes tonightGlow {
     from {
       text-shadow: 
@@ -225,7 +222,7 @@ style.textContent = `
     100% { background-position: 0% 50%; }
   }
 `;
-document.head.appendChild(style);
+document.head.appendChild(combinedStyle);
 
 // ===============================================
 // OPTIMIZED USER COLORS LISTENER
@@ -6656,6 +6653,9 @@ intro.innerHTML = `
         background-size: 200% 200%;
         display: inline-block;
         padding: 8px 24px;
+        
+  animation: tonightGlow 3s ease-in-out infinite alternate,
+             tonightShift 8s linear infinite;
         
         /* Black lifted shadow */
         text-shadow: 
