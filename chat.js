@@ -184,11 +184,23 @@ link.href = 'https://fonts.googleapis.com/css2?family=Architects+Daughter&displa
 document.head.appendChild(link);
 
 
-const style = document.createElement('style');
-style.textContent = `
+// Add this once (after creating modal or at top of script)
+const neonStyle = document.createElement('style');
+neonStyle.textContent = `
   @keyframes cubeNeonGreen {
-    from { text-shadow: 0 0 20px #00ff9f, 0 0 40px #00ff9f, 0 6px 15px rgba(0,0,0,0.9); }
-    to   { text-shadow: 0 0 30px #00ff9f, 0 0 55px #00ff9f, 0 8px 20px rgba(0,0,0,0.9), 0 0 70px rgba(0,230,192,0.6); }
+    from {
+      text-shadow: 
+        0 0 15px #00ff9f,
+        0 0 30px #00ff9f,
+        0 0 50px rgba(0,255,159,0.6);
+    }
+    to {
+      text-shadow: 
+        0 0 25px #00ff9f,
+        0 0 45px #00ff9f,
+        0 0 70px #00e6c0,
+        0 0 90px rgba(0,255,159,0.8);
+    }
   }
 
   @keyframes tonightShift {
@@ -196,24 +208,8 @@ style.textContent = `
     50%  { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
-
-  /* Cool Typing / Reveal Effect for Tagline */
-  #tagline {
-    animation: taglineReveal 2.2s ease forwards,
-               taglineGlow 4s ease-in-out infinite alternate;
-  }
-
-  @keyframes taglineReveal {
-    0%   { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes taglineGlow {
-    from { text-shadow: 0 0 8px rgba(176, 255, 235, 0.6); }
-    to   { text-shadow: 0 0 18px rgba(176, 255, 235, 0.9); }
-  }
 `;
-document.head.appendChild(style);
+document.head.appendChild(neonStyle);
 
 // ==================== COMBINED STYLES (Media Queries + Tonight Animations) ====================
 const combinedStyle = document.createElement('style');
@@ -6658,18 +6654,17 @@ Object.assign(modal.style, {
   width: "100vw", 
   height: "100vh",
   
-  /* Deep Black + Subtle WhatsApp-style Texture */
-  background: "rgba(6, 2, 18, 0.98)",
+  /* Deep Black + Faded Pattern */
+  background: `rgba(6, 2, 18, 0.97)`,
   backgroundImage: `
-    radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
-    radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
-    radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
-    radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
+    radial-gradient(circle at 25% 25%, rgba(0, 255, 159, 0.06) 1px, transparent 0),
+    radial-gradient(circle at 75% 35%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+    radial-gradient(circle at 40% 80%, rgba(138, 43, 226, 0.04) 1px, transparent 0)
   `,
-  backgroundSize: "90px 90px",
+  backgroundSize: "80px 80px",
   
-  backdropFilter: "blur(22px)",
-  WebkitBackdropFilter: "blur(22px)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
   
   display: "flex", 
   flexDirection: "column",
@@ -6744,10 +6739,10 @@ closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none
 
 Object.assign(closeBtn.style, {
   position: "absolute",
-  top: "8px",           // Moved further up
-  right: "12px",        // Shifted more to the right
-  width: "44px",        // Slightly bigger touch area
-  height: "44px",
+  top: "14px",        // Moved up
+  right: "16px",      // Slightly adjusted
+  width: "42px",
+  height: "42px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -7399,14 +7394,10 @@ function openLocationModal() {
   };
 }
 
-  // ==================== SHOW AD AFTER 6 SECONDS ====================
-  setTimeout(() => {
-    showHotspotAd();
-  }, 6000);
-
-  // Initial render
-  renderCards();
-  document.body.appendChild(modal);
+// Initial render
+renderCards();
+document.body.appendChild(modal);
+}
 
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
@@ -8979,118 +8970,6 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
       termsModal.style.display = 'none';
     }
   });
-
-
-// ==================== TONIGHT'S HOTSPOT AD POPUP ====================
-function showHotspotAd() {
-  const adModal = document.createElement("div");
-  adModal.id = "hotspotAdModal";
-  adModal.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.92);
-    backdrop-filter: blur(18px);
-    z-index: 10000000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  `;
-
-  adModal.innerHTML = `
-    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.85); border: 10px solid #111;">
-      
-      <!-- Fake iPhone Status Bar -->
-      <div style="height:28px; background:#000; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:10px; color:#aaa;">
-        <span>9:41</span>
-        <span>● ● ●</span>
-      </div>
-
-      <div style="padding:20px 16px 12px; text-align:center;">
-        <h2 style="margin:0 0 6px 0; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
-        <p style="margin:0; color:#aaa; font-size:13.5px;">People are gathering right now...</p>
-      </div>
-
-      <!-- Slides Container -->
-      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden; background:#000;"></div>
-
-      <!-- Big Action Button -->
-      <div style="position:absolute; bottom:75px; left:50%; transform:translateX(-50%); z-index:5;">
-        <button id="imGoingBtn" style="
-          padding:15px 48px; 
-          font-size:17px; 
-          font-weight:700; 
-          border:none; 
-          border-radius:50px; 
-          background:linear-gradient(90deg, #00ff9f, #00e6c0);
-          color:#000;
-          box-shadow:0 0 30px rgba(0,255,159,0.7);
-          cursor:pointer;
-        ">
-          I'm Going Tonight ✨
-        </button>
-      </div>
-
-      <!-- Close X -->
-      <div id="adCloseBtn" style="
-        position:absolute; top:18px; right:18px; 
-        width:36px; height:36px; 
-        display:flex; align-items:center; justify-content:center;
-        color:#ddd; font-size:32px; font-weight:300; cursor:pointer; z-index:10;
-      ">×</div>
-    </div>
-  `;
-
-  document.body.appendChild(adModal);
-
-  // Fade in
-  setTimeout(() => adModal.style.opacity = "1", 100);
-
-  // Sample images (replace with your real ad photos)
-  const adImages = [
-    "https://picsum.photos/id/1015/800/1200",
-    "https://picsum.photos/id/237/800/1200",
-    "https://picsum.photos/id/201/800/1200",
-    "https://picsum.photos/id/133/800/1200"
-  ];
-
-  let current = 0;
-  const slidesContainer = adModal.querySelector("#adSlides");
-
-  adImages.forEach((src, i) => {
-    const slide = document.createElement("div");
-    slide.style.cssText = `position:absolute; inset:0; background:url('${src}') center/cover no-repeat; opacity:${i===0 ? 1 : 0}; transition:opacity 1s ease;`;
-    slidesContainer.appendChild(slide);
-  });
-
-  // Auto-slide every 3.5 seconds
-  setInterval(() => {
-    const slides = slidesContainer.children;
-    slides[current].style.opacity = "0";
-    current = (current + 1) % adImages.length;
-    slides[current].style.opacity = "1";
-  }, 3500);
-
-  // "I'm Going Tonight" Button
-  adModal.querySelector("#imGoingBtn").onclick = () => {
-    const btn = adModal.querySelector("#imGoingBtn");
-    btn.style.transform = "scale(0.9)";
-    btn.style.boxShadow = "0 0 40px #00ff9f";
-
-    setTimeout(() => {
-      showStarPopup("See you there tonight! 🔥", "success");
-      adModal.style.opacity = "0";
-      setTimeout(() => adModal.remove(), 600);
-    }, 300);
-  };
-
-  // Close Button
-  adModal.querySelector("#adCloseBtn").onclick = () => {
-    adModal.style.opacity = "0";
-    setTimeout(() => adModal.remove(), 600);
-  };
-}
 
 
 /*********************************
