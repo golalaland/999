@@ -6516,19 +6516,18 @@ highlightsBtn.onclick = async () => {
         if (clip.isTrending !== true) return;
         if (clip.trendingUntil && clip.trendingUntil < Date.now()) return;
 
-        allClips.push({
-          ...clip,
-          uploaderId: userDoc.id,
-          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+      allClips.push({
+  ...clip,
+  uploaderId: userDoc.id,
+  uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
 
-          // FORCE ALL FIELDS NEEDED BY renderCards()
-          fruitPick: userData.fruitPick,
-          naturePick: userData.naturePick,
-          gender: userData.gender,
-          age: userData.age,
-          location: userData.location,
-          city: userData.city,
-        });
+  fruitPick: userData.fruitPick || clip.fruitPick,
+  naturePick: userData.naturePick || clip.naturePick,
+  gender: userData.gender,
+  age: userData.age,
+  location: userData.location,
+  city: userData.city,
+});
       });
     });
 
@@ -6922,20 +6921,17 @@ thumbContainer.onclick = (e) => {
 
       card.appendChild(thumbContainer);
        
-     // ==================== INFO LAYER ====================
-
+   // ==================== INFO LAYER ====================
       const info = document.createElement("div");
-
       info.style.cssText = `
-
         position:absolute; bottom:0; left:0; right:0;
-
         background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-
         padding:60px 12px 12px;
-
       `;
 
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
           const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
@@ -6992,35 +6988,34 @@ thumbContainer.onclick = (e) => {
 
         tryFetch(tryIds[0]);
       };
-       
-  // One-liner — FIXED & MORE RELIABLE
-const naturePick = video.naturePick || "";
-const genderRaw = (video.gender || "person").toLowerCase().trim();
-const isMale = genderRaw === "male";
-const pronoun = isMale ? "his" : "her";
+   // ==================== ONE-LINER — SUPER DEFENSIVE ====================
+      const naturePick = (video.naturePick || "").trim();
+      const genderRaw = String(video.gender || "person").toLowerCase().trim();
+      const isMale = genderRaw === "male" || genderRaw === "man";
+      const pronoun = isMale ? "his" : "her";
 
-const age = Number(video.age) || 25;
-const ageGroup = age >= 50 ? "50s" : 
-                 age >= 40 ? "40s" : 
-                 age >= 30 ? "30s" : "20s";
+      const age = parseInt(video.age) || 25;
+      const ageGroup = age >= 50 ? "50s" : 
+                      age >= 40 ? "40s" : 
+                      age >= 30 ? "30s" : "20s";
 
-const oneLinerText = naturePick 
-  ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
-  : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+      const oneLinerText = naturePick 
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
-const oneLiner = document.createElement("div");
-oneLiner.textContent = oneLinerText;
-oneLiner.style.cssText = `
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 4px;
-`;
-               // ==================== TAGS (Emoji + City) ====================
+      const oneLiner = document.createElement("div");
+      oneLiner.textContent = oneLinerText;
+      oneLiner.style.cssText = `
+        font-size: 11px;
+        color: #aaa;
+        margin-top: 4px;
+      `;
+                // ==================== TAGS (Emoji + City) ====================
       const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
       // Location Badge
-      const locValue = video.location || video.city;
+      const locValue = video.location || video.city || "";
       if (locValue) {
         const locSpan = document.createElement("span");
         const flag = getFlagEmoji(locValue);
@@ -7055,30 +7050,29 @@ oneLiner.style.cssText = `
           tagsEl.appendChild(span);
         }
       });
-       
+   
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
 
-            // FruitPick Badge — Top Right or Bottom Right
-      if (video.fruitPick && video.fruitPick.trim()) {
+            // ==================== FRUIT PICK BADGE ====================
+      if (video.fruitPick && video.fruitPick.toString().trim()) {
         const fruitEl = document.createElement("div");
-        fruitEl.textContent = video.fruitPick.trim();
+        fruitEl.textContent = video.fruitPick.toString().trim();
         fruitEl.style.cssText = `
           position:absolute; 
           bottom:12px; 
           right:12px; 
-          font-size:18px; 
+          font-size:19px; 
           line-height:1; 
           color:#fff; 
-          text-shadow:0 0 4px rgba(0,0,0,0.8);
+          text-shadow:0 0 5px rgba(0,0,0,0.9);
           z-index:3;
-          background:rgba(0,0,0,0.4);
-          padding:2px 6px;
+          background:rgba(0,0,0,0.45);
+          padding:3px 8px;
           border-radius:8px;
         `;
         card.appendChild(fruitEl);
       }
-
       // Badge
 
       const badge = document.createElement("div");
