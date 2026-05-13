@@ -6612,94 +6612,109 @@ function cleanLocation(location = "") {
 }
 
 /* ================================================
-   FREE TONIGHT MODAL – FULL CLEAN REWRITE
-   (Reliable Thumbnails + Strong Location Filter)
+   FREE TONIGHT MODAL – GLASSY LUXE BLACK + CUBE NEON GREEN
    ================================================ */
 function showHighlightsModal(initialVideos, loadMoreFn) {
   document.getElementById("highlightsModal")?.remove();
+  
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
+  
   Object.assign(modal.style, {
-    position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-    background: "rgba(8,3,25,0.97)",
-    backgroundImage: "linear-gradient(135deg, rgba(0,255,234,0.09), rgba(255,0,242,0.14), rgba(138,43,226,0.11))",
-    display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "flex-start",
-    zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
-    fontFamily: "system-ui, sans-serif"
+    position: "fixed", 
+    top: 0, left: 0, 
+    width: "100vw", 
+    height: "100vh",
+    background: "rgba(6, 2, 18, 0.96)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    display: "flex", 
+    flexDirection: "column",
+    alignItems: "center", 
+    justifyContent: "flex-start",
+    zIndex: "999999", 
+    overflowY: "auto", 
+    padding: "20px 12px", 
+    boxSizing: "border-box",
+    fontFamily: "system-ui, sans-serif",
+    color: "#e0d0ff"
   });
-// ==================== FREE TONIGHT - ARCHITECTS DAUGHTER (LIFTED + ANIMATED) ====================
-const intro = document.createElement("div");
-intro.innerHTML = `
-  <div style="text-align:center; max-width:640px; margin:0 auto 24px; position:relative;">
-    
-    <div style="
-      background: linear-gradient(135deg, rgba(255,0,242,0.18), rgba(138,43,226,0.15));
-      padding: 20px 32px;
-      border: 1px solid rgba(255,0,242,0.4);
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      display: inline-block;
-    ">
+
+  // ==================== GLASSY LUXE HEADER ====================
+  const intro = document.createElement("div");
+  intro.innerHTML = `
+    <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
       
-      <span id="freeTonightText" style="
-        font-family: 'Architects Daughter', cursive;
-        font-size: 31px;
-        font-weight: 400;
-        letter-spacing: 3px;
-        background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2, #00ffea);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-size: 200% 200%;
+      <div style="
+        background: rgba(15, 8, 35, 0.65);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 255, 180, 0.25);
+        border-radius: 24px;
+        padding: 28px 40px 20px;
+        box-shadow: 
+          0 8px 32px rgba(0, 0, 0, 0.7),
+          inset 0 1px 0 rgba(255,255,255,0.08);
         display: inline-block;
-        padding: 8px 24px;
-        
-  animation: tonightGlow 3s ease-in-out infinite alternate,
-             tonightShift 8s linear infinite;
-        
-        /* Black lifted shadow */
-        text-shadow: 
-          0 4px 8px rgba(0,0,0,0.9),
-          0 8px 16px rgba(0,0,0,0.7),
-          4px 4px 0 rgba(0,0,0,0.6),
-          -2px -2px 6px rgba(255,255,255,0.1);
-        
-        animation: tonightGlow 3s ease-in-out infinite alternate,
-                   tonightShift 8s linear infinite;
       ">
-        Free Tonight?
-      </span>
-      
-    <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
-      Real moments, Real matches, No waiting.
-      <br>Just pure connection under the night sky.
-    </p>
-    <p style="margin:0; color:#aaa; font-size:13px;">
-      Tap "Enter Location" or other tags to filter.
-    </p>
-  </div>
-`;
-modal.appendChild(intro);
-   
-  // ==================== YOUR CLOSE BUTTON ====================
+        
+        <span id="freeTonightText" style="
+          font-family: 'Architects Daughter', cursive;
+          font-size: 42px;
+          font-weight: 400;
+          letter-spacing: 4px;
+          background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-size: 200% 200%;
+          display: inline-block;
+          padding: 10px 32px;
+          text-shadow: 
+            0 0 20px #00ff9f,
+            0 0 40px #00ff9f,
+            0 4px 12px rgba(0,0,0,0.9),
+            0 8px 20px rgba(0,0,0,0.8);
+          animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
+                     tonightShift 7s linear infinite;
+        ">
+          Free Tonight
+        </span>
+        
+        <p style="margin:12px 0 6px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+          Real moments • Real desire • Right now
+        </p>
+        <p style="margin:0; color:#8899aa; font-size:13.5px;">
+          Glassy nights. No games. Pure vibe.
+        </p>
+      </div>
+    </div>
+  `;
+
+  modal.appendChild(intro);
+
+  // ==================== CLOSE BUTTON (Neon Green) ====================
   const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M18 6L6 18M6 6L18 18" stroke="#00ffea" stroke-width="2.5" stroke-linecap="round"/>
+  closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
   </svg>`;
+  
   Object.assign(closeBtn.style, {
-    position: "absolute", top: "8px", right: "10px", width: "32px", height: "32px",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", zIndex: "1002", transition: "all 0.25s ease",
-    filter: "drop-shadow(0 0 10px rgba(0,255,234,0.7))"
+    position: "absolute", 
+    top: "18px", 
+    right: "18px", 
+    width: "38px", 
+    height: "38px",
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center",
+    cursor: "pointer", 
+    zIndex: "1002",
+    filter: "drop-shadow(0 0 12px #00ff9f)"
   });
-  closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
-  closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
-  closeBtn.onclick = (e) => {
-    e.stopPropagation();
-    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
-    setTimeout(() => modal.remove(), 280);
-  };
+  
+  closeBtn.onclick = () => modal.remove();
   intro.firstElementChild.appendChild(closeBtn);
+
    
   // ==================== CONTROLS ====================
   const controls = document.createElement("div");
