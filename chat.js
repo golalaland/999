@@ -6502,7 +6502,7 @@ highlightsBtn.onclick = async () => {
     return;
   }
 
-  showLoaderBlack("");
+  showLoader("Loading Free Tonight profiles... 🔥");
 
   try {
     const snap = await getDocs(collection(db, "highlightVideos"));
@@ -6516,23 +6516,24 @@ highlightsBtn.onclick = async () => {
         if (clip.isTrending !== true) return;
         if (clip.trendingUntil && clip.trendingUntil < Date.now()) return;
 
-      allClips.push({
-  ...clip,
-  uploaderId: userDoc.id,
-  uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+        allClips.push({
+          ...clip,                    // ← This is key: spread the clip itself
+          uploaderId: userDoc.id,
+          uploaderName: userData.uploaderName || userData.chatId || clip.uploaderName || "Anonymous",
 
-  fruitPick: userData.fruitPick || clip.fruitPick,
-  naturePick: userData.naturePick || clip.naturePick,
-  gender: userData.gender,
-  age: userData.age,
-  location: userData.location,
-  city: userData.city,
-});
+          // Pull from both levels (userData + inside clip)
+          fruitPick: userData.fruitPick || clip.fruitPick,
+          naturePick: userData.naturePick || clip.naturePick,
+          gender: userData.gender || clip.gender,
+          age: userData.age || clip.age,
+          location: userData.location || clip.location,
+          city: userData.city || clip.city,
+        });
       });
     });
 
     if (allClips.length === 0) {
-      hideLoaderBlack();
+      hideLoader();
       showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
       return;
     }
@@ -6540,10 +6541,10 @@ highlightsBtn.onclick = async () => {
     showHighlightsModal(allClips);
 
   } catch (err) {
-    console.error(err);
+    console.error("Highlights load error:", err);
     showGoldAlert("Error loading Free Tonight");
   } finally {
-    hideLoaderBlack();
+    hideLoader();
   }
 };
 
