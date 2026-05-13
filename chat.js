@@ -7018,11 +7018,11 @@ function renderCards() {
       return;
     }
 
-    // === RENDER CARDS ===
+       // === RENDER CARDS - GLASSY LUXE STYLE ===
     const fragment = document.createDocumentFragment();
+    
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
       
-      // Fixed Debug Log
       console.log("🎥 Free Tonight Video Data:", {
         uploaderName: video.uploaderName,
         fruitPick: video.fruitPick,
@@ -7030,59 +7030,75 @@ function renderCards() {
         gender: video.gender,
         age: video.age,
         location: video.location,
-        city: video.city,
-        fullObject: video
+        city: video.city
       });
 
+      // ==================== CARD - GLASSY LUXE ====================
       const card = document.createElement("div");
       Object.assign(card.style, {
         position: "relative",
         aspectRatio: "9/16",
-        borderRadius: "16px",
+        borderRadius: "20px",
         overflow: "hidden",
-        background: "#0f0a1a",
+        background: "#0a0614",
         cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
-        border: "1px solid rgba(138,43,226,0.4)"
+        
+        /* Glassy Luxe Premium Look */
+        border: "1px solid rgba(0, 255, 159, 0.25)",
+        boxShadow: "0 8px 28px rgba(0, 0, 0, 0.65)",
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
       });
 
-      card.onmouseenter = () => card.style.transform = "scale(1.03)";
-      card.onmouseleave = () => card.style.transform = "scale(1)";
+      // Premium Hover Effect
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.06) translateY(-8px)";
+        card.style.boxShadow = "0 20px 45px rgba(0, 255, 159, 0.28)";
+        card.style.borderColor = "rgba(0, 255, 159, 0.45)";
+      };
+      
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1) translateY(0)";
+        card.style.boxShadow = "0 8px 28px rgba(0, 0, 0, 0.65)";
+        card.style.borderColor = "rgba(0, 255, 159, 0.25)";
+      };
 
-  
-
-
-            // ==================== ROBUST THUMBNAIL ====================
+      // ==================== ROBUST THUMBNAIL ====================
       const thumbUrl = (video.thumbnail || video.thumbnailUrl || "").trim();
       const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
-
+      
       const img = document.createElement("img");
       img.loading = "lazy";
       img.decoding = "async";
       img.alt = video.uploaderName || "Free Tonight";
-      img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; background:#0a0614;";
-
+      img.style.cssText = `
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        display: block; 
+        background: #0a0614;
+      `;
+      
       img.onerror = () => {
         img.src = fallback;
         img.onerror = null;
       };
+      
       img.src = thumbUrl || fallback;
 
       const thumbContainer = document.createElement("div");
-      thumbContainer.style.cssText = "width:100%; height:100%; position:relative; background:#000;";
-
+      thumbContainer.style.cssText = `
+        width: 100%; 
+        height: 100%; 
+        position: relative;
+        background: #000;
+      `;
       thumbContainer.appendChild(img);
 
-
-   // ==================== CLICK HANDLER ====================
-thumbContainer.onclick = (e) => {
-  e.stopImmediatePropagation();
-  e.preventDefault();
-  if (video.videoUrl) {
-    openFullScreenVideo(video.videoUrl);
-  }
-};
+      // Click to play video
+      thumbContainer.onclick = (e) => {
+        e.stopImmediatePropagation();
+        if (video.videoUrl) openFullScreenVideo(video.videoUrl);
+      };
 
       card.appendChild(thumbContainer);
        
