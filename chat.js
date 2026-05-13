@@ -185,7 +185,6 @@ document.head.appendChild(link);
 
 
 // Add this once at the top of your script (after consts)
-const style = document.createElement('style');
 style.textContent = `
   @media (max-width: 768px) {
     #livePlayerContainer {
@@ -197,6 +196,7 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
 
 // Add neon night animations
 const style = document.createElement('style');
