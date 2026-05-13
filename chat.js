@@ -6678,7 +6678,7 @@ Object.assign(modal.style, {
   color: "#e0d0ff"
 });
 
- // ==================== GLASSY LUXE HEADER - ONE LINER ====================
+// ==================== GLASSY LUXE HEADER - ONE LINER ====================
 const intro = document.createElement("div");
 intro.innerHTML = `
   <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
@@ -6689,7 +6689,7 @@ intro.innerHTML = `
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(0, 255, 159, 0.25);
       border-radius: 24px;
-      padding: 32px 40px 24px;
+      padding: 26px 48px 24px;           /* Reduced top padding + more right padding */
       box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.7),
         inset 0 1px 0 rgba(255,255,255,0.08);
@@ -6731,7 +6731,7 @@ intro.innerHTML = `
 
 modal.appendChild(intro);
 
-// ==================== CLOSE BUTTON WITH ORIGINAL ANIMATION ====================
+// ==================== CLOSE BUTTON - BETTER POSITION ====================
 const closeBtn = document.createElement("div");
 closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
   <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
@@ -6739,10 +6739,10 @@ closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none
 
 Object.assign(closeBtn.style, {
   position: "absolute",
-  top: "18px",
-  right: "18px",
-  width: "38px",
-  height: "38px",
+  top: "14px",        // Moved up
+  right: "16px",      // Slightly adjusted
+  width: "42px",
+  height: "42px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -7102,19 +7102,16 @@ function renderCards() {
 
       card.appendChild(thumbContainer);
        
-        // ==================== INFO LAYER (Glassy Gradient) ====================
+
+ 
+ // ==================== INFO LAYER ====================
       const info = document.createElement("div");
       info.style.cssText = `
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(to top, rgba(8, 3, 22, 0.96), rgba(15, 8, 35, 0.75), transparent);
-        padding: 56px 14px 16px;
-        backdrop-filter: blur(10px);
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
       `;
-
-      // Username (Clickable)
+     // Username (Clickable)
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = `
@@ -7125,16 +7122,14 @@ function renderCards() {
         cursor: pointer;
         display: inline-block;
       `;
-
       user.onclick = (e) => {
         e.stopPropagation();
-        
+       
         if (!video.uploaderId) {
           showStarPopup("Profile ID missing", "error");
           return;
         }
-
-        // Loading Spinner
+      // Loading Spinner
         const fullSpinner = document.createElement("div");
         fullSpinner.style.cssText = `
           position:fixed; top:0; left:0; width:100vw; height:100vh;
@@ -7148,14 +7143,12 @@ function renderCards() {
                         animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div>
           </div>`;
         document.body.appendChild(fullSpinner);
-
-        // Try multiple ID formats
+        // Try multiple possible ID formats
         const tryIds = [
           video.uploaderId,
-          video.uploaderId?.toLowerCase(),
-          video.uploaderId?.replace(/[@.]/g, '_')
+          video.uploaderId.toLowerCase ? video.uploaderId.toLowerCase() : null,
+          video.uploaderId.replace(/[@.]/g, '_')
         ].filter(Boolean);
-
         let attempts = 0;
         const tryFetch = (id) => {
           getDoc(doc(db, "users", id))
@@ -7173,7 +7166,7 @@ function renderCards() {
                 showStarPopup("User profile not found", "error");
               }
             })
-            .catch(() => {
+            .catch(err => {
               attempts++;
               if (attempts < tryIds.length) {
                 tryFetch(tryIds[attempts]);
@@ -7185,30 +7178,27 @@ function renderCards() {
         };
         tryFetch(tryIds[0]);
       };
-
-      // ==================== ONE-LINER ====================
+   // ==================== ONE-LINER — SUPER DEFENSIVE ====================
       const naturePick = (video.naturePick || "").trim();
       const genderRaw = String(video.gender || "person").toLowerCase().trim();
       const isMale = genderRaw === "male" || genderRaw === "man";
       const pronoun = isMale ? "his" : "her";
       const age = parseInt(video.age) || 25;
-      const ageGroup = age >= 50 ? "50s" : age >= 40 ? "40s" : age >= 30 ? "30s" : "20s";
-
+      const ageGroup = age >= 50 ? "50s" :
+                      age >= 40 ? "40s" :
+                      age >= 30 ? "30s" : "20s";
       const oneLinerText = naturePick
         ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
         : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
-
       const oneLiner = document.createElement("div");
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = `
-        font-size: 12.8px;
-        color: #b0ffe0;
+        font-size: 11px;
+        color: #aaa;
         margin-top: 4px;
-        opacity: 0.95;
       `;
-
-      // ==================== TAGS ====================
-      const tagsEl = document.createElement("div");
+                // ==================== TAGS (Emoji + City) ====================
+     const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;";
 
       // Location Tag
@@ -7250,50 +7240,41 @@ function renderCards() {
 
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
-
-      // ==================== FREE TONIGHT BADGE ====================
-      const badge = document.createElement("div");
-      badge.textContent = "FREE TONIGHT ♡";
-      Object.assign(badge.style, {
-        position: "absolute",
-        top: "12px",
-        right: "12px",
-        padding: "6px 14px",
-        borderRadius: "20px",
-        fontSize: "12.2px",
-        fontWeight: "700",
-        color: "#fff",
-        background: "linear-gradient(135deg, #00ff9f, #00e6c0)",
-        boxShadow: "0 0 20px rgba(0, 255, 159, 0.75)",
-        border: "1px solid rgba(255,255,255,0.25)",
-        textShadow: "0 1px 4px rgba(0,0,0,0.7)",
-        zIndex: "2"
-      });
-      card.appendChild(badge);
-
-      // ==================== FRUIT PICK BADGE ====================
+       
+        // ==================== FRUIT PICK BADGE — PREMIUM GLOW ====================
       if (video.fruitPick && String(video.fruitPick).trim()) {
         const fruitEl = document.createElement("div");
         fruitEl.textContent = String(video.fruitPick).trim();
-        fruitEl.style.cssText = `
+       
+                 fruitEl.style.cssText = `
           position: absolute;
-          bottom: 12px;
-          right: 12px;
-          font-size: 19px;
+          bottom: 10px;
+          right: 10px;
+          font-size: 16px;
           line-height: 1;
+          color: #fff;
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
           z-index: 3;
-          filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
         `;
-        
+        // Slight hover effect
         fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.15)";
         fruitEl.onmouseleave = () => fruitEl.style.transform = "scale(1)";
-        
         card.appendChild(fruitEl);
       }
-
+      // Badge
+      const badge = document.createElement("div");
+      badge.textContent = "Free Tonight ♡";
+      Object.assign(badge.style, {
+        position: "absolute", top: "12px", right: "12px", padding: "6px 12px", borderRadius: "12px",
+        fontSize: "12px", fontWeight: "700", color: "#fff",
+        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+      });
+      card.appendChild(badge);
+   card.appendChild(info);
       fragment.appendChild(card);
     });
-
     grid.appendChild(fragment);
     grid.appendChild(loadMoreDiv);
     isRendering = false;
