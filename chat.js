@@ -7102,17 +7102,29 @@ function renderCards() {
 
       card.appendChild(thumbContainer);
        
-   // ==================== INFO LAYER ====================
+        // ==================== INFO LAYER (Glassy Gradient) ====================
       const info = document.createElement("div");
       info.style.cssText = `
-        position:absolute; bottom:0; left:0; right:0;
-        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
-        padding:60px 12px 12px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(8, 3, 22, 0.96), rgba(15, 8, 35, 0.75), transparent);
+        padding: 56px 14px 16px;
+        backdrop-filter: blur(10px);
       `;
 
+      // Username (Clickable)
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
+      user.style.cssText = `
+        font-size: 15.5px;
+        font-weight: 700;
+        color: #00ff9f;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        cursor: pointer;
+        display: inline-block;
+      `;
 
       user.onclick = (e) => {
         e.stopPropagation();
@@ -7122,21 +7134,29 @@ function renderCards() {
           return;
         }
 
-        // Spinner
+        // Loading Spinner
         const fullSpinner = document.createElement("div");
-        fullSpinner.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(6px);`;
-        fullSpinner.innerHTML = `<div style="text-align:center;"><div style="width:48px;height:48px;border:4px solid #00ffea;border-top-color:transparent;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div></div>`;
+        fullSpinner.style.cssText = `
+          position:fixed; top:0; left:0; width:100vw; height:100vh;
+          background:rgba(0,0,0,0.4); display:flex; align-items:center;
+          justify-content:center; z-index:999999; backdrop-filter:blur(6px);
+        `;
+        fullSpinner.innerHTML = `
+          <div style="text-align:center;">
+            <div style="width:48px;height:48px;border:4px solid #00ff9f;
+                        border-top-color:transparent;border-radius:50%;
+                        animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div>
+          </div>`;
         document.body.appendChild(fullSpinner);
 
-        // Try multiple possible ID formats
+        // Try multiple ID formats
         const tryIds = [
           video.uploaderId,
-          video.uploaderId.toLowerCase ? video.uploaderId.toLowerCase() : null,
-          video.uploaderId.replace(/[@.]/g, '_')
+          video.uploaderId?.toLowerCase(),
+          video.uploaderId?.replace(/[@.]/g, '_')
         ].filter(Boolean);
 
         let attempts = 0;
-
         const tryFetch = (id) => {
           getDoc(doc(db, "users", id))
             .then(userSnap => {
@@ -7153,7 +7173,7 @@ function renderCards() {
                 showStarPopup("User profile not found", "error");
               }
             })
-            .catch(err => {
+            .catch(() => {
               attempts++;
               if (attempts < tryIds.length) {
                 tryFetch(tryIds[attempts]);
@@ -7163,173 +7183,239 @@ function renderCards() {
               }
             });
         };
-
         tryFetch(tryIds[0]);
       };
-   // ==================== ONE-LINER — SUPER DEFENSIVE ====================
+
+      // ==================== ONE-LINER ====================
       const naturePick = (video.naturePick || "").trim();
       const genderRaw = String(video.gender || "person").toLowerCase().trim();
       const isMale = genderRaw === "male" || genderRaw === "man";
       const pronoun = isMale ? "his" : "her";
-
       const age = parseInt(video.age) || 25;
-      const ageGroup = age >= 50 ? "50s" : 
-                      age >= 40 ? "40s" : 
-                      age >= 30 ? "30s" : "20s";
+      const ageGroup = age >= 50 ? "50s" : age >= 40 ? "40s" : age >= 30 ? "30s" : "20s";
 
-      const oneLinerText = naturePick 
+      const oneLinerText = naturePick
         ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
         : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
       const oneLiner = document.createElement("div");
       oneLiner.textContent = oneLinerText;
       oneLiner.style.cssText = `
-        font-size: 11px;
-        color: #aaa;
+        font-size: 12.8px;
+        color: #b0ffe0;
         margin-top: 4px;
+        opacity: 0.95;
       `;
-                // ==================== TAGS (Emoji + City) ====================
-      const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      // Location Badge
+      // ==================== TAGS ====================
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;";
+
+      // Location Tag
       const locValue = video.location || video.city || "";
       if (locValue) {
         const locSpan = document.createElement("span");
-        const flag = getFlagEmoji(locValue);
-        const cityName = (video.city || cleanLocation(locValue)).trim() || "Unknown";
-
+        const flag = getFlagEmoji ? getFlagEmoji(locValue) : "📍";
+        const cityName = (video.city || cleanLocation ? cleanLocation(locValue) : locValue).trim() || "Unknown";
+        
         locSpan.textContent = `${flag} ${cityName}`;
         locSpan.style.cssText = `
-          font-size:11px; 
-          padding:3px 10px; 
-          border-radius:10px; 
-          background: rgba(0,255,234,0.25); 
-          color: #00ffea; 
-          border: 1px solid rgba(0,255,234,0.5);
+          font-size: 11.5px;
+          padding: 4px 11px;
+          border-radius: 20px;
+          background: rgba(0, 255, 159, 0.15);
+          color: #00ff9f;
+          border: 1px solid rgba(0, 255, 159, 0.4);
           font-weight: 500;
         `;
         tagsEl.appendChild(locSpan);
       }
 
-      // Other tags
+      // Other Tags
       (video.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           const span = document.createElement("span");
           span.textContent = t.trim();
           span.style.cssText = `
-            font-size:11px; 
-            padding:2px 8px; 
-            border-radius:10px; 
-            background: rgba(255,46,120,0.22); 
-            color: #ff4d8a; 
-            border: 1px solid rgba(255,46,120,0.6);
+            font-size: 11.5px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            background: rgba(255, 70, 140, 0.18);
+            color: #ff6ab6;
+            border: 1px solid rgba(255, 70, 140, 0.4);
           `;
           tagsEl.appendChild(span);
         }
       });
-   
+
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
 
-        // ==================== FRUIT PICK BADGE — PREMIUM GLOW ====================
+      // ==================== FREE TONIGHT BADGE ====================
+      const badge = document.createElement("div");
+      badge.textContent = "FREE TONIGHT ♡";
+      Object.assign(badge.style, {
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        padding: "6px 14px",
+        borderRadius: "20px",
+        fontSize: "12.2px",
+        fontWeight: "700",
+        color: "#fff",
+        background: "linear-gradient(135deg, #00ff9f, #00e6c0)",
+        boxShadow: "0 0 20px rgba(0, 255, 159, 0.75)",
+        border: "1px solid rgba(255,255,255,0.25)",
+        textShadow: "0 1px 4px rgba(0,0,0,0.7)",
+        zIndex: "2"
+      });
+      card.appendChild(badge);
+
+      // ==================== FRUIT PICK BADGE ====================
       if (video.fruitPick && String(video.fruitPick).trim()) {
         const fruitEl = document.createElement("div");
         fruitEl.textContent = String(video.fruitPick).trim();
-        
-                 fruitEl.style.cssText = `
+        fruitEl.style.cssText = `
           position: absolute;
-          bottom: 10px;
-          right: 10px;
-          font-size: 16px;
+          bottom: 12px;
+          right: 12px;
+          font-size: 19px;
           line-height: 1;
-          color: #fff;
-          text-shadow: 0 0 3px rgba(255,255,255,0.5);
           z-index: 3;
+          filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
         `;
-
-        // Slight hover effect
+        
         fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.15)";
         fruitEl.onmouseleave = () => fruitEl.style.transform = "scale(1)";
-
+        
         card.appendChild(fruitEl);
       }
-      // Badge
-
-      const badge = document.createElement("div");
-
-      badge.textContent = "Free Tonight ♡";
-
-      Object.assign(badge.style, {
-
-        position: "absolute", top: "12px", right: "12px", padding: "6px 12px", borderRadius: "12px",
-
-        fontSize: "12px", fontWeight: "700", color: "#fff",
-
-        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
-
-        boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
-
-        textShadow: "0 0 4px rgba(0,0,0,0.7)"
-
-      });
-
-      card.appendChild(badge);
-
-   card.appendChild(info);
 
       fragment.appendChild(card);
-
     });
 
     grid.appendChild(fragment);
-
     grid.appendChild(loadMoreDiv);
-
     isRendering = false;
-
   }, 16);
 
 }
 
   
-  // ==================== LOCATION MODAL (Only v.location) ====================
-  function openLocationModal() {
-    const locModal = document.createElement("div");
-    locModal.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); z-index:1000000; display:flex; align-items:center; justify-content:center;`;
-    locModal.innerHTML = `
-      <div style="background:rgba(15,10,26,0.95); border:1px solid #8a2be2; border-radius:20px; padding:32px; max-width:420px; width:90%; text-align:center;">
-        <h3 style="color:#fff; margin-bottom:20px; font-size:20px;">Choose Location</h3>
-        <div id="locList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-height:320px; overflow-y:auto; padding:10px;"></div>
-        <button id="clearLocBtn" style="margin-top:20px; padding:10px 30px; background:#333; color:#fff; border:none; border-radius:30px;">Clear Filter</button>
-      </div>
+ // ==================== LOCATION MODAL (Compact & Glassy) ====================
+function openLocationModal() {
+  const locModal = document.createElement("div");
+  locModal.style.cssText = `
+    position:fixed; 
+    inset:0; 
+    background:rgba(0,0,0,0.85); 
+    backdrop-filter:blur(16px); 
+    z-index:1000000; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+  `;
+
+  locModal.innerHTML = `
+    <div style="
+      background:rgba(15, 10, 28, 0.95);
+      border:1px solid rgba(0, 255, 159, 0.3);
+      border-radius:20px; 
+      padding:28px 24px; 
+      max-width:360px; 
+      width:90%; 
+      text-align:center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+    ">
+      
+      <h3 style="color:#00ff9f; margin:0 0 22px 0; font-size:19px; font-weight:600;">
+        Choose Location
+      </h3>
+      
+      <div id="locList" style="
+        display:flex; 
+        flex-wrap:wrap; 
+        gap:10px; 
+        justify-content:center; 
+        max-height:280px; 
+        overflow-y:auto; 
+        padding:8px 4px;
+      "></div>
+      
+      <button id="clearLocBtn" style="
+        margin-top:20px; 
+        padding:11px 32px; 
+        background:rgba(255,255,255,0.08); 
+        color:#ccc; 
+        border:1px solid rgba(255,255,255,0.2); 
+        border-radius:30px; 
+        font-size:14px;
+        cursor:pointer;
+        transition: all 0.3s;
+      ">
+        Clear Filter
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(locModal);
+
+  const container = locModal.querySelector("#locList");
+  const locations = new Set();
+
+  allVideos.forEach(v => {
+    if (v.location) locations.add(v.location.trim());
+  });
+
+  [...locations].sort().forEach(loc => {
+    const btn = document.createElement("button");
+    btn.textContent = loc;
+    btn.style.cssText = `
+      padding:9px 18px; 
+      border-radius:25px; 
+      background:rgba(0, 255, 159, 0.12); 
+      color:#b0ffe0; 
+      border:1px solid rgba(0, 255, 159, 0.3); 
+      cursor:pointer;
+      font-size:14px;
+      transition: all 0.25s;
     `;
-    document.body.appendChild(locModal);
-    const container = locModal.querySelector("#locList");
-    const locations = new Set();
-    allVideos.forEach(v => {
-      if (v.location) locations.add(v.location.trim());
-    });
-    [...locations].sort().forEach(loc => {
-      const btn = document.createElement("button");
-      btn.textContent = loc;
-      btn.style.cssText = `padding:10px 20px; border-radius:25px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer;`;
-      btn.onclick = () => {
-        activeLocation = loc;
-        renderCards();
-        locModal.remove();
-      };
-      container.appendChild(btn);
-    });
-    locModal.querySelector("#clearLocBtn").onclick = () => {
-      activeLocation = null;
+
+    btn.onmouseenter = () => {
+      btn.style.background = "rgba(0, 255, 159, 0.25)";
+      btn.style.color = "#00ff9f";
+      btn.style.transform = "scale(1.05)";
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = "rgba(0, 255, 159, 0.12)";
+      btn.style.color = "#b0ffe0";
+      btn.style.transform = "scale(1)";
+    };
+
+    btn.onclick = () => {
+      activeLocation = loc;
       renderCards();
       locModal.remove();
     };
-  }
-  // Initial render
-  renderCards();
-  document.body.appendChild(modal);
+    container.appendChild(btn);
+  });
+
+  // Clear Button
+  locModal.querySelector("#clearLocBtn").onclick = () => {
+    activeLocation = null;
+    renderCards();
+    locModal.remove();
+  };
+
+  // Close when clicking outside
+  locModal.onclick = (e) => {
+    if (e.target === locModal) locModal.remove();
+  };
+}
+
+// Initial render
+renderCards();
+document.body.appendChild(modal);
 }
 
 function showUnlockConfirm(video, onUnlockCallback) {
