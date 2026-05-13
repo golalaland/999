@@ -6851,12 +6851,13 @@ intro.innerHTML = `
         Free Tonight?
       </span>
       
-      <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
-        Real moments • Real desire • Right now
-      </p>
-      <p style="margin:0; color:#8899aa; font-size:13.5px;">
-        www.freetonight.app
-      </p>
+     <p style="margin:0 0 8px; font-size:15.5px; font-weight:700; color:#d7fff4; letter-spacing:0.4px; text-shadow:0 0 15px rgba(176,255,235,0.35);">
+  ✺ REAL PEOPLE ✺ REAL MATCHES ✺ RIGHT NOW
+</p>
+
+<p style="margin:0; color:#8595a5; font-size:13px; letter-spacing:1px;">
+  www.freetonight.app
+</p>
     </div>
   </div>
 `;
