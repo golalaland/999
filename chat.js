@@ -756,7 +756,6 @@ function showHotspotAd() {
     transition: opacity 0.5s ease;
   `;
 
-  // Random time
   const randomHour = String(Math.floor(Math.random() * 4) + 7).padStart(2, '0');
   const randomMin = String(Math.floor(Math.random() * 50) + 5).padStart(2, '0');
 
@@ -765,24 +764,40 @@ function showHotspotAd() {
       
       <!-- Header -->
       <div style="padding:16px 20px; background:#000; display:flex; justify-content:space-between; align-items:center;">
-        <div style="color:#00ff9f; font-weight:700; font-size:15px;">TONIGHT'S HOTSPOT 🔥</div>
+        <div style="color:#00ff9f; font-weight:700; font-size:15px;">LIVE TONIGHT</div>
         <div id="adCloseBtn" style="color:#888; font-size:28px; cursor:pointer; line-height:1;">×</div>
       </div>
 
       <!-- Hero Image -->
-      <div id="adSlides" style="height:420px; position:relative; overflow:hidden;"></div>
+      <div id="adSlides" style="height:400px; position:relative; overflow:hidden;"></div>
 
       <!-- Content -->
-      <div style="padding:20px 24px 30px; text-align:center;">
-        <h2 style="margin:0 0 8px; font-size:22px; color:#fff; font-weight:600;">
-          The vibe is live right now
-        </h2>
-        <p style="margin:0 0 24px; color:#aaa; font-size:15px; line-height:1.4;">
-          Real people. Real energy.<br>
-          Join the best crowd tonight.
+      <div style="padding:24px 24px 32px; text-align:center;">
+        
+        <!-- Free Tonight? Logo Style -->
+        <span style="
+          font-family: 'Architects Daughter', cursive;
+          font-size: 26px;
+          letter-spacing: 3px;
+          background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: block;
+          margin-bottom: 8px;
+        ">
+          Free Tonight?
+        </span>
+
+        <p style="margin:0 0 16px; font-size:15.5px; color:#ddd; font-weight:500;">
+          Visit some of tonight's hotspot
         </p>
 
-        <!-- Prime-style Big Button -->
+        <!-- Small faded reward text -->
+        <p style="margin:0 0 28px; font-size:13px; color:#777; font-style:italic; opacity:0.85;">
+          and unlock rewards when you visit
+        </p>
+
+        <!-- Big Action Button -->
         <button id="imGoingBtn" style="
           width: 100%;
           padding: 16px;
@@ -796,7 +811,7 @@ function showHotspotAd() {
           cursor: pointer;
           transition: all 0.3s ease;
         ">
-          I'M GOING TONIGHT
+          I'M GOING TONIGHT ✨
         </button>
       </div>
     </div>
