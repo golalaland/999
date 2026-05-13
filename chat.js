@@ -184,23 +184,11 @@ link.href = 'https://fonts.googleapis.com/css2?family=Architects+Daughter&displa
 document.head.appendChild(link);
 
 
-// Add this once (after creating modal or at top of script)
-const neonStyle = document.createElement('style');
-neonStyle.textContent = `
+const style = document.createElement('style');
+style.textContent = `
   @keyframes cubeNeonGreen {
-    from {
-      text-shadow: 
-        0 0 15px #00ff9f,
-        0 0 30px #00ff9f,
-        0 0 50px rgba(0,255,159,0.6);
-    }
-    to {
-      text-shadow: 
-        0 0 25px #00ff9f,
-        0 0 45px #00ff9f,
-        0 0 70px #00e6c0,
-        0 0 90px rgba(0,255,159,0.8);
-    }
+    from { text-shadow: 0 0 20px #00ff9f, 0 0 40px #00ff9f, 0 6px 15px rgba(0,0,0,0.9); }
+    to   { text-shadow: 0 0 30px #00ff9f, 0 0 55px #00ff9f, 0 8px 20px rgba(0,0,0,0.9), 0 0 70px rgba(0,230,192,0.6); }
   }
 
   @keyframes tonightShift {
@@ -208,8 +196,24 @@ neonStyle.textContent = `
     50%  { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
+
+  /* Cool Typing / Reveal Effect for Tagline */
+  #tagline {
+    animation: taglineReveal 2.2s ease forwards,
+               taglineGlow 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes taglineReveal {
+    0%   { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes taglineGlow {
+    from { text-shadow: 0 0 8px rgba(176, 255, 235, 0.6); }
+    to   { text-shadow: 0 0 18px rgba(176, 255, 235, 0.9); }
+  }
 `;
-document.head.appendChild(neonStyle);
+document.head.appendChild(style);
 
 // ==================== COMBINED STYLES (Media Queries + Tonight Animations) ====================
 const combinedStyle = document.createElement('style');
@@ -6678,7 +6682,7 @@ Object.assign(modal.style, {
   color: "#e0d0ff"
 });
 
-// ==================== GLASSY LUXE HEADER - ONE LINER ====================
+// ==================== GLASSY LUXE HEADER - CINEMATIC ====================
 const intro = document.createElement("div");
 intro.innerHTML = `
   <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
@@ -6689,41 +6693,48 @@ intro.innerHTML = `
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(0, 255, 159, 0.25);
       border-radius: 24px;
-      padding: 26px 48px 24px;           /* Reduced top padding + more right padding */
+      padding: 28px 52px 26px;
       box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.7),
         inset 0 1px 0 rgba(255,255,255,0.08);
       display: inline-block;
+      position: relative;
     ">
       
-      <!-- ONE LINER - STRONG & CLEAN -->
+      <!-- MAIN TITLE -->
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
         font-size: 32px;
         font-weight: 400;
-        letter-spacing: 5px;
+        letter-spacing: 6px;
         background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-size: 200% 200%;
         display: block;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
         text-shadow:
           0 0 25px #00ff9f,
           0 0 45px #00ff9f,
           0 6px 15px rgba(0,0,0,0.9),
           0 10px 25px rgba(0,0,0,0.85);
-        animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
-                   tonightShift 7s linear infinite;
+        animation: cubeNeonGreen 2.8s ease-in-out infinite alternate,
+                   tonightShift 8s linear infinite;
       ">
         Free Tonight?
       </span>
       
-      <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+      <!-- ANIMATED SUBTEXT -->
+      <p id="tagline" style="
+        margin: 0;
+        font-size: 15.5px;
+        font-weight: 500;
+        color: #b0ffeb;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        min-height: 48px;
+        opacity: 0;
+      ">
         Real moments • Real desire • Right now
-      </p>
-      <p style="margin:0; color:#8899aa; font-size:13.5px;">
-        www.freetonight.app
       </p>
     </div>
   </div>
@@ -6739,10 +6750,10 @@ closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none
 
 Object.assign(closeBtn.style, {
   position: "absolute",
-  top: "14px",        // Moved up
-  right: "16px",      // Slightly adjusted
-  width: "42px",
-  height: "42px",
+  top: "8px",           // Moved further up
+  right: "12px",        // Shifted more to the right
+  width: "44px",        // Slightly bigger touch area
+  height: "44px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
