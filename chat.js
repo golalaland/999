@@ -6932,9 +6932,6 @@ thumbContainer.onclick = (e) => {
       const user = document.createElement("div");
       user.textContent = `@${video.uploaderName || "cutie"}`;
       user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
-          const user = document.createElement("div");
-      user.textContent = `@${video.uploaderName || "cutie"}`;
-      user.style.cssText = "font-size:14px; color:#00ffea; font-weight:700; cursor:pointer; display:inline-block;";
 
       user.onclick = (e) => {
         e.stopPropagation();
