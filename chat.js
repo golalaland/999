@@ -6644,7 +6644,7 @@ intro.innerHTML = `
       
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
-        font-size: 38px;
+        font-size: 31px;
         font-weight: 400;
         letter-spacing: 3px;
         background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2, #00ffea);
@@ -6669,8 +6669,7 @@ intro.innerHTML = `
       ">
         Free Tonight?
       </span>
-    </div>
-
+      
     <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
       Real moments, Real matches, No waiting.
       <br>Just pure connection under the night sky.
