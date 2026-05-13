@@ -6658,17 +6658,18 @@ Object.assign(modal.style, {
   width: "100vw", 
   height: "100vh",
   
-  /* Deep Black + Faded Pattern */
-  background: `rgba(6, 2, 18, 0.97)`,
+  /* Deep Black + Subtle WhatsApp-style Texture */
+  background: "rgba(6, 2, 18, 0.98)",
   backgroundImage: `
-    radial-gradient(circle at 25% 25%, rgba(0, 255, 159, 0.06) 1px, transparent 0),
-    radial-gradient(circle at 75% 35%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
-    radial-gradient(circle at 40% 80%, rgba(138, 43, 226, 0.04) 1px, transparent 0)
+    radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
+    radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+    radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
+    radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
   `,
-  backgroundSize: "80px 80px",
+  backgroundSize: "90px 90px",
   
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
+  backdropFilter: "blur(22px)",
+  WebkitBackdropFilter: "blur(22px)",
   
   display: "flex", 
   flexDirection: "column",
@@ -6682,7 +6683,7 @@ Object.assign(modal.style, {
   color: "#e0d0ff"
 });
 
-// ==================== GLASSY LUXE HEADER - CINEMATIC ====================
+// ==================== GLASSY LUXE HEADER - ONE LINER ====================
 const intro = document.createElement("div");
 intro.innerHTML = `
   <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
@@ -6693,48 +6694,41 @@ intro.innerHTML = `
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(0, 255, 159, 0.25);
       border-radius: 24px;
-      padding: 28px 52px 26px;
+      padding: 26px 48px 24px;           /* Reduced top padding + more right padding */
       box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.7),
         inset 0 1px 0 rgba(255,255,255,0.08);
       display: inline-block;
-      position: relative;
     ">
       
-      <!-- MAIN TITLE -->
+      <!-- ONE LINER - STRONG & CLEAN -->
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
         font-size: 32px;
         font-weight: 400;
-        letter-spacing: 6px;
+        letter-spacing: 5px;
         background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-size: 200% 200%;
         display: block;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
         text-shadow:
           0 0 25px #00ff9f,
           0 0 45px #00ff9f,
           0 6px 15px rgba(0,0,0,0.9),
           0 10px 25px rgba(0,0,0,0.85);
-        animation: cubeNeonGreen 2.8s ease-in-out infinite alternate,
-                   tonightShift 8s linear infinite;
+        animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
+                   tonightShift 7s linear infinite;
       ">
         Free Tonight?
       </span>
       
-      <!-- ANIMATED SUBTEXT -->
-      <p id="tagline" style="
-        margin: 0;
-        font-size: 15.5px;
-        font-weight: 500;
-        color: #b0ffeb;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-        min-height: 48px;
-        opacity: 0;
-      ">
+      <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
         Real moments • Real desire • Right now
+      </p>
+      <p style="margin:0; color:#8899aa; font-size:13.5px;">
+        www.freetonight.app
       </p>
     </div>
   </div>
@@ -7405,10 +7399,14 @@ function openLocationModal() {
   };
 }
 
-// Initial render
-renderCards();
-document.body.appendChild(modal);
-}
+  // ==================== SHOW AD AFTER 6 SECONDS ====================
+  setTimeout(() => {
+    showHotspotAd();
+  }, 6000);
+
+  // Initial render
+  renderCards();
+  document.body.appendChild(modal);
 
 function showUnlockConfirm(video, onUnlockCallback) {
     document.querySelectorAll("video").forEach(v => v.pause());
@@ -8981,6 +8979,118 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
       termsModal.style.display = 'none';
     }
   });
+
+
+// ==================== TONIGHT'S HOTSPOT AD POPUP ====================
+function showHotspotAd() {
+  const adModal = document.createElement("div");
+  adModal.id = "hotspotAdModal";
+  adModal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(18px);
+    z-index: 10000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  `;
+
+  adModal.innerHTML = `
+    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.85); border: 10px solid #111;">
+      
+      <!-- Fake iPhone Status Bar -->
+      <div style="height:28px; background:#000; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:10px; color:#aaa;">
+        <span>9:41</span>
+        <span>● ● ●</span>
+      </div>
+
+      <div style="padding:20px 16px 12px; text-align:center;">
+        <h2 style="margin:0 0 6px 0; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
+        <p style="margin:0; color:#aaa; font-size:13.5px;">People are gathering right now...</p>
+      </div>
+
+      <!-- Slides Container -->
+      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden; background:#000;"></div>
+
+      <!-- Big Action Button -->
+      <div style="position:absolute; bottom:75px; left:50%; transform:translateX(-50%); z-index:5;">
+        <button id="imGoingBtn" style="
+          padding:15px 48px; 
+          font-size:17px; 
+          font-weight:700; 
+          border:none; 
+          border-radius:50px; 
+          background:linear-gradient(90deg, #00ff9f, #00e6c0);
+          color:#000;
+          box-shadow:0 0 30px rgba(0,255,159,0.7);
+          cursor:pointer;
+        ">
+          I'm Going Tonight ✨
+        </button>
+      </div>
+
+      <!-- Close X -->
+      <div id="adCloseBtn" style="
+        position:absolute; top:18px; right:18px; 
+        width:36px; height:36px; 
+        display:flex; align-items:center; justify-content:center;
+        color:#ddd; font-size:32px; font-weight:300; cursor:pointer; z-index:10;
+      ">×</div>
+    </div>
+  `;
+
+  document.body.appendChild(adModal);
+
+  // Fade in
+  setTimeout(() => adModal.style.opacity = "1", 100);
+
+  // Sample images (replace with your real ad photos)
+  const adImages = [
+    "https://picsum.photos/id/1015/800/1200",
+    "https://picsum.photos/id/237/800/1200",
+    "https://picsum.photos/id/201/800/1200",
+    "https://picsum.photos/id/133/800/1200"
+  ];
+
+  let current = 0;
+  const slidesContainer = adModal.querySelector("#adSlides");
+
+  adImages.forEach((src, i) => {
+    const slide = document.createElement("div");
+    slide.style.cssText = `position:absolute; inset:0; background:url('${src}') center/cover no-repeat; opacity:${i===0 ? 1 : 0}; transition:opacity 1s ease;`;
+    slidesContainer.appendChild(slide);
+  });
+
+  // Auto-slide every 3.5 seconds
+  setInterval(() => {
+    const slides = slidesContainer.children;
+    slides[current].style.opacity = "0";
+    current = (current + 1) % adImages.length;
+    slides[current].style.opacity = "1";
+  }, 3500);
+
+  // "I'm Going Tonight" Button
+  adModal.querySelector("#imGoingBtn").onclick = () => {
+    const btn = adModal.querySelector("#imGoingBtn");
+    btn.style.transform = "scale(0.9)";
+    btn.style.boxShadow = "0 0 40px #00ff9f";
+
+    setTimeout(() => {
+      showStarPopup("See you there tonight! 🔥", "success");
+      adModal.style.opacity = "0";
+      setTimeout(() => adModal.remove(), 600);
+    }, 300);
+  };
+
+  // Close Button
+  adModal.querySelector("#adCloseBtn").onclick = () => {
+    adModal.style.opacity = "0";
+    setTimeout(() => adModal.remove(), 600);
+  };
+}
 
 
 /*********************************
