@@ -2,7 +2,6 @@
    Firebase Modular SDK v10+ (January 2026) — CDN / Script Tag
    Includes: App, Auth, Firestore, Functions
    ============================================== */
-
 // ── Core & Shared ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
