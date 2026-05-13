@@ -739,82 +739,75 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
-// ==================== TONIGHT'S HOTSPOT AD (iPhone Style) ====================
+// ==================== PRIME VIDEO STYLE HOTSPOT POPUP ====================
 function showHotspotAd() {
   const adModal = document.createElement("div");
   adModal.id = "hotspotAdModal";
   adModal.style.cssText = `
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.92);
-    backdrop-filter: blur(18px);
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(20px);
     z-index: 10000000;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.6s ease;
+    transition: opacity 0.5s ease;
   `;
 
-  // Random time for realism
-  const randomHour = String(Math.floor(Math.random() * 3) + 8).padStart(2, '0');
-  const randomMin = String(Math.floor(Math.random() * 50) + 10).padStart(2, '0');
+  // Random time
+  const randomHour = String(Math.floor(Math.random() * 4) + 7).padStart(2, '0');
+  const randomMin = String(Math.floor(Math.random() * 50) + 5).padStart(2, '0');
 
   adModal.innerHTML = `
-    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 25px 70px rgba(0,0,0,0.9); border: 10px solid #111;">
+    <div style="width: 340px; max-width: 92vw; background:#0f0a1a; border-radius: 20px; overflow:hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.9); border: 1px solid #222;">
       
-      <!-- Fake Status Bar -->
-      <div style="height:28px; background:#000; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:10px; color:#aaa;">
-        <span>${randomHour}:${randomMin}</span>
-        <span>● ● ●</span>
+      <!-- Header -->
+      <div style="padding:16px 20px; background:#000; display:flex; justify-content:space-between; align-items:center;">
+        <div style="color:#00ff9f; font-weight:700; font-size:15px;">TONIGHT'S HOTSPOT 🔥</div>
+        <div id="adCloseBtn" style="color:#888; font-size:28px; cursor:pointer; line-height:1;">×</div>
       </div>
 
-      <div style="padding:20px 16px 10px; text-align:center;">
-        <h2 style="margin:0 0 6px 0; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
-        <p style="margin:0; color:#aaa; font-size:13.5px;">People are gathering right now...</p>
-      </div>
+      <!-- Hero Image -->
+      <div id="adSlides" style="height:420px; position:relative; overflow:hidden;"></div>
 
-      <!-- Swipeable Slides Container -->
-      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden; touch-action: pan-y;"></div>
+      <!-- Content -->
+      <div style="padding:20px 24px 30px; text-align:center;">
+        <h2 style="margin:0 0 8px; font-size:22px; color:#fff; font-weight:600;">
+          The vibe is live right now
+        </h2>
+        <p style="margin:0 0 24px; color:#aaa; font-size:15px; line-height:1.4;">
+          Real people. Real energy.<br>
+          Join the best crowd tonight.
+        </p>
 
-      <!-- Circular Home-like Button -->
-      <div style="position:absolute; bottom:65px; left:50%; transform:translateX(-50%); z-index:5;">
+        <!-- Prime-style Big Button -->
         <button id="imGoingBtn" style="
-          width: 68px;
-          height: 68px;
-          border-radius: 50%;
-          border: none;
-          background: linear-gradient(145deg, #00ff9f, #00c8a0);
+          width: 100%;
+          padding: 16px;
+          font-size: 17px;
+          font-weight: 700;
           color: #000;
-          font-size: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 0 30px rgba(0,255,159,0.6),
-                      inset 0 2px 4px rgba(255,255,255,0.4);
+          background: linear-gradient(90deg, #00ff9f, #00d4a8);
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 8px 25px rgba(0,255,159,0.4);
           cursor: pointer;
           transition: all 0.3s ease;
         ">
-          →
+          I'M GOING TONIGHT
         </button>
       </div>
-
-      <!-- Close X -->
-      <div id="adCloseBtn" style="
-        position:absolute; top:18px; right:18px; 
-        width:36px; height:36px; 
-        display:flex; align-items:center; justify-content:center;
-        color:#ddd; font-size:32px; font-weight:300; cursor:pointer; z-index:10;
-      ">×</div>
     </div>
   `;
 
   document.body.appendChild(adModal);
 
   // Fade in
-  setTimeout(() => adModal.style.opacity = "1", 100);
+  setTimeout(() => adModal.style.opacity = "1", 80);
 
-  // ==================== SWIPEABLE PHOTOS ====================
+  // ==================== SLIDESHOW ====================
   const adImages = [
     "https://picsum.photos/id/1015/800/1200",
     "https://picsum.photos/id/237/800/1200",
@@ -822,71 +815,45 @@ function showHotspotAd() {
     "https://picsum.photos/id/133/800/1200"
   ];
 
-  let currentSlide = 0;
+  let current = 0;
   const slidesContainer = adModal.querySelector("#adSlides");
 
-  adImages.forEach(src => {
+  adImages.forEach((src, i) => {
     const slide = document.createElement("div");
     slide.style.cssText = `
-      position:absolute; inset:0; 
+      position:absolute; inset:0;
       background:url('${src}') center/cover no-repeat;
-      transition: transform 0.4s ease;
+      opacity: ${i === 0 ? '1' : '0'};
+      transition: opacity 1s ease;
     `;
     slidesContainer.appendChild(slide);
   });
 
-  const updateSlide = () => {
-    const slides = slidesContainer.children;
-    for (let i = 0; i < slides.length; i++) {
-      slides[i].style.transform = `translateX(${ (i - currentSlide) * 100 }%)`;
-    }
-  };
-  updateSlide();
-
   // Auto slide
-  let autoSlide = setInterval(() => {
-    currentSlide = (currentSlide + 1) % adImages.length;
-    updateSlide();
-  }, 3800);
+  setInterval(() => {
+    const slides = slidesContainer.children;
+    slides[current].style.opacity = "0";
+    current = (current + 1) % adImages.length;
+    slides[current].style.opacity = "1";
+  }, 4000);
 
-  // Touch Swipe Support
-  let startX = 0;
-  slidesContainer.addEventListener('touchstart', e => {
-    startX = e.changedTouches[0].screenX;
-    clearInterval(autoSlide);
-  });
+  // Button Action
+  adModal.querySelector("#imGoingBtn").onclick = () => {
+    const btn = adModal.querySelector("#imGoingBtn");
+    btn.style.transform = "scale(0.95)";
+    btn.style.boxShadow = "0 0 40px #00ff9f";
 
-  slidesContainer.addEventListener('touchend', e => {
-    const endX = e.changedTouches[0].screenX;
-    if (endX < startX - 50) {
-      // Swipe Left
-      currentSlide = (currentSlide + 1) % adImages.length;
-    } else if (endX > startX + 50) {
-      // Swipe Right
-      currentSlide = (currentSlide - 1 + adImages.length) % adImages.length;
-    }
-    updateSlide();
-    autoSlide = setInterval(() => {
-      currentSlide = (currentSlide + 1) % adImages.length;
-      updateSlide();
-    }, 3800);
-  });
-
-  // "I'm Going Tonight" Button
-  const goBtn = adModal.querySelector("#imGoingBtn");
-  goBtn.onclick = () => {
-    goBtn.style.transform = "scale(0.85)";
     setTimeout(() => {
       showStarPopup("See you there tonight! 🔥", "success");
       adModal.style.opacity = "0";
       setTimeout(() => adModal.remove(), 600);
-    }, 200);
+    }, 250);
   };
 
-  // Close Button
+  // Close
   adModal.querySelector("#adCloseBtn").onclick = () => {
     adModal.style.opacity = "0";
-    setTimeout(() => adModal.remove(), 600);
+    setTimeout(() => adModal.remove(), 500);
   };
 }
 
