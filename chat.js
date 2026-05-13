@@ -739,7 +739,126 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
+function showHotspotAd() {
+  // Check if shown today
+  const today = new Date().toISOString().split('T')[0];
+  if (localStorage.getItem('hotspotAdLastShown') === today) {
+    return; // Already shown today
+  }
 
+  const adModal = document.createElement("div");
+  adModal.id = "hotspotAdModal";
+  adModal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(18px);
+    z-index: 10000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  `;
+
+  adModal.innerHTML = `
+    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 8px solid #111;">
+      
+      <!-- Fake Status Bar -->
+      <div style="height:28px; background:#000; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:10px; color:#aaa;">
+        <span>9:41</span>
+        <span>● ● ●</span>
+      </div>
+
+      <div style="padding:20px 16px; text-align:center; color:#fff;">
+        <h2 style="margin:0 0 8px; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
+        <p style="margin:0; color:#aaa; font-size:13px;">People are already there...</p>
+      </div>
+
+      <!-- Slides Container -->
+      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden;"></div>
+
+      <!-- I'm Going Tonight Button -->
+      <div style="position:absolute; bottom:80px; left:50%; transform:translateX(-50%); z-index:3;">
+        <button id="imGoingBtn" style="
+          padding:14px 42px; 
+          font-size:16px; 
+          font-weight:700; 
+          border:none; 
+          border-radius:50px; 
+          background:linear-gradient(90deg, #00ff9f, #00e6c0);
+          color:#000;
+          box-shadow:0 0 25px rgba(0,255,159,0.6);
+        ">
+          I'm Going Tonight ✨
+        </button>
+      </div>
+
+      <!-- Close X -->
+      <div id="adCloseBtn" style="
+        position:absolute; top:18px; right:18px; 
+        width:32px; height:32px; 
+        display:flex; align-items:center; justify-content:center;
+        color:#aaa; font-size:28px; cursor:pointer; z-index:5;
+      ">×</div>
+    </div>
+  `;
+
+  document.body.appendChild(adModal);
+
+  // Fade in
+  setTimeout(() => adModal.style.opacity = "1", 50);
+
+  // Sample Ad Images (replace with your own URLs)
+  const adImages = [
+    "https://picsum.photos/id/1015/800/1200",
+    "https://picsum.photos/id/237/800/1200",
+    "https://picsum.photos/id/201/800/1200"
+  ];
+
+  let currentSlide = 0;
+  const slidesContainer = adModal.querySelector("#adSlides");
+
+  adImages.forEach((src, i) => {
+    const slide = document.createElement("div");
+    slide.style.cssText = `
+      position:absolute; inset:0; 
+      background:url('${src}') center/cover no-repeat;
+      opacity: ${i === 0 ? '1' : '0'};
+      transition: opacity 0.8s ease;
+    `;
+    slidesContainer.appendChild(slide);
+  });
+
+  // Auto slide
+  setInterval(() => {
+    const slides = slidesContainer.children;
+    slides[currentSlide].style.opacity = "0";
+    currentSlide = (currentSlide + 1) % adImages.length;
+    slides[currentSlide].style.opacity = "1";
+  }, 3200);
+
+  // "I'm Going Tonight" Button Effect
+  adModal.querySelector("#imGoingBtn").onclick = () => {
+    const btn = adModal.querySelector("#imGoingBtn");
+    btn.style.transition = "all 0.3s";
+    btn.style.transform = "scale(0.92)";
+    btn.style.boxShadow = "0 0 40px #00ff9f";
+    
+    setTimeout(() => {
+      showStarPopup("See you there tonight! 🔥", "success");
+      adModal.style.opacity = "0";
+      setTimeout(() => adModal.remove(), 600);
+      localStorage.setItem('hotspotAdLastShown', new Date().toISOString().split('T')[0]);
+    }, 280);
+  };
+
+  // Close Button
+  adModal.querySelector("#adCloseBtn").onclick = () => {
+    adModal.style.opacity = "0";
+    setTimeout(() => adModal.remove(), 600);
+  };
+}
 
 // ===============================================
 // VIP COUNTDOWN - WITH DIRECT BOOST LINK
@@ -7395,6 +7514,11 @@ function openLocationModal() {
   };
 }
 
+   // ==================== SHOW AD AFTER 6 SECONDS ====================
+  setTimeout(() => {
+    showHotspotAd();
+  }, 6000);
+   
 // Initial render
 renderCards();
 document.body.appendChild(modal);
