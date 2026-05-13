@@ -6508,26 +6508,45 @@ highlightsBtn.onclick = async () => {
     const snap = await getDocs(collection(db, "highlightVideos"));
     const allClips = [];
 
+    // First collect all uploader IDs
+    const uploaderIds = new Set();
     snap.forEach(userDoc => {
-      const userData = userDoc.data();
-      const highlights = userData.highlights || [];
+      const data = userDoc.data();
+      if (data.highlights?.length) uploaderIds.add(userDoc.id);
+    });
+
+    // Fetch full user profiles in one go
+    const userPromises = Array.from(uploaderIds).map(id => 
+      getDoc(doc(db, "users", id))
+    );
+    const userSnaps = await Promise.all(userPromises);
+
+    const userMap = {};
+    userSnaps.forEach(us => {
+      if (us.exists()) userMap[us.id] = us.data();
+    });
+
+    // Build clips with full user data
+    snap.forEach(userDoc => {
+      const highlights = userDoc.data().highlights || [];
+      const userData = userMap[userDoc.id] || {};
 
       highlights.forEach(clip => {
         if (clip.isTrending !== true) return;
         if (clip.trendingUntil && clip.trendingUntil < Date.now()) return;
 
         allClips.push({
-          ...clip,                    // ← This is key: spread the clip itself
+          ...clip,
           uploaderId: userDoc.id,
-          uploaderName: userData.uploaderName || userData.chatId || clip.uploaderName || "Anonymous",
+          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
 
-          // Pull from both levels (userData + inside clip)
-          fruitPick: userData.fruitPick || clip.fruitPick,
-          naturePick: userData.naturePick || clip.naturePick,
-          gender: userData.gender || clip.gender,
-          age: userData.age || clip.age,
-          location: userData.location || clip.location,
-          city: userData.city || clip.city,
+          // FULL PROFILE DATA
+          fruitPick: userData.fruitPick,
+          naturePick: userData.naturePick,
+          gender: userData.gender,
+          age: userData.age,
+          location: userData.location,
+          city: userData.city,
         });
       });
     });
