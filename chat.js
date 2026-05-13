@@ -6660,7 +6660,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
         
         <span id="freeTonightText" style="
           font-family: 'Architects Daughter', cursive;
-          font-size: 42px;
+          font-size: 31px;
           font-weight: 400;
           letter-spacing: 4px;
           background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
@@ -6677,14 +6677,14 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
           animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
                      tonightShift 7s linear infinite;
         ">
-          Free Tonight
+          Free Tonight?
         </span>
         
         <p style="margin:12px 0 6px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
           Real moments • Real desire • Right now
         </p>
         <p style="margin:0; color:#8899aa; font-size:13.5px;">
-          Glassy nights. No games. Pure vibe.
+          www.freetonight.app
         </p>
       </div>
     </div>
