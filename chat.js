@@ -198,7 +198,34 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// Add neon night animations
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes tonightGlow {
+    from {
+      text-shadow: 
+        0 4px 8px rgba(0,0,0,0.9),
+        0 8px 16px rgba(0,0,0,0.7),
+        0 0 20px #ff00f2,
+        0 0 40px #00ffea;
+    }
+    to {
+      text-shadow: 
+        0 6px 12px rgba(0,0,0,0.95),
+        0 10px 25px rgba(0,0,0,0.8),
+        0 0 30px #ff00f2,
+        0 0 60px #00ffea,
+        0 0 80px #8a2be2;
+    }
+  }
 
+  @keyframes tonightShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+`;
+document.head.appendChild(style);
 
 // ===============================================
 // OPTIMIZED USER COLORS LISTENER
@@ -6604,31 +6631,46 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
- // ==================== FREE TONIGHT HEADER - ARCHITECTS DAUGHTER ====================
+// ==================== FREE TONIGHT - ARCHITECTS DAUGHTER (LIFTED + ANIMATED) ====================
 const intro = document.createElement("div");
 intro.innerHTML = `
-  <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
-              line-height:1.6; font-size:14px;
-              background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
-              padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
-              box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
-   
-    <div style="margin-bottom:8px;">
-      <span style="
+  <div style="text-align:center; max-width:640px; margin:0 auto 24px; position:relative;">
+    
+    <div style="
+      background: linear-gradient(135deg, rgba(255,0,242,0.18), rgba(138,43,226,0.15));
+      padding: 20px 32px;
+      border: 1px solid rgba(255,0,242,0.4);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      display: inline-block;
+    ">
+      
+      <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
-        font-size: 32px;
+        font-size: 38px;
         font-weight: 400;
-        background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+        letter-spacing: 3px;
+        background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2, #00ffea);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        letter-spacing: 1px;
+        background-size: 200% 200%;
         display: inline-block;
+        padding: 8px 24px;
+        
+        /* Black lifted shadow */
+        text-shadow: 
+          0 4px 8px rgba(0,0,0,0.9),
+          0 8px 16px rgba(0,0,0,0.7),
+          4px 4px 0 rgba(0,0,0,0.6),
+          -2px -2px 6px rgba(255,255,255,0.1);
+        
+        animation: tonightGlow 3s ease-in-out infinite alternate,
+                   tonightShift 8s linear infinite;
       ">
         Free Tonight?
       </span>
     </div>
 
-    
     <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
       Real moments, Real matches, No waiting.
       <br>Just pure connection under the night sky.
