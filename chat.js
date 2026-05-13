@@ -6654,17 +6654,18 @@ Object.assign(modal.style, {
   width: "100vw", 
   height: "100vh",
   
-  /* Deep Black + Faded Pattern */
-  background: `rgba(6, 2, 18, 0.97)`,
+  /* Deep Black + Subtle WhatsApp-style Texture */
+  background: "rgba(6, 2, 18, 0.98)",
   backgroundImage: `
-    radial-gradient(circle at 25% 25%, rgba(0, 255, 159, 0.06) 1px, transparent 0),
-    radial-gradient(circle at 75% 35%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
-    radial-gradient(circle at 40% 80%, rgba(138, 43, 226, 0.04) 1px, transparent 0)
+    radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
+    radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+    radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
+    radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
   `,
-  backgroundSize: "80px 80px",
+  backgroundSize: "90px 90px",
   
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
+  backdropFilter: "blur(22px)",
+  WebkitBackdropFilter: "blur(22px)",
   
   display: "flex", 
   flexDirection: "column",
@@ -6739,10 +6740,10 @@ closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none
 
 Object.assign(closeBtn.style, {
   position: "absolute",
-  top: "14px",        // Moved up
-  right: "16px",      // Slightly adjusted
-  width: "42px",
-  height: "42px",
+  top: "8px",           // Moved further up
+  right: "12px",        // Shifted more to the right
+  width: "44px",        // Slightly bigger touch area
+  height: "44px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -6762,7 +6763,7 @@ closeBtn.onclick = (e) => {
 };
 
 intro.firstElementChild.appendChild(closeBtn);
-
+   
    
  // ==================== CONTROLS - GLASSY LUXE STYLE ====================
 const controls = document.createElement("div");
