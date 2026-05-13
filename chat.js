@@ -739,13 +739,8 @@ window.sanitizeId = sanitizeId;
 window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
 window.formatNumberWithCommas = formatNumberWithCommas;
 
+// ==================== TONIGHT'S HOTSPOT AD (iPhone Style) ====================
 function showHotspotAd() {
-  // Check if shown today
-  const today = new Date().toISOString().split('T')[0];
-  if (localStorage.getItem('hotspotAdLastShown') === today) {
-    return; // Already shown today
-  }
-
   const adModal = document.createElement("div");
   adModal.id = "hotspotAdModal";
   adModal.style.cssText = `
@@ -761,45 +756,55 @@ function showHotspotAd() {
     transition: opacity 0.6s ease;
   `;
 
+  // Random time for realism
+  const randomHour = String(Math.floor(Math.random() * 3) + 8).padStart(2, '0');
+  const randomMin = String(Math.floor(Math.random() * 50) + 10).padStart(2, '0');
+
   adModal.innerHTML = `
-    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 8px solid #111;">
+    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 25px 70px rgba(0,0,0,0.9); border: 10px solid #111;">
       
       <!-- Fake Status Bar -->
       <div style="height:28px; background:#000; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:10px; color:#aaa;">
-        <span>9:41</span>
+        <span>${randomHour}:${randomMin}</span>
         <span>● ● ●</span>
       </div>
 
-      <div style="padding:20px 16px; text-align:center; color:#fff;">
-        <h2 style="margin:0 0 8px; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
-        <p style="margin:0; color:#aaa; font-size:13px;">People are already there...</p>
+      <div style="padding:20px 16px 10px; text-align:center;">
+        <h2 style="margin:0 0 6px 0; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
+        <p style="margin:0; color:#aaa; font-size:13.5px;">People are gathering right now...</p>
       </div>
 
-      <!-- Slides Container -->
-      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden;"></div>
+      <!-- Swipeable Slides Container -->
+      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden; touch-action: pan-y;"></div>
 
-      <!-- I'm Going Tonight Button -->
-      <div style="position:absolute; bottom:80px; left:50%; transform:translateX(-50%); z-index:3;">
+      <!-- Circular Home-like Button -->
+      <div style="position:absolute; bottom:65px; left:50%; transform:translateX(-50%); z-index:5;">
         <button id="imGoingBtn" style="
-          padding:14px 42px; 
-          font-size:16px; 
-          font-weight:700; 
-          border:none; 
-          border-radius:50px; 
-          background:linear-gradient(90deg, #00ff9f, #00e6c0);
-          color:#000;
-          box-shadow:0 0 25px rgba(0,255,159,0.6);
+          width: 68px;
+          height: 68px;
+          border-radius: 50%;
+          border: none;
+          background: linear-gradient(145deg, #00ff9f, #00c8a0);
+          color: #000;
+          font-size: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 0 30px rgba(0,255,159,0.6),
+                      inset 0 2px 4px rgba(255,255,255,0.4);
+          cursor: pointer;
+          transition: all 0.3s ease;
         ">
-          I'm Going Tonight ✨
+          →
         </button>
       </div>
 
       <!-- Close X -->
       <div id="adCloseBtn" style="
         position:absolute; top:18px; right:18px; 
-        width:32px; height:32px; 
+        width:36px; height:36px; 
         display:flex; align-items:center; justify-content:center;
-        color:#aaa; font-size:28px; cursor:pointer; z-index:5;
+        color:#ddd; font-size:32px; font-weight:300; cursor:pointer; z-index:10;
       ">×</div>
     </div>
   `;
@@ -807,50 +812,75 @@ function showHotspotAd() {
   document.body.appendChild(adModal);
 
   // Fade in
-  setTimeout(() => adModal.style.opacity = "1", 50);
+  setTimeout(() => adModal.style.opacity = "1", 100);
 
-  // Sample Ad Images (replace with your own URLs)
+  // ==================== SWIPEABLE PHOTOS ====================
   const adImages = [
     "https://picsum.photos/id/1015/800/1200",
     "https://picsum.photos/id/237/800/1200",
-    "https://picsum.photos/id/201/800/1200"
+    "https://picsum.photos/id/201/800/1200",
+    "https://picsum.photos/id/133/800/1200"
   ];
 
   let currentSlide = 0;
   const slidesContainer = adModal.querySelector("#adSlides");
 
-  adImages.forEach((src, i) => {
+  adImages.forEach(src => {
     const slide = document.createElement("div");
     slide.style.cssText = `
       position:absolute; inset:0; 
       background:url('${src}') center/cover no-repeat;
-      opacity: ${i === 0 ? '1' : '0'};
-      transition: opacity 0.8s ease;
+      transition: transform 0.4s ease;
     `;
     slidesContainer.appendChild(slide);
   });
 
-  // Auto slide
-  setInterval(() => {
+  const updateSlide = () => {
     const slides = slidesContainer.children;
-    slides[currentSlide].style.opacity = "0";
-    currentSlide = (currentSlide + 1) % adImages.length;
-    slides[currentSlide].style.opacity = "1";
-  }, 3200);
+    for (let i = 0; i < slides.length; i++) {
+      slides[i].style.transform = `translateX(${ (i - currentSlide) * 100 }%)`;
+    }
+  };
+  updateSlide();
 
-  // "I'm Going Tonight" Button Effect
-  adModal.querySelector("#imGoingBtn").onclick = () => {
-    const btn = adModal.querySelector("#imGoingBtn");
-    btn.style.transition = "all 0.3s";
-    btn.style.transform = "scale(0.92)";
-    btn.style.boxShadow = "0 0 40px #00ff9f";
-    
+  // Auto slide
+  let autoSlide = setInterval(() => {
+    currentSlide = (currentSlide + 1) % adImages.length;
+    updateSlide();
+  }, 3800);
+
+  // Touch Swipe Support
+  let startX = 0;
+  slidesContainer.addEventListener('touchstart', e => {
+    startX = e.changedTouches[0].screenX;
+    clearInterval(autoSlide);
+  });
+
+  slidesContainer.addEventListener('touchend', e => {
+    const endX = e.changedTouches[0].screenX;
+    if (endX < startX - 50) {
+      // Swipe Left
+      currentSlide = (currentSlide + 1) % adImages.length;
+    } else if (endX > startX + 50) {
+      // Swipe Right
+      currentSlide = (currentSlide - 1 + adImages.length) % adImages.length;
+    }
+    updateSlide();
+    autoSlide = setInterval(() => {
+      currentSlide = (currentSlide + 1) % adImages.length;
+      updateSlide();
+    }, 3800);
+  });
+
+  // "I'm Going Tonight" Button
+  const goBtn = adModal.querySelector("#imGoingBtn");
+  goBtn.onclick = () => {
+    goBtn.style.transform = "scale(0.85)";
     setTimeout(() => {
       showStarPopup("See you there tonight! 🔥", "success");
       adModal.style.opacity = "0";
       setTimeout(() => adModal.remove(), 600);
-      localStorage.setItem('hotspotAdLastShown', new Date().toISOString().split('T')[0]);
-    }, 280);
+    }, 200);
   };
 
   // Close Button
@@ -6819,7 +6849,7 @@ intro.innerHTML = `
       <!-- ONE LINER - STRONG & CLEAN -->
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
-        font-size: 32px;
+        font-size: 33px;
         font-weight: 400;
         letter-spacing: 5px;
         background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
