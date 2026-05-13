@@ -6851,7 +6851,7 @@ intro.innerHTML = `
         Free Tonight?
       </span>
       
-     <p style="margin:0 0 8px; font-size:9px; font-weight:700; color:#d7fff4; letter-spacing:0.4px; text-shadow:0 0 15px rgba(176,255,235,0.35);">
+     <p style="margin:0 0 8px; font-size:3; font-weight:500; color:#d7fff4; letter-spacing:0.4px; text-shadow:0 0 15px rgba(176,255,235,0.35);">
   ✺ REAL MOMENTS ✺ REAL MATCHES ✺ RIGHT NOW
 </p>
 
