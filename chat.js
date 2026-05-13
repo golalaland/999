@@ -7088,19 +7088,15 @@ thumbContainer.onclick = (e) => {
         const fruitEl = document.createElement("div");
         fruitEl.textContent = String(video.fruitPick).trim();
         
-               fruitEl.style.cssText = `
-          position: absolute; 
-          bottom: 12px; 
-          right: 12px; 
-          font-size: 22px; 
+                 fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          font-size: 16px;
           line-height: 1;
           color: #fff;
-          z-index: 4;
-          filter: drop-shadow(0 0 4px #fff) 
-                  drop-shadow(0 0 12px #ffd700) 
-                  drop-shadow(0 0 20px currentColor);
-          text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-          transition: all 0.3s ease;
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
+          z-index: 3;
         `;
 
         // Slight hover effect
