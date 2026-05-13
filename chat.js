@@ -184,6 +184,33 @@ link.href = 'https://fonts.googleapis.com/css2?family=Architects+Daughter&displa
 document.head.appendChild(link);
 
 
+// Add this once (after creating modal or at top of script)
+const neonStyle = document.createElement('style');
+neonStyle.textContent = `
+  @keyframes cubeNeonGreen {
+    from {
+      text-shadow: 
+        0 0 15px #00ff9f,
+        0 0 30px #00ff9f,
+        0 0 50px rgba(0,255,159,0.6);
+    }
+    to {
+      text-shadow: 
+        0 0 25px #00ff9f,
+        0 0 45px #00ff9f,
+        0 0 70px #00e6c0,
+        0 0 90px rgba(0,255,159,0.8);
+    }
+  }
+
+  @keyframes tonightShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+`;
+document.head.appendChild(neonStyle);
+
 // ==================== COMBINED STYLES (Media Queries + Tonight Animations) ====================
 const combinedStyle = document.createElement('style');
 combinedStyle.textContent = `
@@ -6620,27 +6647,38 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
   
-  Object.assign(modal.style, {
-    position: "fixed", 
-    top: 0, left: 0, 
-    width: "100vw", 
-    height: "100vh",
-    background: "rgba(6, 2, 18, 0.96)",
-    backdropFilter: "blur(20px)",
-    WebkitBackdropFilter: "blur(20px)",
-    display: "flex", 
-    flexDirection: "column",
-    alignItems: "center", 
-    justifyContent: "flex-start",
-    zIndex: "999999", 
-    overflowY: "auto", 
-    padding: "20px 12px", 
-    boxSizing: "border-box",
-    fontFamily: "system-ui, sans-serif",
-    color: "#e0d0ff"
-  });
+Object.assign(modal.style, {
+  position: "fixed", 
+  top: 0, 
+  left: 0, 
+  width: "100vw", 
+  height: "100vh",
+  
+  /* Deep Black + Faded Pattern */
+  background: `rgba(6, 2, 18, 0.97)`,
+  backgroundImage: `
+    radial-gradient(circle at 25% 25%, rgba(0, 255, 159, 0.06) 1px, transparent 0),
+    radial-gradient(circle at 75% 35%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+    radial-gradient(circle at 40% 80%, rgba(138, 43, 226, 0.04) 1px, transparent 0)
+  `,
+  backgroundSize: "80px 80px",
+  
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  
+  display: "flex", 
+  flexDirection: "column",
+  alignItems: "center", 
+  justifyContent: "flex-start",
+  zIndex: "999999", 
+  overflowY: "auto", 
+  padding: "20px 12px", 
+  boxSizing: "border-box",
+  fontFamily: "system-ui, sans-serif",
+  color: "#e0d0ff"
+});
 
- // ==================== GLASSY LUXE HEADER - ONE LINER TITLE ====================
+ // ==================== GLASSY LUXE HEADER - ONE LINER ====================
 const intro = document.createElement("div");
 intro.innerHTML = `
   <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
@@ -6649,7 +6687,7 @@ intro.innerHTML = `
       background: rgba(15, 8, 35, 0.65);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 255, 180, 0.25);
+      border: 1px solid rgba(0, 255, 159, 0.25);
       border-radius: 24px;
       padding: 32px 40px 24px;
       box-shadow: 
@@ -6658,10 +6696,10 @@ intro.innerHTML = `
       display: inline-block;
     ">
       
-      <!-- ONE LINER TITLE -->
+      <!-- ONE LINER - STRONG & CLEAN -->
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
-        font-size: 46px;
+        font-size: 32px;
         font-weight: 400;
         letter-spacing: 5px;
         background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
@@ -6669,8 +6707,7 @@ intro.innerHTML = `
         -webkit-text-fill-color: transparent;
         background-size: 200% 200%;
         display: block;
-        margin-bottom: 16px;
-        padding: 8px 0;
+        margin-bottom: 18px;
         text-shadow:
           0 0 25px #00ff9f,
           0 0 45px #00ff9f,
@@ -6682,7 +6719,6 @@ intro.innerHTML = `
         Free Tonight?
       </span>
       
-      <!-- Your kept text edits -->
       <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
         Real moments • Real desire • Right now
       </p>
@@ -6695,7 +6731,7 @@ intro.innerHTML = `
 
 modal.appendChild(intro);
 
-   // ==================== CLOSE BUTTON ====================
+// ==================== CLOSE BUTTON WITH ORIGINAL ANIMATION ====================
 const closeBtn = document.createElement("div");
 closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
   <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
@@ -6712,11 +6748,21 @@ Object.assign(closeBtn.style, {
   justifyContent: "center",
   cursor: "pointer",
   zIndex: "1002",
-  filter: "drop-shadow(0 0 12px #00ff9f)"
+  filter: "drop-shadow(0 0 12px #00ff9f)",
+  transition: "all 0.25s ease"
 });
 
-closeBtn.onclick = () => modal.remove();
+closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
+
+closeBtn.onclick = (e) => {
+  e.stopPropagation();
+  closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+  setTimeout(() => modal.remove(), 280);
+};
+
 intro.firstElementChild.appendChild(closeBtn);
+
    
  // ==================== CONTROLS - GLASSY LUXE STYLE ====================
 const controls = document.createElement("div");
@@ -6911,36 +6957,68 @@ function renderCards() {
 
     });
 
-    [...visibleTags].sort().forEach(tag => {
+   // ==================== TAG BUTTONS - GLASSY NEON GREEN ====================
+[...visibleTags].sort().forEach(tag => {
+  const btn = document.createElement("button");
+  btn.textContent = tag;
+  btn.dataset.tag = tag;
+  
+  Object.assign(btn.style, {
+    padding: "8px 18px",
+    borderRadius: "30px",
+    fontSize: "13.5px",
+    fontWeight: "600",
+    letterSpacing: "0.3px",
+    
+    /* Glassy Luxe Style */
+    background: activeTags.has(tag) 
+      ? "rgba(0, 255, 159, 0.18)" 
+      : "rgba(15, 8, 35, 0.65)",
+    
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    
+    color: activeTags.has(tag) ? "#00ff9f" : "#a0ffe0",
+    border: activeTags.has(tag) 
+      ? "1px solid #00ff9f" 
+      : "1px solid rgba(0, 255, 159, 0.25)",
+    
+    cursor: "pointer",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.4)",
+    textShadow: "0 1px 4px rgba(0,0,0,0.6)"
+  });
 
-      const btn = document.createElement("button");
+  // Hover Effect
+  btn.onmouseenter = () => {
+    btn.style.transform = "translateY(-2px)";
+    btn.style.boxShadow = "0 8px 20px rgba(0, 255, 159, 0.25)";
+    if (!activeTags.has(tag)) {
+      btn.style.background = "rgba(0, 255, 159, 0.12)";
+      btn.style.borderColor = "rgba(0, 255, 159, 0.5)";
+    }
+  };
 
-      btn.textContent = tag;
+  btn.onmouseleave = () => {
+    btn.style.transform = "translateY(0)";
+    btn.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.4)";
+    if (!activeTags.has(tag)) {
+      btn.style.background = "rgba(15, 8, 35, 0.65)";
+      btn.style.borderColor = "rgba(0, 255, 159, 0.25)";
+    }
+  };
 
-      btn.dataset.tag = tag;
+  btn.onclick = () => {
+    if (activeTags.has(tag)) {
+      activeTags.delete(tag);
+    } else {
+      activeTags.add(tag);
+    }
+    renderCards();
+  };
 
-      Object.assign(btn.style, {
-
-        padding: "6px 14px", 
-
-        borderRadius: "24px", 
-
-        fontSize: "12px", 
-
-        fontWeight: "600",
-
-        background: activeTags.has(tag) ? "linear-gradient(135deg, #ff2e78, #ff5e9e)" : "rgba(255,46,120,0.2)",
-
-        color: activeTags.has(tag) ? "#fff" : "#ff6ab6",
-
-        border: "1px solid rgba(255,46,120,0.6)", 
-
-        cursor: "pointer", 
-
-        transition: "all 0.25s"
-
-      });
-
+  tagContainer.appendChild(btn);
+});
       btn.onclick = () => {
 
         if (activeTags.has(tag)) activeTags.delete(tag);
