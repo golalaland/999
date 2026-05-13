@@ -6857,6 +6857,18 @@ function renderCards() {
     const fragment = document.createDocumentFragment();
 
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+       
+       // === DEBUG LOG - ADD THIS LINE ===
+  console.log("🎥 Free Tonight Video Data:", {
+    uploaderName: video.uploaderName,
+    fruitPick: video.fruitPick,
+    naturePick: video.naturePick,
+    gender: video.gender,
+    age: video.age,
+    location: video.location,
+    city: video.city,
+    fullObject: video
+  });
 
       const card = document.createElement("div");
 
