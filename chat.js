@@ -6647,251 +6647,315 @@ function cleanLocation(location = "") {
    ================================================ */
 function showHighlightsModal(initialVideos, loadMoreFn) {
   document.getElementById("highlightsModal")?.remove();
-
+  
   const modal = document.createElement("div");
   modal.id = "highlightsModal";
+  
+Object.assign(modal.style, {
+  position: "fixed", 
+  top: 0, 
+  left: 0, 
+  width: "100vw", 
+  height: "100vh",
+  
+  /* Deep Black + Subtle WhatsApp-style Texture */
+  background: "rgba(6, 2, 18, 0.98)",
+  backgroundImage: `
+    radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
+    radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+    radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
+    radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
+  `,
+  backgroundSize: "90px 90px",
+  
+  backdropFilter: "blur(22px)",
+  WebkitBackdropFilter: "blur(22px)",
+  
+  display: "flex", 
+  flexDirection: "column",
+  alignItems: "center", 
+  justifyContent: "flex-start",
+  zIndex: "999999", 
+  overflowY: "auto", 
+  padding: "20px 12px", 
+  boxSizing: "border-box",
+  fontFamily: "system-ui, sans-serif",
+  color: "#e0d0ff"
+});
 
-  Object.assign(modal.style, {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-
-    /* Deep Black + Subtle WhatsApp-style Texture */
-    background: "rgba(6, 2, 18, 0.98)",
-    backgroundImage: `
-      radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
-      radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
-      radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
-      radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
-    `,
-    backgroundSize: "90px 90px",
-
-    backdropFilter: "blur(22px)",
-    WebkitBackdropFilter: "blur(22px)",
-
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    zIndex: "999999",
-    overflowY: "auto",
-    padding: "20px 12px",
-    boxSizing: "border-box",
-    fontFamily: "system-ui, sans-serif",
-    color: "#e0d0ff"
-  });
-
-  // ==================== GLASSY LUXE HEADER ====================
-  const intro = document.createElement("div");
-  intro.innerHTML = `
-    <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
-      <div style="
-        background: rgba(15, 8, 35, 0.65);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(0, 255, 159, 0.25);
-        border-radius: 24px;
-        padding: 26px 52px 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.08);
-        display: inline-block;
+// ==================== GLASSY LUXE HEADER - ONE LINER ====================
+const intro = document.createElement("div");
+intro.innerHTML = `
+  <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
+    
+    <div style="
+      background: rgba(15, 8, 35, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 255, 159, 0.25);
+      border-radius: 24px;
+      padding: 26px 48px 24px;           /* Reduced top padding + more right padding */
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      display: inline-block;
+    ">
+      
+      <!-- ONE LINER - STRONG & CLEAN -->
+      <span id="freeTonightText" style="
+        font-family: 'Architects Daughter', cursive;
+        font-size: 32px;
+        font-weight: 400;
+        letter-spacing: 5px;
+        background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 200% 200%;
+        display: block;
+        margin-bottom: 18px;
+        text-shadow:
+          0 0 25px #00ff9f,
+          0 0 45px #00ff9f,
+          0 6px 15px rgba(0,0,0,0.9),
+          0 10px 25px rgba(0,0,0,0.85);
+        animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
+                   tonightShift 7s linear infinite;
       ">
-        <span id="freeTonightText" style="
-          font-family: 'Architects Daughter', cursive;
-          font-size: 32px;
-          font-weight: 400;
-          letter-spacing: 5px;
-          background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-size: 200% 200%;
-          display: block;
-          margin-bottom: 18px;
-          text-shadow: 0 0 25px #00ff9f, 0 0 45px #00ff9f, 0 6px 15px rgba(0,0,0,0.9), 0 10px 25px rgba(0,0,0,0.85);
-          animation: cubeNeonGreen 2.5s ease-in-out infinite alternate, tonightShift 7s linear infinite;
-        ">
-          Free Tonight?
-        </span>
-        
-        <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
-          Real moments • Real desire • Right now
-        </p>
-        <p style="margin:0; color:#8899aa; font-size:13.5px;">
-          www.freetonight.app
-        </p>
-      </div>
+        Free Tonight?
+      </span>
+      
+      <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+        Real moments • Real desire • Right now
+      </p>
+      <p style="margin:0; color:#8899aa; font-size:13.5px;">
+        www.freetonight.app
+      </p>
     </div>
-  `;
-  modal.appendChild(intro);
+  </div>
+`;
 
-  // ==================== CLOSE BUTTON ====================
-  const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-    <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
-  </svg>`;
+modal.appendChild(intro);
 
-  Object.assign(closeBtn.style, {
-    position: "absolute",
-    top: "8px",
-    right: "12px",
-    width: "44px",
-    height: "44px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    zIndex: "1002",
-    filter: "drop-shadow(0 0 12px #00ff9f)",
-    transition: "all 0.25s ease"
-  });
+// ==================== CLOSE BUTTON - BETTER POSITION ====================
+const closeBtn = document.createElement("div");
+closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+  <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
 
-  closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
-  closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
-  closeBtn.onclick = (e) => {
-    e.stopPropagation();
-    closeBtn.style.transform = "rotate(180deg) scale(1.35)";
-    setTimeout(() => modal.remove(), 280);
-  };
+Object.assign(closeBtn.style, {
+  position: "absolute",
+  top: "8px",           // Moved further up
+  right: "12px",        // Shifted more to the right
+  width: "44px",        // Slightly bigger touch area
+  height: "44px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: "1002",
+  filter: "drop-shadow(0 0 12px #00ff9f)",
+  transition: "all 0.25s ease"
+});
 
-  intro.firstElementChild.appendChild(closeBtn);
+closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
 
-  // ==================== CONTROLS ====================
-  const controls = document.createElement("div");
-  controls.style.cssText = `
-    width: 100%; max-width: 640px; margin: 0 auto 32px;
-    display: flex; flex-direction: column; align-items: center; gap: 20px;
-  `;
+closeBtn.onclick = (e) => {
+  e.stopPropagation();
+  closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+  setTimeout(() => modal.remove(), 280);
+};
 
-  const locationBtn = document.createElement("button");
-  locationBtn.textContent = "Enter Location";
-  Object.assign(locationBtn.style, {
-    padding: "14px 32px",
-    borderRadius: "50px",
-    fontSize: "15px",
-    fontWeight: "700",
-    letterSpacing: "0.5px",
-    background: "rgba(15, 8, 35, 0.75)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-    border: "1px solid rgba(0, 255, 159, 0.35)",
-    color: "#00ff9f",
-    cursor: "pointer",
-    transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 8px 25px rgba(0, 0, 0, 0.5)",
-    textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)"
-  });
+intro.firstElementChild.appendChild(closeBtn);
 
-  locationBtn.onmouseenter = () => {
-    locationBtn.style.background = "rgba(0, 255, 159, 0.12)";
-    locationBtn.style.borderColor = "#00ff9f";
-    locationBtn.style.transform = "translateY(-3px)";
-    locationBtn.style.boxShadow = "0 12px 30px rgba(0, 255, 159, 0.25)";
-  };
-  locationBtn.onmouseleave = () => {
-    locationBtn.style.background = "rgba(15, 8, 35, 0.75)";
-    locationBtn.style.borderColor = "rgba(0, 255, 159, 0.35)";
-    locationBtn.style.transform = "translateY(0)";
-    locationBtn.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.5)";
-  };
-  locationBtn.onclick = () => openLocationModal();
-  controls.appendChild(locationBtn);
+   
+ // ==================== CONTROLS - GLASSY LUXE STYLE ====================
+const controls = document.createElement("div");
+controls.style.cssText = `
+  width: 100%; 
+  max-width: 640px; 
+  margin: 0 auto 32px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 20px;
+`;
 
-  const tagContainer = document.createElement("div");
-  tagContainer.id = "tagButtons";
-  tagContainer.style.cssText = `
-    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
-    max-width: 520px; padding: 8px 0;
-  `;
-  controls.appendChild(tagContainer);
-  modal.appendChild(controls);
+const locationBtn = document.createElement("button");
+locationBtn.textContent = "Enter Location";
+Object.assign(locationBtn.style, {
+  padding: "14px 32px",
+  borderRadius: "50px",
+  fontSize: "15px",
+  fontWeight: "700",
+  letterSpacing: "0.5px",
+  
+  /* Glassy Luxe Look */
+  background: "rgba(15, 8, 35, 0.75)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  border: "1px solid rgba(0, 255, 159, 0.35)",
+  color: "#00ff9f",
+  
+  cursor: "pointer", 
+  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+  boxShadow: "0 8px 25px rgba(0, 0, 0, 0.5)",
+  textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)"
+});
 
+locationBtn.onmouseenter = () => {
+  locationBtn.style.background = "rgba(0, 255, 159, 0.12)";
+  locationBtn.style.borderColor = "#00ff9f";
+  locationBtn.style.transform = "translateY(-3px)";
+  locationBtn.style.boxShadow = "0 12px 30px rgba(0, 255, 159, 0.25)";
+};
+
+locationBtn.onmouseleave = () => {
+  locationBtn.style.background = "rgba(15, 8, 35, 0.75)";
+  locationBtn.style.borderColor = "rgba(0, 255, 159, 0.35)";
+  locationBtn.style.transform = "translateY(0)";
+  locationBtn.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.5)";
+};
+
+locationBtn.onclick = () => openLocationModal();
+controls.appendChild(locationBtn);
+
+// ==================== TAG CONTAINER ====================
+const tagContainer = document.createElement("div");
+tagContainer.id = "tagButtons";
+tagContainer.style.cssText = `
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+  justify-content: center; 
+  max-width: 520px;
+  padding: 8px 0;
+`;
+controls.appendChild(tagContainer);
+
+modal.appendChild(controls);
+   
   // ==================== GRID ====================
-  const grid = document.createElement("div");
-  grid.id = "highlightsGrid";
-  grid.style.cssText = `
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 14px;
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-    padding-bottom: 120px;
-    contain: content;
-  `;
+const grid = document.createElement("div");
+grid.id = "highlightsGrid";
+grid.style.cssText = `
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 120px;
+  contain: content;
+  content-visibility: auto;
+  will-change: transform;           /* helps scrolling */
+`;
   modal.appendChild(grid);
-
-  // Load More Trigger
+  // Load more trigger
+    // ==================== LOAD MORE TRIGGER (Nice Spinner) ====================
   const loadMoreDiv = document.createElement("div");
   loadMoreDiv.id = "loadMoreTrigger";
   loadMoreDiv.style.cssText = `
-    grid-column: 1 / -1; height: 160px;
-    display: flex; align-items: center; justify-content: center;
-    color: #aaa; font-size: 15px; padding: 40px 20px;
+    grid-column: 1 / -1;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 15px;
+    padding: 40px 20px;
   `;
+
   loadMoreDiv.innerHTML = `
     <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-      <div style="width:28px; height:28px; border:3px solid rgba(0,255,234,0.2);
-                  border-top-color:#00ffea; border-radius:50%; animation:spin 1s linear infinite;"></div>
+      <div style="width:28px; height:28px; border:3px solid rgba(0,255,234,0.2); 
+                  border-top-color:#00ffea; border-radius:50%; 
+                  animation:spin 1s linear infinite;"></div>
       <span style="opacity:0.7;">Loading more profiles...</span>
     </div>
   `;
+
   grid.appendChild(loadMoreDiv);
 
+   // After rendering cards, if you know there's no more data:
+loadMoreDiv.style.display = "none";   // or change text to "No more clips"
+
+   
   // State
   let allVideos = [...initialVideos];
   let activeTags = new Set();
   let activeLocation = null;
    
-// ==================== RENDER CARDS ====================
-  let renderTimeout = null;
-  let isRendering = false;
+// ==================== RENDER CARDS (Static Thumbnails Only) ====================
 
-  function renderCards() {
-    if (isRendering) return;
-    isRendering = true;
-    clearTimeout(renderTimeout);
+let renderTimeout = null;
 
-    renderTimeout = setTimeout(() => {
-      grid.innerHTML = "";
-      tagContainer.innerHTML = "";
+let isRendering = false;
 
-      // Filtering
-      let visibleVideos = allVideos.filter(v => {
-        const now = Date.now();
-        return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+function renderCards() {
+
+  if (isRendering) return;
+
+  isRendering = true;
+
+  clearTimeout(renderTimeout);
+
+  renderTimeout = setTimeout(() => {
+
+    grid.innerHTML = "";
+
+    tagContainer.innerHTML = "";
+
+    // === FILTERING (Must be done BEFORE rendering) ===
+
+    let visibleVideos = allVideos.filter(v => {
+
+      const now = Date.now();
+
+      return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+
+    });
+
+    if (activeLocation) {
+
+      visibleVideos = visibleVideos.filter(v =>
+
+        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
+
+      );
+
+    }
+
+    if (activeTags.size > 0) {
+
+      visibleVideos = visibleVideos.filter(v => {
+
+        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+
+        return [...activeTags].every(tag => videoTags.includes(tag));
+
       });
 
-      if (activeLocation) {
-        visibleVideos = visibleVideos.filter(v =>
-          (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
-        );
-      }
+    }
 
-      if (activeTags.size > 0) {
-        visibleVideos = visibleVideos.filter(v => {
-          const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
-          return [...activeTags].every(tag => videoTags.includes(tag));
-        });
-      }
-
-      // Tag Buttons
-      const visibleTags = new Set();
-      visibleVideos.forEach(v => {
-        (v.tags || []).forEach(t => {
-          if (t && typeof t === "string") {
-            const trimmed = t.trim().toLowerCase();
-            if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
-              visibleTags.add(trimmed);
-            }
+     // === TAG BUTTONS (from visible videos only) ===
+    const visibleTags = new Set();
+    visibleVideos.forEach(v => {
+      (v.tags || []).forEach(t => {
+        if (t && typeof t === "string") {
+          const trimmed = t.trim().toLowerCase();
+          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
+            visibleTags.add(trimmed);
           }
-        });
+        }
       });
+    });
 
-      [...visibleTags].sort().forEach(tag => {
-        const btn = document.createElement("button");
-        btn.textContent = tag;
-        btn.dataset.tag = tag;
+    // ==================== TAG BUTTONS - GLASSY NEON GREEN ====================
+    [...visibleTags].sort().forEach(tag => {
+      const btn = document.createElement("button");
+      btn.textContent = tag;
+      btn.dataset.tag = tag;
 
       Object.assign(btn.style, {
         padding: "8px 18px",
@@ -6946,17 +7010,19 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
       tagContainer.appendChild(btn);
     });
 
-    // Empty State
-      if (visibleVideos.length === 0) {
-        const empty = document.createElement("div");
-        empty.textContent = activeLocation ? `No profiles found in ${activeLocation}...` : "No profiles match your filters...";
-        empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
-        grid.appendChild(empty);
-        grid.appendChild(loadMoreDiv);
-        isRendering = false;
-        return;
-      }
-       
+    // === EMPTY STATE ===
+    if (visibleVideos.length === 0) {
+      const empty = document.createElement("div");
+      empty.textContent = activeLocation
+        ? `No profiles found in ${activeLocation}...`
+        : "No profiles match your filters...";
+      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
+      grid.appendChild(empty);
+      grid.appendChild(loadMoreDiv);
+      isRendering = false;
+      return;
+    }
+
        // === RENDER CARDS - GLASSY LUXE STYLE ===
     const fragment = document.createDocumentFragment();
     
@@ -7332,7 +7398,11 @@ function openLocationModal() {
     if (e.target === locModal) locModal.remove();
   };
 }
-   
+
+  // ==================== SHOW AD AFTER 6 SECONDS ====================
+  setTimeout(() => {
+    showHotspotAd();
+  }, 6000);
 
   // Initial render
   renderCards();
@@ -8909,6 +8979,119 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
       termsModal.style.display = 'none';
     }
   });
+
+
+// ==================== TONIGHT'S HOTSPOT AD POPUP ====================
+function showHotspotAd() {
+  const adModal = document.createElement("div");
+  adModal.id = "hotspotAdModal";
+  adModal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(18px);
+    z-index: 10000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  `;
+
+  adModal.innerHTML = `
+    <div style="width: 320px; height: 568px; background:#0a0614; border-radius: 48px; overflow:hidden; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.85); border: 10px solid #111;">
+      
+      <!-- Fake iPhone Status Bar -->
+      <div style="height:28px; background:#000; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:10px; color:#aaa;">
+        <span>9:41</span>
+        <span>● ● ●</span>
+      </div>
+
+      <div style="padding:20px 16px 12px; text-align:center;">
+        <h2 style="margin:0 0 6px 0; font-size:18px; color:#00ff9f;">Tonight's Hotspot 🔥</h2>
+        <p style="margin:0; color:#aaa; font-size:13.5px;">People are gathering right now...</p>
+      </div>
+
+      <!-- Slides Container -->
+      <div id="adSlides" style="width:100%; height:320px; position:relative; overflow:hidden; background:#000;"></div>
+
+      <!-- Big Action Button -->
+      <div style="position:absolute; bottom:75px; left:50%; transform:translateX(-50%); z-index:5;">
+        <button id="imGoingBtn" style="
+          padding:15px 48px; 
+          font-size:17px; 
+          font-weight:700; 
+          border:none; 
+          border-radius:50px; 
+          background:linear-gradient(90deg, #00ff9f, #00e6c0);
+          color:#000;
+          box-shadow:0 0 30px rgba(0,255,159,0.7);
+          cursor:pointer;
+        ">
+          I'm Going Tonight ✨
+        </button>
+      </div>
+
+      <!-- Close X -->
+      <div id="adCloseBtn" style="
+        position:absolute; top:18px; right:18px; 
+        width:36px; height:36px; 
+        display:flex; align-items:center; justify-content:center;
+        color:#ddd; font-size:32px; font-weight:300; cursor:pointer; z-index:10;
+      ">×</div>
+    </div>
+  `;
+
+  document.body.appendChild(adModal);
+
+  // Fade in
+  setTimeout(() => adModal.style.opacity = "1", 100);
+
+  // Sample images (replace with your real ad photos)
+  const adImages = [
+    "https://picsum.photos/id/1015/800/1200",
+    "https://picsum.photos/id/237/800/1200",
+    "https://picsum.photos/id/201/800/1200",
+    "https://picsum.photos/id/133/800/1200"
+  ];
+
+  let current = 0;
+  const slidesContainer = adModal.querySelector("#adSlides");
+
+  adImages.forEach((src, i) => {
+    const slide = document.createElement("div");
+    slide.style.cssText = `position:absolute; inset:0; background:url('${src}') center/cover no-repeat; opacity:${i===0 ? 1 : 0}; transition:opacity 1s ease;`;
+    slidesContainer.appendChild(slide);
+  });
+
+  // Auto-slide every 3.5 seconds
+  setInterval(() => {
+    const slides = slidesContainer.children;
+    slides[current].style.opacity = "0";
+    current = (current + 1) % adImages.length;
+    slides[current].style.opacity = "1";
+  }, 3500);
+
+  // "I'm Going Tonight" Button
+  adModal.querySelector("#imGoingBtn").onclick = () => {
+    const btn = adModal.querySelector("#imGoingBtn");
+    btn.style.transform = "scale(0.9)";
+    btn.style.boxShadow = "0 0 40px #00ff9f";
+
+    setTimeout(() => {
+      showStarPopup("See you there tonight! 🔥", "success");
+      adModal.style.opacity = "0";
+      setTimeout(() => adModal.remove(), 600);
+    }, 300);
+  };
+
+  // Close Button
+  adModal.querySelector("#adCloseBtn").onclick = () => {
+    adModal.style.opacity = "0";
+    setTimeout(() => adModal.remove(), 600);
+  };
+}
+
 
 /*********************************
  * INIT
