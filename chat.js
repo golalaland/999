@@ -3561,27 +3561,41 @@ refs.sendBtn?.addEventListener("click", async () => {
 });
 
 // ====================== BUZZ MESSAGE ======================
+const buzzSound = document.getElementById("buzz-sound"); // Make sure this element exists in HTML
+
 refs.buzzBtn?.addEventListener("click", async () => {
   const btn = refs.buzzBtn;
   if (!btn || btn.disabled) return;
 
+  // Disable button immediately
   btn.disabled = true;
   btn.style.opacity = "0.6";
 
   try {
-    if (!currentUser?.uid) return showStarPopup("Sign in to BUZZ.");
-
-    const text = (refs.messageInputEl?.value || "").trim();
-    if (!text) return showStarPopup("Write something to BUZZ");
-    if (text.length > 21) return showStarPopup("BUZZ limited to 21 characters", "error");
-
-    if ((currentUser.stars || 0) < BUZZ_COST) {
-      return showStarPopup(`BUZZ costs ${BUZZ_COST} stars`, "error");
+    if (!currentUser?.uid) {
+      showStarPopup("Sign in to BUZZ.");
+      return;
     }
 
-    const gradient = typeof randomStickerGradient === "function" 
-      ? randomStickerGradient() 
-      : "linear-gradient(135deg, #ff00ff, #00ffff)";
+    const text = (refs.messageInputEl?.value || "").trim();
+    if (!text) {
+      showStarPopup("Write something to BUZZ");
+      return;
+    }
+    if (text.length > 21) {
+      showStarPopup("BUZZ limited to 21 characters", "error");
+      return;
+    }
+    if ((currentUser.stars || 0) < BUZZ_COST) {
+      showStarPopup(`BUZZ costs ${BUZZ_COST} stars`, "error");
+      return;
+    }
+
+    const gradient = typeof randomStickerGradient === "function"
+      ? randomStickerGradient()
+      : "linear-gradient(135deg, #ff9a9e, #fecfef)";
+
+    const newMsgRef = doc(collection(db, CHAT_COLLECTION));
 
     // Atomic transaction
     await runTransaction(db, async (transaction) => {
@@ -3589,7 +3603,7 @@ refs.buzzBtn?.addEventListener("click", async () => {
         stars: increment(-BUZZ_COST)
       });
 
-      transaction.set(doc(collection(db, CHAT_COLLECTION)), {
+      transaction.set(newMsgRef, {
         content: text,
         uid: currentUser.uid,
         chatId: currentUser.chatId,
@@ -3597,44 +3611,132 @@ refs.buzzBtn?.addEventListener("click", async () => {
         timestamp: serverTimestamp(),
         type: "buzz",
         stickerGradient: gradient,
-        highlight: true
+        highlight: true,
+        buzzLevel: "epic",        // restored from old version
+        screenShake: true,
+        sound: "buzz_sound"
       });
     });
 
+    // === SUCCESS PATH ===
     // Local update
     currentUser.stars -= BUZZ_COST;
     if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
 
-    // UI Reset
+    // Clear input
     refs.messageInputEl.value = "";
-    clearReplyAfterSend();
+    clearReplyAfterSend?.();
     resizeAndExpand?.();
 
-    // Visual & Sound
+    // Visuals & Sound
     if (buzzSound) {
       buzzSound.currentTime = 0;
-      buzzSound.play().catch(() => {});
+      buzzSound.play().catch(e => console.log("Sound play prevented:", e));
     }
 
     if (typeof triggerStickerBuzz === "function") {
-      triggerStickerBuzz(gradient, text, currentUser.chatId);
+      triggerStickerBuzz(gradient, text, currentUser.username || "Someone");
     }
 
-    showStarPopup("🎉 BUZZ SENT — The chat is shaking!", { type: "success", duration: 4000 });
+    showStarPopup("🎉 BUZZ SENT — The chat is shaking!", {
+      type: "success",
+      duration: 4000
+    });
 
   } catch (err) {
     console.error("Buzz failed:", err);
-    showStarPopup("BUZZ failed — stars refunded", "error");
 
-    currentUser.stars += BUZZ_COST;
-    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    // Only refund if we actually deducted stars
+    if (err.code !== 'permission-denied' && err.code !== 'not-found') {
+      currentUser.stars += BUZZ_COST;
+      if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    }
+
+    showStarPopup("BUZZ failed — stars refunded", "error");
   } finally {
+    // Always re-enable button
     btn.disabled = false;
     btn.style.opacity = "1";
   }
 });
+   
+// =============================
+// MILDER APOCALYPSE — STICKER-FOCUSED (Flash + Confetti + Shake)
+// =============================
+function triggerStickerBuzz(gradient, text, name) {
+  // 1. SUBTLE FULL SCREEN FLASH (using gradient)
+  var flash = document.createElement("div");
+  flash.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:" + gradient + ";opacity:0.7;pointer-events:none;z-index:99999;animation:stickerFlash 1s ease-out;";
+  document.body.appendChild(flash);
 
-// ====================== PRIVATE MESSAGE ======================
+  // 2. GENTLE SCREEN SHAKE
+  document.body.classList.add("screen-shake");
+  setTimeout(function() {
+    document.body.classList.remove("screen-shake");
+  }, 800);
+
+  // 3. CONFETTI BURST (from sticker colors)
+  if (typeof launchConfetti === "function") {
+    launchConfetti({
+      particleCount: 200,
+      spread: 90,
+      origin: { y: 0.7 },
+      colors: extractColorsFromGradient(gradient)  // Pulls from gradient
+    });
+  }
+
+  // 4. SOUND
+  if (typeof playSound === "function") {
+    playSound("buzz_sound");
+  }
+
+  // 5. STICKER ANNOUNCE (smaller text)
+  var announce = document.createElement("div");
+  announce.textContent = name + " SENT A STICKER BUZZ!";
+  announce.style.cssText = "position:fixed;top:20%;left:50%;transform:translate(-50%,-50%);font-size:2.5rem;font-weight:700;color:#fff;text-shadow:0 0 20px rgba(0,0,0,0.5);pointer-events:none;z-index:99999;animation:stickerAnnounce 2s ease-out forwards;letter-spacing:4px;";
+  document.body.appendChild(announce);
+
+  // Cleanup
+  setTimeout(function() {
+    if (flash && flash.parentNode) flash.remove();
+    if (announce && announce.parentNode) announce.remove();
+  }, 2500);
+}
+
+// =============================
+// RANDOM STICKER GRADIENTS — CLASSY, NON-NEON (YouTube-Style)
+// =============================
+function randomStickerGradient() {
+  var gradients = [
+    // Warm sunset (orange-pink, soft)
+    "linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)",
+    // Cool ocean (blue-teal, calming)
+    "linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #a8edea 100%)",
+    // Vibrant purple (elegant, not neon)
+    "linear-gradient(135deg, #d299c2 0%, #fef9d7 50%, #d299c2 100%)",
+    // Fresh green (nature-inspired)
+    "linear-gradient(135deg, #89f7fe 0%, #66a6ff 50%, #89f7fe 100%)",
+    // Golden hour (warm yellow-orange)
+    "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f093fb 100%)",
+    // Soft lavender (pastel purple-blue)
+    "linear-gradient(135deg, #fa709a 0%, #fee140 50%, #fa709a 100%)",
+    // Earthy terracotta (red-brown fade)
+    "linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%)",
+    // Minty fresh (green-cyan)
+    "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #a1c4fd 100%)"
+  ];
+  return gradients[Math.floor(Math.random() * gradients.length)];
+}
+
+// HELPER: Extract 3-4 colors from gradient for confetti
+function extractColorsFromGradient(gradient) {
+  // Simple regex to pull hex colors (e.g., #ff9a9e, #fecfef)
+  var colors = gradient.match(/#[0-9a-f]{6}/gi) || ["#ff9a9e", "#fecfef", "#fff"];
+  return colors.slice(0, 4).concat("#fff");  // Add white for confetti pop
+}
+
+
+   // ====================== PRIVATE MESSAGE ======================
 const privateMsgBtn = document.getElementById('privateMsgBtn');
 const privateMsgModal = document.getElementById('privateMsgModal');
 const privateClose = document.querySelector('.private-close');
@@ -3720,81 +3822,6 @@ privateMsgInput?.addEventListener('keydown', (e) => {
     privateSendBtn?.click();
   }
 });
-   
-// =============================
-// MILDER APOCALYPSE — STICKER-FOCUSED (Flash + Confetti + Shake)
-// =============================
-function triggerStickerBuzz(gradient, text, name) {
-  // 1. SUBTLE FULL SCREEN FLASH (using gradient)
-  var flash = document.createElement("div");
-  flash.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:" + gradient + ";opacity:0.7;pointer-events:none;z-index:99999;animation:stickerFlash 1s ease-out;";
-  document.body.appendChild(flash);
-
-  // 2. GENTLE SCREEN SHAKE
-  document.body.classList.add("screen-shake");
-  setTimeout(function() {
-    document.body.classList.remove("screen-shake");
-  }, 800);
-
-  // 3. CONFETTI BURST (from sticker colors)
-  if (typeof launchConfetti === "function") {
-    launchConfetti({
-      particleCount: 200,
-      spread: 90,
-      origin: { y: 0.7 },
-      colors: extractColorsFromGradient(gradient)  // Pulls from gradient
-    });
-  }
-
-  // 4. SOUND
-  if (typeof playSound === "function") {
-    playSound("buzz_sound");
-  }
-
-  // 5. STICKER ANNOUNCE (smaller text)
-  var announce = document.createElement("div");
-  announce.textContent = name + " SENT A STICKER BUZZ!";
-  announce.style.cssText = "position:fixed;top:20%;left:50%;transform:translate(-50%,-50%);font-size:2.5rem;font-weight:700;color:#fff;text-shadow:0 0 20px rgba(0,0,0,0.5);pointer-events:none;z-index:99999;animation:stickerAnnounce 2s ease-out forwards;letter-spacing:4px;";
-  document.body.appendChild(announce);
-
-  // Cleanup
-  setTimeout(function() {
-    if (flash && flash.parentNode) flash.remove();
-    if (announce && announce.parentNode) announce.remove();
-  }, 2500);
-}
-
-// =============================
-// RANDOM STICKER GRADIENTS — CLASSY, NON-NEON (YouTube-Style)
-// =============================
-function randomStickerGradient() {
-  var gradients = [
-    // Warm sunset (orange-pink, soft)
-    "linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)",
-    // Cool ocean (blue-teal, calming)
-    "linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #a8edea 100%)",
-    // Vibrant purple (elegant, not neon)
-    "linear-gradient(135deg, #d299c2 0%, #fef9d7 50%, #d299c2 100%)",
-    // Fresh green (nature-inspired)
-    "linear-gradient(135deg, #89f7fe 0%, #66a6ff 50%, #89f7fe 100%)",
-    // Golden hour (warm yellow-orange)
-    "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f093fb 100%)",
-    // Soft lavender (pastel purple-blue)
-    "linear-gradient(135deg, #fa709a 0%, #fee140 50%, #fa709a 100%)",
-    // Earthy terracotta (red-brown fade)
-    "linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%)",
-    // Minty fresh (green-cyan)
-    "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #a1c4fd 100%)"
-  ];
-  return gradients[Math.floor(Math.random() * gradients.length)];
-}
-
-// HELPER: Extract 3-4 colors from gradient for confetti
-function extractColorsFromGradient(gradient) {
-  // Simple regex to pull hex colors (e.g., #ff9a9e, #fecfef)
-  var colors = gradient.match(/#[0-9a-f]{6}/gi) || ["#ff9a9e", "#fecfef", "#fff"];
-  return colors.slice(0, 4).concat("#fff");  // Add white for confetti pop
-}
   /* ----------------------------
      👋 Rotating Hello Text
   ----------------------------- */
@@ -6442,7 +6469,7 @@ highlightsBtn.onclick = async () => {
     return;
   }
 
-  showLoaderBlack("Entering Free Tonight... 🔥");
+  showLoaderBlack("");
 
   try {
     const snap = await getDocs(collection(db, "highlightVideos"));
@@ -7744,7 +7771,7 @@ async function openPollModal() {
     return;
   }
 
-  showLoaderBlack("Loading poll...");
+  showLoaderBlack("");
 
   // Clean up previous listeners
   cleanupPollListeners();
