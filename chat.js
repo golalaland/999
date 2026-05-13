@@ -6640,106 +6640,149 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     color: "#e0d0ff"
   });
 
-  // ==================== GLASSY LUXE HEADER ====================
-  const intro = document.createElement("div");
-  intro.innerHTML = `
-    <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
+ // ==================== GLASSY LUXE HEADER - ONE LINER TITLE ====================
+const intro = document.createElement("div");
+intro.innerHTML = `
+  <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
+    
+    <div style="
+      background: rgba(15, 8, 35, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 255, 180, 0.25);
+      border-radius: 24px;
+      padding: 32px 40px 24px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      display: inline-block;
+    ">
       
-      <div style="
-        background: rgba(15, 8, 35, 0.65);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(0, 255, 180, 0.25);
-        border-radius: 24px;
-        padding: 28px 40px 20px;
-        box-shadow: 
-          0 8px 32px rgba(0, 0, 0, 0.7),
-          inset 0 1px 0 rgba(255,255,255,0.08);
-        display: inline-block;
+      <!-- ONE LINER TITLE -->
+      <span id="freeTonightText" style="
+        font-family: 'Architects Daughter', cursive;
+        font-size: 46px;
+        font-weight: 400;
+        letter-spacing: 5px;
+        background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 200% 200%;
+        display: block;
+        margin-bottom: 16px;
+        padding: 8px 0;
+        text-shadow:
+          0 0 25px #00ff9f,
+          0 0 45px #00ff9f,
+          0 6px 15px rgba(0,0,0,0.9),
+          0 10px 25px rgba(0,0,0,0.85);
+        animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
+                   tonightShift 7s linear infinite;
       ">
-        
-        <span id="freeTonightText" style="
-          font-family: 'Architects Daughter', cursive;
-          font-size: 31px;
-          font-weight: 400;
-          letter-spacing: 4px;
-          background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-size: 200% 200%;
-          display: inline-block;
-          padding: 10px 32px;
-          text-shadow: 
-            0 0 20px #00ff9f,
-            0 0 40px #00ff9f,
-            0 4px 12px rgba(0,0,0,0.9),
-            0 8px 20px rgba(0,0,0,0.8);
-          animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
-                     tonightShift 7s linear infinite;
-        ">
-          Free Tonight?
-        </span>
-        
-        <p style="margin:12px 0 6px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
-          Real moments • Real desire • Right now
-        </p>
-        <p style="margin:0; color:#8899aa; font-size:13.5px;">
-          www.freetonight.app
-        </p>
-      </div>
+        Free Tonight?
+      </span>
+      
+      <!-- Your kept text edits -->
+      <p style="margin:0 0 8px; font-size:15.5px; font-weight:500; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+        Real moments • Real desire • Right now
+      </p>
+      <p style="margin:0; color:#8899aa; font-size:13.5px;">
+        www.freetonight.app
+      </p>
     </div>
-  `;
+  </div>
+`;
 
-  modal.appendChild(intro);
+modal.appendChild(intro);
 
-  // ==================== CLOSE BUTTON (Neon Green) ====================
-  const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-    <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
-  </svg>`;
-  
-  Object.assign(closeBtn.style, {
-    position: "absolute", 
-    top: "18px", 
-    right: "18px", 
-    width: "38px", 
-    height: "38px",
-    display: "flex", 
-    alignItems: "center", 
-    justifyContent: "center",
-    cursor: "pointer", 
-    zIndex: "1002",
-    filter: "drop-shadow(0 0 12px #00ff9f)"
-  });
-  
-  closeBtn.onclick = () => modal.remove();
-  intro.firstElementChild.appendChild(closeBtn);
+   // ==================== CLOSE BUTTON ====================
+const closeBtn = document.createElement("div");
+closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+  <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
 
+Object.assign(closeBtn.style, {
+  position: "absolute",
+  top: "18px",
+  right: "18px",
+  width: "38px",
+  height: "38px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: "1002",
+  filter: "drop-shadow(0 0 12px #00ff9f)"
+});
+
+closeBtn.onclick = () => modal.remove();
+intro.firstElementChild.appendChild(closeBtn);
    
-  // ==================== CONTROLS ====================
-  const controls = document.createElement("div");
-  controls.style.cssText = `
-    width:100%; max-width:640px; margin:0 auto 28px;
-    display:flex; flex-direction:column; align-items:center; gap:16px;
-  `;
-  const locationBtn = document.createElement("button");
-  locationBtn.textContent = "Enter Location";
-  Object.assign(locationBtn.style, {
-    padding: "10px 24px", borderRadius: "30px", fontSize: "14px", fontWeight: "700",
-    background: "linear-gradient(135deg, #240046, #3c0b5e)", color: "#00ffea",
-    border: "1px solid rgba(138,43,226,0.6)", cursor: "pointer", transition: "all 0.3s",
-    boxShadow: "0 4px 12px rgba(138,43,226,0.4)"
-  });
-  locationBtn.onclick = () => openLocationModal();
-  controls.appendChild(locationBtn);
-  const tagContainer = document.createElement("div");
-  tagContainer.id = "tagButtons";
-  tagContainer.style.cssText = `
-    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:500px;
-    margin-top:12px; padding:8px 0;
-  `;
-  controls.appendChild(tagContainer);
-  modal.appendChild(controls);
+ // ==================== CONTROLS - GLASSY LUXE STYLE ====================
+const controls = document.createElement("div");
+controls.style.cssText = `
+  width: 100%; 
+  max-width: 640px; 
+  margin: 0 auto 32px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 20px;
+`;
+
+const locationBtn = document.createElement("button");
+locationBtn.textContent = "Enter Location";
+Object.assign(locationBtn.style, {
+  padding: "14px 32px",
+  borderRadius: "50px",
+  fontSize: "15px",
+  fontWeight: "700",
+  letterSpacing: "0.5px",
+  
+  /* Glassy Luxe Look */
+  background: "rgba(15, 8, 35, 0.75)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  border: "1px solid rgba(0, 255, 159, 0.35)",
+  color: "#00ff9f",
+  
+  cursor: "pointer", 
+  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+  boxShadow: "0 8px 25px rgba(0, 0, 0, 0.5)",
+  textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)"
+});
+
+locationBtn.onmouseenter = () => {
+  locationBtn.style.background = "rgba(0, 255, 159, 0.12)";
+  locationBtn.style.borderColor = "#00ff9f";
+  locationBtn.style.transform = "translateY(-3px)";
+  locationBtn.style.boxShadow = "0 12px 30px rgba(0, 255, 159, 0.25)";
+};
+
+locationBtn.onmouseleave = () => {
+  locationBtn.style.background = "rgba(15, 8, 35, 0.75)";
+  locationBtn.style.borderColor = "rgba(0, 255, 159, 0.35)";
+  locationBtn.style.transform = "translateY(0)";
+  locationBtn.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.5)";
+};
+
+locationBtn.onclick = () => openLocationModal();
+controls.appendChild(locationBtn);
+
+// ==================== TAG CONTAINER ====================
+const tagContainer = document.createElement("div");
+tagContainer.id = "tagButtons";
+tagContainer.style.cssText = `
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+  justify-content: center; 
+  max-width: 520px;
+  padding: 8px 0;
+`;
+controls.appendChild(tagContainer);
+
+modal.appendChild(controls);
    
   // ==================== GRID ====================
 const grid = document.createElement("div");
