@@ -3825,7 +3825,40 @@ privateMsgInput?.addEventListener('keydown', (e) => {
   /* ----------------------------
      👋 Rotating Hello Text
   ----------------------------- */
-  const greetings = ["HELLO","HOLA","BONJOUR","CIAO","HALLO","こんにちは","你好","안녕하세요","SALUT","OLÁ","NAMASTE","MERHABA"];
+  const greetings = [
+  "HELLO",          // English
+  "HOLA",           // Spanish
+  "BONJOUR",        // French
+  "CIAO",           // Italian
+  "HALLO",          // German
+  "こんにちは",       // Japanese
+  "你好",            // Chinese
+  "안녕하세요",        // Korean
+  "SALUT",          // Romanian/French casual
+  "OLÁ",            // Portuguese
+  "NAMASTE",        // Hindi
+  "MERHABA",        // Turkish
+
+  "NDEWO",          // Igbo
+  "BAWO",           // Yoruba
+  "SANNu",          // Hausa
+  "M̀MÈ",           // Efik
+  "SAWUBONA",       // Zulu
+  "JAMBO",          // Swahili
+  "DUMELA",         // Setswana
+  "AVUXENI",        // Tsonga
+  "MORO",           // Sesotho
+  "MHORO",          // Shona
+  "MAKADHI",        // Venda
+  "LUMELA",         // Sepedi/Northern Sotho
+  "WAALEYKUM",      // Fulfulde greeting style
+  "MBOTE",          // Lingala
+  "AKWAABA",        // Twi (Akan)
+  "KÉLÉ WULI",      // Ewe
+  "MONI",           // Chichewa
+  "YÁ'ÁT'ÉÉH",      // Navajo
+  "ALOHA"           // Hawaiian
+];
   const helloEl = document.getElementById("helloText");
   let greetIndex = 0;
 
