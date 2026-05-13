@@ -177,6 +177,12 @@ async function getCachedUserDoc(uid, forceFresh = false) {
 }
 
 
+// Add this early in your script
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = 'https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap';
+document.head.appendChild(link);
+
 
 // Add this once at the top of your script (after consts)
 const style = document.createElement('style');
@@ -6598,7 +6604,7 @@ function showHighlightsModal(initialVideos, loadMoreFn) {
     zIndex: "999999", overflowY: "auto", padding: "20px 12px", boxSizing: "border-box",
     fontFamily: "system-ui, sans-serif"
   });
-  // ==================== YOUR ORIGINAL HEADER WITH NABLA FONT ====================
+ // ==================== FREE TONIGHT HEADER - ARCHITECTS DAUGHTER ====================
 const intro = document.createElement("div");
 intro.innerHTML = `
   <div style="text-align:center; color:#e0b0ff; max-width:640px; margin:0 auto 24px;
@@ -6606,20 +6612,22 @@ intro.innerHTML = `
               background:linear-gradient(135deg,rgba(255,0,242,0.15),rgba(138,43,226,0.12));
               padding:16px 28px; border:1px solid rgba(138,43,226,0.5);
               box-shadow:0 0 20px rgba(255,0,242,0.25); border-radius:16px; position:relative;">
-    
+   
     <div style="margin-bottom:8px;">
       <span style="
-        font-family: 'Nabla', system-ui;
-        font-size: 28px;
+        font-family: 'Architects Daughter', cursive;
+        font-size: 32px;
         font-weight: 400;
         background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        display: inline-block;
       ">
         Free Tonight?
       </span>
     </div>
+
     
     <p style="margin:0 0 8px; font-size:15px; font-weight:500; color:#d0b0ff;">
       Real moments, Real matches, No waiting.
