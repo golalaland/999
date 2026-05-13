@@ -6502,7 +6502,7 @@ highlightsBtn.onclick = async () => {
     return;
   }
 
-  showLoader("Loading Free Tonight profiles... 🔥");
+  showLoaderBlack("");
 
   try {
     const snap = await getDocs(collection(db, "highlightVideos"));
@@ -6552,7 +6552,7 @@ highlightsBtn.onclick = async () => {
     });
 
     if (allClips.length === 0) {
-      hideLoader();
+      hideLoaderBlack();
       showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
       return;
     }
@@ -6563,7 +6563,7 @@ highlightsBtn.onclick = async () => {
     console.error("Highlights load error:", err);
     showGoldAlert("Error loading Free Tonight");
   } finally {
-    hideLoader();
+    hideLoaderBlack();
   }
 };
 
