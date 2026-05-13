@@ -6933,176 +6933,124 @@ function renderCards() {
 
     }
 
-    // === TAG BUTTONS (from visible videos only) ===
-
+     // === TAG BUTTONS (from visible videos only) ===
     const visibleTags = new Set();
-
     visibleVideos.forEach(v => {
-
       (v.tags || []).forEach(t => {
-
         if (t && typeof t === "string") {
-
           const trimmed = t.trim().toLowerCase();
-
           if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
-
             visibleTags.add(trimmed);
-
           }
-
         }
-
       });
-
     });
 
-   // ==================== TAG BUTTONS - GLASSY NEON GREEN ====================
-[...visibleTags].sort().forEach(tag => {
-  const btn = document.createElement("button");
-  btn.textContent = tag;
-  btn.dataset.tag = tag;
-  
-  Object.assign(btn.style, {
-    padding: "8px 18px",
-    borderRadius: "30px",
-    fontSize: "13.5px",
-    fontWeight: "600",
-    letterSpacing: "0.3px",
-    
-    /* Glassy Luxe Style */
-    background: activeTags.has(tag) 
-      ? "rgba(0, 255, 159, 0.18)" 
-      : "rgba(15, 8, 35, 0.65)",
-    
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    
-    color: activeTags.has(tag) ? "#00ff9f" : "#a0ffe0",
-    border: activeTags.has(tag) 
-      ? "1px solid #00ff9f" 
-      : "1px solid rgba(0, 255, 159, 0.25)",
-    
-    cursor: "pointer",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.4)",
-    textShadow: "0 1px 4px rgba(0,0,0,0.6)"
-  });
+    // ==================== TAG BUTTONS - GLASSY NEON GREEN ====================
+    [...visibleTags].sort().forEach(tag => {
+      const btn = document.createElement("button");
+      btn.textContent = tag;
+      btn.dataset.tag = tag;
 
-  // Hover Effect
-  btn.onmouseenter = () => {
-    btn.style.transform = "translateY(-2px)";
-    btn.style.boxShadow = "0 8px 20px rgba(0, 255, 159, 0.25)";
-    if (!activeTags.has(tag)) {
-      btn.style.background = "rgba(0, 255, 159, 0.12)";
-      btn.style.borderColor = "rgba(0, 255, 159, 0.5)";
-    }
-  };
+      Object.assign(btn.style, {
+        padding: "8px 18px",
+        borderRadius: "30px",
+        fontSize: "13.5px",
+        fontWeight: "600",
+        letterSpacing: "0.3px",
 
-  btn.onmouseleave = () => {
-    btn.style.transform = "translateY(0)";
-    btn.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.4)";
-    if (!activeTags.has(tag)) {
-      btn.style.background = "rgba(15, 8, 35, 0.65)";
-      btn.style.borderColor = "rgba(0, 255, 159, 0.25)";
-    }
-  };
+        background: activeTags.has(tag) 
+          ? "rgba(0, 255, 159, 0.18)" 
+          : "rgba(15, 8, 35, 0.65)",
+        
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
 
-  btn.onclick = () => {
-    if (activeTags.has(tag)) {
-      activeTags.delete(tag);
-    } else {
-      activeTags.add(tag);
-    }
-    renderCards();
-  };
+        color: activeTags.has(tag) ? "#00ff9f" : "#a0ffe0",
+        border: activeTags.has(tag) 
+          ? "1px solid #00ff9f" 
+          : "1px solid rgba(0, 255, 159, 0.25)",
 
-  tagContainer.appendChild(btn);
-});
+        cursor: "pointer",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.4)",
+        textShadow: "0 1px 4px rgba(0,0,0,0.6)"
+      });
+
+      // Hover Effect
+      btn.onmouseenter = () => {
+        btn.style.transform = "translateY(-2px)";
+        btn.style.boxShadow = "0 8px 20px rgba(0, 255, 159, 0.25)";
+        if (!activeTags.has(tag)) {
+          btn.style.background = "rgba(0, 255, 159, 0.12)";
+          btn.style.borderColor = "rgba(0, 255, 159, 0.5)";
+        }
+      };
+
+      btn.onmouseleave = () => {
+        btn.style.transform = "translateY(0)";
+        btn.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.4)";
+        if (!activeTags.has(tag)) {
+          btn.style.background = "rgba(15, 8, 35, 0.65)";
+          btn.style.borderColor = "rgba(0, 255, 159, 0.25)";
+        }
+      };
+
       btn.onclick = () => {
-
         if (activeTags.has(tag)) activeTags.delete(tag);
-
         else activeTags.add(tag);
-
         renderCards();
-
       };
 
       tagContainer.appendChild(btn);
-
     });
 
     // === EMPTY STATE ===
-
     if (visibleVideos.length === 0) {
-
       const empty = document.createElement("div");
-
-      empty.textContent = activeLocation 
-
-        ? `No profiles found in ${activeLocation}...` 
-
+      empty.textContent = activeLocation
+        ? `No profiles found in ${activeLocation}...`
         : "No profiles match your filters...";
-
       empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
-
       grid.appendChild(empty);
-
       grid.appendChild(loadMoreDiv);
-
       isRendering = false;
-
       return;
-
     }
 
-    // === RENDER CARDS using DocumentFragment ===
-
+    // === RENDER CARDS ===
     const fragment = document.createDocumentFragment();
-
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
-       
-       // === DEBUG LOG - ADD THIS LINE ===
-  ("🎥 Free Tonight Video Data:", {
-    uploaderName: video.uploaderName,
-    fruitPick: video.fruitPick,
-    naturePick: video.naturePick,
-    gender: video.gender,
-    age: video.age,
-    location: video.location,
-    city: video.city,
-    fullObject: video
-  });
+      
+      // Fixed Debug Log
+      console.log("🎥 Free Tonight Video Data:", {
+        uploaderName: video.uploaderName,
+        fruitPick: video.fruitPick,
+        naturePick: video.naturePick,
+        gender: video.gender,
+        age: video.age,
+        location: video.location,
+        city: video.city,
+        fullObject: video
+      });
 
       const card = document.createElement("div");
-
       Object.assign(card.style, {
-
         position: "relative",
-
         aspectRatio: "9/16",
-
         borderRadius: "16px",
-
         overflow: "hidden",
-
         background: "#0f0a1a",
-
         cursor: "pointer",
-
         boxShadow: "0 4px 20px rgba(138,43,226,0.35)",
-
         transition: "transform 0.25s ease, box-shadow 0.25s ease",
-
         border: "1px solid rgba(138,43,226,0.4)"
-
       });
 
       card.onmouseenter = () => card.style.transform = "scale(1.03)";
-
       card.onmouseleave = () => card.style.transform = "scale(1)";
 
+  
 
 
             // ==================== ROBUST THUMBNAIL ====================
