@@ -76,7 +76,7 @@ const firebaseConfig = {
 
 /* ── Initialize Services ── */
 const app = initializeApp(firebaseConfig);
-console.log("🔥 Firebase Project:", firebaseConfig.projectId);
+("🔥 Firebase Project:", firebaseConfig.projectId);
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -84,8 +84,8 @@ const rtdb = getDatabase(app);
 const storage = getStorage(app);
 const functions = getFunctions(app, "us-central1"); // explicit region — important!
 
-console.log("☁️ Functions region set to us-central1");
-console.log("☁️ Storage ready:", firebaseConfig.storageBucket);
+("☁️ Functions region set to us-central1");
+("☁️ Storage ready:", firebaseConfig.storageBucket);
 
 /* ── Exports for other modules/scripts ── */
 export {
@@ -135,7 +135,7 @@ function setupPresence(user) {
     }).catch(() => {});
     onDisconnect(pRef).remove().catch(() => {});
   } catch (err) {
-    console.error("Presence error:", err);
+    ("Presence error:", err);
   }
 }
 
@@ -171,7 +171,7 @@ async function getCachedUserDoc(uid, forceFresh = false) {
     }
     return null;
   } catch (err) {
-    console.error("getCachedUserDoc error:", err);
+    ("getCachedUserDoc error:", err);
     return null;
   }
 }
@@ -235,7 +235,7 @@ function setupUsersListener() {
     window.userColorsUnsubscribe();
   }
 
-  console.log("[OPTIMIZED] Starting active users colors listener");
+  (" Starting active users colors listener");
 
   const activeRef = collection(db, `rooms/${ROOM_ID}/activeUsers`);
 
@@ -256,7 +256,7 @@ function setupUsersListener() {
       renderMessagesFromArray(lastMessagesArray);
     }
   }, (err) => {
-    console.error("[COLORS] Listener error:", err);
+    ("[COLORS] Listener error:", err);
   });
 }
 
@@ -268,33 +268,33 @@ async function login(identifier, password) {
   }
 
   let emailToUse = identifier.trim();
-  console.log(`[Login] Attempting login with: "${identifier}"`);
+  (`[Login] Attempting login with: "${identifier}"`);
 
   try {
     if (!emailToUse.includes('@')) {
       // Username (chatId) login
       const chatIdLower = emailToUse.toLowerCase().trim();
-      console.log(`[Username Login] Searching for chatId: "${chatIdLower}"`);
+      (`[Username Login] Searching for chatId: "${chatIdLower}"`);
 
       const chatIdRef = doc(db, "chatIds", chatIdLower);
       const snap = await getDoc(chatIdRef);
 
       if (!snap.exists()) {
-        console.error(`[FAILED] No index found for chatId "${chatIdLower}". Run the index creation code.`);
+        (`[FAILED] No index found for chatId "${chatIdLower}". Run the index creation code.`);
         throw new Error("Invalid username or password");
       }
 
       emailToUse = snap.data().email;
-      console.log(`[SUCCESS] Found email: ${emailToUse}`);
+      (`[SUCCESS] Found email: ${emailToUse}`);
     } else {
       emailToUse = emailToUse.toLowerCase().trim();
-      console.log(`[Email Login] Using: ${emailToUse}`);
+      (`[Email Login] Using: ${emailToUse}`);
     }
 
     return await signInWithEmailAndPassword(auth, emailToUse, password);
 
   } catch (error) {
-    console.error("Login function error:", error);
+    ("Login function error:", error);
     
     if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
       throw new Error("Invalid username or password");
@@ -364,7 +364,7 @@ async function syncUserData() {
     localStorage.setItem("userUnlockedVideos", JSON.stringify(merged));
 
   } catch (err) {
-    console.error("syncUserData failed:", err);
+    ("syncUserData failed:", err);
   }
 }
 /* ===============================
@@ -429,7 +429,7 @@ function revealHostTabs() {
     el.style.display = el.tagName === "BUTTON" ? "inline-flex" : "block";
   });
 
-  console.log("[HOST UI] revealed");
+  ("[HOST UI] revealed");
 }
 
 // =============================
@@ -468,7 +468,7 @@ async function pushNotification(userId, message) {
       read: false
     });
   } catch (err) {
-    console.warn("Failed to send notification:", err);
+    ("Failed to send notification:", err);
   }
 }
 
@@ -551,7 +551,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     // ADMIN MODE
     if (currentUser.isAdmin) {
       currentAdmin = { uid, email, chatId: currentUser.chatId };
-      console.log("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+      ("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
       const pollSection = document.getElementById("polls");
       if (pollSection) pollSection.style.display = "block";
     }
@@ -610,7 +610,7 @@ setTimeout(async () => {
     `);
 
   } catch (err) {
-    console.error("Login process error:", err);
+    ("Login process error:", err);
     showStarPopup("Login failed — try again");
     await signOut(auth);
   }
@@ -765,7 +765,7 @@ async function showVIPCountdown() {
     updateCountdown();
     setInterval(updateCountdown, 60000);
   } catch (err) {
-    console.error("Countdown error:", err);
+    ("Countdown error:", err);
     countdownEl.style.display = 'none';
   }
 }
@@ -774,12 +774,12 @@ async function showVIPCountdown() {
 // Call it when Media Tab is clicked + on page load
 // ===============================================
 document.getElementById('mediaTab').addEventListener('click', () => {
-  console.log("🖱️ Media Tab clicked");
+  ("🖱️ Media Tab clicked");
   showVIPCountdown();
 });
 
 setTimeout(() => {
-  console.log("⏰ Initial countdown call after delay");
+  ("⏰ Initial countdown call after delay");
   showVIPCountdown();
 }, 2000);
 
@@ -932,7 +932,7 @@ async function autoDetectCountry() {
     });
 
   } catch (err) {
-    console.error("Geo detection failed:", err);
+    ("Geo detection failed:", err);
   }
 }
 
@@ -956,14 +956,14 @@ async function showGiftModal(targetUid, targetData) {
   }
 
   if (!targetUid || !targetData?.chatId) {
-    console.warn("Invalid gift target");
+    ("Invalid gift target");
     return;
   }
 
   const { giftModal, giftModalTitle, giftAmountInput, giftConfirmBtn, giftModalClose } = refs;
 
   if (!giftModal || !giftModalTitle || !giftAmountInput || !giftConfirmBtn || !giftModalClose) {
-    console.warn("Gift modal DOM elements missing");
+    ("Gift modal DOM elements missing");
     return;
   }
 
@@ -1034,7 +1034,7 @@ async function showGiftModal(targetUid, targetData) {
       closeModal();
 
     } catch (err) {
-      console.error("Gift transaction failed:", err);
+      ("Gift transaction failed:", err);
       showStarPopup("Gift failed — try again");
       closeModal();
     } finally {
@@ -1165,7 +1165,7 @@ document.getElementById("withdrawCashBtn")?.addEventListener("click", async () =
       `Withdrawal requested!\n₦${amount.toLocaleString()} deducted.`
     );
   } catch (e) {
-    console.error("Withdraw failed:", e);
+    ("Withdraw failed:", e);
     hideLoader();
     showGoldAlert("Request failed — please try again");
   }
@@ -1473,10 +1473,10 @@ async function createLoginToken(uid) {
     });
 
     currentLoginToken = token;
-    console.log("[TOKEN] One-time shareable token created");
+    ("[TOKEN] One-time shareable token created");
     return token;
   } catch (err) {
-    console.error("[TOKEN] Failed:", err);
+    ("[TOKEN] Failed:", err);
     return null;
   }
 }
@@ -1506,11 +1506,11 @@ async function loadUserFromToken(token) {
     // Create Long-Lived Session
     await createLongLivedSession(data.uid);
 
-    console.log("%c✅ One-time token redeemed successfully", "color:#00ffaa");
+    ("%c✅ One-time token redeemed successfully", "color:#00ffaa");
     return data.uid;
 
   } catch (err) {
-    console.warn("Token redemption error:", err);
+    ("Token redemption error:", err);
     return null;
   }
 }
@@ -1538,9 +1538,9 @@ async function createLongLivedSession(uid) {
       expiresAt 
     }));
 
-    console.log("[SESSION] Long-lived session created (30 days)");
+    ("[SESSION] Long-lived session created (30 days)");
   } catch (err) {
-    console.error("[SESSION] Failed to create session:", err);
+    ("[SESSION] Failed to create session:", err);
   }
 }
 
@@ -1567,7 +1567,7 @@ async function validateLongLivedSession(storedData) {
 
     return data.uid;
   } catch (err) {
-    console.warn("Session validation failed:", err);
+    ("Session validation failed:", err);
     return null;
   }
 }
@@ -1833,7 +1833,7 @@ async function reportMessage(msgData) {
     }
     showStarPopup("Report submitted!", { type: "success" });
   } catch (err) {
-    console.error(err);
+    (err);
     showStarPopup("Error reporting message.", { type: "error" });
   }
 }
@@ -1943,7 +1943,7 @@ document.addEventListener("click", (e) => {
   const tabId = btn.dataset.tab;
 
   if (tabId === "infoTab" && (!currentUser || !currentUser.isHost)) {
-    console.warn("[tabs] Non-host blocked from Tools");
+    ("[tabs] Non-host blocked from Tools");
     e.preventDefault();
     return;
   }
@@ -2254,7 +2254,7 @@ function attachMessagesListener() {
   messagesUnsubscribe = onSnapshot(q, 
     { includeMetadataChanges: true },
     (snapshot) => {
-      console.log(`[Messages] ${snapshot.metadata.fromCache ? 'CACHE' : 'SERVER'} | ${snapshot.size} msgs`);
+      (`[Messages] ${snapshot.metadata.fromCache ? 'CACHE' : 'SERVER'} | ${snapshot.size} msgs`);
 
       snapshot.docChanges().forEach((change) => {
         if (change.type !== "added") return;
@@ -2304,7 +2304,7 @@ function attachMessagesListener() {
       });
     },
     (error) => {
-      console.error("Messages listener error:", error);
+      ("Messages listener error:", error);
     }
   );
 }
@@ -2320,7 +2320,7 @@ async function setupNotifications() {
   const markAllBtn = document.getElementById("markAllRead");
 
   if (!listEl) {
-    console.warn("Notifications tab not found in DOM");
+    ("Notifications tab not found in DOM");
     return;
   }
 
@@ -2373,7 +2373,7 @@ async function setupNotifications() {
     listEl.innerHTML = "";
     listEl.appendChild(frag);
   }, (error) => {
-    console.error("Notifications listener failed:", error);
+    ("Notifications listener failed:", error);
     listEl.innerHTML = `<p style="color:#ff6666;">Failed to load notifications.</p>`;
   });
 
@@ -2395,7 +2395,7 @@ async function setupNotifications() {
         await batch.commit();
         showStarPopup("All notifications marked as read");
       } catch (err) {
-        console.error("Mark all failed:", err);
+        ("Mark all failed:", err);
         showStarPopup("Failed to mark as read");
       } finally {
         markAllBtn.disabled = false;
@@ -2532,7 +2532,7 @@ async function loadNotifications() {
     });
 
   } catch (err) {
-    console.error("Notifications error:", err);
+    ("Notifications error:", err);
     list.innerHTML = `<div style="color:#f66; text-align:center; padding:80px;">Failed</div>`;
   }
 }
@@ -2573,10 +2573,10 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
     await batch.commit();
 
     loadNotifications(); // refresh UI + badge gone
-    console.log("All notifications deleted");
+    ("All notifications deleted");
 
   } catch (err) {
-    console.error("Clear all failed:", err);
+    ("Clear all failed:", err);
     clearBtn.textContent = "Error";
   }
 });
@@ -2606,7 +2606,7 @@ async function checkHostNotifications() {
     }
 
   } catch (e) {
-    console.warn("Badge check failed:", e);
+    ("Badge check failed:", e);
     if (hostBadge) hostBadge.style.display = "none";
   }
 }
@@ -2689,7 +2689,7 @@ async function autoLogin() {
 
   // If user is already logged in via Firebase, no need to do anything
   if (auth.currentUser) {
-    console.log("✅ Already logged in via Firebase");
+    ("✅ Already logged in via Firebase");
     return;
   }
 
@@ -2700,11 +2700,11 @@ async function autoLogin() {
       // Use the new login function that supports email OR username
       await login(vipUser.email, vipUser.password);   // ← your new login() function
 
-      console.log("✅ Auto-login successful");
+      ("✅ Auto-login successful");
       // No need for extra sleeps
 
     } catch (err) {
-      console.warn("Auto-login failed:", err.message);
+      ("Auto-login failed:", err.message);
       localStorage.removeItem("vipUser"); // clean bad data
     }
   }
@@ -2753,7 +2753,7 @@ async function promptForChatID(userRef, userData) {
         showStarPopup(`Welcome ${chosen}! 🎉`);
         resolve(chosen);
       } catch (err) {
-        console.error(err);
+        (err);
         alert("Failed to save Chat ID");
       }
     };
@@ -2791,9 +2791,9 @@ async function loadActiveUsersForSocial() {
         });
       }
     });
-    console.log(`[Social] Loaded ${usersByChatId.size} active users for cards`);
+    (` Loaded ${usersByChatId.size} active users for cards`);
   } catch (err) {
-    console.warn("[Social] Load failed:", err);
+    (" Load failed:", err);
   }
 }
 
@@ -3005,7 +3005,7 @@ document.addEventListener("pointerdown", e => {
   }
 });
 
-console.log("✅ Social Card System v2 Loaded");
+("✅ Social Card System v2 Loaded");
 window.showSocialCard = showSocialCard;
 window.typeWriterEffect = typeWriterEffect;
 
@@ -3076,7 +3076,7 @@ async function sendStarsToUser(targetUser, amt) {
     // 4. On-screen alert
     showGoldAlert(`You sent ${amt} stars to ${targetUser.chatId}!`, 4000);
   } catch (err) {
-    console.error("Gift failed:", err);
+    ("Gift failed:", err);
     showGoldAlert("Failed — try again", 4000);
   }
 }
@@ -3123,7 +3123,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     loader.update(18);
 
     const userCredential = await login(identifier, password);
-    console.log("Firebase Auth Success:", userCredential.user.uid);
+    ("Firebase Auth Success:", userCredential.user.uid);
 
     loader.update(55);
 
@@ -3145,7 +3145,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
 
     // UPDATED LOGIC: Hosts & VIPs have full access
     if (data.isHost || data.isVIP) {
-      console.log(`✅ Access granted to ${data.isHost ? 'Host' : 'VIP'}`);
+      (`✅ Access granted to ${data.isHost ? 'Host' : 'VIP'}`);
       loader.update(100);
       
       // Optional: Show welcome message
@@ -3166,7 +3166,7 @@ document.getElementById("whitelistLoginBtn")?.addEventListener("click", async ()
     }
 
   } catch (err) {
-    console.error("Login failed:", err);
+    ("Login failed:", err);
 
     if (err.message === "Invalid username or password" ||
         err.code === "auth/wrong-password" ||
@@ -3212,8 +3212,8 @@ function setCurrentUserFromData(data, uidKey, email) {
 // HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
 function setupPostLogin() {
   localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
-  console.log("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
-  console.log("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
+  ("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
+  ("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
 
 
   updateRedeemLink();
@@ -3224,7 +3224,7 @@ function setupPostLogin() {
   // Prompt GUEST users for permanent chatID (non-blocking)
   if (currentUser.chatId?.startsWith("GUEST")) {
     promptForChatID(doc(db, "users", currentUser.uid), currentUser).catch(e => {
-      console.warn("ChatID prompt cancelled:", e);
+      ("ChatID prompt cancelled:", e);
     });
   }
 
@@ -3234,7 +3234,7 @@ function setupPostLogin() {
   safeUpdateDOM();     // Header balances
   revealHostTabs();    // Host features
 
-  console.log("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
+  ("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
 }
 
 /* LOGOUT — CLEAN, FUN, SAFE */
@@ -3242,7 +3242,7 @@ window.logoutVIP = async () => {
   try {
     await signOut(auth);
   } catch (e) {
-    console.warn("Sign out failed:", e);
+    ("Sign out failed:", e);
   } finally {
     localStorage.removeItem("vipUser");
     localStorage.removeItem("lastVipEmail");
@@ -3283,7 +3283,7 @@ document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) =>
 
     setTimeout(() => location.reload(), 1800);
   } catch (err) {
-    console.error("Logout failed:", err);
+    ("Logout failed:", err);
     btn.disabled = false;
     showStarPopup("Logout failed — try again!");
   }
@@ -3366,10 +3366,10 @@ async function giveDailyStarBonus(uid) {
       }
     }, 800); // Small delay ensures everything is loaded
 
-    console.log(`[DAILY BONUS] +${amountToAdd} stars | New Total: ${currentUser.stars}`);
+    (`[DAILY BONUS] +${amountToAdd} stars | New Total: ${currentUser.stars}`);
 
   } catch (err) {
-    console.error("[DAILY BONUS] Error:", err);
+    ("[DAILY BONUS] Error:", err);
   }
 }
 
@@ -3575,10 +3575,10 @@ refs.sendBtn?.addEventListener("click", async () => {
     clearReplyAfterSend();
     resizeAndExpand?.();
 
-    console.log("✅ Message sent successfully");
+    ("✅ Message sent successfully");
 
   } catch (err) {
-    console.error("Send failed:", err);
+    ("Send failed:", err);
     showStarPopup("Failed to send message — try again", "error");
 
     // Refund stars
@@ -3661,7 +3661,7 @@ refs.buzzBtn?.addEventListener("click", async () => {
     // Visuals & Sound
     if (buzzSound) {
       buzzSound.currentTime = 0;
-      buzzSound.play().catch(e => console.log("Sound play prevented:", e));
+      buzzSound.play().catch(e => ("Sound play prevented:", e));
     }
 
     if (typeof triggerStickerBuzz === "function") {
@@ -3674,7 +3674,7 @@ refs.buzzBtn?.addEventListener("click", async () => {
     });
 
   } catch (err) {
-    console.error("Buzz failed:", err);
+    ("Buzz failed:", err);
 
     // Only refund if we actually deducted stars
     if (err.code !== 'permission-denied' && err.code !== 'not-found') {
@@ -3828,7 +3828,7 @@ privateSendBtn?.addEventListener('click', async () => {
     showStarPopup("Private message sent! Host only sees it 💌", "success");
 
   } catch (err) {
-    console.error("Private message failed:", err);
+    ("Private message failed:", err);
     showStarPopup("Failed to send private message", "error");
 
     currentUser.stars += 100;
@@ -3977,7 +3977,7 @@ privateMsgInput?.addEventListener('keydown', (e) => {
 
     // Wait for metadata before playing
     videoPlayer.addEventListener("loadedmetadata", function onMeta() {
-      videoPlayer.play().catch(() => console.warn("Autoplay may be blocked by browser"));
+      videoPlayer.play().catch(() => ("Autoplay may be blocked by browser"));
       videoPlayer.removeEventListener("loadedmetadata", onMeta);
     });
   };
@@ -4234,7 +4234,7 @@ async function loadHostsPage(isFirstPage = true) {
 
     return pageHosts;
   } catch (err) {
-    console.error("Hosts fetch failed:", err);
+    ("Hosts fetch failed:", err);
     return [];
   } finally {
     isFetchingHosts = false;
@@ -4249,7 +4249,7 @@ if (openBtn) {
       hosts = cache.data;
       lastVisibleHostDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
       hasMoreHosts = hosts.length % HOSTS_PAGE_SIZE === 0;
-      console.log("Hosts from cache:", hosts.length);
+      ("Hosts from cache:", hosts.length);
     } else {
       hosts = [];
       lastVisibleHostDoc = null;
@@ -4273,7 +4273,7 @@ if (openBtn) {
 
     if (giftSlider) giftSlider.style.background = randomFieryGradient();
 
-    console.log("Star Hosts Modal Opened —", hosts.length, "loaded so far");
+    ("Star Hosts Modal Opened —", hosts.length, "loaded so far");
   };
 }
 
@@ -4304,7 +4304,7 @@ async function fetchFeaturedHostsPage(isFirstPage = false) {
     const snap = await getDoc(docRef);
 
     if (!snap.exists() || !snap.data().hosts?.length) {
-      console.warn("No featured hosts found.");
+      ("No featured hosts found.");
       hosts = [];
       hasMoreHosts = false;
       renderHostAvatars();
@@ -4353,12 +4353,12 @@ async function fetchFeaturedHostsPage(isFirstPage = false) {
     lastVisibleDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
     hasMoreHosts = endIndex < allHostIds.length;
 
-    console.log(`Loaded page ${Math.ceil(hosts.length / PAGE_SIZE)}: ${pageHosts.length} hosts`);
+    (`Loaded page ${Math.ceil(hosts.length / PAGE_SIZE)}: ${pageHosts.length} hosts`);
 
     renderHostAvatars();
     updateLoadMoreButton();
   } catch (err) {
-    console.error("Featured hosts fetch failed:", err);
+    ("Featured hosts fetch failed:", err);
     showStarPopup("Error loading hosts", { type: "error" });
   } finally {
     isFetchingHosts = false;
@@ -4776,7 +4776,7 @@ modalContent.innerHTML = `
       });
 
     } catch (err) {
-      console.error("Meet request failed:", err);
+      ("Meet request failed:", err);
       showGiftAlert("Something went wrong. Try again.");
       modal.remove();
     }
@@ -4872,7 +4872,7 @@ openBtn.addEventListener("click", () => {
 
   // Give it a fiery flash on open
   giftSlider.style.background = randomFieryGradient();
-  console.log("📺 Modal opened");
+  ("📺 Modal opened");
 });
 */
 
@@ -4955,10 +4955,10 @@ async function sendGift() {
       }, 1200);
     }
 
-    console.log(`Gift sent: ${giftStars} stars → ${receiverName}`);
+    (`Gift sent: ${giftStars} stars → ${receiverName}`);
 
   } catch (err) {
-    console.error("Gift failed:", err);
+    ("Gift failed:", err);
     const msg = err.message.includes("enough")
       ? "Not enough stars"
       : "Gift failed — try again";
@@ -5109,7 +5109,7 @@ confirmBtn.onclick = async () => {
         await runNumberVerification(number);
         modal.remove();
       } catch (err) {
-        console.error(err);
+        (err);
         showGoldAlert("❌ Verification failed, please retry!");
         modal.remove();
       }
@@ -5135,7 +5135,7 @@ confirmBtn.onclick = async () => {
 
       showVerificationModal(verifiedUser, number);
     } catch (err) {
-      console.error(err);
+      (err);
       showGoldAlert("❌ Verification failed, please retry!");
     }
   }
@@ -5264,7 +5264,7 @@ function activateViewBoost() {
         await updateDoc(docRef, { highlights });
       }
     } catch (err) {
-      console.error("[VIEW BOOST] Error:", err);
+      ("[VIEW BOOST] Error:", err);
     }
   }, 60000); // 60 seconds
 }
@@ -5458,11 +5458,11 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     // ====================== GENERATE THUMBNAIL ======================
     let thumbnailFile = null;
     try {
-      console.log("🎨 Generating thumbnail...");
+      ("🎨 Generating thumbnail...");
       thumbnailFile = await generateThumbnail(file);
-      console.log("✅ Thumbnail generated!");
+      ("✅ Thumbnail generated!");
     } catch (err) {
-      console.error("❌ Thumbnail generation failed:", err);
+      ("❌ Thumbnail generation failed:", err);
     }
 
     // ====================== UPLOAD VIDEO ======================
@@ -5480,7 +5480,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
         if (txt) txt.textContent = `Uploading ${percent}%`;
       },
       (error) => {
-        console.error(error);
+        (error);
         showStarPopup('Upload failed', 'error');
         resetUploadUI();
       },
@@ -5502,9 +5502,9 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
               const rawThumbUrl = await getDownloadURL(thumbRef);
               thumbnailUrl = toCloudflareUrl(rawThumbUrl);
               thumbnailStoragePath = thumbPath;
-              console.log("✅ Thumbnail uploaded!");
+              ("✅ Thumbnail uploaded!");
             } catch (e) {
-              console.warn("Thumbnail upload failed:", e);
+              ("Thumbnail upload failed:", e);
             }
           }
 
@@ -5563,7 +5563,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
           if (typeof loadMyClips === 'function') loadMyClips();
 
         } catch (err) {
-          console.error(err);
+          (err);
           showStarPopup('Upload succeeded but database save failed', 'error');
           resetUploadUI();
         }
@@ -5571,7 +5571,7 @@ document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (
     );
 
   } catch (err) {
-    console.error(err);
+    (err);
     showStarPopup('Failed to start upload', 'error');
     resetUploadUI();
   }
@@ -5757,7 +5757,7 @@ async function startStream(type = 'regular') {
       cache: 'no-store' // prevent caching issues
     });
 
-    console.log('Backend response status:', response.status); // debug
+    ('Backend response status:', response.status); // debug
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'No details');
@@ -5787,7 +5787,7 @@ async function startStream(type = 'regular') {
       showOfflineState(data.error || 'Stream is idle');
     }
   } catch (err) {
-    console.error('Failed to check live stream status:', err.message);
+    ('Failed to check live stream status:', err.message);
     // Show friendly message (Render free tier sleeps sometimes → first call takes 10-30s)
     showOfflineState(
       err.message.includes('503') || err.message.includes('failed to fetch')
@@ -6077,10 +6077,10 @@ window.startStream = startStream;
   }
 
   ready(async () => {
-    console.log("[host-init] DOM ready. isHost =", isHost);
+    ("[host-init] DOM ready. isHost =", isHost);
 
     if (!isHost) {
-      console.log("[host-init] not a host. exiting host init.");
+      ("[host-init] not a host. exiting host init.");
       return;
     }
 
@@ -6095,7 +6095,7 @@ window.startStream = startStream;
         { timeout: 7000 }
       );
 
-      console.log("[host-init] Found host elements:", {
+      ("[host-init] Found host elements:", {
         hostSettingsWrapper: !!hostSettingsWrapperEl,
         hostModal: !!hostModalEl,
         hostSettingsBtn: !!hostSettingsBtnEl,
@@ -6107,7 +6107,7 @@ window.startStream = startStream;
       // close button - optional but preferred
       const closeModalEl = hostModalEl.querySelector(".close");
       if (!closeModalEl) {
-        console.warn("[host-init] close button (.close) not found inside #hostModal.");
+        ("[host-init] close button (.close) not found inside #hostModal.");
       }
 
       // --- attach tab init (shared across modals)
@@ -6120,7 +6120,7 @@ window.startStream = startStream;
             btn.classList.add("active");
             const target = document.getElementById(btn.dataset.tab);
             if (target) target.style.display = "block";
-            else console.warn("[host-init] tab target not found:", btn.dataset.tab);
+            else ("[host-init] tab target not found:", btn.dataset.tab);
           });
         });
       }
@@ -6132,14 +6132,14 @@ window.startStream = startStream;
           hostModalEl.style.display = "block";
 
           if (!currentUser?.uid) {
-            console.warn("[host-init] currentUser.uid missing");
+            ("[host-init] currentUser.uid missing");
             return showStarPopup("⚠️ Please log in first.");
           }
 
           const userRef = doc(db, "users", currentUser.uid);
           const snap = await getDoc(userRef);
           if (!snap.exists()) {
-            console.warn("[host-init] user doc not found for uid:", currentUser.uid);
+            ("[host-init] user doc not found for uid:", currentUser.uid);
             return showStarPopup("⚠️ User data not found.");
           }
           const data = snap.data() || {};
@@ -6191,8 +6191,8 @@ if (bodyTypeEl) bodyTypeEl.value = data.bodyTypePick || "";
           }
 
         } catch (err) {
-          console.error("[host-init] error in hostSettingsBtn click:", err);
-          showStarPopup("⚠️ Failed to open settings. Check console.");
+          ("[host-init] error in hostSettingsBtn click:", err);
+          showStarPopup("⚠️ Failed to open settings. Check ");
         }
       });
 
@@ -6306,7 +6306,7 @@ if (maybeSaveInfo) {
       document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
 
     } catch (err) {
-      console.error("[host-init] saveInfo error:", err);
+      ("[host-init] saveInfo error:", err);
       showStarPopup("⚠️ Failed to update info. Please try again.");
     } finally {
       maybeSaveInfo.innerHTML = originalHTML;
@@ -6314,7 +6314,7 @@ if (maybeSaveInfo) {
     }
   });
 } else {
-  console.warn("[host-init] saveInfo button not found.");
+  ("[host-init] saveInfo button not found.");
 }
 
       // --- save media button (optional)
@@ -6351,17 +6351,17 @@ if (maybeSaveInfo) {
             showStarPopup("✅ Media uploaded successfully!");
             hostModalEl.style.display = "none";
           } catch (err) {
-            console.error("[host-init] media upload error:", err);
+            ("[host-init] media upload error:", err);
             showStarPopup(`⚠️ Failed to upload media: ${err.message}`);
           }
         });
       } else {
-        console.info("[host-init] saveMedia button not present (ok if VIP-only UI).");
+        ("[host-init] saveMedia button not present (ok if VIP-only UI).");
       }
 
-      console.log("[host-init] Host logic initialized successfully.");
+      ("[host-init] Host logic initialized successfully.");
     } catch (err) {
-      console.error("[host-init] Could not find required host elements:", err);
+      ("[host-init] Could not find required host elements:", err);
       // helpful message for debugging during development:
       showStarPopup("⚠️ Host UI failed to initialize. Check console for details.");
     }
@@ -6590,7 +6590,7 @@ highlightsBtn.onclick = async () => {
     showHighlightsModal(allClips);
 
   } catch (err) {
-    console.error("Highlights load error:", err);
+    ("Highlights load error:", err);
     showGoldAlert("Error loading Free Tonight");
   } finally {
     hideLoaderBlack();
@@ -6928,7 +6928,7 @@ function renderCards() {
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
        
        // === DEBUG LOG - ADD THIS LINE ===
-  console.log("🎥 Free Tonight Video Data:", {
+  ("🎥 Free Tonight Video Data:", {
     uploaderName: video.uploaderName,
     fruitPick: video.fruitPick,
     naturePick: video.naturePick,
@@ -7356,7 +7356,7 @@ async function unlockVideo(video) {
                 createdAt: serverTimestamp()
             });
         } catch (notifErr) {
-            console.warn("Notification failed (non-critical):", notifErr);
+            ("Notification failed (non-critical):", notifErr);
         }
 
         // Slutty morphine confetti
@@ -7402,7 +7402,7 @@ async function unlockVideo(video) {
         if (typeof loadNotifications === "function") loadNotifications();
 
     } catch (error) {
-        console.error("Unlock failed:", error);
+        ("Unlock failed:", error);
 
         let userMessage = "Unlock failed — try again";
 
@@ -7550,7 +7550,7 @@ async function loadMyClips() {
     });
 
   } catch (err) {
-    console.error("loadMyClips error:", err);
+    ("loadMyClips error:", err);
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:100px;color:#f66;">Failed to load your clips</div>`;
   }
 }
@@ -7614,9 +7614,9 @@ async function showDeleteConfirm(clipId, clipTitle) {
         try {
           const thumbRef = ref(storage, clipToDelete.thumbnailStoragePath);
           await deleteObject(thumbRef);
-          console.log("Thumbnail deleted from storage");
+          ("Thumbnail deleted from storage");
         } catch (e) {
-          console.warn("Thumbnail delete failed (might not exist):", e);
+          ("Thumbnail delete failed (might not exist):", e);
         }
       }
 
@@ -7638,7 +7638,7 @@ async function showDeleteConfirm(clipId, clipTitle) {
       }
 
     } catch (err) {
-      console.error("Delete error:", err);
+      ("Delete error:", err);
       showGoldAlert?.("Failed to delete clip. Please try again.");
       confirmBtn.disabled = false;
       confirmBtn.textContent = "Yes, Delete";
@@ -7792,7 +7792,7 @@ function attachReelInteractions() {
           await video.webkitEnterFullscreen();
         }
       } catch (err) {
-        console.log('Play failed:', err);
+        ('Play failed:', err);
         // Fallback: show play icon if blocked
         playIcon.style.opacity = '1';
       }
@@ -7911,12 +7911,12 @@ async function openPollModal() {
       startVotesListener(poll, endTime);
     }, (err) => {
       hideLoaderBlack();
-      console.error("Poll snapshot error:", err);
+      ("Poll snapshot error:", err);
       showStarPopup("Failed to load poll");
     });
   } catch (err) {
     hideLoaderBlack();
-    console.error(err);
+    (err);
   }
 }
 
@@ -8038,7 +8038,7 @@ function showVotingOptions(poll) {
         showLiveResults(poll, option);
 
       } catch (err) {
-        console.error(err);
+        (err);
         showStarPopup("Vote failed. Try again.");
       }
     };
@@ -8306,7 +8306,7 @@ function initCreatePollButton() {
   const createBtn = document.getElementById("create-new-poll");
 
   if (!createBtn) {
-    console.warn("⚠️ Create Poll button (#create-new-poll) not found in DOM yet.");
+    ("⚠️ Create Poll button (#create-new-poll) not found in DOM yet.");
     // Retry after a short delay (in case modal loads late)
     setTimeout(initCreatePollButton, 800);
     return;
@@ -8316,7 +8316,7 @@ function initCreatePollButton() {
   createBtn.removeEventListener("click", handleCreatePoll);
 
   createBtn.addEventListener("click", handleCreatePoll);
-  console.log("✅ Create Poll button initialized successfully");
+  ("✅ Create Poll button initialized successfully");
 }
 
 // Main Handler
@@ -8380,10 +8380,10 @@ async function handleCreatePoll() {
     document.getElementById("poll-duration").value = "24";
 
   } catch (err) {
-    console.error("Create Poll Error:", err);
+    ("Create Poll Error:", err);
     btn.innerHTML = '✗ Failed';
     btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
-    showGoldAlert("Failed to create poll. Check console.");
+    showGoldAlert("Failed to create poll. Check ");
   }
 
   // Reset button after 2.5 seconds
@@ -8709,7 +8709,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       let msg = err.message || 'Failed to activate';
       if (msg.includes("No clips")) msg = "Upload some clips first!";
       showStarPopup(msg, 'error');
-      console.error('Free Tonight failed:', err);
+      ('Free Tonight failed:', err);
     } finally {
       btn.disabled = false;
     }
