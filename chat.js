@@ -4956,7 +4956,7 @@ function showMeetModal(host) {
       </h3>
       
       <p style="color: #d0d0d0; margin-bottom: 24px; line-height: 1.5; font-size: 14.5px;">
-       unlock direct messaging with<br>
+       Access direct messaging + member points<br>
         <strong style="color:#ffd700;">250 STRZ ⭐</strong>
       </p>
 
@@ -5163,58 +5163,81 @@ modalContent.innerHTML = `
 function showSocialRedirectModal(modalContent, host) {
   let snapHandle = (host.snapchat || "").trim();
   const hostName = host.chatId || "this host";
-
-  // Clean the handle (remove @ if user added it)
+  
+  // Clean handle
   snapHandle = snapHandle.replace(/^@/, "").trim();
 
-  if (snapHandle) {
-    // Build proper Snapchat URL
-    const snapUrl = `https://www.snapchat.com/add/${snapHandle}`;
+  const snapUrl = snapHandle 
+    ? `https://www.snapchat.com/add/${snapHandle}` 
+    : "#";
 
-   modalContent.innerHTML = `
-  <h3 style="margin-bottom:10px; font-weight:600;">Meet ${hostName}?</h3>
-  <p style="margin-bottom:16px;">${hostName} hasn't shared her contact yet.</p>
-  <p style="margin-bottom:20px;">Add her & Chat on <b>Snapchat</b> instead?</p>
- 
-  <button id="goSocialBtn" style="
-    padding:12px 32px; 
-    background: #FFFC00; 
-    color: #000; 
-    border: none; 
-    border-radius: 12px; 
-    font-weight: 700; 
-    font-size: 16px; 
-    box-shadow: 0 4px 15px rgba(255, 252, 0, 0.5);
-  ">
-    Snapchat
-  </button>
- 
-  <button id="cancelMeet" style="margin-top:14px; padding:9px 22px; background:#333; border:none; color:#fff; border-radius:8px; font-weight:500;">
-    Close
-  </button>
-`;
-
-    modalContent.querySelector("#goSocialBtn").onclick = () => {
-      window.open(snapUrl, "_blank");
-      modalContent.parentElement.remove();
-    };
-
-  } else {
-    // No Snapchat added
-    modalContent.innerHTML = `
-      <h3 style="margin-bottom:10px; font-weight:600;">Meet ${hostName}?</h3>
-      <p style="margin-bottom:16px;">${hostName} isn’t meeting new people yet.</p>
-      <p style="margin-bottom:20px;">No Snapchat linked yet. Check back soon!</p>
+  modalContent.innerHTML = `
+    <div style="position:relative; padding-top: 8px;">
       
-      <button id="cancelMeet" style="padding:10px 24px; background:#333; border:none; color:#fff; border-radius:8px; font-weight:500;">
-        Close
-      </button>
-    `;
+      <!-- Small Close Button -->
+      <div id="cancelMeet" style="
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: #aaa;
+        cursor: pointer;
+        z-index: 10;
+      ">×</div>
+
+      <!-- Snapchat Logo -->
+      <div style="margin-bottom: 18px;">
+        <svg width="78" height="78" viewBox="0 0 24 24" fill="#FFFC00" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 18.5C8.96 18.5 6.5 16.04 6.5 13C6.5 9.96 8.96 7.5 12 7.5C15.04 7.5 17.5 9.96 17.5 13C17.5 16.04 15.04 18.5 12 18.5Z"/>
+          <path d="M12 4.5C9.24 4.5 7 6.74 7 9.5C7 11.43 8.18 13.07 10 13.85V15.5H14V13.85C15.82 13.07 17 11.43 17 9.5C17 6.74 14.76 4.5 12 4.5Z"/>
+        </svg>
+      </div>
+
+      <h3 style="margin: 0 0 8px; font-size: 19px; font-weight: 700;">
+        Add ${hostName} on Snapchat
+      </h3>
+      
+      <p style="color: #bbb; margin-bottom: 22px; line-height: 1.45;">
+        ${snapHandle 
+          ? `Add <b>@${snapHandle}</b> and send her a message` 
+          : "She hasn't shared a Snapchat yet"}
+      </p>
+
+      ${snapHandle ? `
+      <a href="${snapUrl}" target="_blank" id="goSocialBtn" style="
+        display: inline-block;
+        padding: 13px 34px;
+        background: #FFFC00;
+        color: #000;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 16px;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(255, 252, 0, 0.45);
+        transition: all 0.2s ease;
+      ">
+        Open
+      </a>` : ''}
+      
+    </div>
+  `;
+
+  // Close button functionality
+  const closeBtn = modalContent.querySelector("#cancelMeet");
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const modal = document.getElementById("meetModal");
+      if (modal) modal.remove();
+    };
   }
-
-  modalContent.querySelector("#cancelMeet").onclick = () => modalContent.parentElement.remove();
 }
-
 /* ---------- Gift Slider ---------- */
 const fieryColors = [
   ["#ff0000", "#ff8c00"], // red to orange
