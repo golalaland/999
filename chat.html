@@ -3348,6 +3348,21 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   object-fit: contain;
   transform: scale(0.92);
 }
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes vipShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+@keyframes shineAnimation {
+  0% { transform: translateX(-150%) skewX(-25deg); }
+  20% { transform: translateX(400%) skewX(-25deg); }
+  100% { transform: translateX(400%) skewX(-25deg); }
+}
   
 </style>
 </head>
