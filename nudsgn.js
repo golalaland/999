@@ -373,23 +373,20 @@ async function loadUserFromToken(token) {
   }
 }
 
-// Main load function (your current one, but using the helper)
+// ===============================================
+// MAIN USER LOADER — CLEAN & COMPLETE (2026)
+// ===============================================
 async function loadCurrentUserForGame() {
   try {
     let uid = null;
 
-    // 1. Try token from URL
+    // 1. Try token from URL (TM link)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("t");
 
     if (token) {
-      console.log("[TM] Token found in URL:", token.substring(0, 20) + "...");
+      console.log("[TM] Token found:", token.substring(0, 20) + "...");
       uid = await loadUserFromToken(token);
-      if (uid) {
-        console.log("[TM] Valid token used, UID:", uid);
-      } else {
-        console.warn("[TM] Token invalid or expired");
-      }
     }
 
     // 2. Fallback to localStorage
@@ -398,47 +395,49 @@ async function loadCurrentUserForGame() {
       const storedUser = vipRaw ? JSON.parse(vipRaw) : null;
       if (storedUser?.uid) {
         uid = storedUser.uid;
-        console.log("[TM] UID from localStorage:", uid);
       }
     }
 
-    console.log("[TM] Final UID before Firestore:", uid);
-
-    // 3. Guest mode
+    // 3. Guest Mode
     if (!uid) {
-      console.log("[TM] No UID → Guest mode");
+      console.log("[TM] No UID found → Guest Mode");
       currentUser = null;
-      profileNameEl && (profileNameEl.textContent = "GUEST 0000");
-      starCountEl && (starCountEl.textContent = "50");
-      cashCountEl && (cashCountEl.textContent = "₦0");
-      persistentBonusLevel = undefined;
+      if (profileNameEl) profileNameEl.textContent = "GUEST 0000";
+      if (starCountEl) starCountEl.textContent = "50";
+      if (cashCountEl) cashCountEl.textContent = "₦0";
+      persistentBonusLevel = 1;
       return;
     }
 
-    // 4. Load from Firestore
-    console.log("[TM] Loading user doc for UID:", uid);
+    // 4. Load full user data from Firestore
+    console.log("[TM] Loading user profile for UID:", uid);
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
-      console.warn("[TM] User doc not found for UID:", uid);
-      alert("Profile not found");
+      console.warn("[TM] User document not found");
+      realAlert("Profile not found. Please contact support.");
       currentUser = null;
-      persistentBonusLevel = undefined;
+      persistentBonusLevel = 1;
       return;
     }
 
     const data = snap.data();
-    console.log("[TM] User data loaded:", data);
 
+    // === BUILD FULL CURRENT USER OBJECT ===
     currentUser = {
-      uid,
-      chatId: data.chatId || uid.split('_')[0],
-      email: uid.replace(/_/g, "@"),
+      uid: uid,
+      chatId: data.chatId || uid.split('_')[0] || "Player",
+      email: data.email || uid.replace(/_/g, "@"),
       stars: Number(data.stars || 0),
       cash: Number(data.cash || 0),
       totalTaps: Number(data.totalTaps || 0),
-      bonusLevel: Number(data.bonusLevel || 1)
+      bonusLevel: Number(data.bonusLevel || 1),
+      
+      // IMPORTANT: Bank details for withdrawal
+      bankName: data.bankName || null,
+      bankAccountNumber: data.bankAccountNumber || null,
+      bankSlug: data.bankSlug || null,
     };
 
     persistentBonusLevel = currentUser.bonusLevel;
@@ -448,10 +447,19 @@ async function loadCurrentUserForGame() {
     if (profileNameEl) profileNameEl.textContent = currentUser.chatId;
     if (starCountEl) starCountEl.textContent = formatNumber(currentUser.stars);
     if (cashCountEl) cashCountEl.textContent = '₦' + formatNumber(currentUser.cash);
+
+    // Refresh withdrawal button state
+    if (typeof updateBankDisplay === "function") {
+      updateBankDisplay();
+    }
+
     updateInfoTab?.();
+
+    console.log("[TM] ✅ User loaded successfully with bank details");
+
   } catch (err) {
     console.error("[TM] Load failed:", err);
-    alert("Failed to load profile");
+    realAlert("Failed to load profile. Please refresh the page.");
     currentUser = null;
     persistentBonusLevel = 1;
   }
