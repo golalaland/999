@@ -776,7 +776,7 @@ function showHotspotAd() {
         <!-- Free Tonight? Logo Style -->
         <span style="
           font-family: 'Architects Daughter', cursive;
-          font-size: 21px;
+          font-size: 25px;
           letter-spacing: 3px;
           background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
           -webkit-background-clip: text;
