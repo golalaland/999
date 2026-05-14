@@ -3180,7 +3180,7 @@ function showUnifiedCard(user) {
   });
   content.appendChild(traitsContainer);
 
-    // Bio
+     // Bio - Simple typing, no cursor, better emoji support
   const bioEl = document.createElement("div");
   Object.assign(bioEl.style, {
     margin: "12px 0 20px",
@@ -3192,11 +3192,11 @@ function showUnifiedCard(user) {
     borderLeft: "3px solid",
     paddingLeft: "14px",
     opacity: "0.92",
-    fontFamily: "Poppins, system-ui, sans-serif",
+    fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     minHeight: "52px"
   });
   content.appendChild(bioEl);
-
+  
   typeWriterEffect(bioEl, user.bioPick || "No notes shared yet...");
    
    // Meet Button for Hosts - Random Dope Colors
@@ -3279,38 +3279,20 @@ function showUnifiedCard(user) {
   }, 100);
 }
 
-// Typewriter Effect - Claude Style with Blinking Cursor (Poppins Font)
-function typeWriterEffect(el, text, speed = 38) {
+// Simple Typewriter - No Cursor (Your Preferred Style)
+function typeWriterEffect(el, text, speed = 35) {
   el.textContent = "";
-  el.style.fontFamily = "Poppins, system-ui, sans-serif"; // Your font
   
-  const cursor = document.createElement("span");
-  cursor.className = "type-cursor";
-  cursor.style.cssText = `
-    display: inline-block;
-    width: 2px;
-    height: 0.95em;
-    background: currentColor;
-    vertical-align: middle;
-    margin-left: 2px;
-    animation: blink 0.75s step-end infinite;
-  `;
-  
-  el.appendChild(cursor);
-
   let i = 0;
   const interval = setInterval(() => {
     if (i < text.length) {
-      el.insertBefore(document.createTextNode(text[i++]), cursor);
+      el.textContent += text[i++];
     } else {
       clearInterval(interval);
-      // Keep cursor for a moment then remove
-      setTimeout(() => {
-        cursor.remove();
-      }, 1800);
     }
   }, speed);
 }
+
 
 // ===============================================
 // SAFE GLOBAL USERNAME CLICK (Social Card)
@@ -4956,7 +4938,7 @@ function showMeetModal(host) {
       </h3>
       
       <p style="color: #d0d0d0; margin-bottom: 24px; line-height: 1.5; font-size: 14.5px;">
-       Access direct messaging + member points<br>
+       Access direct messaging & chat privately <br>
         <strong style="color:#ffd700;">250 STRZ ⭐</strong>
       </p>
 
@@ -4971,7 +4953,7 @@ function showMeetModal(host) {
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
-        ">Cancel</button>
+        ">No</button>
         
         <button id="confirmMeet" style="
           flex: 1; 
@@ -5064,100 +5046,102 @@ function showMeetModal(host) {
 
         setTimeout(() => {
           stageMsgEl.textContent = stage;
+              // Final stage → show success screen
+              if (index === stages.length - 1) {
+                setTimeout(() => {
+                  const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
+                  const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on CUBE) and I’d love to meet you.`;
+                  
+                  let openURL = "";
+                  let buttonColor = "";
+                  let platform = "";
+                  let contact = "";
+                  let logoSVG = "";
 
-          // Final stage → show success screen
-          if (index === stages.length - 1) {
-            setTimeout(() => {
-              const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
-              const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on CUBE) and I’d love to meet you.`;
+                  // Telegram first
+                  if (host.telegram && host.telegram.trim()) {
+                    const username = host.telegram.trim().replace(/^@/, "");
+                    openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
+                    buttonColor = "#0088cc";
+                    platform = "Telegram";
+                    contact = `@${username}`;
+                    logoSVG = `
+                      <svg width="62" height="62" viewBox="0 0 24 24" fill="#0088cc">
+                        <path d="M22.5 2.5L2.5 10.5L9.5 13.5L12.5 21.5L22.5 2.5Z"/>
+                        <path d="M10.5 14.5L17.5 19.5L22.5 2.5L10.5 14.5Z" fill="#fff" opacity="0.3"/>
+                      </svg>`;
+                  } 
+                  // WhatsApp
+                  else if (host.whatsapp && host.whatsapp.trim()) {
+                    const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
+                    const hostCountry = host.country || "Nigeria";
+                    let waNumber = host.whatsapp.trim();
+                    if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
+                    waNumber = countryCodes[hostCountry] + waNumber;
+                    
+                    openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
+                    buttonColor = "#25D366";
+                    platform = "WhatsApp";
+                    contact = host.chatId;
+                    logoSVG = `
+                      <svg width="62" height="62" viewBox="0 0 24 24" fill="#25D366">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.485-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.297-.497.099-.198.05-.372-.025-.52-.075-.149-.67-1.612-.92-2.206-.25-.594-.504-.51-.67-.51-.173 0-.372-.025-.57-.025-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.48 0 1.463 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.264.489 1.694.625.712.227 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"/>
+                      </svg>`;
+                  } 
+                  else {
+                    showSocialRedirectModal(modalContent, host);
+                    return;
+                  }
 
-              let openURL = "";
-              let buttonColor = "";
-              let platform = "";
-              let contact = "";
+                  // Beautiful Final Screen
+                  modalContent.innerHTML = `
+                    <div style="text-align:center;">
+                      <div style="margin-bottom: 20px;">
+                        ${logoSVG}
+                      </div>
+                      
+                      <h3 style="margin:0 0 12px; font-weight:700; font-size:19px;">
+                        Request Approved!
+                      </h3>
+                      
+                      <p style="margin:0 0 24px; color:#ccc; font-size:14.5px; line-height:1.5;">
+                        Chat with <b>${contact}</b> on ${platform}
+                      </p>
+                      
+                      <button id="openChatBtn" style="
+                        padding:13px 36px;
+                        border:none;
+                        border-radius:50px;
+                        font-weight:700;
+                        font-size:16px;
+                        background:${buttonColor};
+                        color:#fff;
+                        cursor:pointer;
+                        box-shadow:0 6px 22px rgba(0,0,0,0.4);
+                        transition:all 0.25s ease;
+                      ">
+                        Open ${platform}
+                      </button>
+                    </div>
+                  `;
 
-              // Telegram first
-              if (host.telegram && host.telegram.trim()) {
-                const username = host.telegram.trim().replace(/^@/, "");
-                openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
-                buttonColor = "#0088cc";
-                platform = "Telegram";
-                contact = `@${username}`;
+                  const openBtn = modalContent.querySelector("#openChatBtn");
+                  openBtn.onclick = () => {
+                    window.open(openURL, "_blank");
+                    modal.remove();
+                  };
+
+                  // Auto open
+                  setTimeout(() => {
+                    window.open(openURL, "_blank");
+                  }, 1100);
+
+                  // Auto close modal
+                  setTimeout(() => modal.remove(), 8500);
+
+                }, 600);
               }
-              // Then WhatsApp
-              else if (host.whatsapp && host.whatsapp.trim()) {
-                const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
-                const hostCountry = host.country || "Nigeria";
-                let waNumber = host.whatsapp.trim();
-                if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
-                waNumber = countryCodes[hostCountry] + waNumber;
-
-                openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
-                buttonColor = "#25D366";
-                platform = "WhatsApp";
-                contact = host.chatId;
-              } else {
-                showSocialRedirectModal(modalContent, host);
-                return;
-              }
-
-              // Unified final screen — SMALL, CUTE & CLEAN (no phone emoji)
-modalContent.innerHTML = `
-  <h3 style="
-    margin:0 0 12px;
-    font-weight:600;
-    font-size:18px;
-    line-height:1.3;
-  ">
-   Request to meet ${host.chatId} is approved!
-  </h3>
-  <p style="
-    margin:0 0 24px;
-    font-size:15px;
-    color:#ddd;
-  ">
-    Chat with <b>${contact}</b> on ${platform}
-  </p>
-  <button id="openChatBtn" style="
-    padding:12px 36px;
-    border:none;
-    border-radius:50px;
-    font-weight:700;
-    font-size:16px;
-    background:${buttonColor};
-    color:#fff;
-    cursor:pointer;
-    box-shadow:0 6px 20px rgba(0,0,0,0.4);
-    transition:transform 0.2s ease;
-  "
-  onmouseover="this.style.transform='translateY(-2px)'"
-  onmouseout="this.style.transform='translateY(0)'">
-    Send Message
-  </button>
-`;
-              const openBtn = modalContent.querySelector("#openChatBtn");
-              openBtn.onclick = () => {
-                window.open(openURL, "_blank");
-                modal.remove();
-              };
-
-              // Auto-open chat
-              window.open(openURL, "_blank");
-
-              // Auto-close modal
-              setTimeout(() => modal.remove(), 8000);
-            }, 500);
-          }
-        }, totalTime);
-      });
-
-    } catch (err) {
-      console.error("Meet request failed:", err);
-      showGiftAlert("Something went wrong. Try again.");
-      modal.remove();
-    }
-  };
-}
 
 /* ---------- Social Fallback (Snapchat Version) ---------- */
 function showSocialRedirectModal(modalContent, host) {
