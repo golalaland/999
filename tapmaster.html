@@ -2194,14 +2194,14 @@ body.game-mode .tiny-action-bar {
     <!-- STATUS -->
     <div style="
       font-family:'Rajdhani',sans-serif;
-      font-size:13px;
-      letter-spacing:2px;
+      font-size:13.5px;
+      letter-spacing:2.5px;
       color:#FFD700;
       font-weight:700;
-      margin-bottom:14px;
+      margin-bottom:10px;
       text-transform:uppercase;
     ">
-      TRANSACTION SUCCESSFUL
+      WITHDRAWAL SUCCESSFUL
     </div>
 
     <!-- AMOUNT -->
@@ -2213,7 +2213,7 @@ body.game-mode .tiny-action-bar {
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
       background-clip:text;
-      margin:10px 0 18px;
+      margin:8px 0 20px;
       letter-spacing:2px;
       animation:amountPulse 2.2s ease-in-out infinite alternate;
     ">
@@ -2223,17 +2223,30 @@ body.game-mode .tiny-action-bar {
     <!-- MESSAGE -->
     <div style="
       font-family:'Rajdhani',sans-serif;
-      font-size:14px;
+      font-size:15.2px;
       color:#c7ffd8;
-      line-height:1.5;
-      margin-bottom:22px;
-      opacity:0.9;
+      line-height:1.65;
+      margin-bottom:24px;
+      opacity:0.95;
     ">
-      Your withdrawal request has been received.<br>
-      Funds are on the way.<br>
-       Payments are proccessed 6:00pm & 12:00pm daily.
+      Your tap grind just paid off!<br><br>
+      
+      <strong>₦<span id="goldenAmount">0</span></strong> has been successfully initiated.<br>
+      Funds are on the way and will be credited to your account within 24 hours.
     </div>
 
+    <!-- Processing Info -->
+    <div style="
+      font-size:13px;
+      color:#9ca3af;
+      background:rgba(255,255,255,0.05);
+      padding:10px 14px;
+      border-radius:10px;
+      margin-bottom:22px;
+    ">
+      Daily processing at <strong>12:00 PM</strong> & <strong>6:00 PM</strong><br>
+      <span style="opacity:0.9;">Usually lands in your account within 24 hours</span>
+    </div>
     <!-- BUTTON -->
     <button id="closeSuccessBtn" style="
       width:100%;
