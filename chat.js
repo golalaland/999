@@ -6830,7 +6830,7 @@ intro.innerHTML = `
       <!-- ONE LINER - STRONG & CLEAN -->
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
-        font-size: 21px;
+        font-size: 25px;
         font-weight: 400;
         letter-spacing: 5px;
         background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
