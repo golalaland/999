@@ -3070,14 +3070,12 @@ function showUnifiedCard(user) {
   const city = cleanLocation(user.city || "Lagos");
   const location = cleanLocation(user.location);
 
-  const isPrivilegedMale = isMale && user.isHost;
-
-  // Build main text — Fruit removed from sentence
+  // Build main text
   let mainText = "";
   const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
   const intro = descriptors ? `${descriptors} ${genderRaw}` : genderRaw;
 
-  if (isPrivilegedMale) {
+  if (isMale && isHost) {
     mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}, currently in ${city}`;
   } else {
     mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}`;
@@ -3102,14 +3100,14 @@ function showUnifiedCard(user) {
   });
   content.appendChild(profileEl);
 
-  // Trait Pills (Fruit moved here)
+  // Trait Pills
   const traitsContainer = document.createElement("div");
   traitsContainer.style.cssText = `display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:18px;`;
 
   const traits = [ageGroup, city];
   if (bodyType) traits.push(bodyType);
   if (nature) traits.push(nature);
-  if (fruit) traits.push(fruit);           // ← Fruit now appears as pill
+  if (fruit) traits.push(fruit);
 
   traits.forEach(trait => {
     const pill = document.createElement("span");
@@ -3143,32 +3141,26 @@ function showUnifiedCard(user) {
   content.appendChild(bioEl);
   typeWriterEffect(bioEl, user.bioPick || "No bio shared yet...");
 
-    // Meet Button for Hosts
+  // Meet Button for Hosts
   if (user.isHost) {
     const meetBtn = document.createElement("div");
     meetBtn.style.cssText = `
-      width: 56px; 
-      height: 56px; 
-      border-radius: 50%; 
+      width: 56px; height: 56px; border-radius: 50%;
       background: rgba(255,255,255,0.06);
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      margin: 12px auto 8px; 
-      cursor: pointer; 
+      display: flex; align-items: center; justify-content: center;
+      margin: 12px auto 8px;
+      cursor: pointer;
       border: 2px solid rgba(255,255,255,0.18);
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     `;
 
-    // Heart + subtle glow
     meetBtn.innerHTML = `
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff99aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
       </svg>
     `;
 
-    // Hover effect
     meetBtn.onmouseenter = () => {
       meetBtn.style.background = "rgba(255,255,255,0.12)";
       meetBtn.style.borderColor = "rgba(255,255,255,0.35)";
@@ -3187,7 +3179,10 @@ function showUnifiedCard(user) {
 
     content.appendChild(meetBtn);
   }
-   
+
+  // ←←← THIS WAS MISSING
+  document.body.appendChild(card);
+
   // Close on outside click
   setTimeout(() => {
     const closeOut = (e) => {
@@ -3197,10 +3192,10 @@ function showUnifiedCard(user) {
       }
     };
     document.addEventListener("click", closeOut);
-  }, 50);
+  }, 100);
 }
-// Typewriter
 
+// Typewriter
 function typeWriterEffect(el, text, speed = 31) {
   el.textContent = "";
   let i = 0;
