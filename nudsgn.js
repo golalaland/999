@@ -2530,22 +2530,22 @@ tutorialModal.addEventListener("click", (e) => {
 async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
   const userRef = doc(db, "users", currentUser.uid);
   const withdrawalRef = doc(collection(db, "withdrawals"));
-
+  
   try {
     await runTransaction(db, async (t) => {
       const snap = await t.get(userRef);
       if (!snap.exists()) throw "User not found";
-      
+     
       const data = snap.data();
       if (data.cash < amount) throw "Not enough cash";
       if (isFastTrack && data.stars < 500) throw "Not enough STRZ";
-
+      
       t.update(userRef, {
         cash: data.cash - amount,
         stars: isFastTrack ? data.stars - 500 : data.stars,
         updatedAt: serverTimestamp()
       });
-
+      
       t.set(withdrawalRef, {
         uid: currentUser.uid,
         username: currentUser.chatId || currentUser.email?.split('@')[0] || "Player",
@@ -2561,7 +2561,8 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
 
     // UPDATE LOCAL USER
     currentUser.cash -= amount;
-    if (isFastTrack) currentUser.stars -= 500;   // ← You had 21 earlier, changed to 500
+    if (isFastTrack) currentUser.stars -= 500;
+
     updateBankDisplay();
 
     // === SUCCESS OVERLAY ===
@@ -2575,8 +2576,8 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       return;
     }
 
-    // Reset and show
     goldenAmount.textContent = '0';
+    
     if (successMessage) {
       successMessage.textContent = isFastTrack 
         ? "FAST TRACKED! Support notified" 
@@ -2601,19 +2602,24 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
       goldenAmount.textContent = current.toLocaleString();
     }, 28);
 
-    // FAST TRACK TELEGRAM
-    if (isFastTrack) {
-      setTimeout(() => {
-        const msg = encodeURIComponent(
-          `FAST TRACK WITHDRAWAL\n` +
-          `User: @${currentUser.chatId || 'unknown'}\n` +
-          `Amount: ₦${amount.toLocaleString()}\n` +
-          `Bank: ${currentUser.bankName || 'Not set'}\n` +
-          `Account: ${currentUser.bankAccountNumber || 'Not set'}\n\n` +
-          `Process urgently!`
-        );
-        window.open(`https://t.me/YOUR_ADMIN_USERNAME?text=${msg}`, '_blank');
-      }, 1600);
+    // ====================== OK BUTTON BEHAVIOR ======================
+    const okBtn = document.getElementById('closeSuccessBtn');
+    if (okBtn) {
+      okBtn.textContent = isFastTrack ? "Open WhatsApp" : "OK";
+
+      // Remove old listeners
+      const newOkBtn = okBtn.cloneNode(true);
+      okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+
+      newOkBtn.onclick = () => {
+        successOverlay.style.display = 'none';
+
+        if (isFastTrack) {
+          const message = `Fast Track Activated! I just paid for Fast Track withdrawal of ₦${amount.toLocaleString()}. Please process urgently. My username is @${currentUser.chatId || "N/A"}`;
+          const whatsappUrl = `https://wa.me/234XXXXXXXXXX?text=${encodeURIComponent(message)}`; 
+          window.open(whatsappUrl, '_blank');
+        }
+      };
     }
 
   } catch (err) {
