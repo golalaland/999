@@ -1630,10 +1630,10 @@ async function createLoginToken(uid) {
     });
 
     currentLoginToken = token;
-    ("[TOKEN] One-time shareable token created");
+    console.log("[TOKEN] One-time shareable token created");
     return token;
   } catch (err) {
-    ("[TOKEN] Failed:", err);
+    console.error("[TOKEN] Failed:", err);
     return null;
   }
 }
@@ -1663,11 +1663,11 @@ async function loadUserFromToken(token) {
     // Create Long-Lived Session
     await createLongLivedSession(data.uid);
 
-    ("%c✅ One-time token redeemed successfully", "color:#00ffaa");
+    console.log("%c✅ One-time token redeemed successfully", "color:#00ffaa");
     return data.uid;
 
   } catch (err) {
-    ("Token redemption error:", err);
+    console.warn("Token redemption error:", err);
     return null;
   }
 }
@@ -1695,9 +1695,9 @@ async function createLongLivedSession(uid) {
       expiresAt 
     }));
 
-    ("[SESSION] Long-lived session created (30 days)");
+    console.log("[SESSION] Long-lived session created (30 days)");
   } catch (err) {
-    ("[SESSION] Failed to create session:", err);
+    console.error("[SESSION] Failed to create session:", err);
   }
 }
 
@@ -1724,7 +1724,7 @@ async function validateLongLivedSession(storedData) {
 
     return data.uid;
   } catch (err) {
-    ("Session validation failed:", err);
+    console.warn("Session validation failed:", err);
     return null;
   }
 }
