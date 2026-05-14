@@ -7081,10 +7081,10 @@ intro.innerHTML = `
       </span>
       
      <p style="margin:0 0 7px; font-size:13px; font-weight:700; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
-        Real moments • Real matches • Tonight
+        Real moments • Real matches • Right away
       </p>
       <p style="margin:0; color:#8899aa; font-size:13.5px;">
-        Hop right in, meet people who match your vibe.
+    Own your vibe. Own the night.
       </p>
       <p style="margin:0; color:#8899aa; font-size:13.5px;">
         www.freetonight.app
