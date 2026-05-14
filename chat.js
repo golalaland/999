@@ -7328,18 +7328,18 @@ function renderCards() {
         color: #aaa;
         margin-top: 4px;
       `;
-                // ==================== TAGS (Emoji + City) ====================
-     const tagsEl = document.createElement("div");
+                     // ==================== TAGS (Emoji + CITY) ====================
+      const tagsEl = document.createElement("div");
       tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;";
 
-      // Location Tag
-      const locValue = video.location || video.city || "";
-      if (locValue) {
+      // Location Tag - Prefer CITY (as in your old design)
+      const cityValue = video.city || video.location || "";
+      if (cityValue) {
         const locSpan = document.createElement("span");
-        const flag = getFlagEmoji ? getFlagEmoji(locValue) : "📍";
-        const cityName = (video.city || cleanLocation ? cleanLocation(locValue) : locValue).trim() || "Unknown";
-        
-        locSpan.textContent = `${flag} ${cityName}`;
+        const flag = typeof getFlagEmoji === "function" ? getFlagEmoji(cityValue) : "📍";
+        const cityName = cleanLocation ? cleanLocation(cityValue) : cityValue;
+
+        locSpan.textContent = `${flag} ${cityName.trim() || "Unknown"}`;
         locSpan.style.cssText = `
           font-size: 11.5px;
           padding: 4px 11px;
@@ -7372,24 +7372,26 @@ function renderCards() {
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
        
-        // ==================== FRUIT PICK BADGE — PREMIUM GLOW ====================
+             // ==================== FRUIT PICK BADGE — LIGHT GLOW ====================
       if (video.fruitPick && String(video.fruitPick).trim()) {
         const fruitEl = document.createElement("div");
         fruitEl.textContent = String(video.fruitPick).trim();
-       
-                 fruitEl.style.cssText = `
-          position: absolute;
-          bottom: 10px;
-          right: 10px;
-          font-size: 16px;
+        
+        fruitEl.style.cssText = `
+          position: absolute; 
+          bottom: 12px; 
+          right: 12px; 
+          font-size: 22px; 
           line-height: 1;
           color: #fff;
-          text-shadow: 0 0 3px rgba(255,255,255,0.5);
-          z-index: 3;
+          z-index: 4;
+          filter: drop-shadow(0 0 8px rgba(255,255,255,0.9));
+          text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
         `;
-        // Slight hover effect
-        fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.15)";
+        
+        fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.12)";
         fruitEl.onmouseleave = () => fruitEl.style.transform = "scale(1)";
+        
         card.appendChild(fruitEl);
       }
       // Badge
