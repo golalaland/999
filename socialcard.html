@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUBE Social Card Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+min-height: 100vh;
+background: #0a0a0b;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
+gap: 32px;
+padding: 40px 20px;
+font-family: ‘DM Mono’, monospace;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse 60% 40% at 20% 80%, rgba(255,0,100,0.07) 0%, transparent 60%),
+radial-gradient(ellipse 50% 50% at 80% 20%, rgba(255,100,0,0.05) 0%, transparent 60%);
+pointer-events: none;
+z-index: 0;
+}
+
+.demo-controls {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+justify-content: center;
+position: relative;
+z-index: 10;
+}
+
+.demo-btn {
+font-family: ‘DM Mono’, monospace;
+font-size: 11px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+padding: 8px 18px;
+border: 1px solid rgba(255,255,255,0.12);
+background: rgba(255,255,255,0.04);
+color: #999;
+cursor: pointer;
+border-radius: 2px;
+transition: all 0.2s;
+}
+
+.demo-btn:hover { border-color: rgba(255,0,100,0.5); color: #fff; }
+.demo-btn.active { border-color: #ff0064; color: #ff0064; background: rgba(255,0,100,0.08); }
+
+/* ───────────────────── CARD ───────────────────── */
+#socialCard {
+position: relative;
+z-index: 10;
+width: 300px;
+max-width: 92vw;
+background: rgba(12, 12, 14, 0.96);
+border: 1px solid rgba(255, 255, 255, 0.06);
+border-radius: 4px;
+overflow: hidden;
+opacity: 0;
+transform: translateY(10px) scale(0.98);
+transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.35s cubic-bezier(0.16,1,0.3,1);
+box-shadow:
+0 0 0 1px rgba(255,255,255,0.03),
+0 30px 60px rgba(0,0,0,0.8),
+0 0 80px rgba(255,0,100,0.06);
+}
+
+#socialCard.visible {
+opacity: 1;
+transform: translateY(0) scale(1);
+}
+
+/* Accent bar top */
+.card-accent {
+height: 2px;
+width: 100%;
+background: var(–accent-bar, linear-gradient(90deg, #ff0064, #ff6600));
+}
+
+.card-inner {
+padding: 22px 24px 20px;
+}
+
+/* Close */
+.card-close {
+position: absolute;
+top: 12px;
+right: 14px;
+width: 22px;
+height: 22px;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+color: rgba(255,255,255,0.25);
+font-size: 18px;
+line-height: 1;
+transition: color 0.15s;
+z-index: 5;
+font-family: ‘DM Mono’, monospace;
+font-weight: 300;
+}
+.card-close:hover { color: rgba(255,255,255,0.7); }
+
+/* Handle */
+.card-handle {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 26px;
+letter-spacing: 0.08em;
+background: var(–name-gradient, linear-gradient(90deg, #ff0064, #ff6600));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+margin-bottom: 2px;
+line-height: 1;
+}
+
+/* Role chip */
+.card-role-row {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-bottom: 18px;
+}
+
+.role-chip {
+font-family: ‘DM Mono’, monospace;
+font-size: 9px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+padding: 3px 8px;
+border-radius: 2px;
+font-weight: 400;
+}
+
+.role-chip.vip {
+background: linear-gradient(135deg, #a07010, #f0c040 50%, #a07010);
+color: #1a1200;
+}
+
+.role-chip.host {
+background: rgba(255,107,0,0.15);
+border: 1px solid rgba(255,107,0,0.4);
+color: #ff8833;
+}
+
+.role-chip.member {
+background: rgba(255,255,255,0.05);
+border: 1px solid rgba(255,255,255,0.1);
+color: rgba(255,255,255,0.4);
+}
+
+/* Divider */
+.card-divider {
+width: 100%;
+height: 1px;
+background: rgba(255,255,255,0.05);
+margin: 0 0 16px;
+}
+
+/* Profile prose */
+.card-profile {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 15.5px;
+font-weight: 300;
+line-height: 1.55;
+color: rgba(255,255,255,0.65);
+letter-spacing: 0.01em;
+margin-bottom: 16px;
+}
+
+.card-profile em {
+font-style: italic;
+color: rgba(255,255,255,0.5);
+}
+
+/* Trait pills */
+.card-traits {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+margin-bottom: 18px;
+}
+
+.trait {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+color: rgba(255,255,255,0.35);
+border: 1px solid rgba(255,255,255,0.08);
+padding: 3px 9px;
+border-radius: 2px;
+}
+
+/* Bio */
+.card-bio {
+font-family: ‘Cormorant Garamond’, serif;
+font-style: italic;
+font-size: 13px;
+font-weight: 400;
+line-height: 1.5;
+color: var(–bio-color, #ff99cc);
+min-height: 38px;
+margin-bottom: 18px;
+border-left: 1px solid var(–bio-color, #ff99cc);
+padding-left: 12px;
+opacity: 0.85;
+}
+
+/* Meet button */
+.card-meet-btn {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+width: 100%;
+padding: 10px 0;
+background: rgba(255,107,0,0.08);
+border: 1px solid rgba(255,107,0,0.25);
+border-radius: 2px;
+cursor: pointer;
+transition: all 0.2s;
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: #ff8833;
+margin-top: 4px;
+}
+
+.card-meet-btn:hover {
+background: rgba(255,107,0,0.15);
+border-color: rgba(255,107,0,0.5);
+color: #ffaa55;
+}
+
+.card-meet-btn svg {
+width: 14px;
+height: 14px;
+opacity: 0.7;
+}
+
+/* Footer line */
+.card-footer {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding-top: 14px;
+border-top: 1px solid rgba(255,255,255,0.04);
+margin-top: 4px;
+}
+
+.card-city {
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: rgba(255,255,255,0.2);
+}
+
+.card-city span {
+color: rgba(255,255,255,0.45);
+}
+
+.cube-mark {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 12px;
+letter-spacing: 0.2em;
+color: rgba(255,255,255,0.1);
+}
+
+/* Typewriter cursor blink */
+.cursor {
+display: inline-block;
+width: 1px;
+height: 0.9em;
+background: currentColor;
+vertical-align: middle;
+margin-left: 1px;
+animation: blink 0.8s step-end infinite;
+}
+
+@keyframes blink {
+0%, 100% { opacity: 1; }
+50% { opacity: 0; }
+}
+</style>
+
+</head>
+<body>
+
+<div class="demo-controls">
+  <button class="demo-btn active" onclick="loadCard('female_vip')">Female VIP</button>
+  <button class="demo-btn" onclick="loadCard('host_male')">Male Host</button>
+  <button class="demo-btn" onclick="loadCard('female_member')">Female Member</button>
+</div>
+
+<div id="socialCard"></div>
+
+<script>
+const SAMPLE_USERS = {
+  female_vip: {
+    chatId: "soleil.viii",
+    gender: "female",
+    age: 26,
+    city: "Lagos",
+    location: "VI",
+    naturePick: "fierce",
+    bodyTypePick: "curvy",
+    fruitPick: "🍑",
+    bioPick: "Chaos in heels. Order by morning.",
+    isHost: false,
+    hasPaid: true,
+    isVIP: true
+  },
+  host_male: {
+    chatId: "kingsley.x",
+    gender: "male",
+    age: 31,
+    city: "Lagos",
+    location: "Lekki",
+    naturePick: "magnetic",
+    bodyTypePick: "athletic",
+    fruitPick: "",
+    bioPick: "The room changes when I enter. Ask anyone.",
+    isHost: true,
+    hasPaid: false,
+    isVIP: false
+  },
+  female_member: {
+    chatId: "zara.nneka",
+    gender: "female",
+    age: 24,
+    city: "Lagos",
+    location: "Ikoyi",
+    naturePick: "electric",
+    bodyTypePick: "slim",
+    fruitPick: "🍒",
+    bioPick: "Quiet storm. You'll feel it before you see it.",
+    isHost: false,
+    hasPaid: false,
+    isVIP: false
+  }
+};
+
+function buildCard(user) {
+  if (!user) return;
+
+  const card = document.getElementById("socialCard");
+  card.innerHTML = "";
+  card.className = "";
+  card.removeAttribute("style");
+
+  // Determine role + colors
+  const isVIP = !!(user.hasPaid || user.isVIP);
+  const isHost = !!user.isHost;
+  const isMale = (user.gender || "").toLowerCase() === "male";
+  const pronoun = isMale ? "his" : "her";
+
+  // Color scheme
+  let accentBar, nameGradient, roleName, roleClass;
+  if (isHost) {
+    accentBar = "linear-gradient(90deg, #ff6600, #ffaa00)";
+    nameGradient = "linear-gradient(90deg, #ff6b00, #ffcc55)";
+    roleName = "Host"; roleClass = "host";
+  } else if (isVIP) {
+    accentBar = "linear-gradient(90deg, #b8860b, #ffd700, #b8860b)";
+    nameGradient = "linear-gradient(90deg, #ff00aa, #ff6600)";
+    roleName = "VIP"; roleClass = "vip";
+  } else {
+    accentBar = "linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.04))";
+    nameGradient = "linear-gradient(90deg, #cccccc, #888888)";
+    roleName = "Member"; roleClass = "member";
+  }
+
+  // Bio colors
+  const bioColors = ["#ff99cc","#ffcc33","#66ffcc","#66ccff","#ff9966","#c9b8ff"];
+  const bioColor = bioColors[Math.floor(Math.random() * bioColors.length)];
+
+  card.style.cssText = `position:relative;z-index:10;width:300px;max-width:92vw;
+    background:rgba(12,12,14,0.96);border:1px solid rgba(255,255,255,0.06);
+    border-radius:4px;overflow:hidden;opacity:0;transform:translateY(10px) scale(0.98);
+    transition:opacity 0.35s cubic-bezier(0.16,1,0.3,1),transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 30px 60px rgba(0,0,0,0.8);`;
+
+  // Age group
+  const age = Number(user.age);
+  const ageGroup = !age ? "20s" : age >= 50 ? "50s" : age >= 40 ? "40s" : age >= 30 ? "30s" : "20s";
+
+  const clean = v => (v || "").toString().trim().replace(/^(a|an)\s+/i, "").replace(/\s+/g, " ");
+  const cleanLoc = v => (v || "").toString().replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s?/gu, "").trim();
+
+  const nature = clean(user.naturePick);
+  const bodyType = clean(user.bodyTypePick);
+  const fruit = clean(user.fruitPick);
+  const city = cleanLoc(user.city || "Lagos");
+  const location = cleanLoc(user.location);
+
+  // Profile sentence — creative, not listicle
+  let profileText = "";
+  const descriptors = [nature, bodyType].filter(Boolean).join(", ");
+
+  if (isHost && isMale) {
+    profileText = `A man in ${pronoun} ${ageGroup} — ${city}${location ? ", " + location : ""}.`;
+  } else {
+    const traitPhrase = descriptors ? `${descriptors}` : "";
+    profileText = `${traitPhrase ? traitPhrase.charAt(0).toUpperCase() + traitPhrase.slice(1) + ". " : ""}In ${pronoun} ${ageGroup}, somewhere in ${city}${location ? " — " + location : ""}${!isMale && fruit ? " " + fruit : ""}.`;
+  }
+
+  if (!isHost && !isVIP) profileText += isMale ? "" : " 💋";
+
+  // Build DOM
+  const accentEl = document.createElement("div");
+  accentEl.className = "card-accent";
+  accentEl.style.background = accentBar;
+  card.appendChild(accentEl);
+
+  const inner = document.createElement("div");
+  inner.className = "card-inner";
+
+  // Close
+  const closeBtn = document.createElement("div");
+  closeBtn.className = "card-close";
+  closeBtn.innerHTML = "×";
+  closeBtn.onclick = () => { card.style.opacity = "0"; card.style.transform = "translateY(10px) scale(0.98)"; };
+
+  // Handle
+  const handle = document.createElement("div");
+  handle.className = "card-handle";
+  handle.style.background = nameGradient;
+  handle.style.webkitBackgroundClip = "text";
+  handle.style.webkitTextFillColor = "transparent";
+  handle.style.backgroundClip = "text";
+  const rawName = (user.chatId || "").trim();
+  handle.textContent = rawName ? `@${rawName}` : "@guest";
+
+  // Role row
+  const roleRow = document.createElement("div");
+  roleRow.className = "card-role-row";
+  const chip = document.createElement("span");
+  chip.className = `role-chip ${roleClass}`;
+  chip.textContent = roleName;
+  roleRow.appendChild(chip);
+
+  // Divider
+  const divider = document.createElement("div");
+  divider.className = "card-divider";
+
+  // Profile prose
+  const profileEl = document.createElement("div");
+  profileEl.className = "card-profile";
+  profileEl.textContent = profileText;
+
+  // Trait pills (when not hiding details for male host)
+  const traitsEl = document.createElement("div");
+  traitsEl.className = "card-traits";
+  const traits = [];
+  if (bodyType && !(isHost && isMale)) traits.push(bodyType);
+  if (nature && !(isHost && isMale)) traits.push(nature);
+  traits.push(ageGroup);
+  if (city) traits.push(city);
+  traits.forEach(t => {
+    const pill = document.createElement("span");
+    pill.className = "trait";
+    pill.textContent = t;
+    traitsEl.appendChild(pill);
+  });
+
+  // Bio
+  const bioEl = document.createElement("div");
+  bioEl.className = "card-bio";
+  bioEl.style.setProperty("--bio-color", bioColor);
+  bioEl.style.borderLeftColor = bioColor;
+  bioEl.style.color = bioColor;
+
+  // Meet button (hosts only)
+  let meetBtn = null;
+  if (isHost) {
+    meetBtn = document.createElement("div");
+    meetBtn.className = "card-meet-btn";
+    meetBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Request to meet
+    `;
+    meetBtn.onclick = e => {
+      e.stopPropagation();
+      if (typeof showMeetModal === "function") showMeetModal(user);
+    };
+  }
+
+  // Footer
+  const footer = document.createElement("div");
+  footer.className = "card-footer";
+  const cityEl = document.createElement("div");
+  cityEl.className = "card-city";
+  cityEl.innerHTML = `${city}${location ? " — <span>" + location + "</span>" : ""}`;
+  const cubeMark = document.createElement("div");
+  cubeMark.className = "cube-mark";
+  cubeMark.textContent = "CUBE";
+  footer.appendChild(cityEl);
+  footer.appendChild(cubeMark);
+
+  // Assemble
+  inner.appendChild(handle);
+  inner.appendChild(roleRow);
+  inner.appendChild(divider);
+  inner.appendChild(profileEl);
+  inner.appendChild(traitsEl);
+  inner.appendChild(bioEl);
+  if (meetBtn) inner.appendChild(meetBtn);
+  inner.appendChild(footer);
+
+  card.appendChild(closeBtn);
+  card.appendChild(inner);
+
+  // Fade in
+  requestAnimationFrame(() => {
+    card.style.opacity = "1";
+    card.style.transform = "translateY(0) scale(1)";
+  });
+
+  // Typewriter bio
+  typeWriter(bioEl, user.bioPick || "No story shared yet...", 38);
+}
+
+function typeWriter(el, text, speed = 40) {
+  el.textContent = "";
+  const cursor = document.createElement("span");
+  cursor.className = "cursor";
+  el.appendChild(cursor);
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      el.insertBefore(document.createTextNode(text[i++]), cursor);
+    } else {
+      clearInterval(interval);
+      setTimeout(() => cursor.remove(), 1200);
+    }
+  }, speed);
+}
+
+function loadCard(key) {
+  document.querySelectorAll(".demo-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+  buildCard(SAMPLE_USERS[key]);
+}
+
+// Initial load
+buildCard(SAMPLE_USERS.female_vip);
+
+// Export as module-ready function
+window.showSocialCard = function(user) {
+  if (!user) return;
+  const existing = document.getElementById("socialCard");
+  if (!existing) {
+    const card = document.createElement("div");
+    card.id = "socialCard";
+    document.body.appendChild(card);
+  }
+  buildCard(user);
+};
+</script>
+
+</body>
+</html>
