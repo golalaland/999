@@ -4812,7 +4812,7 @@ function showMeetModal(host) {
 
   const modal = document.createElement("div");
   modal.id = "meetModal";
-  
+
   Object.assign(modal.style, {
     position: "fixed",
     top: 0,
@@ -4843,63 +4843,58 @@ function showMeetModal(host) {
       box-shadow: 0 20px 50px rgba(0,0,0,0.6);
       font-family: Poppins, system-ui, sans-serif;
     ">
-      <div style="margin-bottom: 18px;">
-        <div style="width: 68px; height: 68px; margin: 0 auto 16px; background: rgba(255,107,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,107,0,0.4);">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffaa66" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          </svg>
-        </div>
-      </div>
-
-      <h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700;">
-        Meet <span style="background: linear-gradient(90deg, #ff6b00, #ff55cc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">@${host.chatId || "Host"}</span>?
-      </h3>
-      
-      <p style="color: #ccc; margin-bottom: 24px; line-height: 1.5;">
-        Unlock private chat + meetup details<br>
-        <strong style="color:#ffd700;">250 STRZ ⭐</strong>
-      </p>
-
-      <div style="display: flex; gap: 12px; justify-content: center;">
-        <button id="cancelMeet" style="
-          flex: 1; 
-          padding: 14px; 
-          background: rgba(255,255,255,0.08); 
-          border: 1px solid rgba(255,255,255,0.15); 
-          color: #ddd; 
-          border-radius: 12px; 
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        ">Cancel</button>
-        
-        <button id="confirmMeet" style="
-          flex: 1; 
-          padding: 14px; 
-          background: linear-gradient(90deg, #ff0099, #ff6600); 
-          border: none; 
-          color: white; 
-          border-radius: 12px; 
-          font-weight: 700;
-          cursor: pointer;
-          box-shadow: 0 4px 15px rgba(255,0,153,0.3);
-          transition: all 0.2s ease;
-        ">Pay 250 STRZ & Meet</button>
-      </div>
-
-      <p style="margin-top: 18px; font-size: 12px; color: #666;">
-        Instant connection • Safe & Private
-      </p>
+      <!-- Content injected here -->
     </div>
   `;
 
   document.body.appendChild(modal);
 
+  // Fade in modal
+  setTimeout(() => modal.style.opacity = "1", 10);
+
+  const modalContent = modal.querySelector("#meetModalContent");
+
+  // Initial Confirmation Screen
+  modalContent.innerHTML = `
+    <div style="margin-bottom: 18px;">
+      <div style="width: 68px; height: 68px; margin: 0 auto 16px; background: rgba(255,107,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,107,0,0.4);">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffaa66" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        </svg>
+      </div>
+    </div>
+
+    <h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700;">
+      Meet <span style="background: linear-gradient(90deg, #ff6b00, #ff55cc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">@${host.chatId || "Host"}</span>?
+    </h3>
+    
+    <p style="color: #ccc; margin-bottom: 24px; line-height: 1.5;">
+      Unlock private chat + meetup details<br>
+      <strong style="color:#ffd700;">250 STRZ ⭐</strong>
+    </p>
+
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button id="cancelMeet" style="
+        flex: 1; padding: 14px; background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15); color: #ddd;
+        border-radius: 12px; font-weight: 600; cursor: pointer;
+      ">Cancel</button>
+      
+      <button id="confirmMeet" style="
+        flex: 1; padding: 14px; background: linear-gradient(90deg, #ff0099, #ff6600);
+        border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer;
+      ">Pay 250 STRZ & Meet</button>
+    </div>
+
+    <p style="margin-top: 18px; font-size: 12px; color: #666;">
+      Instant connection • Safe & Private
+    </p>
+  `;
+
   const cancelBtn = modal.querySelector("#cancelMeet");
   const confirmBtn = modal.querySelector("#confirmMeet");
-  const modalContent = modal.querySelector("#meetModalContent");
 
   cancelBtn.onclick = () => modal.remove();
 
@@ -4907,28 +4902,35 @@ function showMeetModal(host) {
     const COST = 250;
 
     if (!currentUser?.uid) {
-      showGiftAlert("⚠️ Please log in to request meets");
+      if (typeof showGiftAlert === "function") showGiftAlert("⚠️ Please log in to request meets");
       modal.remove();
       return;
     }
 
     if ((currentUser.stars || 0) < COST) {
-      showGiftAlert("⚠️ Not enough stars ⭐");
+      if (typeof showGiftAlert === "function") showGiftAlert("⚠️ Not enough stars ⭐");
       modal.remove();
       return;
     }
 
+    // Disable button
     confirmBtn.disabled = true;
-    confirmBtn.style.opacity = 0.6;
+    confirmBtn.style.opacity = "0.6";
     confirmBtn.style.cursor = "not-allowed";
+    confirmBtn.textContent = "Processing...";
 
     try {
       // Deduct stars
-      currentUser.stars -= COST;
-      if (refs?.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
-      await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
+      currentUser.stars = (currentUser.stars || 0) - COST;
+      if (refs?.starCountEl) refs.starCountEl.textContent = typeof formatNumberWithCommas === "function" 
+        ? formatNumberWithCommas(currentUser.stars) 
+        : currentUser.stars;
 
-      // === PLAYFUL STAGED ANIMATION (SAME FOR TELEGRAM & WHATSAPP) ===
+      if (typeof updateDoc === "function" && typeof increment === "function") {
+        await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
+      }
+
+      // === Staged Animation ===
       const fixedStages = ["Handling your request…", "Collecting host’s identity…"];
       const playfulMessages = [
         "Oh, she’s hella cute…💋", "Careful, she may be naughty..😏",
@@ -4952,118 +4954,92 @@ function showMeetModal(host) {
 
       const stages = [...fixedStages, ...randomPlayful, "Generating secure link…"];
 
-      modalContent.innerHTML = `<p id="stageMsg" style="margin-top:20px; font-weight:500; font-size:15px;"></p>`;
+      modalContent.innerHTML = `<p id="stageMsg" style="margin-top:40px; font-weight:500; font-size:15.5px; min-height:100px;"></p>`;
       const stageMsgEl = modalContent.querySelector("#stageMsg");
 
-      let totalTime = 0;
+      let delay = 0;
       stages.forEach((stage, index) => {
-        const duration = index < 2
-          ? 1500 + Math.random() * 1000
-          : index < stages.length - 1
-          ? 1700 + Math.random() * 600
-          : 2000 + Math.random() * 500;
-
-        totalTime += duration;
+        const stageDelay = index < 2 ? 1400 : index < stages.length - 1 ? 1600 : 1800;
+        delay += stageDelay;
 
         setTimeout(() => {
           stageMsgEl.textContent = stage;
 
-          // Final stage → show success screen
           if (index === stages.length - 1) {
             setTimeout(() => {
-              const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
-              const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on CUBE) and I’d love to meet you.`;
-
-              let openURL = "";
-              let buttonColor = "";
-              let platform = "";
-              let contact = "";
-
-              // Telegram first
-              if (host.telegram && host.telegram.trim()) {
-                const username = host.telegram.trim().replace(/^@/, "");
-                openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
-                buttonColor = "#0088cc";
-                platform = "Telegram";
-                contact = `@${username}`;
-              }
-              // Then WhatsApp
-              else if (host.whatsapp && host.whatsapp.trim()) {
-                const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
-                const hostCountry = host.country || "Nigeria";
-                let waNumber = host.whatsapp.trim();
-                if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
-                waNumber = countryCodes[hostCountry] + waNumber;
-
-                openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
-                buttonColor = "#25D366";
-                platform = "WhatsApp";
-                contact = host.chatId;
-              } else {
-                showSocialRedirectModal(modalContent, host);
-                return;
-              }
-
-              // Unified final screen — SMALL, CUTE & CLEAN (no phone emoji)
-modalContent.innerHTML = `
-  <h3 style="
-    margin:0 0 12px;
-    font-weight:600;
-    font-size:18px;
-    line-height:1.3;
-  ">
-   Request to meet ${host.chatId} is approved!
-  </h3>
-  <p style="
-    margin:0 0 24px;
-    font-size:15px;
-    color:#ddd;
-  ">
-    Chat with <b>${contact}</b> on ${platform}
-  </p>
-  <button id="openChatBtn" style="
-    padding:12px 36px;
-    border:none;
-    border-radius:50px;
-    font-weight:700;
-    font-size:16px;
-    background:${buttonColor};
-    color:#fff;
-    cursor:pointer;
-    box-shadow:0 6px 20px rgba(0,0,0,0.4);
-    transition:transform 0.2s ease;
-  "
-  onmouseover="this.style.transform='translateY(-2px)'"
-  onmouseout="this.style.transform='translateY(0)'">
-    Send Message
-  </button>
-`;
-              const openBtn = modalContent.querySelector("#openChatBtn");
-              openBtn.onclick = () => {
-                window.open(openURL, "_blank");
-                modal.remove();
-              };
-
-              // Auto-open chat
-              window.open(openURL, "_blank");
-
-              // Auto-close modal
-              setTimeout(() => modal.remove(), 8000);
-            }, 500);
+              showFinalSuccessScreen(host, modal);
+            }, 800);
           }
-        }, totalTime);
+        }, delay);
       });
 
-         // Fade in
-  setTimeout(() => modal.style.opacity = "1", 10);
-
-
     } catch (err) {
-      ("Meet request failed:", err);
-      showGiftAlert("Something went wrong. Try again.");
+      console.error("Meet request failed:", err);
+      if (typeof showGiftAlert === "function") showGiftAlert("Something went wrong. Try again.");
       modal.remove();
     }
   };
+}
+
+// Final Success Screen
+function showFinalSuccessScreen(host, modal) {
+  const modalContent = modal.querySelector("#meetModalContent");
+  const firstName = currentUser?.fullName?.split(" ")[0] || "VIP";
+  const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on CUBE) and I’d love to meet you.`;
+
+  let openURL = "";
+  let buttonColor = "#0088cc";
+  let platform = "";
+  let contact = "";
+
+  if (host.telegram && host.telegram.trim()) {
+    const username = host.telegram.trim().replace(/^@/, "");
+    openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
+    platform = "Telegram";
+    contact = `@${username}`;
+  } else if (host.whatsapp && host.whatsapp.trim()) {
+    const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
+    const hostCountry = host.country || "Nigeria";
+    let waNumber = host.whatsapp.trim().replace(/^0/, "");
+    waNumber = (countryCodes[hostCountry] || "+234") + waNumber;
+    openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
+    buttonColor = "#25D366";
+    platform = "WhatsApp";
+    contact = host.chatId;
+  } else {
+    if (typeof showSocialRedirectModal === "function") {
+      showSocialRedirectModal(modalContent, host);
+    }
+    return;
+  }
+
+  modalContent.innerHTML = `
+    <h3 style="margin:0 0 12px; font-weight:600; font-size:18px; line-height:1.3;">
+      Request to meet ${host.chatId} is approved!
+    </h3>
+    <p style="margin:0 0 24px; font-size:15px; color:#ddd;">
+      Chat with <b>${contact}</b> on ${platform}
+    </p>
+    <button id="openChatBtn" style="
+      padding:12px 36px; border:none; border-radius:50px; font-weight:700;
+      font-size:16px; background:${buttonColor}; color:#fff; cursor:pointer;
+      box-shadow:0 6px 20px rgba(0,0,0,0.4); transition:transform 0.2s ease;
+    ">Send Message</button>
+  `;
+
+  const openBtn = modalContent.querySelector("#openChatBtn");
+  openBtn.onclick = () => {
+    window.open(openURL, "_blank");
+    modal.remove();
+  };
+
+  // Auto open chat
+  setTimeout(() => {
+    window.open(openURL, "_blank");
+  }, 1200);
+
+  // Auto close modal after some time
+  setTimeout(() => modal.remove(), 9000);
 }
 
 /* ---------- Social Fallback (Snapchat Version) ---------- */
