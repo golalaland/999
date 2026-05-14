@@ -7328,89 +7328,106 @@ function renderCards() {
         color: #aaa;
         margin-top: 4px;
       `;
-                     // ==================== TAGS (Emoji + CITY) ====================
+                  // ==================== TAGS (Emoji + City) ====================
       const tagsEl = document.createElement("div");
-      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;";
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
 
-      // Location Tag - Prefer CITY (as in your old design)
-      const cityValue = video.city || video.location || "";
-      if (cityValue) {
+      // Location Badge
+      const locValue = video.location || video.city || "";
+      if (locValue) {
         const locSpan = document.createElement("span");
-        const flag = typeof getFlagEmoji === "function" ? getFlagEmoji(cityValue) : "📍";
-        const cityName = cleanLocation ? cleanLocation(cityValue) : cityValue;
+        const flag = getFlagEmoji(locValue);
+        const cityName = (video.city || cleanLocation(locValue)).trim() || "Unknown";
 
-        locSpan.textContent = `${flag} ${cityName.trim() || "Unknown"}`;
+        locSpan.textContent = `${flag} ${cityName}`;
         locSpan.style.cssText = `
-          font-size: 11.5px;
-          padding: 4px 11px;
-          border-radius: 20px;
-          background: rgba(0, 255, 159, 0.15);
-          color: #00ff9f;
-          border: 1px solid rgba(0, 255, 159, 0.4);
+          font-size:11px; 
+          padding:3px 10px; 
+          border-radius:10px; 
+          background: rgba(0,255,234,0.25); 
+          color: #00ffea; 
+          border: 1px solid rgba(0,255,234,0.5);
           font-weight: 500;
         `;
         tagsEl.appendChild(locSpan);
       }
 
-      // Other Tags
+      // Other tags
       (video.tags || []).forEach(t => {
         if (t && typeof t === "string" && t.trim()) {
           const span = document.createElement("span");
           span.textContent = t.trim();
           span.style.cssText = `
-            font-size: 11.5px;
-            padding: 4px 11px;
-            border-radius: 20px;
-            background: rgba(255, 70, 140, 0.18);
-            color: #ff6ab6;
-            border: 1px solid rgba(255, 70, 140, 0.4);
+            font-size:11px; 
+            padding:2px 8px; 
+            border-radius:10px; 
+            background: rgba(255,46,120,0.22); 
+            color: #ff4d8a; 
+            border: 1px solid rgba(255,46,120,0.6);
           `;
           tagsEl.appendChild(span);
         }
       });
-
+   
       info.append(user, oneLiner, tagsEl);
       card.appendChild(info);
-       
-             // ==================== FRUIT PICK BADGE — LIGHT GLOW ====================
+
+        // ==================== FRUIT PICK BADGE — PREMIUM GLOW ====================
       if (video.fruitPick && String(video.fruitPick).trim()) {
         const fruitEl = document.createElement("div");
         fruitEl.textContent = String(video.fruitPick).trim();
         
-        fruitEl.style.cssText = `
-          position: absolute; 
-          bottom: 12px; 
-          right: 12px; 
-          font-size: 22px; 
+                 fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          font-size: 16px;
           line-height: 1;
           color: #fff;
-          z-index: 4;
-          filter: drop-shadow(0 0 8px rgba(255,255,255,0.9));
-          text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
+          z-index: 3;
         `;
-        
-        fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.12)";
+
+        // Slight hover effect
+        fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.15)";
         fruitEl.onmouseleave = () => fruitEl.style.transform = "scale(1)";
-        
+
         card.appendChild(fruitEl);
       }
       // Badge
+
       const badge = document.createElement("div");
+
       badge.textContent = "Free Tonight ♡";
+
       Object.assign(badge.style, {
+
         position: "absolute", top: "12px", right: "12px", padding: "6px 12px", borderRadius: "12px",
+
         fontSize: "12px", fontWeight: "700", color: "#fff",
+
         background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+
         boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
+
         textShadow: "0 0 4px rgba(0,0,0,0.7)"
+
       });
+
       card.appendChild(badge);
+
    card.appendChild(info);
+
       fragment.appendChild(card);
+
     });
+
     grid.appendChild(fragment);
+
     grid.appendChild(loadMoreDiv);
+
     isRendering = false;
+
   }, 16);
 
 }
