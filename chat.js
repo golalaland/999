@@ -3039,20 +3039,75 @@ function showUnifiedCard(user) {
   `;
   content.appendChild(header);
 
-  // Role Chip
+   // Role Chip with Special Shimmer for VIP
   const roleChip = document.createElement("div");
   roleChip.textContent = roleName;
-  Object.assign(roleChip.style, {
-    display: "inline-block",
-    fontSize: "10px",
-    letterSpacing: "1px",
-    fontWeight: "600",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    background: roleBg,
-    color: isHost ? "#ffaa66" : isVIP ? "#1a1200" : "#aaa",
-    marginBottom: "16px"
-  });
+
+  if (isVIP) {
+    // Premium Gold VIP with shimmer
+    roleChip.style.cssText = `
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #b8860b, #ffd700, #ffeb3b, #ffd700, #b8860b);
+      background-size: 300% 100%;
+      color: #1a1200;
+      margin-bottom: 16px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+      animation: vipShimmer 3.5s linear infinite;
+      position: relative;
+      overflow: hidden;
+    `;
+
+    // Subtle shine overlay
+    const shine = document.createElement("div");
+    shine.style.cssText = `
+      position: absolute;
+      top: -50%;
+      left: -100%;
+      width: 40%;
+      height: 300%;
+      background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.9),
+        transparent
+      );
+      animation: shineAnimation 4s infinite linear;
+    `;
+    roleChip.appendChild(shine);
+
+  } else if (isHost) {
+    roleChip.style.cssText = `
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,107,0,0.15);
+      border: 1px solid rgba(255,107,0,0.4);
+      color: #ffaa66;
+      margin-bottom: 16px;
+    `;
+  } else {
+    roleChip.style.cssText = `
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #aaa;
+      margin-bottom: 16px;
+    `;
+  }
+
   content.appendChild(roleChip);
 
   // Legendary Details Logic
@@ -3130,17 +3185,20 @@ function showUnifiedCard(user) {
   Object.assign(bioEl.style, {
     margin: "12px 0 20px",
     fontStyle: "italic",
-    fontSize: "13.5px",
-    lineHeight: "1.45",
+    fontSize: "13.8px",
+    lineHeight: "1.48",
     color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#c9b8ff"][Math.floor(Math.random()*7)],
     textAlign: "center",
     borderLeft: "3px solid",
     paddingLeft: "14px",
-    opacity: "0.9"
+    opacity: "0.92",
+    fontFamily: "Poppins, system-ui, sans-serif",   // Your font enforced
+    minHeight: "48px"
   });
   content.appendChild(bioEl);
+  
   typeWriterEffect(bioEl, user.bioPick || "No notes shared yet...");
-
+   
    // Meet Button for Hosts - Random Dope Colors
   if (user.isHost) {
     const meetBtn = document.createElement("div");
@@ -3221,13 +3279,36 @@ function showUnifiedCard(user) {
   }, 100);
 }
 
-// Typewriter
-function typeWriterEffect(el, text, speed = 31) {
+// Typewriter Effect - Claude Style with Blinking Cursor (Poppins Font)
+function typeWriterEffect(el, text, speed = 38) {
   el.textContent = "";
+  el.style.fontFamily = "Poppins, system-ui, sans-serif"; // Your font
+  
+  const cursor = document.createElement("span");
+  cursor.className = "type-cursor";
+  cursor.style.cssText = `
+    display: inline-block;
+    width: 2px;
+    height: 0.95em;
+    background: currentColor;
+    vertical-align: middle;
+    margin-left: 2px;
+    animation: blink 0.75s step-end infinite;
+  `;
+  
+  el.appendChild(cursor);
+
   let i = 0;
-  const t = setInterval(() => {
-    if (i < text.length) el.textContent += text[i++];
-    else clearInterval(t);
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      el.insertBefore(document.createTextNode(text[i++]), cursor);
+    } else {
+      clearInterval(interval);
+      // Keep cursor for a moment then remove
+      setTimeout(() => {
+        cursor.remove();
+      }, 1800);
+    }
   }, speed);
 }
 
