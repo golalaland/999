@@ -6847,10 +6847,10 @@ intro.innerHTML = `
         animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
                    tonightShift 7s linear infinite;
       ">
-        Free Tonight?
+        FREE TONIGHT?
       </span>
       
-     <p style="margin:0 0 7px; font-size:13px; font-weight:400; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+     <p style="margin:0 0 7px; font-size:13px; font-weight:600; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
         Real moments • Real matches • Right now
       </p>
       <p style="margin:0; color:#8899aa; font-size:13.5px;">
