@@ -2634,7 +2634,7 @@ async function processWithdrawalAndCelebrate(amount, isFastTrack = false) {
     // ====================== OK BUTTON BEHAVIOR ======================
     const okBtn = document.getElementById('closeSuccessBtn');
     if (okBtn) {
-      okBtn.textContent = isFastTrack ? "Open WhatsApp" : "OK";
+      okBtn.textContent = isFastTrack ? "OKAY" : "OKAY";
 
       // Remove old listeners
       const newOkBtn = okBtn.cloneNode(true);
