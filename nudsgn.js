@@ -93,6 +93,7 @@ const cashCountEl = document.getElementById('cashCount');
 const profileNameEl = document.getElementById('profileName');
 
 
+
 // ==================== CONFIRM PLAY SOUND ====================
 const confirmPlaySound = document.getElementById('confirmPlaySound');
 
@@ -120,6 +121,24 @@ window.lastSoundTime = 0;
 document.getElementById('leaderboardBtn').onclick = () => {
   document.getElementById('sideTab').classList.toggle('closed');
 };
+
+function updateWithdrawButtonState() {
+  const btn = document.getElementById('withdrawBtn');
+  if (!btn) return;
+
+  const hasBankDetails = currentUser.bankName && currentUser.bankAccountNumber;
+
+  if (!hasBankDetails) {
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+    btn.style.cursor = "not-allowed";
+  } else {
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+  }
+}
+
 
 
 // =============== TINY ACTION BAR HIDING ===============
@@ -1700,57 +1719,66 @@ document.getElementById('withdrawBtn')?.addEventListener('click', () => {
   const raw = document.getElementById('withdrawAmount').value.replace(/,/g, '');
   const amount = Number(raw);
 
+  // === 1. Basic Validation ===
   if (!amount || amount < 5000) {
     realAlert("Minimum withdrawal is ₦5,000");
     return;
   }
+
   if (amount > currentUser.cash) {
     realAlert(`You only have ₦${currentUser.cash.toLocaleString()}`);
     return;
   }
 
+  // === 2. Bank Details Check (Most Important) ===
+  if (!currentUser.bankName || !currentUser.bankAccountNumber) {
+    realAlert("Please set up your Bank Account details first before withdrawing.\n\nGo to Profile → Bank Setup.");
+    return;
+  }
+
+  // All checks passed
   pendingWithdrawal.amount = amount;
 
-  // Show amount only (cute & clean)
+  // Show amount in confirmation modal
   document.getElementById('confirmAmount').textContent = amount.toLocaleString();
   
   document.getElementById('starMarketModal').style.display = 'none';
   document.getElementById('withdrawConfirmModal').style.display = 'flex';
 });
 
-// STANDARD WITHDRAW
+// ====================== STANDARD WITHDRAW ======================
 document.getElementById('standardWithdrawBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawConfirmModal').style.display = 'none';
-  processWithdrawalAndCelebrate(pendingWithdrawal.amount, false);
+  processWithdrawalAndCelebrate(pendingWithdrawal.amount, false);   // false = normal speed
 });
 
-// FAST TRACK → DOUBLE CONFIRM
+// ====================== FAST TRACK WITHDRAW ======================
 document.getElementById('fastTrackWithdrawBtn')?.addEventListener('click', () => {
   if (currentUser.stars < 21) {
-    realAlert("You need 21 STRZ for Fast Track!");
+    realAlert("You need at least 21 STRZ to use Fast Track!");
     return;
   }
+
   document.getElementById('withdrawConfirmModal').style.display = 'none';
   document.getElementById('fastTrackConfirmModal').style.display = 'flex';
 });
 
-// CONFIRM FAST TRACK
+// ====================== CONFIRM FAST TRACK ======================
 document.getElementById('confirmFastTrack')?.addEventListener('click', () => {
   document.getElementById('fastTrackConfirmModal').style.display = 'none';
-  processWithdrawalAndCelebrate(pendingWithdrawal.amount, true);
+  processWithdrawalAndCelebrate(pendingWithdrawal.amount, true);    // true = fast track
 });
 
-// CANCEL FAST TRACK
-document.getElementById('cancelFastTrack')?.addEventListener('click', () => {
-  document.getElementById('fastTrackConfirmModal').style.display = 'none';
-});
-
-// CANCEL MAIN CONFIRM
+// ====================== CANCEL BUTTONS ======================
 document.getElementById('cancelWithdrawBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawConfirmModal').style.display = 'none';
 });
 
-// CLOSE SUCCESS
+document.getElementById('cancelFastTrack')?.addEventListener('click', () => {
+  document.getElementById('fastTrackConfirmModal').style.display = 'none';
+});
+
+// ====================== CLOSE SUCCESS OVERLAY ======================
 document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
   document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
