@@ -763,7 +763,7 @@ function showHotspotAd() {
       
       <!-- Header -->
       <div style="padding:16px 20px; background:#000; display:flex; justify-content:space-between; align-items:center;">
-        <div style="color:#00ff9f; font-weight:700; font-size:15px;">LIVE TONIGHT</div>
+        <div style="color:#00ff9f; font-weight:700; font-size:15px;"></div>
         <div id="adCloseBtn" style="color:#888; font-size:28px; cursor:pointer; line-height:1;">×</div>
       </div>
 
@@ -823,10 +823,10 @@ function showHotspotAd() {
 
   // ==================== SLIDESHOW ====================
   const adImages = [
-    "https://picsum.photos/id/1015/800/1200",
-    "https://picsum.photos/id/237/800/1200",
-    "https://picsum.photos/id/201/800/1200",
-    "https://picsum.photos/id/133/800/1200"
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
   ];
 
   let current = 0;
