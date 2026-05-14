@@ -3180,7 +3180,7 @@ function showUnifiedCard(user) {
   });
   content.appendChild(traitsContainer);
 
-  // Bio
+    // Bio
   const bioEl = document.createElement("div");
   Object.assign(bioEl.style, {
     margin: "12px 0 20px",
@@ -3192,11 +3192,11 @@ function showUnifiedCard(user) {
     borderLeft: "3px solid",
     paddingLeft: "14px",
     opacity: "0.92",
-    fontFamily: "Poppins, system-ui, sans-serif",   // Your font enforced
-    minHeight: "48px"
+    fontFamily: "Poppins, system-ui, sans-serif",
+    minHeight: "52px"
   });
   content.appendChild(bioEl);
-  
+
   typeWriterEffect(bioEl, user.bioPick || "No notes shared yet...");
    
    // Meet Button for Hosts - Random Dope Colors
