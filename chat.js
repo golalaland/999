@@ -4909,48 +4909,101 @@ giftSlider.value = 1;
 giftAmountEl.textContent = "1";
 }
 
-/* ---------- Meet Modal with Staged Playful Flow for Telegram → WhatsApp ---------- */
+/* ---------- Meet Modal - Matching Social Card Design ---------- */
 function showMeetModal(host) {
-  let modal = document.getElementById("meetModal");
-  if (modal) modal.remove();
+  if (!host) return;
 
-  modal = document.createElement("div");
+  // Remove existing modal
+  let existing = document.getElementById("meetModal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
   modal.id = "meetModal";
+
   Object.assign(modal.style, {
     position: "fixed",
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
-    background: "rgba(0,0,0,0.75)",
+    background: "rgba(0,0,0,0.8)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: "999999",
-    backdropFilter: "blur(3px)",
-    WebkitBackdropFilter: "blur(3px)"
+    zIndex: "9999999",
+    opacity: "0",
+    transition: "opacity 0.3s ease"
   });
 
   modal.innerHTML = `
     <div id="meetModalContent" style="
-      background:#111;
-      padding:20px 22px;
-      border-radius:12px;
-      text-align:center;
-      color:#fff;
-      max-width:340px;
-      box-shadow:0 0 20px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, rgba(18,18,20,0.95), rgba(22,22,25,0.95));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px 26px 26px;
+      max-width: 340px;
+      width: 92%;
+      text-align: center;
+      color: #ffffff;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+      font-family: Poppins, system-ui, sans-serif;
     ">
-      <h3 style="margin-bottom:10px;font-weight:600;">Meet ${host.chatId || "this host"}?</h3>
-      <p style="margin-bottom:16px;">Unlock with <b>250 STRZ ⭐</b>?</p>
-      <div style="display:flex;gap:10px;justify-content:center;">
-        <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
-        <button id="confirmMeet" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
+      <div style="margin-bottom: 20px;">
+        <div style="width: 64px; height: 64px; margin: 0 auto; background: rgba(255,107,0,0.15); 
+                    border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+                    border: 2px solid rgba(255,107,0,0.5);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ffaa66" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          </svg>
+        </div>
+      </div>
+
+      <h3 style="margin: 0 0 10px; font-size: 21px; font-weight: 700;">
+        Meet <span style="background: linear-gradient(90deg, #ff6b00, #ff55cc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">@${host.chatId || "Host"}</span>?
+      </h3>
+      
+      <p style="color: #d0d0d0; margin-bottom: 24px; line-height: 1.5; font-size: 14.5px;">
+        Unlock private chat + meetup details<br>
+        <strong style="color:#ffd700;">250 STRZ ⭐</strong>
+      </p>
+
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="cancelMeet" style="
+          flex: 1; 
+          padding: 13px 20px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.15);
+          color: #ddd;
+          border-radius: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        ">Cancel</button>
+        
+        <button id="confirmMeet" style="
+          flex: 1; 
+          padding: 13px 20px;
+          background: linear-gradient(90deg, #ff0099, #ff6600);
+          border: none;
+          color: white;
+          border-radius: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(255,0,153,0.35);
+          transition: all 0.2s ease;
+        ">Pay 250 STRZ & Meet</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
+
+  // Fade in
+  setTimeout(() => modal.style.opacity = "1", 20);
 
   const cancelBtn = modal.querySelector("#cancelMeet");
   const confirmBtn = modal.querySelector("#confirmMeet");
