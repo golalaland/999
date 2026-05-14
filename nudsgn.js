@@ -1651,7 +1651,7 @@ document.getElementById('withdrawBtn')?.addEventListener('click', () => {
 
   // === 2. Bank Details Check (Most Important) ===
   if (!currentUser.bankName || !currentUser.bankAccountNumber) {
-    realAlert("Please set up your Bank Account details first before withdrawing.\n\nGo to Profile → Bank Setup.");
+    realAlert("Please set up your Bank Account details first before withdrawing.");
     return;
   }
 
@@ -1673,8 +1673,8 @@ document.getElementById('standardWithdrawBtn')?.addEventListener('click', () => 
 
 // ====================== FAST TRACK WITHDRAW ======================
 document.getElementById('fastTrackWithdrawBtn')?.addEventListener('click', () => {
-  if (currentUser.stars < 21) {
-    realAlert("You need at least 21 STRZ to use Fast Track!");
+  if (currentUser.stars < 500) {
+    realAlert("You need at least 500 STRZ to use Fast Track!");
     return;
   }
 
@@ -2195,23 +2195,23 @@ async function updateLiveBanner() {
 
     // YOUR NEW GOD-TIER MESSAGES (rotate every 21 sec)
     const messages = [
-      { text: "LIVE • ₦4.82M POT • WAR DON START",                    color: "#00FFA3", glow: true },
-      { text: "1ST TAKES ₦1.9M • NO MERCY",                           color: "#FF2D55", glow: true },
+      { text: "LIVE • ₦2.5M POT • TAP MASTER",                    color: "#00FFA3", glow: true },
+      { text: "1ST TAKES ₦250K • TAP! IN",                           color: "#FF2D55", glow: true },
       
       top1 ? { text: `${top1.name.toUpperCase()} IS GOOOALS • ${top1.taps.toLocaleString()} TAPS`, color: "#00FFA3", glow: true } : null,
       top2 ? { text: `#2 ${top2.name.toUpperCase()} IS CATCHING UP`,       color: "#FFD700", glow: false } : null,
       top3 ? { text: `#3 ${top3.name.toUpperCase()} IS HUNTING`, color: "#FFD700", glow: false } : null,
 
       { text: "₦1.4M PAID THIS WEEK • REAL CASH",                   color: "#00FFA3", glow: true },
-      { text: "LAST CASH OUT ₦920K • 11 MINS AGO",                    color: "#FF2D55", glow: false },
-      { text: "TOP 100 CASH DAILY • NO EXCUSES",                       color: "#FFD700", glow: true },
+      { text: "LAST CASH OUT ₦159K • 11 MINS AGO",                    color: "#FF2D55", glow: false },
+      { text: "TOP 100 REWARDED DAILY • PROMOTIONS",                       color: "#FFD700", glow: true },
 
       top10 ? { text: `YOU NEED ${(top10.taps + 5000).toLocaleString()} TAPS TO ENTER TOP-10`, color: "#00FFA3", glow: true } : null,
       
-      { text: "RESET IN ~24H • ONLY THE STRONG EAT",                   color: "#FF2D55", glow: true },
-      { text: "FINGERS BLEEDING YET? KEEP GOING",                     color: "#00FFA3", glow: true },
-      { text: "YOUR MAMA CAN’T SAVE YOU NOW",                         color: "#FF2D55", glow: true },
-      { text: "TAP OR REMAIN BROKE • CHOOSE",                         color: "#FFD700", glow: true },
+      { text: "RESET IN ~24H • TAP!",                   color: "#FF2D55", glow: true },
+      { text: "ON THE LEADERBOARD YET? KEEP GOING",                     color: "#00FFA3", glow: true },
+      { text: "YO MAMA CAN’T SAVE YOU NOW",                         color: "#FF2D55", glow: true },
+      { text: "TAP OR TAP OUT • CHOOSE",                         color: "#FFD700", glow: true },
       { text: "LEADERBOARD DOESN’T LIE • MOVE!",                      color: "#00FFA3", glow: true },
     ].filter(Boolean); // remove nulls
 
