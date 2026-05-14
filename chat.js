@@ -3072,7 +3072,7 @@ function showUnifiedCard(user) {
 
   const isPrivilegedMale = isMale && user.isHost;
 
-  // Build main text
+  // Build main text — Fruit removed from sentence
   let mainText = "";
   const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
   const intro = descriptors ? `${descriptors} ${genderRaw}` : genderRaw;
@@ -3084,7 +3084,6 @@ function showUnifiedCard(user) {
   }
 
   if (location) mainText += `, ${location}`;
-  if (!isMale && fruit) mainText += ` ${fruit}`;
   mainText += ".";
 
   if (!user.isHost && !isVIP) {
@@ -3103,13 +3102,14 @@ function showUnifiedCard(user) {
   });
   content.appendChild(profileEl);
 
-  // Trait Pills
+  // Trait Pills (Fruit moved here)
   const traitsContainer = document.createElement("div");
   traitsContainer.style.cssText = `display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:18px;`;
 
   const traits = [ageGroup, city];
   if (bodyType) traits.push(bodyType);
   if (nature) traits.push(nature);
+  if (fruit) traits.push(fruit);           // ← Fruit now appears as pill
 
   traits.forEach(trait => {
     const pill = document.createElement("span");
@@ -3143,27 +3143,51 @@ function showUnifiedCard(user) {
   content.appendChild(bioEl);
   typeWriterEffect(bioEl, user.bioPick || "No bio shared yet...");
 
-  // Meet Button for Hosts
+    // Meet Button for Hosts
   if (user.isHost) {
     const meetBtn = document.createElement("div");
     meetBtn.style.cssText = `
-      width:54px; height:54px; border-radius:50%; 
-      background:rgba(30,30,35,0.9); 
-      display:flex; align-items:center; justify-content:center; 
-      margin:10px auto 8px; cursor:pointer; 
-      border:2px solid rgba(255,107,0,0.5);
-      transition:all 0.3s ease;
+      width: 56px; 
+      height: 56px; 
+      border-radius: 50%; 
+      background: rgba(255,255,255,0.06);
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      margin: 12px auto 8px; 
+      cursor: pointer; 
+      border: 2px solid rgba(255,255,255,0.18);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     `;
-    meetBtn.innerHTML = `<img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_1.png?v=1765845334" style="width:28px;height:28px;"/>`;
+
+    // Heart + subtle glow
+    meetBtn.innerHTML = `
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff99aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    `;
+
+    // Hover effect
+    meetBtn.onmouseenter = () => {
+      meetBtn.style.background = "rgba(255,255,255,0.12)";
+      meetBtn.style.borderColor = "rgba(255,255,255,0.35)";
+      meetBtn.style.transform = "scale(1.08)";
+    };
+    meetBtn.onmouseleave = () => {
+      meetBtn.style.background = "rgba(255,255,255,0.06)";
+      meetBtn.style.borderColor = "rgba(255,255,255,0.18)";
+      meetBtn.style.transform = "scale(1)";
+    };
+
     meetBtn.onclick = (e) => {
       e.stopPropagation();
       if (typeof showMeetModal === 'function') showMeetModal(user);
     };
+
     content.appendChild(meetBtn);
   }
-
-  document.body.appendChild(card);
-
+   
   // Close on outside click
   setTimeout(() => {
     const closeOut = (e) => {
@@ -3175,9 +3199,9 @@ function showUnifiedCard(user) {
     document.addEventListener("click", closeOut);
   }, 50);
 }
-
 // Typewriter
-function typeWriterEffect(el, text, speed = 40) {
+
+function typeWriterEffect(el, text, speed = 31) {
   el.textContent = "";
   let i = 0;
   const t = setInterval(() => {
@@ -4783,44 +4807,96 @@ giftSlider.value = 1;
 giftAmountEl.textContent = "1";
 }
 
-/* ---------- Meet Modal with Staged Playful Flow for Telegram → WhatsApp ---------- */
+/* ---------- Enhanced Meet Modal ---------- */
 function showMeetModal(host) {
-  let modal = document.getElementById("meetModal");
-  if (modal) modal.remove();
+  if (!host) return;
 
-  modal = document.createElement("div");
+  // Remove existing modal
+  let existing = document.getElementById("meetModal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
   modal.id = "meetModal";
+  
   Object.assign(modal.style, {
     position: "fixed",
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
-    background: "rgba(0,0,0,0.75)",
+    background: "rgba(0,0,0,0.8)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: "999999",
-    backdropFilter: "blur(3px)",
-    WebkitBackdropFilter: "blur(3px)"
+    zIndex: "9999999",
+    opacity: "0",
+    transition: "opacity 0.3s ease"
   });
 
   modal.innerHTML = `
     <div id="meetModalContent" style="
-      background:#111;
-      padding:20px 22px;
-      border-radius:12px;
-      text-align:center;
-      color:#fff;
-      max-width:340px;
-      box-shadow:0 0 20px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, rgba(20,20,23,0.97), rgba(15,15,18,0.97));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 28px 26px 24px;
+      max-width: 340px;
+      width: 92%;
+      text-align: center;
+      color: #fff;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      font-family: Poppins, system-ui, sans-serif;
     ">
-      <h3 style="margin-bottom:10px;font-weight:600;">Meet ${host.chatId || "this host"}?</h3>
-      <p style="margin-bottom:16px;">Unlock with <b>250 STRZ ⭐</b>?</p>
-      <div style="display:flex;gap:10px;justify-content:center;">
-        <button id="cancelMeet" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
-        <button id="confirmMeet" style="padding:8px 16px;background:linear-gradient(90deg,#ff0099,#ff6600);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
+      <div style="margin-bottom: 18px;">
+        <div style="width: 68px; height: 68px; margin: 0 auto 16px; background: rgba(255,107,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,107,0,0.4);">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffaa66" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          </svg>
+        </div>
       </div>
+
+      <h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 700;">
+        Meet <span style="background: linear-gradient(90deg, #ff6b00, #ff55cc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">@${host.chatId || "Host"}</span>?
+      </h3>
+      
+      <p style="color: #ccc; margin-bottom: 24px; line-height: 1.5;">
+        Unlock private chat + meetup details<br>
+        <strong style="color:#ffd700;">250 STRZ ⭐</strong>
+      </p>
+
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="cancelMeet" style="
+          flex: 1; 
+          padding: 14px; 
+          background: rgba(255,255,255,0.08); 
+          border: 1px solid rgba(255,255,255,0.15); 
+          color: #ddd; 
+          border-radius: 12px; 
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        ">Cancel</button>
+        
+        <button id="confirmMeet" style="
+          flex: 1; 
+          padding: 14px; 
+          background: linear-gradient(90deg, #ff0099, #ff6600); 
+          border: none; 
+          color: white; 
+          border-radius: 12px; 
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(255,0,153,0.3);
+          transition: all 0.2s ease;
+        ">Pay 250 STRZ & Meet</button>
+      </div>
+
+      <p style="margin-top: 18px; font-size: 12px; color: #666;">
+        Instant connection • Safe & Private
+      </p>
     </div>
   `;
 
@@ -4982,6 +5058,10 @@ modalContent.innerHTML = `
           }
         }, totalTime);
       });
+
+         // Fade in
+  setTimeout(() => modal.style.opacity = "1", 10);
+
 
     } catch (err) {
       ("Meet request failed:", err);
