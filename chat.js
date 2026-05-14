@@ -776,7 +776,7 @@ function showHotspotAd() {
         <!-- Free Tonight? Logo Style -->
         <span style="
           font-family: 'Architects Daughter', cursive;
-          font-size: 26px;
+          font-size: 21px;
           letter-spacing: 3px;
           background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
           -webkit-background-clip: text;
@@ -810,7 +810,7 @@ function showHotspotAd() {
           cursor: pointer;
           transition: all 0.3s ease;
         ">
-          I'M GOING TONIGHT ✨
+          I'M IN 
         </button>
       </div>
     </div>
@@ -6830,7 +6830,7 @@ intro.innerHTML = `
       <!-- ONE LINER - STRONG & CLEAN -->
       <span id="freeTonightText" style="
         font-family: 'Architects Daughter', cursive;
-        font-size: 33px;
+        font-size: 21px;
         font-weight: 400;
         letter-spacing: 5px;
         background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
@@ -6850,7 +6850,7 @@ intro.innerHTML = `
         FREE TONIGHT?
       </span>
       
-     <p style="margin:0 0 7px; font-size:13px; font-weight:600; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+     <p style="margin:0 0 7px; font-size:13px; font-weight:700; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
         Real moments • Real matches • Right now
       </p>
       <p style="margin:0; color:#8899aa; font-size:13.5px;">
