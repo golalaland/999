@@ -5046,9 +5046,6 @@ function showMeetModal(host) {
 
         setTimeout(() => {
           stageMsgEl.textContent = stage;
-            fix this same way as snapchat, by adding whatsapp logo and telegram logo where neccessary do it as a pro java script expert:
- 
- 
  
           // Final stage → show success screen
           if (index === stages.length - 1) {
