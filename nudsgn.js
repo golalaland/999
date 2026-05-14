@@ -488,9 +488,12 @@ function animateDeduct(el, from, to, duration = 600) {
 }
 
 
-// ---------- DEDUCT STARS WITH ANIMATION ----------
+// ---------- DEDUCT STARS WITH ANIMATION + REAL ALERTS ----------
 async function tryDeductStarsForJoin(cost) {
-  if (!currentUser?.uid) return { ok: false, message: "You are not logged in" };
+  if (!currentUser?.uid) {
+    realAlert("You are not logged in");
+    return { ok: false, message: "You are not logged in" };
+  }
 
   const userRef = doc(db, "users", currentUser.uid);
   const previousStars = currentUser.stars ?? 0;
@@ -498,24 +501,42 @@ async function tryDeductStarsForJoin(cost) {
   try {
     await runTransaction(db, async (t) => {
       const u = await t.get(userRef);
-      if (!u.exists()) throw new Error("User not found");
+      if (!u.exists()) throw new Error("USER_NOT_FOUND");
+
       const currentStars = Number(u.data().stars || 0);
-      if (currentStars < cost) throw new Error("Not enough stars");
+
+      if (currentStars < cost) {
+        throw new Error("NOT_ENOUGH_STARS");
+      }
+
       t.update(userRef, { stars: currentStars - cost });
       currentUser.stars = currentStars - cost;
     });
 
-    // ← THIS IS THE ONLY CHANGE
+    // Success animation
     if (starCountEl) {
       animateDeduct(starCountEl, previousStars, currentUser.stars, 700);
     }
 
     return { ok: true };
+
   } catch (e) {
-    return { ok: false, message: e.message || "Could not deduct stars" };
+    let alertMessage = "An error occurred";
+
+    if (e.message === "NOT_ENOUGH_STARS") {
+      alertMessage = `You need at least ${cost} stars`;
+    } 
+    else if (e.message === "USER_NOT_FOUND") {
+      alertMessage = "User profile not found. Please refresh and try again.";
+    } 
+    else {
+      alertMessage = e.message || "Could not deduct stars";
+    }
+
+    realAlert(alertMessage);
+    return { ok: false, message: alertMessage };
   }
 }
-
 // ---------- FLOATING +1 ----------
 function showFloatingPlus(parent,text){
   const span=document.createElement('span');
@@ -1571,11 +1592,10 @@ function realAlert(message) {
 }
 
 
-// ==================== STAR MARKET + WITHDRAWAL SYSTEM — FIXED ====================
+// ==================== STAR MARKET + WITHDRAWAL SYSTEM — FINAL & BULLETPROOF ====================
 
 // OPEN STAR MARKET
-document.getElementById('starMarketBtn')?.addEventListener('click', async () => {
-  await refreshCurrentUserBankDetails();   // ← NEW: Force refresh bank info
+document.getElementById('starMarketBtn')?.addEventListener('click', () => {
   document.getElementById('starMarketModal').style.display = 'flex';
   updateBankDisplay();
 });
@@ -1583,23 +1603,6 @@ document.getElementById('starMarketBtn')?.addEventListener('click', async () => 
 document.getElementById('closeStarMarket')?.addEventListener('click', () => {
   document.getElementById('starMarketModal').style.display = 'none';
 });
-
-// Refresh bank details from Firestore
-async function refreshCurrentUserBankDetails() {
-  if (!currentUser?.uid) return;
-  
-  try {
-    const userSnap = await getDoc(doc(db, "users", currentUser.uid));
-    if (userSnap.exists()) {
-      const data = userSnap.data();
-      currentUser.bankName = data.bankName;
-      currentUser.bankAccountNumber = data.bankAccountNumber;
-      currentUser.bankSlug = data.bankSlug; // optional
-    }
-  } catch (e) {
-    console.warn("Could not refresh bank details", e);
-  }
-}
 
 // UPDATE BALANCES + WITHDRAW BUTTON STATE
 function updateBankDisplay() {
@@ -1619,41 +1622,105 @@ function updateBankDisplay() {
   if (els.bankCash) els.bankCash.textContent = cash.toLocaleString();
   if (els.bankStars) els.bankStars.textContent = stars.toLocaleString();
   if (els.withdrawAmount) els.withdrawAmount.value = '';
-
   if (els.withdrawBtn) {
-    const hasBankDetails = !!(currentUser.bankName && currentUser.bankAccountNumber);
-    const canWithdraw = cash >= 5000 && hasBankDetails;
-
+    const canWithdraw = cash >= 5000;
     els.withdrawBtn.style.opacity = canWithdraw ? "1" : "0.5";
     els.withdrawBtn.style.cursor = canWithdraw ? "pointer" : "not-allowed";
     els.withdrawBtn.disabled = !canWithdraw;
   }
 }
 
-// ====================== WITHDRAW BUTTON ======================
+// INPUT — AUTO FORMAT WITH COMMAS
+document.getElementById('withdrawAmount')?.addEventListener('input', function(e) {
+  let value = e.target.value.replace(/\D/g, '');
+  if (!value) {
+    e.target.value = '';
+    return;
+  }
+  e.target.value = parseInt(value).toLocaleString();
+});
+
+// ==================== WITHDRAWAL SYSTEM — FINAL LUXURY EDITION ====================
+
+let pendingWithdrawal = { amount: 0, isFastTrack: false };
+
+// INPUT — AUTO COMMA FORMAT (type="text" required in HTML!)
+document.getElementById('withdrawAmount')?.addEventListener('input', function(e) {
+  let value = e.target.value.replace(/[^\d]/g, '');
+  if (!value) {
+    e.target.value = '';
+    return;
+  }
+  e.target.value = Number(value).toLocaleString('en-US');
+});
+
+// WITHDRAW BUTTON — OPENS CUTE CONFIRM MODAL
 document.getElementById('withdrawBtn')?.addEventListener('click', () => {
   const raw = document.getElementById('withdrawAmount').value.replace(/,/g, '');
   const amount = Number(raw);
 
+  // === 1. Basic Validation ===
   if (!amount || amount < 5000) {
     realAlert("Minimum withdrawal is ₦5,000");
     return;
   }
-  if (amount > (currentUser.cash || 0)) {
+
+  if (amount > currentUser.cash) {
     realAlert(`You only have ₦${currentUser.cash.toLocaleString()}`);
     return;
   }
 
-  // Stronger bank check
+  // === 2. Bank Details Check (Most Important) ===
   if (!currentUser.bankName || !currentUser.bankAccountNumber) {
     realAlert("Please set up your Bank Account details first before withdrawing.");
     return;
   }
 
+  // All checks passed
   pendingWithdrawal.amount = amount;
 
+  // Show amount in confirmation modal
+  document.getElementById('confirmAmount').textContent = amount.toLocaleString();
+  
   document.getElementById('starMarketModal').style.display = 'none';
   document.getElementById('withdrawConfirmModal').style.display = 'flex';
+});
+
+// ====================== STANDARD WITHDRAW ======================
+document.getElementById('standardWithdrawBtn')?.addEventListener('click', () => {
+  document.getElementById('withdrawConfirmModal').style.display = 'none';
+  processWithdrawalAndCelebrate(pendingWithdrawal.amount, false);   // false = normal speed
+});
+
+// ====================== FAST TRACK WITHDRAW ======================
+document.getElementById('fastTrackWithdrawBtn')?.addEventListener('click', () => {
+  if (currentUser.stars < 500) {
+    realAlert("You need at least 500 STRZ to use Fast Track!");
+    return;
+  }
+
+  document.getElementById('withdrawConfirmModal').style.display = 'none';
+  document.getElementById('fastTrackConfirmModal').style.display = 'flex';
+});
+
+// ====================== CONFIRM FAST TRACK ======================
+document.getElementById('confirmFastTrack')?.addEventListener('click', () => {
+  document.getElementById('fastTrackConfirmModal').style.display = 'none';
+  processWithdrawalAndCelebrate(pendingWithdrawal.amount, true);    // true = fast track
+});
+
+// ====================== CANCEL BUTTONS ======================
+document.getElementById('cancelWithdrawBtn')?.addEventListener('click', () => {
+  document.getElementById('withdrawConfirmModal').style.display = 'none';
+});
+
+document.getElementById('cancelFastTrack')?.addEventListener('click', () => {
+  document.getElementById('fastTrackConfirmModal').style.display = 'none';
+});
+
+// ====================== CLOSE SUCCESS OVERLAY ======================
+document.getElementById('closeSuccessBtn')?.addEventListener('click', () => {
+  document.getElementById('withdrawSuccessOverlay').style.display = 'none';
 });
 
 /* ============================================================
