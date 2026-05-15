@@ -3040,66 +3040,64 @@ function showUnifiedCard(user) {
   content.appendChild(header);
 
 // Role Chip Logic
-if (!isHost) {
-  const roleChip = document.createElement("div");
+const roleChip = document.createElement("div");
 
-  if (isVIP) {
-    roleChip.textContent = "VIP";
+if (isVIP) {
+  roleChip.textContent = "VIP";
 
-    roleChip.style.cssText = `
-      display: inline-block;
-      font-size: 10px;
-      letter-spacing: 1.2px;
-      font-weight: 700;
-      padding: 5px 14px;
-      border-radius: 30px;
-      background: linear-gradient(90deg, #b8860b, #ffd700, #ffeb3b, #ffd700, #b8860b);
-      background-size: 300% 100%;
-      color: #1a1200;
-      margin-bottom: 16px;
-      box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-      animation: vipShimmer 3.5s linear infinite;
-      position: relative;
-      overflow: hidden;
-    `;
+  roleChip.style.cssText = `
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 30px;
+    background: linear-gradient(90deg, #b8860b, #ffd700, #ffeb3b, #ffd700, #b8860b);
+    background-size: 300% 100%;
+    color: #1a1200;
+    margin-bottom: 16px;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    animation: vipShimmer 3.5s linear infinite;
+    position: relative;
+    overflow: hidden;
+  `;
 
-    // Shine overlay
-    const shine = document.createElement("div");
-    shine.style.cssText = `
-      position: absolute;
-      top: -50%;
-      left: -100%;
-      width: 40%;
-      height: 300%;
-      background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,0.9),
-        transparent
-      );
-      animation: shineAnimation 4s infinite linear;
-    `;
+  const shine = document.createElement("div");
+  shine.style.cssText = `
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 40%;
+    height: 300%;
+    background: linear-gradient(
+      120deg,
+      transparent,
+      rgba(255,255,255,0.9),
+      transparent
+    );
+    animation: shineAnimation 4s infinite linear;
+  `;
 
-    roleChip.appendChild(shine);
+  roleChip.appendChild(shine);
 
-  } else {
-    roleChip.textContent = "MEMBER";
+} else {
+  roleChip.textContent = "MEMBER";
 
-    roleChip.style.cssText = `
-      display: inline-block;
-      font-size: 10px;
-      letter-spacing: 1px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #aaa;
-      margin-bottom: 16px;
-    `;
-  }
+  roleChip.style.cssText = `
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #aaa;
+    margin-bottom: 16px;
+  `;
+}
 
-  content.appendChild(roleChip);
+content.appendChild(roleChip);
 }
 
   // Legendary Details Logic
