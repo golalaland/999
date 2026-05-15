@@ -2997,7 +2997,7 @@ function showUnifiedCard(user) {
   const isMale = (user.gender || "").toLowerCase() === "male";
 
   let accentColor = isHost ? "#ff6b00" : isVIP ? "#ff00aa" : "#888888";
-  let roleName = isHost ? "HOST" : isVIP ? "VIP" : "MEMBER";
+  let roleName = isVIP ? "VIP" : "MEMBER";
   let roleBg = isHost ? "rgba(255,107,0,0.15)" : isVIP ? "linear-gradient(135deg, #a07010, #f0c040)" : "rgba(255,255,255,0.06)";
 
   // Accent Bar
