@@ -653,7 +653,7 @@ function setupNotificationsListener(userId) {
 
   const list = document.getElementById("notificationsList");
   if (!list) {
-    setTimeout(() => setupNotificationsListener(userId), 500);
+    setTimeout(() => setupNotificationsListener(userId), 800);
     return;
   }
 
@@ -666,11 +666,11 @@ function setupNotificationsListener(userId) {
   notificationsUnsubscribe = onSnapshot(q, (snap) => {
     const unreadCount = snap.docs.filter(doc => !doc.data().read).length;
 
-    // Update Host Button Red ✱ Badge
+    // Update red ✱ badge on Host Button
     updateHostNotifBadge(unreadCount > 0);
 
     if (snap.empty) {
-      list.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No notifications yet</p>`;
+      list.innerHTML = `<p style="opacity:0.6;text-align:center;padding:30px 10px;">No notifications yet</p>`;
       return;
     }
 
@@ -680,7 +680,7 @@ function setupNotificationsListener(userId) {
       const formattedMessage = (n.message || "").replace(/\n/g, "<br>");
 
       return `
-        <div class="notification-item ${n.read ? '' : 'unread'}" data-type="${n.type || ''}">
+        <div class="notification-item ${n.read ? '' : 'unread'}" data-id="${doc.id}">
           ${n.icon ? `<div class="notif-icon">${n.icon}</div>` : ''}
           ${n.title ? `<div class="notif-title">${n.title}</div>` : ''}
           <div class="notif-message">${formattedMessage}</div>
@@ -689,6 +689,14 @@ function setupNotificationsListener(userId) {
       `;
     }).join("");
   });
+}
+
+// UPDATE HOST BUTTON RED ASTERISK
+function updateHostNotifBadge(hasUnread) {
+  const badge = document.getElementById("hostNotifBadge");
+  if (!badge) return;
+
+  badge.style.display = hasUnread ? "flex" : "none";
 }
 
 // MARK ALL READ + CLEAR BADGE
@@ -705,7 +713,7 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
   await batch.commit();
 
   showStarPopup("All notifications marked as read");
-  updateHostNotifBadge(false); // Clear the red ✱
+  updateHostNotifBadge(false);
 });
 
 // UPDATE HOST BUTTON RED ASTERISK
