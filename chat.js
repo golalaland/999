@@ -499,6 +499,8 @@ async function pushNotification(userId, message) {
 }
 
 
+
+
 // ===============================================
 // ON AUTH STATE CHANGED — FINAL CLEAN VERSION
 // ===============================================
@@ -642,8 +644,9 @@ setTimeout(async () => {
   }
 });
 
+
 // ===============================================
-// NOTIFICATIONS LISTENER
+// NOTIFICATIONS LISTENER + HOST BADGE
 // ===============================================
 function setupNotificationsListener(userId) {
   if (!userId) return;
@@ -661,6 +664,11 @@ function setupNotificationsListener(userId) {
   );
 
   notificationsUnsubscribe = onSnapshot(q, (snap) => {
+    const unreadCount = snap.docs.filter(doc => !doc.data().read).length;
+
+    // Update Host Button Red ✱ Badge
+    updateHostNotifBadge(unreadCount > 0);
+
     if (snap.empty) {
       list.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No notifications yet</p>`;
       return;
@@ -683,7 +691,7 @@ function setupNotificationsListener(userId) {
   });
 }
 
-// MARK ALL READ
+// MARK ALL READ + CLEAR BADGE
 document.getElementById("markAllRead")?.addEventListener("click", async () => {
   const userId = localStorage.getItem("userId");
   if (!userId) return;
@@ -695,9 +703,22 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
   const batch = writeBatch(db);
   snap.docs.forEach(d => batch.update(d.ref, { read: true }));
   await batch.commit();
-  showStarPopup("Marked as read");
+
+  showStarPopup("All notifications marked as read");
+  updateHostNotifBadge(false); // Clear the red ✱
 });
 
+// UPDATE HOST BUTTON RED ASTERISK
+function updateHostNotifBadge(hasUnread) {
+  const badge = document.getElementById("hostNotifBadge");
+  if (!badge) return;
+
+  if (hasUnread) {
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
 
 function showStarPopup(text) {
   const popup = document.getElementById("starPopup");
