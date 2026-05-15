@@ -604,6 +604,8 @@ onAuthStateChanged(auth, async (firebaseUser) => {
      loadActiveUsersForSocial();           // ← ADD THIS
      setTimeout(loadActiveUsersForSocial, 1500);   // ← Add this
     showChatUI?.(currentUser);
+     refs.starCountEl.textContent =
+  formatNumberWithCommas(currentUser.stars || 0);
     attachMessagesListener?.();
     setupPresence?.(currentUser);
     setupNotificationsListener?.(uid);
@@ -3705,17 +3707,20 @@ async function giveDailyStarBonus(uid) {
   try {
     const userRef = doc(db, "users", uid);
     const snap = await getDoc(userRef);
+
     if (!snap.exists()) return;
 
     const data = snap.data();
     const today = todayDate();
 
-    // Reset if new day
+    // Reset for new day
     if (data.lastStarDate !== today) {
       await updateDoc(userRef, {
         starsToday: 0,
         lastStarDate: today
       });
+
+      data.starsToday = 0;
     }
 
     const effectiveCap = getEffectiveDailyCap(data);
@@ -3728,48 +3733,46 @@ async function giveDailyStarBonus(uid) {
 
     const amountToAdd = effectiveCap - currentToday;
 
-    // Award stars
+    // STORE OLD VALUE
+    const oldStars = currentUser.stars || 0;
+    const newStars = oldStars + amountToAdd;
+
+    // Update Firestore
     await updateDoc(userRef, {
       stars: increment(amountToAdd),
       starsToday: increment(amountToAdd)
     });
 
-    // Update local state
-    currentUser.stars = (currentUser.stars || 0) + amountToAdd;
+    // Update local user
+    currentUser.stars = newStars;
     currentUser.starsToday = currentToday + amountToAdd;
 
     dailyStarBonusGiven = true;
 
-    // === Show Notification + Smooth Animation ===
-    // Small delay to make sure DOM and UI functions are ready
-    setTimeout(() => {
-      if (typeof showGoldAlert === "function") {
-        showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
-      }
+    // Wait until UI fully mounted
+    requestAnimationFrame(() => {
+      setTimeout(() => {
 
-      // Smooth count-up
-      if (typeof animateStarCount === "function") {
-        animateStarCount(currentUser.stars);
-      } else if (refs?.starCountEl) {
-        let displayed = parseInt(refs.starCountEl.textContent.replace(/[^0-9]/g, '')) || 0;
-        const target = currentUser.stars;
-        const step = Math.ceil((target - displayed) / 25);
+        // ALERT
+        if (typeof showGoldAlert === "function") {
+          showGoldAlert(
+            `🎁 You've received ${amountToAdd} Stars for today!`,
+            "success"
+          );
+        }
 
-        const interval = setInterval(() => {
-          displayed += step;
-          if (displayed >= target) {
-            displayed = target;
-            clearInterval(interval);
-          }
-          refs.starCountEl.textContent = formatNumberWithCommas(displayed);
-        }, 40);
-      }
-    }, 800); // Small delay ensures everything is loaded
+        // ANIMATE
+        animateStarCount(oldStars, newStars);
 
-    (`[DAILY BONUS] +${amountToAdd} stars | New Total: ${currentUser.stars}`);
+      }, 500);
+    });
+
+    console.log(
+      `[DAILY BONUS] +${amountToAdd} stars | New Total: ${newStars}`
+    );
 
   } catch (err) {
-    ("[DAILY BONUS] Error:", err);
+    console.error("[DAILY BONUS] Error:", err);
   }
 }
 
@@ -3784,25 +3787,39 @@ function getEffectiveDailyCap(userData) {
 }
 
 // ====================== SMOOTH ANIMATION HELPER ======================
-function animateStarCount(target) {
+function animateStarCount(from, to) {
   if (!refs?.starCountEl) return;
 
-  let displayed = currentUser.stars || 0;
-  const diff = target - displayed;
-  if (Math.abs(diff) < 5) {
-    refs.starCountEl.textContent = formatNumberWithCommas(target);
+  let displayed = from;
+
+  refs.starCountEl.textContent =
+    formatNumberWithCommas(displayed);
+
+  const diff = to - from;
+
+  if (Math.abs(diff) < 1) {
+    refs.starCountEl.textContent =
+      formatNumberWithCommas(to);
     return;
   }
 
   const step = Math.ceil(diff / 25);
 
   const interval = setInterval(() => {
+
     displayed += step;
-    if ((step > 0 && displayed >= target) || (step < 0 && displayed <= target)) {
-      displayed = target;
+
+    if (
+      (step > 0 && displayed >= to) ||
+      (step < 0 && displayed <= to)
+    ) {
+      displayed = to;
       clearInterval(interval);
     }
-    refs.starCountEl.textContent = formatNumberWithCommas(displayed);
+
+    refs.starCountEl.textContent =
+      formatNumberWithCommas(displayed);
+
   }, 40);
 }
 
