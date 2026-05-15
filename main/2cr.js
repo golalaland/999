@@ -1,4726 +1,9354 @@
-<!doctype html>
-<html lang="en">
-<head>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<meta charset="utf-8" />
-<meta name="viewport"
-  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ＣＵＢＥ</title>
-<link rel="icon" href="data:," />
-<style>
-:root {
-  --bg:           #000;
-  --card:         #111;
-  --muted:        #88a066;
-  --accent:       #c3f60c;
-  --glass:        rgba(255,255,255,0.03);
-  --pulse-color:  #c3f60c;
-  --buzz-color:   #ddff55;
-
-  /* SUBTLE GLOW LEVELS */
-  --glow-1:       rgba(195, 246, 12, 0.08);  /* softer */
-  --glow-2:       rgba(195, 246, 12, 0.18);  /* medium-soft */
-  --glow-3:       rgba(195, 246, 12, 0.28);  /* controlled */
-  --glow-max:     rgba(195, 246, 12, 0.5);   /* no more full neon */
-}
-
-#videoWrapper .nav-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 6px;
-  position: absolute;
-  bottom: 6px; /* overlay near bottom of video */
-  width: 100%;
-  pointer-events: auto;
-}
-
-#videoWrapper .nav-buttons button {
-  padding: 6px 10px;
-  font-size: 13px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,20,147,0.2);
-  background: rgba(30,30,30,0.7);
-  color: var(--accent);
-  cursor: pointer;
-}
-#videoWrapper .nav-buttons button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(255,20,147,0.3);
-}
-#videoWrapper {
-  flex-shrink: 0;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #111;
-
-  /* NEW: make sticky */
-  position: sticky;
-  top: 0;
-  z-index: 50; /* make sure it’s above messages but below popups like stars */
-}
-
-/* Video container inside wrapper */
-#videoContainer {
-  width: 100%;
-  height: 100%;       /* fill the wrapper */
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 24px;
-  background: rgba(0,0,0,0.3);
-  color: #fff;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 50%;
-  z-index: 10;
-}
-#prev { left: 5px; }
-#next { right: 5px; }
-  /* Minimal, almost invisible Prev/Next buttons */
-  #prevBtn, #nextBtn {
-    width: 30px;
-    height: 30px;
-    font-size: 16px;
-    background: rgba(255, 255, 255, 0.05); /* very subtle */
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
-    opacity: 0;               /* invisible by default */
-    transition: opacity 0.3s ease;
-  }
-
-  #prevBtn:hover, #nextBtn:hover,
-  #prevBtn.active, #nextBtn.active {
-    opacity: 0.8;             /* appear on hover or when active */
-    cursor: pointer;
-  }
-
-  #prevBtn { left: 10px; }
-  #nextBtn { right: 10px; }
-  
-  .arrow {
-  opacity: 1;
-  transition: opacity 0.5s ease;
-}
-
-.arrow.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-  
-/* overall layout */
-html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#fff;background:var(--bg);}
-#appWrapper{width:100%;height:100%;display:flex;justify-content:center;}
-.app{display:flex;flex-direction:column;height:100%;gap:10px;padding:10px;box-sizing:border-box;width:100%;max-width:480px;}
-.brand{font-weight:700;font-size:24px;color:var(--accent);text-align:center;}
-.room-desc{font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px;}
-#greeting{font-size:13px;text-align:center;font-weight:600;margin-bottom:6px;color:var(--accent);}
-#helloText{font-size:21px;font-weight:900;text-align:center;margin:6px 0;color:#fff;transition:color .2s ease;}
-#center{flex:1;display:flex;flex-direction:column;gap:6px;}
-
-/* Sticky video wrapper */
-#videoPlayerWrapper {
-  position: fixed;
-  top: 10px; /* distance from top */
-  right: 10px; /* or left: 50%; transform: translateX(-50%) for center */
-  width: 320px;
-  height: 180px;
-  z-index: 999;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  background: #111;
-}
-#videoPlayer {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* or contain if you prefer full visibility */
-}
-
-#guestMsg{font-size:16px;font-weight:700;margin:4px 0;color:var(--accent);text-align:center;}
-
-/* Chat container */
-#messages {
-  flex: 1 1 100%;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 20px 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 10px;
-  background: #000;
-  border-radius: 8px;
-  box-sizing: border-box;
-  position: relative;
-  min-height: 300px;
-}
-
-/* Invisible spacer when chat is empty */
-#messages:empty::after {
-  content: "";
-  flex: 1 1 auto;
-  min-height: 400px;
-}
-
-/* Placeholder text */
-#messages:empty::before {
-  content: "No one’s messaged yet — be the first!";
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  user-select: none;
-  width: 80%;
-  color: #000; /* black on startup */
-  z-index: 0;
-}
-
-/* Gray placeholder after login */
-#messages.active:empty::before {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-/* Message bubbles */
-.msg {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--glass);
-  max-width: 100%;
-  display: block;
-  text-align: left;
-}
-
-/* Your own messages */
-.msg.me { 
-  background: rgba(255, 20, 147, 0.06);
-}
-
-/* Username */
-.msg .meta {
-  font-weight: 700;
-  font-size: 13px;
-  white-space: nowrap;
-  margin-right: 4px;
-  display: inline;
-  color: inherit;
-}
-
-/* Message body */
-.msg .content {
-  font-size: 13px;
-  color: #fff;
-  display: inline;
-  white-space: normal;
-  word-break: break-word;
-}
-
-/* Bottom-right "New" button */
-.scroll-to-bottom-btn {
-  position: absolute;
-  right: 12px;
-  bottom: 82px; /* above your 70px margin */
-  width: 44px; height: 44px;
-  background: #9147ff;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Center arrow */
-.center-scroll-arrow {
-  position: absolute;
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
-  width: 48px; height: 48px;
-  background: rgba(0,0,0,0.7);
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 15;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.center-scroll-arrow.show {
-  opacity: 1;
-  pointer-events: auto;
-  animation: bounce 1.5s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-  50% { transform: translate(-50%, -50%) translateY(-6px); }
-}
-/* 🔥 Send Area - Compact base */
-/* 🔥 SEND AREA — COMPACT MOBILE VERSION (2026) */
-.send-area {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--card, #111);
-  padding: 8px 10px;              /* reduced padding */
-  border-radius: 999px;
-  width: 100%;
-  max-width: 460px;               /* slightly narrower */
-  margin: 0 auto;
-  box-sizing: border-box;
-  border-top: 1px solid rgba(255,255,255,0.04);
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  min-height: 44px;               /* noticeably shorter */
-  transition: 
-    padding 0.3s ease,
-    border-radius 0.3s ease,
-    min-height 0.3s ease;
-}
-
-.input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-}
-
-/* Textarea – smaller base size */
-#messageInput {
-  width: 100%;
-  min-height: 38px;               /* smaller default */
-  max-height: 110px;              /* less room to grow */
-  padding: 10px 14px;             /* tighter padding */
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.07);
-  background-color: #0e0e0e;
-  color: #fff;
-  font-size: 15px;                /* slightly smaller text */
-  line-height: 1.35;
-  outline: none;
-  resize: none;
-  overflow-y: hidden;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-#messageInput::placeholder {
-  color: var(--muted, #aaa);
-  opacity: 0.65;
-}
-
-/* Focus glow – kept sexy but softer */
-#messageInput:focus {
-  border-color: var(--accent, #FF1493);
-  box-shadow: 0 0 10px rgba(255, 20, 147, 0.13);
-}
-
-/* EXPANDED STATE – still grows, but more controlled */
-.send-area.expanded {
-  border-radius: 24px;
-  padding: 12px 14px;
-  min-height: 70px;
-  align-items: flex-start;
-}
-
-.send-area.expanded .input-wrapper {
-  align-items: flex-start;
-}
-
-.send-area.expanded #messageInput {
-  border-radius: 20px;
-  min-height: 64px;
-  overflow-y: auto;
-}
-
-/* BUZZ BUTTON – smaller & tighter */
-.buzz-btn {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #1d1d1d;
-  color: var(--accent);
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 13px;                /* smaller text */
-  border: 1px solid rgba(255,20,147,0.16);
-  align-self: center;
-  transition: all 0.25s ease;
-}
-
-.send-area.expanded .buzz-btn {
-  align-self: flex-end;
-  margin-bottom: 4px;
-}
-
-.buzz-btn:hover {
-  animation: buzzPulse 1.4s infinite;
-  transform: translateY(-1px);
-}
-
-.send-btn {
-  padding: 8px 18px;
-  background: var(--accent, #39ff14);
-  color: #000;
-  border: none;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  align-self: center;
-
-  transition:
-    transform 0.08s ease,
-    filter 0.08s ease,
-    box-shadow 0.08s ease;
-
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-}
-
-.send-btn:hover {
-  filter: brightness(1.03);
-}
-
-.send-btn:active {
-  transform: translateY(2px) scale(0.97);
-  filter: brightness(0.92);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
-}
-
-/* Pulse animation (kept but slightly faster) */
-@keyframes buzzPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255,20,147,0.18); }
-  70%  { box-shadow: 0 0 0 10px rgba(255,20,147,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,20,147,0); }
-}
-
-#postLoginLoader {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  flex-direction: column;
-}
-
-#loadingBarWrapper {
-  width: 80%;
-  max-width: 300px;
-  height: 8px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.1);
-  overflow: hidden;
-}
-
-#loadingBar {
-  width: 0%;
-  height: 100%;
-  background: #c3f60c; /* CUBE THEME */
-  border-radius: 4px;
-  animation: loadingAnim 2.5s linear forwards;
-}
-
-/* 🔥 Glass bar with neon accent glow under input */
-.glass-bar {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  margin-top: 6px; /* sits just under input */
-  z-index: 5;      /* stays beneath input */
-  
-  /* 🔥 Neon underglow */
-  box-shadow: 0 0 12px rgba(255, 20, 147, 0.25),
-              0 0 24px rgba(255, 20, 147, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-.buzz-content {
-  display: inline-block;
-  position: relative;
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-weight: 900;
-  font-size: 0.95rem;
-  font-family: 'Arial', sans-serif;
-  color: #000;
-  background: rgba(135, 206, 235, 0.2);
-  white-space: nowrap; 
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 2px 0;
-  transition: text-shadow 0.3s ease-in-out;
-}
-@keyframes buzzTextPulse {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-4px) scale(1.02); }
-}
-@keyframes buzzFloat {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
-}
-@keyframes buzzParticles {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(40px, -60px) rotate(360deg); }
-}
-@keyframes stickerPop {
-  0% { transform: scale(0.8) translateY(20px); opacity: 0; }
-  60% { transform: scale(1.05); }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-@keyframes confettiFall {
-  0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(120%) rotate(720deg); opacity: 0; }
-}
-@keyframes stickerFlash {
-  0% { opacity: 0.8; } 100% { opacity: 0; }
-}
-@keyframes stickerAnnounce {
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-  50% { transform: translate(-50%, -50%) scale(1.1); }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-}
-.screen-shake { animation: screenShake 0.5s ease-in-out !important; }
-@keyframes screenShake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-.room-subtitle {
-  opacity: 1;
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  transform: translateY(0);
-}
-
-.room-subtitle.hidden {
-  opacity: 0;
-  transform: translateY(-6px);
-  pointer-events: none; /* optional: avoids ghost clicks */
-}
-
-
-/* profile glass bar */
-.profile{display:none;flex-direction:column;gap:8px;margin-top:10px;}
-.profile-card{background:var(--glass);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;}
-.profile-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.profile-left{display:flex;flex-direction:column;gap:2px;}
-.profile-name{font-weight:800;}
-.profile-label{color: var(--accent);font-weight: 800;font-size: 10px;}
-.profile-value{color: #fff;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;font-weight: 400;font-size: 11px;}
-.profile-value span,.profile-value .icon{margin-left:2px;}
-.profile-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;}
-.smalla-btn{padding:4px 10px;border-radius:8px;background: var(--accent);border: 0;color: #000;cursor: pointer;font-weight:700;font-size:12px;text-decoration: none;transition: transform .15s, box-shadow .15s;}
-.smalla-btn:hover{transform: translateY(-2px);box-shadow: 0 4px 10px rgba(255,20,147,0.3);}
-.star-popup {
-  position: fixed;
-  left: 50%;
-  top: 18%;
-  transform: translateX(-50%);
-  background: var(--card);
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.05);
-  display: none; /* hidden by default */
-  z-index: 10000; /* very high to stay above modals */
-  color: var(--accent);
-  font-size: 13px;
-  white-space: nowrap;
-  text-align: center;
-  pointer-events: none; /* optional: so it doesn't block clicks below */
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-
-#starPopup {
-  z-index: 10000 !important; /* ensure it's above everything */
-}
-.onlineCount{font-size:11px;color:var(--muted);}
-#authBox{display:flex;justify-content:center;margin:12px 0;}
-.room-subtitle {
-  font-size: 12px;              /* same as #helloText */
-  font-weight: 600;             /* slightly lighter than HELLO */
-  text-align: center;
-  margin-top: 4px;
-  font-family: 'Montserrat', sans-serif; /* Montserrat font */
-  color: var(--accent);
-  letter-spacing: 0.5px;
-  opacity: 0.85;
-  transition: color 0.2s ease;
-}
-
-.room-subtitle:hover {
-  color: #fff;                  /* subtle hover effect */
-}
-
-.gift-alert {
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%) scale(0.9);
-  background: linear-gradient(90deg,#ff6a00,#ff4081);
-  color: #fff;
-  padding: 14px 22px;
-  border-radius: 12px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  opacity: 0;
-  z-index: 99999;
-  transition: all 0.4s ease;
-  font-size: 1rem;
-}
-.gift-alert {
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%) scale(0.9);
-  background: linear-gradient(90deg,#ff6a00,#ff4081);
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 12px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  opacity: 0;
-  z-index: 99999;
-  transition: all 0.4s ease;
-  font-size: 1rem;
-
-  /* 🟢 One-liner behavior */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  max-width: 90%; /* optional for small screens */
-}
-
-.gift-alert.show {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
-}
-
-.floating-star {
-  position: fixed;
-  animation: floatUp 2s ease-out forwards;
-  pointer-events: none;
-}
-
-@keyframes floatUp {
-  from { transform: translateY(0) scale(1); opacity: 1; }
-  to { transform: translateY(-100px) scale(1.5); opacity: 0; }
-}
-.modal {
-  display:none; 
-  position:fixed; 
-  inset:0; 
-  background:rgba(0,0,0,.7); 
-  justify-content:center; 
-  align-items:center; 
-  z-index:9999; 
-}
-.modal-content {
-  background:#111; 
-  color:#fff; 
-  padding:20px; 
-  border-radius:10px; 
-  text-align:center; 
-  width:280px;
-  box-shadow:0 0 10px rgba(255,255,255,0.2);
-}
-.modal-content input {
-  width:80%; 
-  margin:12px auto; 
-  padding:8px; 
-  border-radius:6px; 
-  border:none; 
-  text-align:center;
-}
-.modal-content button {
-  background:#ff4081; 
-  color:#fff; 
-  border:none; 
-  padding:8px 14px; 
-  border-radius:6px; 
-  cursor:pointer;
-}
-.modal {
-  z-index: 3000 !important;
-}
-.pulse-highlight {
-  animation: glowPulse 0.7s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-  0% { box-shadow: 0 0 10px var(--pulse-color), 0 0 20px var(--pulse-color), 0 0 30px var(--pulse-color); }
-  50% { box-shadow: 0 0 15px var(--pulse-color), 0 0 25px var(--pulse-color), 0 0 35px var(--pulse-color); }
-  100% { box-shadow: 0 0 10px var(--pulse-color), 0 0 20px var(--pulse-color), 0 0 30px var(--pulse-color); }
-}
-/* 💫 Gift Stars Animation Layer */
-#giftStars {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9999; /* ensure it's above everything */
-}
-/* ---------- Auth Inputs ---------- */
-/* ---------- Auth Inputs ---------- */
-#authBox { display: flex; justify-content: center; margin-top: 12px; }
-#emailAuthWrapper { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center;  /* ← KEEP THIS—it's your anchor */
-  gap: 10px; 
-  width: 100%; 
-}
-#emailAuthWrapper input.auth-input { 
-  width: 90%; 
-  max-width: 320px; 
-  padding: 12px 16px; 
-  border-radius: 999px; 
-  border: 1px solid rgba(255,255,255,0.08); 
-  background-color: #0e0e0e; 
-  color: #fff; 
-  font-size: 16px; 
-  outline: none; 
-  transition: all 0.2s ease-in-out; 
-  margin: 0 auto;  /* ← ADD THIS for explicit input centering */
-}
-#emailAuthWrapper input.auth-input:focus { 
-  border-color: var(--accent); 
-  box-shadow: 0 0 12px rgba(255,20,147,0.15); 
-}
-/* ---------- CUBE GREEN GOOGLE BUTTON ---------- */
-.google-btn { 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-  padding: 12px 20px; 
-  border-radius: 999px; 
-  background: linear-gradient(135deg, #c3f60c, #a0d00a); 
-  color: #000; 
-  font-weight: 600; 
-  font-size: 14px; 
-  border: none; 
-  cursor: pointer; 
-  box-shadow: 0 4px 10px rgba(195,246,12,0.25), 0 0 8px rgba(195,246,12,0.1); 
-  transition: transform .2s, box-shadow .2s; 
-  width: auto; 
-  justify-content: center; 
-  margin: 0 auto;  /* ← ADD THIS—centers auto-width buttons perfectly */
-}
-.google-btn:hover { 
-  transform: translateY(-2px); 
-  box-shadow: 0 6px 14px rgba(195,246,12,0.35), 0 0 0 12px rgba(195,246,12,0.25); 
-}
-.google-btn img { 
-  width: 18px; 
-  height: 18px; 
-  background: #fff; 
-  border-radius: 4px; 
-  padding: 2px; 
-}
-/* Mobile – exactly like your original */
-@media (max-width: 420px) { 
-  .google-btn { 
-    width: 90%; 
-    max-width: 320px; 
-  } 
-}
-
-/* ──────── MANUAL GLOW CONTROL (just change the number below) ──────── */
-.google-btn.glow-1   { box-shadow: 0 4px 10px rgba(195,246,12,0.25), 0 0  8px rgba(195,246,12,0.10); } /* 1% glow   ← current */
-.google-btn.glow-2   { box-shadow: 0 4px 10px rgba(195,246,12,0.30), 0 0 16px rgba(195,246,12,0.25); } /* 2% glow */
-.google-btn.glow-5   { box-shadow: 0 4px 10px rgba(195,246,12,0.40), 0 0 30px rgba(195,246,12,0.60); } /* 5% glow */
-.google-btn.glow-max { box-shadow: 0 6px 20px rgba(195,246,12,0.60), 0 0 50px rgba(195,246,12,1); }   /* nuclear */
-.video-controls {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  display: flex;
-  gap: 10px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.video-controls.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.video-controls button {
-  background: rgba(0, 0, 0, 0.55);
-  border: none;
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.video-controls button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.08);
-}
-
-.video-controls svg {
-  pointer-events: none;
-}
-/* ====== Featured Hosts Styles — Cube Theme (Crisp & Sexy) ====== */
-.featured-btn {
-  background: linear-gradient(90deg, rgba(195,246,12,0.85), rgba(232,255,106,0.85));
-  color: #000;                         /* dark text for contrast */
-  border: none;
-  border-radius: 25px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: block;
-  margin: 20px auto;
-  box-shadow: 0 0 6px rgba(195,246,12,0.3);  /* subtle glow */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.featured-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 12px rgba(195,246,12,0.5); /* soft pop on hover */
-}
-
-/* 🌟 Featured Hosts Modal (Centered) */
-.featured-modal {
-  display: none;                       /* hidden by default */
-  position: fixed;
-  inset: 0;                             /* full screen */
-  z-index: 10000;
-  background: rgba(0,0,0,0.85);        /* dark and moody */
-  backdrop-filter: blur(10px);          /* soft blur behind modal */
-
-  display: flex;                        /* center modal content */
-  justify-content: center;              /* horizontal centering */
-  align-items: center;                  /* vertical centering */
-  padding: 20px;                        /* spacing from edges */
-  overflow-y: auto;                     /* scroll if content is tall */
-  border-radius: 12px;                  /* slight rounding */
-}
-/* Optional: Modal inner content — Cube edgy glow */
-.featured-modal .modal-content {
-  background: rgba(0,0,0,0.9);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 0 12px rgba(195, 246, 12, 0.5);
-  max-width: 400px;
-  width: 100%;
-  color: #c3f60c;
-  text-align: center;
-  font-weight: 500;
-  font-family: 'Arial', sans-serif;
-}
-
-/* 🔲 Compact modal card */
-.featured-modal-content {
-  position: relative;
-  background: #111;
-  border-radius: 18px;
-  width: 82%; /* smaller screen-inside-screen look */
-  max-width: 320px; /* tighter fit for mobile */
-  color: #fff;
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: modalPop 0.25s ease-out;
-  transform: translateY(0);
-}
-
-/* ❌ Close button */
-.featured-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
-  opacity: 0.9;
-  z-index: 10;
-}
-.featured-close:hover {
-  opacity: 1;
-}
-
-/* 🎥 Video area (smaller height for compactness) */
-.featured-host-video-container {
-  width: 100%;
-  aspect-ratio: 9 / 14; /* slightly shorter than portrait */
-  background: #000;
-  border-radius: 18px 18px 0 0;
-  overflow: hidden;
-}
-.featured-host-video-container iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  object-fit: cover;
-}
-
-/* 👤 Info and actions section */
-.featured-host-footer {
-  padding: 10px 14px;
-  background: #1a1a1a;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-/* Username + Details */
-.featured-host-username {
-  font-weight: 600;
-  font-size: 1.05em;
-}
-.featured-host-details {
-  font-size: 0.85em;
-  opacity: 0.8;
-  margin-bottom: 6px;
-}
-
-/* 🎁 Gift Slider Section — Cube Theme */
-.gift-slider-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
-  padding: 8px 10px;
-  margin-top: 8px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 0 10px rgba(195, 246, 12, 0.05);
-}
-
-/* Cube Gradient Slider */
-#giftSlider {
-  flex: 1;
-  appearance: none;
-  height: 6px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-  outline: none;
-  cursor: pointer;
-  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
-}
-
-#giftSlider::-webkit-slider-thumb {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #c3f60c;
-  border: 2px solid #fff;
-  transition: 0.2s ease;
-  box-shadow: 0 0 8px rgba(195, 246, 12, 0.7);
-}
-
-#giftSlider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(195, 246, 12, 0.9);
-}
-
-/* Cube Gradient Gift Button */
-.featured-gift-btn {
-  padding: 5px 10px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #c3f60c, #e6ff66);
-  border: none;
-  color: #000;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.25s ease;
-  box-shadow: 0 0 10px rgba(195, 246, 12, 0.35);
-}
-
-.featured-gift-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 14px rgba(195, 246, 12, 0.55);
-}
-
-.featured-gift-btn:active {
-  transform: scale(0.97);
-  background: linear-gradient(135deg, #a8d50a, #d8ff55);
-}
-
-/* Gift amount styling */
-#giftAmount, #giftAmount + span {
-  vertical-align: middle;
-  line-height: 1;
-}
-
-#giftAmount + span {
-  transform: translateY(0);
-}
-
-
-/* 🖼 Avatar list */
-.featured-host-list {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px;
-}
-.featured-host-list img {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border 0.25s, transform 0.25s;
-}
-.featured-host-list img.active {
-  border: 2px solid #ff4da6;
-  transform: scale(1.05);
-}
-
-/* Bottom nav buttons */
-.featured-nav-buttons {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 14px 14px;
-  font-size: 0.85rem;
-}
-.featured-nav-buttons a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-/* Animation */
-@keyframes modalPop {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
+/* ==============================================
+   Firebase Modular SDK v10+ (January 2026) — CDN / Script Tag
+   Includes: App, Auth, Firestore, Functions
+   ============================================== */
+// ── Core & Shared ──
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+// ── Firestore ──
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+   deleteField,
+  collection,
+  addDoc,
+  serverTimestamp,
+  onSnapshot,
+  query,
+  startAfter,
+  limit,
+  orderBy,
+  increment,
+  getDocs,
+  where,
+  runTransaction,
+  arrayUnion,
+  writeBatch,
+   Timestamp,   // ← ADD THIS
+  limitToLast
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ── Storage (for uploads) ──
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+      deleteObject,
+  uploadBytesResumable,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+// ── Realtime Database ──
+import {
+  getDatabase,
+  ref as rtdbRef,
+  set as rtdbSet,
+  onDisconnect,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ── Authentication ──
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// ── Cloud Functions ──
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+
+/* ── Firebase Configuration ── */
+const firebaseConfig = {
+  apiKey: "AIzaSyD_GjkTox5tum9o4AupO0LeWzjTocJg8RI",
+  authDomain: "dettyverse.firebaseapp.com",
+  projectId: "dettyverse",
+  storageBucket: "dettyverse.firebasestorage.app",
+  messagingSenderId: "1036459652488",
+  appId: "1:1036459652488:web:f4284cbc49c8074bc9b63d",
+  measurementId: "G-KPSCEYNZWX"
+};
+
+/* ── Initialize Services ── */
+const app = initializeApp(firebaseConfig);
+("🔥 Firebase Project:", firebaseConfig.projectId);
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+const rtdb = getDatabase(app);
+const storage = getStorage(app);
+const functions = getFunctions(app, "us-central1"); // explicit region — important!
+
+("☁️ Functions region set to us-central1");
+("☁️ Storage ready:", firebaseConfig.storageBucket);
+
+/* ── Exports for other modules/scripts ── */
+export {
+  app,
+  db,
+  auth,
+  rtdb,
+  storage,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+   deleteObject,
+  getDownloadURL
+};
+
+/* ---------- Global State ---------- */
+const ROOM_ID = "room888";
+const CHAT_COLLECTION = "messages_room888";
+const BUZZ_COST = 100;
+const SEND_COST = 1;
+let lastMessagesArray = [];
+let starInterval = null;
+let refs = {};
+
+// Make Firebase objects available globally (for debugging)
+window.app = app;
+window.db = db;
+window.auth = auth;
+
+// Optional: welcome popup on re-login
+if (sessionStorage.getItem("justLoggedOut") === "true") {
+  sessionStorage.removeItem("justLoggedOut");
+  showStarPopup("Welcome back, legend!");
+}
+
+/* ---------- Presence (Realtime) ---------- */
+function setupPresence(user) {
+  try {
+    if (!rtdb || !user || !user.uid) return;
+    const safeUid = user.uid;
+    const pRef = rtdbRef(rtdb, `presence/${ROOM_ID}/${safeUid}`);
+    rtdbSet(pRef, {
+      online: true,
+      chatId: user.chatId || "",
+      email: user.email || "",
+      lastSeen: Date.now()
+    }).catch(() => {});
+    onDisconnect(pRef).remove().catch(() => {});
+  } catch (err) {
+    ("Presence error:", err);
   }
 }
 
-/* PULSING ONLINE COUNT DOT + GLOW – COPY-PASTE THIS */
-#onlineWrapper::before {
-  content: '●';
-  color: #ff1493;
-  font-size: 12px;
-  animation: pulseDot 2s infinite ease-in-out;
-  margin-right: 6px;
-  text-shadow: 0 0 12px #ff1493;
-}
+// ===============================================
+// GLOBAL CACHE SYSTEM — ONE SOURCE OF TRUTH
+// ===============================================
+const userCache = new Map();     // uid → {data, timestamp}
+let userColors = new Map();      // uid → color
 
-@keyframes pulseDot {
-  0%, 100% { 
-    opacity: 0.7; 
-    transform: scale(1); 
-  }
-  50% { 
-    opacity: 1; 
-    transform: scale(1.4); 
-    text-shadow: 0 0 20px #ff69b4;
-  }
-}
-  
-.featured-host-video-container {
-  position: relative;
-  overflow: hidden;
-}
-/* hint at bottom center, fades smoothly */
-.video-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 18px;
-  font-size: 13px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease, transform 0.25s ease;
-  z-index: 5;
-  white-space: nowrap;
-}
+// Main cached user fetch function
+async function getCachedUserDoc(uid, forceFresh = false) {
+  if (!uid) return null;
 
-.video-hint.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-  
-/* ensure container allows pointer gestures without zooming */
-#featuredHostVideo {
-  touch-action: manipulation;
-  -webkit-user-select: none;
-  -ms-touch-action: manipulation;
-}
+  const now = Date.now();
+  const cached = userCache.get(uid);
 
-.gift-spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top: 2px solid #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  vertical-align: middle;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg);}
-  100% { transform: rotate(360deg);}
-}
-  
-/* ---------- Video Wrapper ---------- */
-.video-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 800px; /* adjust as needed */
-    margin: 0 auto;
-}
-
-.video-wrapper video {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 8px;
-}
-
-/* ---------- Controls Under Video ---------- */
-#videoUnderControls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px; /* reduced from 8px */
-    margin-top: 6px; /* reduced from 12px */
-}
-
-#helloText,
-.room-desc,
-#videoUnderControls {
-    margin: 2px 0;  /* reduce space between elements */
-    padding: 0;      /* remove extra padding if any */
-}
-
-#onlineWrapper {
-    font-size: 14px;
-    color: #fff;     /* white text for visibility */
-    gap: 2px;        /* reduce gap between icon, count, and text */
-}
-
-#openHostsBtn {
-    margin-top: 2px; /* bring the button closer to the online count */
-}
-#hostSettingsBtn:hover {
-  transform: translateY(-2px) rotate(10deg);
-  box-shadow: 0 4px 10px rgba(255,20,147,0.3);
-}
-
-/* Optional sticky under video */
-.video-wrapper.sticky + #helloText,
-.video-wrapper.sticky + #helloText + .room-desc,
-.video-wrapper.sticky + #helloText + .room-desc + #videoUnderControls {
-    position: sticky;
-    top: 8px; /* adjust spacing from top */
-    z-index: 10;
-}
-
-#hostModal .modal-body {
-  background: var(--modal-bg, #111);
-  color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 400px;
-  margin: 10% auto;
-}
-
-#hostModal input {
-  display: block;
-  width: 100%;
-  margin: 6px 0 12px;
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-}
-/* Tab Header */
-.tab-header {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-/* Tab Buttons */
-.tab-btn {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: none;
-  padding: 6px 4px; /* slightly smaller padding */
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 13px; /* smaller text */
-  text-align: center;
-}
-
-.tab-btn.active {
-  background: linear-gradient(90deg, #ff0099, #ff6600);
-}
-
-/* General tab content styling */
-.tab-content label {
-  display: inline-block;      /* keeps label inline-friendly */
-  width: 100px;               /* fixed width for alignment */
-  margin-right: 8px;
-  vertical-align: top;        /* aligns with input top */
-  font-size: 13px;
-  color: #fff;
-}
-
-/* Inputs & textareas */
-.tab-content input,
-.tab-content textarea {
-  display: inline-block;      /* allows horizontal alignment with label */
-  width: calc(100% - 120px);  /* accounts for label width + gap */
-  max-width: 250px;
-  margin-bottom: 8px;
-  padding: 6px;
-  border-radius: 4px;
-  border: none;
-  font-size: 13px;
-  vertical-align: top;        /* ensures alignment with label */
-  resize: vertical;           /* allows bio to expand vertically */
-}
-
-/* Divider spacing */
-.tab-content .divider {
-  margin: 12px 0;
-  border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-
-#postLoginLoader {
-  transition: opacity 0.4s ease;
-}
-#postLoginLoader[style*="display: none"] {
-  opacity: 0;
-}
-  
-/* ===== Notifications Tab ===== */
-.notifications-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.notifications-header h3 {
-  font-size: 15px;
-  color: #fff;
-  margin: 0;
-}
-
-.mark-read-btn {
-  font-size: 11px;
-  background: rgba(195, 246, 12, 0.1);  /* subtle Cube glow */
-  color: #c3f60c;
-  border: none;
-  border-radius: 20px;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-  box-shadow: 0 0 4px rgba(195, 246, 12, 0.3);
-}
-
-.mark-read-btn:hover {
-  background: rgba(195, 246, 12, 0.2);
-  box-shadow: 0 0 8px rgba(195, 246, 12, 0.5);
-  transform: scale(1.05);
-}
-
-.mark-read-btn:active {
-  background: rgba(195, 246, 12, 0.25);
-  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
-  transform: scale(0.97);
-}
-
-/* ===== CUBE THEME NOTIFICATIONS ===== */
-.notifications-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column-reverse; /* newest at bottom */
-  gap: 8px;
-  max-height: 60vh;
-  overflow-y: auto;
-  z-index: 9999;
-}
-
-.notifications-list {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 8px;
-}
-
-/* Each notification */
-.notification-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #eee;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 0 6px rgba(195, 246, 12, 0.25);
-  overflow-wrap: break-word;
-}
-
-/* Unread / new notifications */
-.notification-item.unread,
-.notification-item.new {
-  background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-  color: #000;
-  font-weight: 600;
-  box-shadow: 0 0 12px rgba(195, 246, 12, 0.6);
-  animation: fadePulse 0.8s ease-in-out infinite alternate;
-}
-
-/* Hover effect for all notifications */
-.notification-item:hover {
-  background: rgba(195, 246, 12, 0.15);
-  transform: scale(1.02);
-  box-shadow: 0 0 12px rgba(195, 246, 12, 0.55);
-}
-
-/* Notification icon */
-.notification-icon {
-  font-size: 18px;
-  color: #c3f60c;
-  flex-shrink: 0;
-}
-
-/* Notification title */
-.notif-title {
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
-/* Notification message */
-.notif-message {
-  white-space: pre-wrap; /* preserves line breaks */
-  word-break: break-word;
-}
-
-/* Notification time */
-.notif-time {
-  font-size: 10px;
-  color: #bbb;
-  margin-top: 2px;
-}
-
-/* Mark as read button inside notification */
-.mark-read {
-  background: #c3f60c;
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  font-size: 10px;
-  padding: 4px 8px;
-  cursor: pointer;
-  margin-top: 4px;
-  align-self: flex-end;
-  transition: all 0.2s ease;
-}
-
-.mark-read:hover {
-  opacity: 0.8;
-}
-
-/* ===== Animations ===== */
-@keyframes fadePulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
-}
-
-/* ==== Upload Labels ==== */
-.upload-label {
-  display: block;
-  font-weight: 600;
-  margin-top: 12px;
-  color: #fff;
-  font-size: 14px;
-}
-
-/* ==== File Inputs ==== */
-.upload-input {
-  width: 100%;
-  margin-top: 6px;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: #121212;
-  color: #fff;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-/* ==== Photo Preview Circle ==== */
-.photo-preview {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 2px dashed #ff66b2;
-  background: #1c1c1c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 12px auto;
-  overflow: hidden;
-  position: relative;
-  transition: border-color 0.3s ease, transform 0.3s ease;
-}
-
-.photo-preview:hover {
-  border-color: #ff0099;
-  transform: scale(1.05);
-}
-
-.photo-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-#photoPlaceholder {
-  font-size: 28px;
-  color: #999;
-}
-
-/* ==== Save Button ==== */
-.small-btn {
-  display: inline-block;
-  background: linear-gradient(135deg, #ff0099, #ff6600);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-.small-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
-}
-  
-/* ==== BUTTON THEME — CUBE VERSION ==== */
-.themed-btn {
-  background: linear-gradient(135deg, #c3f60c, #e8ff6a); /* Cube gradient */
-  border: none;
-  color: #000; /* dark text for contrast */
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 0 8px rgba(195, 246, 12, 0.3);
-}
-
-.themed-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 12px rgba(195, 246, 12, 0.55);
-}
-
-.themed-btn:active {
-  transform: scale(0.97);
-  background: linear-gradient(135deg, #a8d50a, #d8ff55);
-  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
-}
-
-/* ==== FILE UPLOAD LABEL — CUBE VERSION ==== */
-.upload-input + label {
-  display: inline-block;
-  margin-top: 8px;
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #c3f60c, #e6ff66);
-  color: #000;
-  font-weight: 500;
-  transition: all 0.25s ease;
-  box-shadow: 0 0 6px rgba(195, 246, 12, 0.3);
-}
-
-.upload-input + label:hover {
-  background: linear-gradient(90deg, #a8d50a, #d8ff55);
-  box-shadow: 0 0 10px rgba(195, 246, 12, 0.5);
-}
-
-.upload-input + label:active {
-  transform: scale(0.97);
-  box-shadow: 0 0 6px rgba(195, 246, 12, 0.4);
-}
-/* chat scroller */
-  #scrollArrow {
-    position: fixed; /* float above chat messages anywhere on screen */
-    bottom: 40px; /* distance from bottom of viewport */
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95);
-    color: #ff4500;
-    font-size: 2.2rem;
-    padding: 12px;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.2s ease;
-    z-index: 999; /* above everything */
+  // Use cache if fresh (5 minutes)
+  if (!forceFresh && cached && (now - cached.timestamp < 300000)) {
+    return cached.data;
   }
 
-  #scrollArrow.show {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      userCache.set(uid, { data, timestamp: now });
 
-  #scrollArrow:hover {
-    transform: translate(-50%, -5px);
-  }
-  
-/* ---------- Media Tab Inputs & Labels ---------- */
-#mediaTab input,
-#mediaTab textarea,
-#mediaTab select {
-  width: 96%;             /* fill container */
-  max-width: 96%;
-  padding: 6px 10px;
-  margin-bottom: 12px;
-  border-radius: 4px;
-  border: none;
-  box-sizing: border-box;
-  font-size: 13px;
-  color: #fff;
-  background: rgba(255,255,255,0.05);
-}
-/* Fade placeholder style */
-#mediaTab input::placeholder,
-#mediaTab textarea::placeholder,
-#mediaTab select option[disabled] {
-  color: rgba(255,255,255,0.5);
-  opacity: 1; /* ensure visible in Firefox */
-}
-
-/* When typing, placeholder fades slightly */
-#mediaTab input:focus::placeholder,
-#mediaTab textarea:focus::placeholder {
-  color: rgba(255,255,255,0.3);
-  transition: color 0.3s ease;
-}
-
-/* ---------- Labels ---------- */
-#mediaTab label {
-  font-weight: bold;
-  font-size: 13px;        /* smaller to fit nicely */
-  display: block;
-  margin-bottom: 4px;
-  white-space: normal;     /* allow wrapping instead of truncation */
-  line-height: 1.2;
-}
-
-/* ---------- Section Headers ---------- */
-#mediaTab h4 {
-  text-align: center;
-  font-weight: bold;
-  margin-bottom: 10px;
-  font-size: 15px;
-  color: #fff;
-}
-
-/* ---------- Custom Selects ---------- */
-#mediaTab select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background: linear-gradient(90deg, #ff0099, #ff6600);
-  color: rgba(255, 255, 255, 0.7);
-  padding: 6px 28px 6px 6px; /* right padding for arrow */
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><polygon points="0,0 10,0 5,5" fill="white"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  background-size: 10px;
-}
-
-#mediaTab select:focus {
-  color: #fff;
-  outline: none;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><polygon points="0,5 10,5 5,0" fill="white"/></svg>');
-}
-
-/* ---------- Photo Preview ---------- */
-#mediaTab .photo-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-#mediaTab .photo-preview img {
-  max-width: 100%;
-  max-height: 150px;
-  border-radius: 4px;
-}
-
-#mediaTab .photo-preview span {
-  font-size: 40px;
-  color: rgba(255,255,255,0.3);
-}
-/* ---------- Soft Placeholder Effect ---------- */
-#mediaTab input,
-#mediaTab textarea,
-#mediaTab select {
-  color: rgba(255,255,255,0.7);   /* faded color for “inactive” state */
-  transition: color 0.3s ease;
-}
-
-#mediaTab input:focus,
-#mediaTab textarea:focus,
-#mediaTab select:focus {
-  color: #fff;  /* full color when typing */
-}
-#saveInfo {
-  display: block !important;
-  margin: 18px auto !important;
-  padding: 7px 18px !important;
-  font-size: 14px !important;
-  border-radius: 8px !important;
-}
-.username-blink {
-  animation: blinkName 0.4s ease-in-out;
-}
-
-@keyframes blinkName {
-  0%, 100% { background-color: transparent; }
-  50% { background-color: rgba(255, 255, 0, 0.4); border-radius: 4px; }
-}
-/* Baller Alert Wrapper */
-#ballerAlert {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, #ffcc00, #ff33cc);
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  color: #000;
-  font-size: 16px;
-  text-align: center;
-  z-index: 999999;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-/* Glow pulse */
-.baller-glow {
-  animation: pulseGlow 2s ease-in-out;
-}
-
-/* Confetti pieces */
-.baller-confetti {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  opacity: 0.9;
-  animation: floatConfetti 3s ease-in-out forwards;
-}
-
-@keyframes floatConfetti {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(60px) rotate(360deg); opacity: 0; }
-}
-
-@keyframes pulseGlow {
-  0%,100% { box-shadow: 0 0 12px rgba(255,255,255,0.2); }
-  50% { box-shadow: 0 0 24px rgba(255,255,255,0.8); }
-}
-/* ---------- Chat Tap Modal ---------- */
-.tap-modal {
-  position: absolute;
-  background: rgba(0,0,0,0.85);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  display: flex;
-  gap: 8px;
-  z-index: 9999;
-  pointer-events: auto;
-}
-
-.tap-modal button {
-  background: none;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 600;
-  padding: 2px 6px;
-}
-
-.tap-modal button:hover {
-  background: rgba(255,255,255,0.2);
-  border-radius: 4px;
-}
-#sessionBar {
-  display: flex;
-  justify-content: space-around; /* keeps buttons spaced nicely */
-  gap: 8px;                      /* adds consistent spacing */
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(6px);
-  border-radius: 12px;
-  padding: 6px 0;
-  cursor: pointer;
-}
-
-#sessionModal {
-  position: fixed;
-  bottom: -100%;
-  left: 0; right: 0;
-  height: 65%;
-  background: rgba(15,15,15,0.95);
-  color: #fff;
-  border-radius: 20px 20px 0 0;
-  transition: bottom 0.4s ease;
-  z-index: 1000;
-  overflow-y: auto;
-}
-#sessionModal.active { bottom: 0; }
-
-.sessionTabs button {
-  background: none; border: none;
-  color: #aaa; padding: 10px 16px;
-  font-weight: 700; cursor: pointer;
-}
-.sessionTabs button.active { color: #fff; border-bottom: 2px solid #ff33cc; }
-
-.ballerTabs button.active { color: #fff; border-bottom: 2px solid #ffcc00; }
-
-.baller-card {
-  display: flex; align-items: center;
-  padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.baller-card img { width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; }
-
-/* Unified compact session buttons — now with maximum drip */
-.session-btn {
-  background: #111;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-block;
-  box-shadow: 
-    0 0 8px rgba(255, 255, 255, 0.15),
-    inset 0 1px 2px rgba(255, 255, 255, 0.1);
-  transition: all 0.25s ease;
-  margin: 0 2px;
-  position: relative;
-  overflow: hidden;
-}
-
-.session-btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(90deg, 
-    rgba(100, 255, 255, 0.08),
-    rgba(255, 100, 255, 0.08),
-    rgba(100, 100, 255, 0.08));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.session-btn:hover {
-  transform: scale(1.05);
-  background: #1a1a1a;
-  box-shadow: 
-    0 0 20px rgba(0, 255, 255, 0.4),
-    0 0 30px rgba(255, 0, 255, 0.25);
-}
-
-.session-btn:hover::before {
-  opacity: 1;
-}
-
-/* Unified compact session buttons — now with maximum drip */
-.session-btn {
-  background: #111;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-block;
-  box-shadow: 
-    0 0 8px rgba(255, 255, 255, 0.15),
-    inset 0 1px 2px rgba(255, 255, 255, 0.1);
-  transition: all 0.25s ease;
-  margin: 0 2px;
-  position: relative;
-  overflow: hidden;
-}
-
-.session-btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(90deg, 
-    rgba(100, 255, 255, 0.08),
-    rgba(255, 100, 255, 0.08),
-    rgba(100, 100, 255, 0.08));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.session-btn:hover {
-  transform: scale(1.05);
-  background: #1a1a1a;
-  box-shadow: 
-    0 0 20px rgba(0, 255, 255, 0.4),
-    0 0 30px rgba(255, 0, 255, 0.25);
-}
-
-.session-btn:hover::before {
-  opacity: 1;
-}
-
-/* STAR HOSTS = GOD TIER ENERGY */
-.star-hosts-btn {
-  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
-  background-size: 200% 200%;
-  animation: starPulse 4s ease infinite;
-  color: #fff;
-  font-weight: 700;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
-  box-shadow: 
-    0 0 15px rgba(138, 43, 226, 0.6),
-    0 0 30px rgba(0, 255, 234, 0.5);
-}
-
-.star-hosts-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 
-    0 0 25px rgba(138, 43, 226, 0.9),
-    0 0 50px rgba(0, 255, 234, 0.8);
-  animation-duration: 1.5s;
-}
-
-@keyframes starPulse {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* Tiny inline spinner — no size change, no text flicker */
-.btn-spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  opacity: 0;
-  transition: opacity 0.2s;
-  vertical-align: middle;
-  margin-left: 6px;
-}
-
-.btn-spinner.visible {
-  opacity: 1;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-  .tiny-glass-logout {
-    background: rgba(255, 255, 255, 0.07);
-    color: #ff3366;
-    border: 1px solid #ff3366;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 4px 9px;           /* super small padding */
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 12.5px;          /* tiny but still readable */
-    cursor: pointer;
-    transition: all 0.25s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    line-height: 1;
-  }
-
-  .tiny-glass-logout:hover {
-    background: rgba(255, 51, 102, 0.15);
-    box-shadow: 0 3px 12px rgba(255, 51, 102, 0.3);
-    transform: translateY(-1px);
-  }
-
-  .tiny-glass-logout:active {
-    background: rgba(255, 51, 102, 0.22);
-    transform: translateY(0);
-  }
-  #uploadHighlightBtn.uploading .btn-text {
-  opacity: 0;
-}
-
-@keyframes pulse {
-  0%,100% { transform:scale(1); }
-  50% { transform:scale(1.28); }
-}
-@keyframes blink {
-  0%,100% { opacity:1; }
-  50% { opacity:0.4; }
-}
-.brand {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 8px 0 4px 0; /* tighter spacing */
-  padding: 0;
-}
-
-.brand-logo {
-  width: 110px;       /* reduced size */
-  height: auto;
-  display: block;
-  object-fit: contain;
-  margin: 4px 0 0 0;
-}
-#startupFooter {
-  text-align: center;
-  padding: 12px 0;
-  color: rgba(255, 255, 255, 0.6);
-  background: #111;
-  font-size: 14px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  z-index: 50;
-  transition: opacity 0.3s ease;
-}
-#startupFooter.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-  .tag-btn {
-    padding:8px 16px;
-    background:#111;
-    border:1px solid #333;
-    border-radius:20px;
-    color:#ccc;
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-    transition:all 0.25s;
-  }
-  .tag-btn:hover {
-    background:#222;
-    border-color:#ff2e78;
-    color:#ff2e78;
-  }
-  .tag-btn.selected {
-    background:linear-gradient(135deg,#ff2e78,#ff5e2e);
-    color:#fff;
-    border-color:#ff2e78;
-    box-shadow:0 0 12px rgba(255,46,120,0.4);
-  }
-  .host-only {
-  display: none;
-}
-.tab-btn.host-only {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-  
-/* LIVE MODAL - Semi-transparent bleed for chat visibility */
-.live-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(0, 0, 0, 0.75); /* Dark but transparent — chat visible underneath */
-  backdrop-filter: blur(8px); /* Soft blur for premium feel */
-  overflow-y: auto;
-}
-.live-modal.open {
-  display: block;
-}
-
-/* Modal Content - Slim, no extra bulk */
-.live-modal-content {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 60px 12px 80px;
-  gap: 16px;
-  box-sizing: border-box;
-}
-
-/* Close Button - Clean */
-.live-close {
-  position: fixed;
-  top: 12px;
-  right: 16px;
-  font-size: 48px;
-  font-weight: 200;
-  color: #fff;
-  opacity: 0.8;
-  cursor: pointer;
-  z-index: 30;
-  transition: all 0.3s ease;
-}
-.live-close:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-/* Tabs - Compact */
-.live-content-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 10px 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  flex-wrap: nowrap;
-  margin-bottom: 10px;
-}
-.live-content-tabs::-webkit-scrollbar { display: none; }
-
-.live-tab-btn {
-  flex: 0 0 auto;
-  min-width: 90px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50px;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(12px);
-}
-.live-tab-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-.live-tab-btn.active {
-  background: #c3f60c;
-  color: #000;
-  border-color: #c3f60c;
-  box-shadow: 0 0 12px rgba(195, 246, 12, 0.5);
-}
-
-/* Tab Contents */
-.live-tab-content {
-  display: none;
-}
-.live-tab-content.active {
-  display: block;
-}
-
-/* Live Player - Full bleed, landscape on mobile */
-#livePlayerContainer {
-  width: 100%;
-  max-width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-}
-#livePlayerContainer mux-player {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain;
-}
-
-/* Placeholder */
-.player-placeholder {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #666;
-  font-size: 18px;
-  pointer-events: none;
-}
-
-/* Mobile - True YouTube landscape */
-@media (max-width: 768px) {
-  .live-modal-content {
-    padding: 60px 0 40px;
-    gap: 0;
-  }
-  #livePlayerContainer {
-    border-radius: 0;
-    height: calc(100vw * 9 / 16);
-  }
-}
-/* Upcoming Posters - Clean Instagram Style */
-.upcoming-posters {
-  width: 100%;
-  padding: 30px 0;
-}
-
-.poster-grid {
-  display: flex;
-  overflow-x: auto;
-  gap: 20px;
-  padding: 0 20px 40px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.poster-grid::-webkit-scrollbar { display: none; }
-
-.poster-card {
-  flex: 0 0 320px; /* fixed width for consistency */
-  background: #111;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.poster-image {
-  width: 100%;
-  aspect-ratio: 1 / 1; /* Perfect Instagram square */
-  overflow: hidden;
-}
-.poster-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* fills square perfectly */
-  display: block;
-}
-
-.poster-info {
-  padding: 18px;
-  color: #fff;
-}
-.poster-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 6px 0;
-  letter-spacing: 0.3px;
-}
-.poster-time {
-  font-size: 14px;
-  color: #ff3366;
-  font-weight: 600;
-  margin-bottom: 10px;
-  opacity: 0.9;
-}
-.poster-desc {
-  font-size: 15px;
-  line-height: 1.5;
-  color: #ccc;
-  margin: 0;
-}
-
-/* Mobile - full-width cards, stacked feel */
-@media (max-width: 768px) {
-  .poster-grid {
-    gap: 16px;
-    padding: 0 16px 40px;
-  }
-  .poster-card {
-    flex: 0 0 85vw; /* nearly full width on phone */
-    max-width: 380px;
-  }
-  .poster-title {
-    font-size: 19px;
-  }
-  .poster-desc {
-    font-size: 14.5px;
+      // Update color cache
+      if (data.usernameColor) {
+        userColors.set(uid, data.usernameColor);
+      }
+      return data;
+    }
+    return null;
+  } catch (err) {
+    ("getCachedUserDoc error:", err);
+    return null;
   }
 }
 
-/* Mobile - stack vertically for better reading */
-@media (max-width: 768px) {
-  .poster-grid {
-    flex-direction: column;
-    gap: 30px;
-    padding: 0 16px 40px;
-    overflow-x: hidden;
+
+// Add this early in your script
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = 'https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap';
+document.head.appendChild(link);
+
+
+// Add this once (after creating modal or at top of script)
+const neonStyle = document.createElement('style');
+neonStyle.textContent = `
+  @keyframes cubeNeonGreen {
+    from {
+      text-shadow: 
+        0 0 15px #00ff9f,
+        0 0 30px #00ff9f,
+        0 0 50px rgba(0,255,159,0.6);
+    }
+    to {
+      text-shadow: 
+        0 0 25px #00ff9f,
+        0 0 45px #00ff9f,
+        0 0 70px #00e6c0,
+        0 0 90px rgba(0,255,159,0.8);
+    }
   }
-  .poster-card {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
+
+  @keyframes tonightShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
-  .poster-image {
-    height: 500px;
+`;
+document.head.appendChild(neonStyle);
+
+// ==================== COMBINED STYLES (Media Queries + Tonight Animations) ====================
+const combinedStyle = document.createElement('style');
+combinedStyle.textContent = `
+  /* ====================== MEDIA QUERIES ====================== */
+  @media (max-width: 768px) {
+    #livePlayerContainer {
+      font-size: 14px !important;
+    }
+    #livePlayerContainer img {
+      max-height: 65vh !important;
+    }
   }
-  .poster-title {
-    font-size: 24px;
+
+  /* ====================== FREE TONIGHT ANIMATIONS ====================== */
+  @keyframes tonightGlow {
+    from {
+      text-shadow: 
+        0 4px 8px rgba(0,0,0,0.9),
+        0 8px 16px rgba(0,0,0,0.7),
+        0 0 20px #ff00f2,
+        0 0 40px #00ffea;
+    }
+    to {
+      text-shadow: 
+        0 6px 12px rgba(0,0,0,0.95),
+        0 10px 25px rgba(0,0,0,0.8),
+        0 0 30px #ff00f2,
+        0 0 60px #00ffea,
+        0 0 80px #8a2be2;
+    }
   }
-  .poster-desc {
-    font-size: 16px;
+
+  @keyframes tonightShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
-}
-  
-/* Extra tight on small phones */
-@media (max-width: 480px) {
-  .live-tab-btn {
-    min-width: 85px;
-    padding: 7px 12px;
-    font-size: 14px;
+`;
+document.head.appendChild(combinedStyle);
+
+// ===============================================
+// OPTIMIZED USER COLORS LISTENER
+// ===============================================
+function setupUsersListener() {
+  if (!currentUser) return;
+
+  // Cleanup old listener
+  if (window.userColorsUnsubscribe) {
+    window.userColorsUnsubscribe();
   }
-  .live-content-tabs {
-    gap: 6px;
-    padding: 0 6px;
+
+  (" Starting active users colors listener");
+
+  const activeRef = collection(db, `rooms/${ROOM_ID}/activeUsers`);
+
+  window.userColorsUnsubscribe = onSnapshot(activeRef, (snap) => {
+    let changed = false;
+
+    snap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      const color = data?.usernameColor || "#ff69b4";
+
+      if (userColors.get(docSnap.id) !== color) {
+        userColors.set(docSnap.id, color);
+        changed = true;
+      }
+    });
+
+    if (changed && lastMessagesArray?.length > 0) {
+      renderMessagesFromArray(lastMessagesArray);
+    }
+  }, (err) => {
+    ("[COLORS] Listener error:", err);
+  });
+}
+
+
+// ====================== LOGIN WITH EMAIL OR CHATID ======================
+async function login(identifier, password) {
+  if (!identifier || !password) {
+    throw new Error("Please enter both username/email and password");
   }
-}
 
-.google-block { 
-  width: 100%;  /* ← Matches wrapper width */
-  text-align: center;  /* ← Centers text + inline elements */
-  margin-top: 0;  /* ← No extra space—ties directly to VIP button */
-}
-.forgot-link { 
-  display: block;  /* ← Key: Makes it block-level for full-width centering */
-  margin-top: 8px; 
-  font-size: 13px; 
-  color: #c3f60c; 
-  opacity: 0.75; 
-  text-decoration: none; 
-  width: fit-content;  /* ← Keeps it compact like buttons */
-  margin-left: auto; 
-  margin-right: auto; 
-}
-.forgot-link:hover { 
-  opacity: 1; 
-  text-decoration: underline; 
-}
+  let emailToUse = identifier.trim();
+  (`[Login] Attempting login with: "${identifier}"`);
 
-/* ====================================
-   PRIVATE MESSAGE FEATURE - FULL REWRITE
-   ==================================== */
+  try {
+    if (!emailToUse.includes('@')) {
+      // Username (chatId) login
+      const chatIdLower = emailToUse.toLowerCase().trim();
+      (`[Username Login] Searching for chatId: "${chatIdLower}"`);
 
-/* Floating Button - Cute Envelope */
-.private-msg-btn {
-  position: fixed;
-  bottom: 28px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(12px);
-  border-radius: 50%;
-  border: 3px solid #c3f60c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 40;
-  cursor: pointer;
-  box-shadow: 0 8px 25px rgba(195,246,12,0.4);
-  transition: all 0.3s ease;
-}
-.private-msg-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 12px 35px rgba(195,246,12,0.6);
-}
-.envelope-icon {
-  width: 34px;
-  height: 34px;
-}
+      const chatIdRef = doc(db, "chatIds", chatIdLower);
+      const snap = await getDoc(chatIdRef);
 
-/* Modal Overlay - Semi-transparent, livestream visible underneath */
-.private-msg-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(0,0,0,0.5); /* Light dark overlay — player visible */
-  backdrop-filter: blur(8px); /* Soft blur for depth */
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.private-msg-modal.open {
-  display: flex;
-}
+      if (!snap.exists()) {
+        (`[FAILED] No index found for chatId "${chatIdLower}". Run the index creation code.`);
+        throw new Error("Invalid username or password");
+      }
 
-/* Modal Card - Small, Cute, Centered */
-.private-msg-content {
-  width: 100%;
-  max-width: 360px;
-  max-height: 90vh;
-  background: linear-gradient(135deg, #111, #1a1a1a);
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-  border: 1px solid rgba(195,246,12,0.2);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: popIn 0.35s ease;
-  text-align: center; /* Centers all text */
-}
-@keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
+      emailToUse = snap.data().email;
+      (`[SUCCESS] Found email: ${emailToUse}`);
+    } else {
+      emailToUse = emailToUse.toLowerCase().trim();
+      (`[Email Login] Using: ${emailToUse}`);
+    }
 
-/* Header - Centered emoji only */
-.private-msg-header {
-  display: flex;
-  justify-content: center;     /* Centers the emoji horizontally */
-  align-items: center;         /* Vertical centering */
-  position: relative;          /* Needed for absolute positioning of close button */
-  margin-bottom: 20px;
-  padding: 10px 0;
-  flex-shrink: 0;
-}
+    return await signInWithEmailAndPassword(auth, emailToUse, password);
 
-/* Remove any old h3 styles - no longer needed */
-.private-msg-header img {
-  display: block;
-  width: 40px;                 /* Matches your HTML size - adjust if needed */
-  height: 40px;
-}
-
-/* Close button - top right */
-.private-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 27px;
-  color: #fff;
-  opacity: 0.7;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.private-close:hover {
-  opacity: 1;
-}
-
-/* Note - Centered with all the info */
-.private-note {
-  text-align: center;
-  font-size: 14px;             /* Slightly larger for better readability */
-  color: #ff69b4;
-  margin: 0 0 24px 0;
-  font-weight: 600;
-  line-height: 1.5;
-  flex-shrink: 0;
-}
-
-/* Input - Compact */
-#privateMsgInput {
-  flex: 1;
-  min-height: 100px;
-  max-height: 200px;
-  padding: 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: #1a1a1a;
-  color: #fff;
-  font-size: 16px;
-  resize: none;
-  outline: none;
-  overflow-y: auto;
-}
-#privateMsgInput::placeholder {
-  color: #888;
-}
-#privateMsgInput:focus {
-  border-color: #c3f60c;
-  box-shadow: 0 0 15px rgba(195,246,12,0.3);
-}
-
-/* Send Button */
-.private-send-btn {
-  width: 100%;
-  margin-top: 20px;
-  padding: 16px;
-  border-radius: 50px;
-  background: linear-gradient(135deg, #c3f60c, #a8d50a);
-  color: #000;
-  font-size: 17px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 25px rgba(195,246,12,0.4);
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-.private-send-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(195,246,12,0.6);
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .private-msg-content {
-    max-height: 85vh;
-    padding: 24px 20px;
+  } catch (error) {
+    ("Login function error:", error);
+    
+    if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
+      throw new Error("Invalid username or password");
+    }
+    throw error;
   }
 }
-/* Private Message Reader - Cute & Host-Only */
-.private-msg-reader {
-  width: 100%;
-  max-width: 600px;
-  margin: 20px auto 40px;
-  background: rgba(17, 17, 17, 0.8);
-  border-radius: 24px;
-  border: 1px solid rgba(195, 246, 12, 0.2);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-  display: none; /* hidden by default */
-}
 
-.private-reader-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(195,246,12,0.2), rgba(195,246,12,0.1));
-  border-bottom: 1px solid rgba(195,246,12,0.3);
-}
-.private-reader-header h3 {
-  font-size: 19px;
-  color: #c3f60c;
-  margin: 0;
-  font-weight: 700;
-}
-.msg-count {
-  background: #c3f60c;
-  color: #000;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 50px;
-}
 
-/* Messages List */
-.private-messages-list {
-  max-height: 400px;
-  overflow-y: auto;
-  padding: 16px;
-}
-.private-message-item {
-  background: rgba(255,255,255,0.05);
-  border-radius: 18px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  border-left: 4px solid #c3f60c;
-  animation: fadeIn 0.4s ease;
-}
-.private-message-item .msg-time {
-  font-size: 12px;
-  color: #888;
-  margin-bottom: 6px;
-}
-.private-message-item .msg-text {
-  font-size: 16px;
-  color: #fff;
-  line-height: 1.5;
-}
-.no-messages {
-  text-align: center;
-  color: #888;
-  font-size: 15px;
-  padding: 60px 20px;
-  font-style: italic;
-}
+// ===============================================
+// SYNC VIP EXPIRATION LOGIC
+// ===============================================
+async function syncVIPExpiration(userSnap) {
+  const data = userSnap.data();
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .private-msg-reader {
-    margin: 16px 12px 40px;
-    border-radius: 20px;
+  if (!data.vipExpiresAt || data.hasPaid === false) {
+    return data;
   }
-  .private-messages-list {
-    max-height: 300px;
+
+  const expiresAt = data.vipExpiresAt.toDate 
+    ? data.vipExpiresAt.toDate() 
+    : new Date(data.vipExpiresAt);
+
+  if (expiresAt < new Date()) {
+    await updateDoc(userSnap.ref, { 
+      hasPaid: false 
+      // Do NOT change isVIP
+    });
+
+    return { ...data, hasPaid: false };
+  }
+
+  return data;
+}
+
+
+// OPTIMIZED SYNC — ONE READ MAX
+async function syncUserData() {
+  if (!currentUser?.uid) return;
+
+  try {
+    const userData = await getCachedUserDoc(currentUser.uid, true); // force fresh on login
+
+    if (!userData) return;
+
+    // VIP Expiration
+    if (userData.vipExpiresAt) {
+      const expiresAt = userData.vipExpiresAt.toDate ? userData.vipExpiresAt.toDate() : new Date(userData.vipExpiresAt);
+      if (expiresAt < new Date()) {
+        await updateDoc(doc(db, "users", currentUser.uid), { hasPaid: false });
+        currentUser.hasPaid = false;
+      }
+    }
+
+    // Unlocks sync
+    const localUnlocks = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+    const merged = [...new Set([...localUnlocks, ...(userData.unlockedVideos || [])])];
+
+    if (merged.length > (userData.unlockedVideos?.length || 0)) {
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        unlockedVideos: merged,
+        lastUnlockSync: serverTimestamp()
+      });
+    }
+
+    currentUser.unlockedVideos = merged;
+    localStorage.setItem("userUnlockedVideos", JSON.stringify(merged));
+
+  } catch (err) {
+    ("syncUserData failed:", err);
   }
 }
-/* ========== ADMIN POLL SECTION ========== */
-#polls {
-  display: none;
-  background: linear-gradient(180deg, #0f0f0f, #0a0a0a);
-  padding: 28px 24px;
-  border-radius: 20px;
-  border: 1px solid #242424;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+/* ===============================
+   GLOBAL DOM REFERENCES — POPULATE THE refs OBJECT (ONLY ONCE!)
+   THIS RUNS IMMEDIATELY — NO DUPLICATE DECLARATION
+================================= */
+Object.assign(refs, {
+  // Core
+  authBox: document.getElementById("authBox"),
+  messagesEl: document.getElementById("messages"),
+  sendAreaEl: document.getElementById("sendArea"),
+  messageInputEl: document.getElementById("messageInput"),
+  sendBtn: document.getElementById("sendBtn"),
+  buzzBtn: document.getElementById("buzzBtn"),
+
+  // Profile
+  profileBoxEl: document.getElementById("profileBox"),
+  profileNameEl: document.getElementById("profileName"),
+  starCountEl: document.getElementById("starCount"),
+  cashCountEl: document.getElementById("cashCount"),
+  onlineCountEl: document.getElementById("onlineCount"),
+
+  // Buttons & Links
+  redeemBtn: document.getElementById("redeemBtn"),
+  tipBtn: document.getElementById("tipBtn"),
+
+  // Admin
+  adminControlsEl: document.getElementById("adminControls"),
+  adminClearMessagesBtn: document.getElementById("adminClearMessagesBtn"),
+
+  // Modals
+  chatIDModal: document.getElementById("chatIDModal"),
+  chatIDInput: document.getElementById("chatIDInput"),
+  chatIDConfirmBtn: document.getElementById("chatIDConfirmBtn"),
+  giftModal: document.getElementById("giftModal"),
+  giftModalTitle: document.getElementById("giftModalTitle"),
+  giftAmountInput: document.getElementById("giftAmountInput"),
+  giftConfirmBtn: document.getElementById("giftConfirmBtn"),
+  giftModalClose: document.getElementById("giftModalClose"),
+  giftAlert: document.getElementById("giftAlert"),
+
+  // Popups & Notifications
+  starPopup: document.getElementById("starPopup"),
+  starText: document.getElementById("starText"),
+  notificationBell: document.getElementById("notificationBell"),
+  notificationsList: document.getElementById("notificationsList"),
+  markAllRead: document.getElementById("markAllRead")
+});
+
+// Optional: Limit input length
+if (refs.chatIDInput) refs.chatIDInput.maxLength = 12;
+
+
+function revealHostTabs() {
+  if (!currentUser || currentUser.isHost !== true) return;
+
+  const hostEls = document.querySelectorAll(".host-only");
+  if (!hostEls.length) return;
+
+  hostEls.forEach(el => {
+    // buttons need inline-flex, panels need block
+    el.style.display = el.tagName === "BUTTON" ? "inline-flex" : "block";
+  });
+
+  ("[HOST UI] revealed");
 }
 
-/* Title area */
-.poll-admin-title {
-  text-align: center;
-  margin-bottom: 24px;
-}
+// =============================
+// CHAT REPLY STATE — GLOBAL VARIABLES
+// =============================  
+let currentReplyData = null;       // Optional: extra data if needed (replyTo, etc.)
+let tapModalEl = null;
+let currentReplyTarget = null;
 
-.poll-admin-title h3 {
-  margin: 0 0 6px;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  background: linear-gradient(90deg, #c3f60c, #d9ff4d);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+/* ===============================
+   FINAL 2025 BULLETPROOF AUTH + NOTIFICATIONS + UTILS
+   NO ERRORS — NO RANDOM MODALS — NO MISSING BUTTONS
+================================= */
 
-.admin-subtitle {
-  margin: 0;
-  font-size: 13px;
-  color: #888;
-  font-weight: 500;
-}
+let currentUser = null;
+let currentAdmin = null;
 
-/* Inputs – unified style */
-.poll-input,
-.poll-option-input,
-.poll-meta-input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: #161616;
-  color: #ffffff;
-  border: 1px solid #2a2a2a;
-  font-size: 15px;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-}
 
-.poll-input:focus,
-.poll-option-input:focus,
-.poll-meta-input:focus {
-  outline: none;
-  border-color: #c3f60c;
-  box-shadow: 0 0 0 3px rgba(195, 246, 12, 0.15);
-  background: #141414;
-}
+// UNIVERSAL ID SANITIZER — RESTORED & FINAL
+const sanitizeId = (input) => {
+  if (!input) return "";
+  return String(input).trim().toLowerCase().replace(/[@.\s]/g, "_");
+};
 
-.poll-input::placeholder,
-.poll-option-input::placeholder,
-.poll-meta-input::placeholder {
-  color: #666;
-}
+// RESTORED: getUserId — USED BY OLD CODE (syncUserUnlocks, etc.)
+const getUserId = sanitizeId;  // ← This fixes "getUserId is not defined"
 
-/* Options grid – better spacing */
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin: 20px 0;
-}
-
-/* Meta row with labels */
-.poll-meta-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin: 20px 0;
-}
-
-.meta-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.meta-field label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #aaa;
-}
-
-/* Create button – more premium */
-.create-btn {
-  width: 100%;
-  padding: 14px 24px;
-  margin-top: 20px;
-  background: linear-gradient(90deg, #c3f60c, #d9ff4d);
-  color: #0b0b0b;
-  border: none;
-  border-radius: 16px;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(195, 246, 12, 0.4);
-}
-
-.create-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(195, 246, 12, 0.5);
-  filter: brightness(1.08);
-}
-
-.create-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(195, 246, 12, 0.3);
-}
-
-/* Preview box */
-.preview-box {
-  margin-top: 28px;
-  padding: 18px;
-  background: #121212;
-  border-radius: 16px;
-  border: 1px solid #242424;
-  color: #bbb;
-  font-size: 14px;
-  min-height: 80px;
-}
-
-.preview-placeholder {
-  margin: 0;
-  color: #666;
-  font-style: italic;
-  text-align: center;
-}
-/* CONFETTI ON TOP OF EVERYTHING */
-.confetti-canvas {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  pointer-events: none !important;
-  z-index: 99999 !important; /* Higher than modal */
-}
-/* ========== MODAL OVERLAY ========== */
-#pollModal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.92);
-  align-items: flex-start;      /* Start from top on mobile */
-  justify-content: center;
-  z-index: 9999;
-  padding: 20px 0;              /* Safe space top/bottom */
-  overflow-y: auto;             /* Scroll whole modal if needed */
-}
-
-/* ========== MODAL CARD ========== */
-.poll-modal-card {
-  background: linear-gradient(180deg, #121212, #0d0d0d);
-  color: var(--text-main);
-  padding: 28px 24px;
-  border-radius: 22px;
-  max-width: 400px;
-  width: 92%;
-  max-height: 90vh;             /* Never taller than screen */
-  overflow-y: auto;             /* Internal scroll if content overflows */
-  text-align: center;
-  border: 1px solid #262626;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;                    /* Clean space between intro and poll body */
-  box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ========== INTRO / CONTEXT – OUTSIDE POLL BODY (SPACIOUS & WELCOMING) ========== */
-.poll-intro {
-  text-align: center;
-}
-
-.poll-intro h3 {
-  margin: 0 0 12px;
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: -0.02em;
-}
-
-.poll-intro p {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--text-muted);
-  max-width: 340px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* ========== POLL BODY – COMPACT DARK CONTAINER (ONLY POLL CONTENT) ========== */
-.poll-body {
-  background: #0f0f0f;
-  border: 1px solid #242424;
-  border-radius: 18px;
-  padding: 22px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Question */
-.poll-body #pollQuestion {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.02em;
-}
-
-/* Options */
-.poll-body #pollOptions {
-  width: 100%;
-  margin-bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Timer */
-.poll-body #pollTimer {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-/* Results */
-.poll-body #pollResult {
-  width: 100%;
-  margin-bottom: 0;
-  display: none;
-}
-
-.poll-body #pollResult > p:first-child {
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: #aaa;
-}
-
-.poll-body #yourChoice {
-  margin: 0 0 16px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.poll-body #resultBars {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-}
-
-/* ========== POLL OPTION BUTTONS ========== */
-.poll-option-btn {
-  width: 100%;
-  padding: 14px 18px;
-  background: linear-gradient(180deg, #1b1b1b, #141414);
-  color: var(--text-main);
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.poll-option-btn:hover {
-  background: linear-gradient(180deg, #222, #181818);
-  border-color: #333;
-  transform: translateY(-1px);
-}
-
-.poll-option-btn:active {
-  transform: translateY(0);
-}
-
-.poll-option-btn.selected {
-  border-color: var(--accent);
-  color: #0b0b0b;
-  background: linear-gradient(180deg, #d9ff4d, var(--accent));
-}
-
-/* ========== RESULT BARS – NOW GOLD ========== */
-.result-bar-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 7px;
-  font-size: 14px;
-  color: var(--text-main);
-}
-
-.result-bar-label strong {
-  font-weight: 600;
-  color: inherit; /* no special color needed – header already highlights your vote */
-}
-
-/* Gold result bar (premium & on-brand) */
-.result-bar {
-  height: 26px;                     /* slightly taller for presence */
-  background: #171717;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid #242424;
-  position: relative;
-}
-
-.result-bar-fill {
-  height: 100%;
-  width: 0; /* starts at 0, animated via inline style */
-  background: linear-gradient(
-    90deg,
-    #f9ca24 0%,
-    #ffd700 30%,
-    #ffea00 50%,
-    #f7931e 80%,
-    #d4af37 100%
-  );
-  border-radius: 999px;
-  transition: width 1s cubic-bezier(0.22, 0.61, 0.36, 1);
-  
-  /* Subtle moving shine for extra luxury */
-  overflow: hidden;
-}
-
-.result-bar-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent
-  );
-  animation: shimmer 3s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-#pollCarousel {
-  width: 100%;
-  aspect-ratio: 1 / 1;   /* Instagram-style square */
-  max-height: 320px;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-#pollCarousel img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* ========== CLOSE BUTTON ========== */
-.poll-body #closePollBtn {
-  padding: 12px 34px;
-  background: #151515;
-  color: var(--text-main);
-  border: 1px solid #2f2f2f;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-.poll-body #closePollBtn:hover {
-  background: #1d1d1d;
-}
-
-.poll-body #closePollBtn:active {
-  transform: translateY(1px);
-}
-
-/* Mobile fine-tuning */
-@media (max-height: 600px) {
-  .poll-modal-card {
-    padding: 20px 16px;
-    gap: 20px;
-  }
-  .poll-body {
-    padding: 18px 16px;
+// NOTIFICATION HELPER — CLEAN & ETERNAL
+async function pushNotification(userId, message) {
+  if (!userId || !message) return;
+  try {
+    await addDoc(collection(db, "notifications"), {
+      userId,
+      message,
+      timestamp: serverTimestamp(),
+      read: false
+    });
+  } catch (err) {
+    ("Failed to send notification:", err);
   }
 }
-/* ----- BUY TICKETS SHIMMER EFFECT ----- */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
 
-/* Buy Tickets Section */
-.buy-tickets-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 18px 0 40px;
-  gap: 10px;
-}
-.poll-reward-line {
-  margin-bottom: 10px;
-  font-size: 15px;
-}
 
-.poll-reward-line strong {
-  font-weight: 700;                    /* ensures bold */
-  color: var(--text-main);
-}
-
-.reward-amount {
-  font-weight: 800;
-  font-size: 16.5px;
-  background: linear-gradient(90deg, #ffd700, #ffea00, #f9ca24, #f7931e, #ffd700);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 4s linear infinite;
-  letter-spacing: -0.01em;
-}
-
-.poll-timer-line {
-  font-size: 14.5px;
-}
-
-.poll-timer-line strong {
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* Buy Tickets Button – SUPER SMALL & DOPE */
-.buy-tickets-btn {
-  display: inline-block;
-  padding: 8px 20px;                       /* really small now */
-  background: linear-gradient(
-    90deg,
-    var(--accent) 0%,
-    var(--accent) 40%,
-    #d9ff4d 50%,                           /* bright shimmer highlight */
-    var(--accent) 60%,
-    var(--accent) 100%
-  );
-  background-size: 200% 100%;
-  background-position: -200% 0;
-  color: #0b0b0b;
-  font-size: 14px;                         /* smaller text */
-  font-weight: 700;
-  text-decoration: none;                   /* no underline */
-  border-radius: 14px;                     /* proportionally smaller radius */
-  cursor: pointer;
-  overflow: hidden;
-  position: relative;
-  transition: transform 0.14s ease, filter 0.2s ease;
-  animation: shimmer 3s linear infinite;
-  line-height: 1;                          /* tighter vertical spacing */
-}
-
-.buy-tickets-btn:hover {
-  text-decoration: none;                   /* double ensure no underline */
-  filter: brightness(1.12);
-  transform: translateY(-2px);
-  animation-play-state: paused;
-}
-
-.buy-tickets-btn:active {
-  transform: translateY(0);
-  filter: brightness(0.94);
-}
-
-/* Extra subtle shine overlay */
-.buy-tickets-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.28) 50%,
-    transparent 100%
-  );
-  animation: shimmer 3.2s linear infinite;
-  pointer-events: none;
-}
-
-/* Note under button */
-.buy-tickets-note {
-  font-size: 13px;
-  color: #aaa;
-  margin: 0;
-  text-align: center;
-}
-
-.buy-tickets-note a {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.buy-tickets-note a:hover {
-  text-decoration: underline;
-}
-/* ========== POLL SECTION HEADER – PIM PED EDITION ========== */
-.poll-section-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 12px 0 20px;
-  text-align: center;
-  position: relative;
-}
-
-/* Eyebrow – subtle glow + upscale feel */
-.poll-section-eyebrow {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: transparent;
-  background: linear-gradient(90deg, #777, #aaa, #777);
-  -webkit-background-clip: text;
-  background-clip: text;
-  opacity: 0.9;
-  position: relative;
-}
-
-/* Optional: tiny animated underline flair */
-.poll-section-eyebrow::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  width: 40px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  transform: translateX(-50%);
-  opacity: 0.6;
-  animation: pulseGlow 3s ease-in-out infinite;
-}
-
-/* Main title – gold gradient + subtle shimmer */
-.poll-section-title {
-  margin: 0;
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  background: linear-gradient(90deg, #d4af37, #ffd700, #ffea00, #f9ca24, #d4af37);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 5s linear infinite;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.15); /* soft gold aura */
-}
-
-/* Shimmer animation (reuse from reward/button) */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* Subtle pulse on the eyebrow line */
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-.buzz-username {
-  font-weight: 900;
-  font-size: inherit;      /* 🔑 SAME SIZE AS BUZZ TEXT */
-  letter-spacing: 0.6px;
-  margin-right: 6px;
-}
-#fruitDots .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #444;
-  transition: background 0.3s;
-}
-
-#fruitDots .dot.active {
-  background: #c3f60c;
-  box-shadow: 0 0 12px rgba(195,246,12,0.6);
-}
-/* NORMAL MESSAGES — LIGHT, SMALL, AIRY & MODERN */
-.msg .content {
-  font-weight: 400;              /* Light and natural */
-  font-size: 11px;             /* Small but perfectly readable */
-  line-height: 1.55;             /* Comfortable breathing room */
-  color: #e0e0e0;                /* Soft off-white, not harsh #fff */
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  display: block;
-  margin: 0;
-  opacity: 0.95;
-}
-
-/* Optional: Slightly dimmer for even more "light" feel */
-.msg .content {
-  color: #d0d0d0;
-}
-/* 🔥 REPLY CANCEL "×" — SMALL, GREY BACKDROP + NEON */
-.reply-cancel-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.12);     /* Soft grey backdrop */
-  color: var(--accent, #FF1493);           /* Your neon theme color */
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-left: 8px;
-  margin-bottom: 2px; /* Aligns nicely with input */
-  transition: all 0.2s ease;
-  align-self: flex-end;
-}
-
-.reply-cancel-btn:hover {
-  background: rgba(255,255,255,0.25);
-  transform: scale(1.1);
-}
-
-.reply-cancel-btn:active {
-  transform: scale(0.95);
-}
-#progressContainer {
-  margin: 14px auto 0;
-  width: 80%;
-  max-width: 340px;          /* matches your dashed upload area */
-  height: 8px;               /* slightly thicker = more visible */
-  ...
-}
-.neon-mini-card {
-  background: #0a0012;
-  border: 2px solid #ff00f2;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 
-    0 0 12px rgba(255, 0, 242, 0.6),
-    inset 0 0 10px rgba(0, 255, 234, 0.15);
-  max-width: 260px;
-  margin: 16px auto;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
-}
-
-.neon-mini-card:hover {
-  box-shadow: 
-    0 0 24px rgba(255, 0, 242, 0.9),
-    inset 0 0 16px rgba(0, 255, 234, 0.25);
-  transform: translateY(-2px);
-}
-
-.neon-title-container {
-  text-align: center;
-  margin-bottom: 12px;   /* gives nice spacing before sub text */
-}
-
-.neon-title {
-  font-size: 17px;
-  font-weight: 900;
-  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;   /* better than flex for single line + emoji below */
-  /* remove these if you had them — we don't need flex here anymore */
-  /* display: flex; */
-  /* align-items: center; */
-  /* justify-content: center; */
-  /* gap: 6px; */
-}
-
-.neon-fire {
-  font-size: 22px;
-  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1;          /* tighter spacing under title */
-  margin-top: 4px;         /* small gap between title text and 🔥 */
-  display: block;
-}
-
-.neon-sub {
-  font-size: 11px;
-  color: #ccc;
-  text-align: center;
-  margin-bottom: 12px;
-  line-height: 1.4;
-}
-
-.neon-btn {
-  width: 100%;
-  max-width: 180px; /* shorter button */
-  margin: 0 auto;
-  display: block;
-  padding: 10px;
-  background: linear-gradient(90deg, #ff2e78, #ff5e2e);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255,46,120,0.4);
-  transition: all 0.3s ease;
-}
-
-.neon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255,46,120,0.6);
-}
-
-.neon-btn:disabled {
-  background: #444;
-  cursor: not-allowed;
-  box-shadow: none;
-  opacity: 0.7;
-}
-
-.neon-cost {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: #ff4fd8;
-  font-weight: 600;
-}
-
-.neon-msg {
-  margin-top: 10px;
-  font-size: 11.5px;
-  text-align: center;
-  padding: 6px 10px;
-  border-radius: 10px;
-  min-height: 18px;
-}
-
-.neon-msg.success {
-  background: rgba(0,255,234,0.12);
-  color: #00ffea;
-  border: 1px solid rgba(0,255,234,0.3);
-}
-
-.neon-msg.error {
-  background: rgba(255,51,102,0.12);
-  color: #ff3366;
-  border: 1px solid rgba(255,51,102,0.3);
-}
-/* Optional: make it pulse subtly like glowing cube core */
-@keyframes cubePulse {
-  0%, 100% { opacity: 1; box-shadow: /* your base shadows */; }
-  50%      { opacity: 0.92; box-shadow: 0 0 60px rgba(255,51,102,0.7) /* bigger mid-glow */; }
-}
-
-/* Example usage: add to trending badge only */
-.trending-badge {  /* or add className conditionally in JS */
-  animation: cubePulse 4s infinite ease-in-out;
-}
-
-      @keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.google-btn img {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  padding: 2px;
-}
-
-  /* Optional: Remove white background for Telegram */
-.google-btn img.telegram-logo {
-  background: transparent;
-  padding: 0;
-}
-
-/* Snapchat logo */
-.google-btn img.snapchat-logo {
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  object-fit: contain;
-}
-
-.google-btn img.strz-logo {
-  width: 15px;
-  height: 15px;
-  background: #000;
-  padding: 3px;
-  border-radius: 5px;
-  object-fit: contain;
-  transform: scale(0.92);
-}
-
-@keyframes blink {
-  50% { opacity: 0; }
-}
-
-@keyframes vipShimmer {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-
-@keyframes shineAnimation {
-  0% { transform: translateX(-150%) skewX(-25deg); }
-  20% { transform: translateX(400%) skewX(-25deg); }
-  100% { transform: translateX(400%) skewX(-25deg); }
-}
-  
-</style>
-</head>
-<body>
-
-<div class="star-popup" id="starPopup">
-  <div id="starText">You've just earned +1 STRZ! ⭐</div>
-</div>
-
-
-  <!-- Loading Overlay (hidden by default) -->
-<div id="postLoginLoader" style="display:none;">
-  <div id="loadingBarWrapper">
-    <div id="loadingBar"></div>
-  </div>
-</div>
-
-<audio id="buzz-sound" src="/assets/sci-fi-sound-effect-designed-circuits-hum-10-200831.mp3" preload="auto"></audio>
-<div id="appWrapper">
-  <div class="app">
-    <div class="brand">
-  <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/HABA_HOUSE.png?v=1765412962" 
-       alt="ＣＵＢＥ" 
-       class="brand-logo">
-</div>
-
-    <div id="greeting"></div>
-    <div id="center">
-    <div class="video-container" style="position: relative; width: 100%; max-width: 600px; margin: auto;">
-<div id="videoWrapper">
-  <video id="videoPlayer" muted playsinline></video>
-  <button class="arrow" id="prev">&#10094;</button>
-  <button class="arrow" id="next">&#10095;</button>
-</div>
-<!-- Hello text -->
-   <div id="helloText" aria-live="polite">HELLO</div>
-      <div class="room-desc">Chat. Own your vibe.
-
-<!-- Controls under the video -->
-<div id="videoUnderControls">
-    <div id="onlineWrapper" style="display:flex; justify-content:center; align-items:center; gap:4px; font-family:sans-serif; font-weight:500; font-size:14px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
-        </svg>
-        <span id="onlineCount">…</span>
-        <span>live connections</span>
-    </div>
-<!-- Buttons (keep aligned) -->
-<div id="sessionBar">
-  <button class="session-btn" id="topBallersBtn">Win $STRZ</button>
-  <button id="highlightsBtn" class="session-btn star-hosts-btn">Free Tonight?</button>
-  <button class="session-btn" id="openHostsBtn">Liveshows</button>
-</div>
-
-<!-- Live Stream Modal - Full Clean Structure (No Bleeding) -->
-<div id="liveModal" class="live-modal">
-  <div class="live-modal-content">
-    <span class="live-close" id="closeModal">&times;</span>
-
-    <!-- Tabs -->
-    <div class="live-content-tabs">
-      <button class="live-tab-btn active" data-content="live">Livestreams</button>
-      <button class="live-tab-btn" data-content="upcoming">Explore</button>
-    </div>
-
-    <!-- Live Tab (Livestreams) - Player + Private Message Feature + Reader -->
-    <div id="live" class="live-tab-content active">
-      <!-- Player -->
-      <div id="livePlayerWrapper" class="live-player-wrapper">
-        <div id="livePlayerContainer" class="live-player">
-          <p class="player-placeholder">Live Player Loading...</p>
-        </div>
-      </div>
-
-      <!-- Optional Hint Text -->
-      <div id="liveChatMessages" class="live-chat-messages">
-        <p style="text-align:center; color:#888; padding:60px 20px; font-size:15px;">
-          Private messages are sent directly to the host 💌
-        </p>
-      </div>
-
-      <!-- Private Message Reader (host only) -->
-      <div id="privateMsgReader" class="private-msg-reader">
-        <div class="private-reader-header">
-          <h3>Live Private Messages 💌</h3>
-          <span id="privateMsgCount" class="msg-count">0</span>
-        </div>
-        <div id="privateMessagesList" class="private-messages-list">
-          <p class="no-messages">No private messages yet... waiting for secrets ✨</p>
-        </div>
-      </div>
-
-      <!-- Floating Private Message Button -->
-      <button id="privateMsgBtn" class="private-msg-btn" title="Send private message to host">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="envelope-icon">
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4C21.6569 4 23 5.34315 23 7V17C23 18.6569 21.6569 20 20 20H4C2.34315 20 1 18.6569 1 17V7C1 5.34315 2.34315 4 4 4H20ZM19.2529 6H4.74718L11.3804 11.2367C11.7437 11.5236 12.2563 11.5236 12.6197 11.2367L19.2529 6ZM3 7.1688V17C3 17.5523 3.44772 18 4 18H20C20.5523 18 21 17.5523 21 17V7.16882L13.8589 12.8065C12.769 13.667 11.231 13.667 10.1411 12.8065L3 7.1688Z" fill="#c3f60c"/>
-        </svg>
-      </button>
-
- <!-- Private Message Modal - Small & Cute -->
-<div id="privateMsgModal" class="private-msg-modal">
-  <div class="private-msg-content">
-    <div class="private-msg-header">
-      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/Love%20Letter.webp" 
-           alt="Love Letter" 
-           width="40" 
-           height="40">
-      <span class="private-close">&times;</span>
-    </div>
-    <p class="private-note">Only the host will see this · Costs 100 STRZ</p>
-    <textarea id="privateMsgInput" placeholder="Type your message..."></textarea>
-    <button id="privateSendBtn" class="private-send-btn">Send Message</button>
-  </div>
-</div>
-</div>      
-
-    <!-- Upcoming Tab -->
-    <div id="upcoming" class="live-tab-content">
-      <div id="upcomingPosters" class="upcoming-posters">
-        <div class="poster-grid">
-          <div class="poster-card">
-            <div class="poster-image">
-              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Chill Vibes">
-            </div>
-            <div class="poster-info">
-              <h3 class="poster-title">Chill Vibes</h3>
-              <p class="poster-time">Tonight @ 10PM EST</p>
-              <p class="poster-desc">Late night lo-fi beats, deep talks, and good energy. Pull up and unwind.</p>
-            </div>
-          </div>
-          <div class="poster-card">
-            <div class="poster-image">
-              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356" alt="Late Night Talk">
-            </div>
-            <div class="poster-info">
-              <h3 class="poster-title">Late Night Talk</h3>
-              <p class="poster-time">Tomorrow @ 1AM EST</p>
-              <p class="poster-desc">Real conversations, no filter. Stories, laughs, and truth bombs.</p>
-            </div>
-          </div>
-          <div class="poster-card">
-            <div class="poster-image">
-              <img src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/Beige_Minimal_Romantic_Love_Questions_Card_Game_Document_1080_x_1920_px_5.jpg?v=1765500400" alt="Exclusive Drop">
-            </div>
-            <div class="poster-info">
-              <h3 class="poster-title">Exclusive Drop</h3>
-              <p class="poster-time">Friday @ 9PM EST</p>
-              <p class="poster-desc">Special guest, new music reveal, and giveaways. You don't wanna miss this.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-  </div> <!-- End of .live-modal-content -->
-</div> <!-- End of #liveModal -->
-
-  
-    <button id="openHostsBtnz" class="featured-btnn" style="display:none;"></button>
-</div>
-
- <div id="guestMsg"></div>
-<div id="authBox">
-
-
-<!-- VIP Access Login Wrapper -->
-<div id="emailAuthWrapper">
-  <!-- Email Number Input -->
-  <input type="email" id="emailInput" placeholder="Enter your Email or Username" class="auth-input">
-  <!-- Password Input -->
-  <input type="password" id="passwordInput" placeholder="Enter your password" class="auth-input">
-  <!-- VIP Access Button -->
-<button id="whitelistLoginBtn" class="google-btn">
-  <img 
-    class="strz-logo"
-    src="https://cdn.shopify.com/s/files/1/0962/6648/6067/files/starssvg.svg?v=1761770774" 
-    alt="STRZ Logo"
-  >
- Sign in with STRZ
-</button>
-  
-<!-- Snapchat + Forgot (tied together only) -->
- <div class="google-block"> <button id="googleSignInBtn" class="google-btn"> <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram logo"> Sign in with Telegram </button> 
-
-    <a href="https://auth.cube.xixi.live/0fe4a760-df02-4801-badd-889b8caf3643" class="forgot-link">
-        Forgot password?
-    </a>
-</div>
-</div>
-
-</div>
-<!-- Chat ID Modal -->
-<div id="chatIDModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:200;">
-  <div style="background:var(--card);padding:20px;border-radius:12px;max-width:320px;width:90%;text-align:center;">
-    <h3 style="margin-bottom:12px;color:var(--accent);">Choose your Chat ID</h3>
-    <input id="chatIDInput" type="text" placeholder="Your chat ID" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);margin-bottom:12px;font-size:16px;color:#fff;background:#111;outline:none;" />
-    <button id="chatIDConfirmBtn" class="small-btn" style="width:100%;padding:10px;">Confirm</button>
-  </div>
-</div>
-
-<div id="messages"></div>
-
-
-
-<div class="send-area" id="sendArea" style="display:none;">
-  <div class="input-wrapper">
-    <textarea 
-      id="messageInput" 
-      placeholder="Type your message..." 
-      autocomplete="off"
-      rows="1"
-    ></textarea>
-  </div>
-  <button id="buzzBtn" class="buzz-btn" title="Send BUZZ 🚨">🚨</button>
-  <button id="sendBtn" class="send-btn">Send</button>
-</div>
-    </div>
-<div class="profile" id="profileBox">
-  <div class="profile-card">
-    <div class="profile-top">
-      <div class="profile-left">
-        <div id="profileName" class="profile-name">GUEST 0000</div>
-        <div>
-          <span class="profile-label">STARS COLLECTED:</span>
-          <span class="profile-value"><span id="starCount">0</span>⭐️</span>
-        </div>
-      </div>
-
-      <div class="profile-actions">
-       <!-- Host button with detailed gear SVG -->
-<div id="hostSettingsWrapper" style="text-align:center; margin-top:0; display:none; display:inline-block;">
-    <button id="hostSettingsBtn" class="smalla-btn">
-        <svg width="14" height="14" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" style="vertical-align:middle;">
-            <path fill="#AEADB3" d="M511.958,308.445L512,206.866l-65.964-7.24c-3.594-12.098-8.326-23.82-14.167-35.04l42.197-52.529 l-71.815-71.846L350.485,81.76c-11.116-6.039-22.754-10.98-34.789-14.783l-7.313-66.957H206.793l-7.209,65.975 c-11.983,3.552-23.611,8.243-34.727,14.02l-52.477-42.27l-71.94,71.721l41.486,51.829c-6.059,11.105-11.022,22.744-14.825,34.758 l-66.967,7.24L0,304.872l65.964,7.292c3.573,12.108,8.295,23.83,14.135,35.051L37.85,399.713l71.752,71.909l51.808-41.507 c11.116,6.049,22.744,11.001,34.769,14.814l7.261,66.967l52.581,0.042l49.008,0.042l7.261-65.964 c12.098-3.583,23.83-8.316,35.04-14.156l52.518,42.228l71.877-71.783l-41.528-51.787c6.039-11.116,10.991-22.754,14.793-34.779 L511.958,308.445z M256.021,347.706c-50.659,0-91.727-41.068-91.727-91.727s41.068-91.727,91.727-91.727 s91.727,41.068,91.727,91.727S306.68,347.706,256.021,347.706z"></path>
-            <path fill="#8B8892" d="M444.991,315.738c-3.803,12.025-8.755,23.663-14.793,34.779l41.528,51.787l-71.877,71.783 l-52.518-42.228c-11.21,5.84-22.942,10.573-35.04,14.156l-7.261,65.964l-49.008-0.042V347.706c50.659,0,91.727-41.068,91.727-91.727 s-41.068-91.727-91.727-91.727V0.021h52.362l7.313,66.957c12.035,3.803,23.674,8.744,34.789,14.783l51.766-41.549l71.815,71.846 l-42.197,52.529c5.84,11.22,10.573,22.942,14.167,35.04l65.964,7.24l-0.042,101.579L444.991,315.738z"></path>
-        </svg>
-    </button>
-</div>
-
-    <a id="tipBtn" class="smalla-btn" href="#" target="_blank" style="display:none;">
-    <svg width="14" height="14" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" style="vertical-align:middle;">
-        <path fill="#99AAB5" d="M16 9h4v17h-4z"></path>
-        <path fill="#DA2F47" d="M10 24.5A1.5 1.5 0 0 1 8.5 26h-3a1.5 1.5 0 0 1 0-3h3a1.5 1.5 0 0 1 1.5 1.5z"></path>
-        <path fill="#31373D" d="M34 33a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h28a2 2 0 0 1 2 2v6z"></path>
-        <path fill="#31373D" d="M10 34.5A1.5 1.5 0 0 1 8.5 36h-3a1.5 1.5 0 1 1 0-3h3a1.5 1.5 0 0 1 1.5 1.5zm22 0a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1 0-3h3a1.5 1.5 0 0 1 1.5 1.5z"></path>
-        <circle fill="#DA2F47" cx="18" cy="7" r="5"></circle>
-        <path fill="#31373D" d="M25 26a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2v-1c0-1.104 3.896-6 5-6h4c1.104 0 5 4.896 5 6v1z"></path>
-        <path fill="#66757F" d="M33 28a1 1 0 0 1-1 1H4a1 1 0 1 1 0-2h28a1 1 0 0 1 1 1z"></path>
-    </svg>
-</a>
-      </div>
-    </div> <!-- end profile-top -->
-
-    <div class="profile-cash">
-      <span class="profile-label">CASH EARNED:</span>
-      <span class="profile-value">₦<span id="cashCount">0</span></span>
-    </div>
-
-<!-- ULTRA-COMPACT GLASS LOGOUT (text + icon) -->
-<div id="logoutWrapper" style="text-align:center; margin-top:12px;">
-  <button id="hostLogoutBtn" class="tiny-glass-logout">
-    <span>Log Out</span>
-    <svg viewBox="0 -0.5 25 25" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M11.75 9.874C11.75 10.2882 12.0858 10.624 12.5 10.624C12.9142 10.624 13.25 10.2882 13.25 9.874H11.75ZM13.25 4C13.25 3.58579 12.9142 3.25 12.5 3.25C12.0858 3.25 11.75 3.58579 11.75 4H13.25ZM9.81082 6.66156C10.1878 6.48991 10.3542 6.04515 10.1826 5.66818C10.0109 5.29121 9.56615 5.12478 9.18918 5.29644L9.81082 6.66156ZM5.5 12.16L4.7499 12.1561L4.75005 12.1687L5.5 12.16ZM12.5 19L12.5086 18.25C12.5029 18.25 12.4971 18.25 12.4914 18.25L12.5 19ZM19.5 12.16L20.2501 12.1687L20.25 12.1561L19.5 12.16ZM15.8108 5.29644C15.4338 5.12478 14.9891 5.29121 14.8174 5.66818C14.6458 6.04515 14.8122 6.48991 15.1892 6.66156L15.8108 5.29644ZM13.25 9.874V4H11.75V9.874H13.25ZM9.18918 5.29644C6.49843 6.52171 4.7655 9.19951 4.75001 12.1561L6.24999 12.1639C6.26242 9.79237 7.65246 7.6444 9.81082 6.66156L9.18918 5.29644ZM4.75005 12.1687C4.79935 16.4046 8.27278 19.7986 12.5086 19.75L12.4914 18.25C9.08384 18.2892 6.28961 15.5588 6.24995 12.1513L4.75005 12.1687ZM12.4914 19.75C16.7272 19.7986 20.2007 16.4046 20.2499 12.1687L18.7501 12.1513C18.7104 15.5588 15.9162 18.2892 12.5086 18.25L12.4914 19.75ZM20.25 12.1561C20.2345 9.19951 18.5016 6.52171 15.8108 5.29644L15.1892 6.66156C17.3475 7.6444 18.7376 9.79237 18.75 12.1639L20.25 12.1561Z" fill="#ff3366"/>
-    </svg>
-  </button>
-</div>
-
-
-<!-- USER POLL MODAL (Win $STRZ) -->
-<div id="pollModal">
-  <div class="poll-modal-card">
-
-    <!-- INTRO / CONTEXT (INSIDE MODAL, OUTSIDE POLL) -->
-    <div class="poll-intro">
-      <h3>JOIN THE CONVO</h3>
-      <p>
-        Speak your mind, see how others feel,
-        and jump into the conversation.
-        take your stance & earn STRZ. 
-      </p>
-    </div>
-
-    <!-- POLL CONTAINER (SHRUNK) -->
-    <div class="poll-body">
-
-      <!-- Question -->
-      <h2 id="pollQuestion"></h2>
-
-      <!-- Options -->
-      <div id="pollOptions"
-        style="margin-bottom:22px; display:flex; flex-direction:column; gap:12px;">
-      </div>
-
-      <!-- Timer -->
-      <p id="pollTimer"></p>
-
-      <!-- Results -->
-      <div id="pollResult" style="display:none; margin-bottom:22px;">
-        <p style="font-size:15px; color:#aaa;">You voted for</p>
-        <p id="yourChoice"></p>
-        <div id="resultBars"
-          style="display:flex; flex-direction:column; gap:16px;"></div>
-      </div>
-
-      <!-- Carousel / Ads -->
-      <div id="pollCarousel">
-        Carousel / Ad Space
-      </div>
-
-      <!-- Close -->
-      <button id="closePollBtn">Close</button>
-
-    </div>
-  </div>
-</div>
+// ===============================================
+// ON AUTH STATE CHANGED — FINAL CLEAN VERSION
+// ===============================================
+onAuthStateChanged(auth, async (firebaseUser) => {
+  // Cleanup
+  if (typeof notificationsUnsubscribe === "function") {
+    notificationsUnsubscribe();
+    notificationsUnsubscribe = null;
+  }
+
+  currentUser = null;
+  currentAdmin = null;
+
+  if (!firebaseUser) {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("lastVipEmail");
+    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "block");
+    if (typeof showLoginUI === "function") showLoginUI();
+    return;
+  }
+
+  const email = firebaseUser.email?.toLowerCase()?.trim() || "";
+  if (!email) {
+    showStarPopup("Login error — no email found");
+    await signOut(auth);
+    return;
+  }
+
+  const uid = sanitizeKey(email);
+  const userRef = doc(db, "users", uid);
+
+  try {
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      showStarPopup("Profile missing — contact support");
+      await signOut(auth);
+      return;
+    }
+
+    let data = userSnap.data();
+
+    // Sync VIP expiration
+ await syncUserData();
+
+    // Set currentUser
+    currentUser = {
+      uid,
+      email,
+      firebaseUid: firebaseUser.uid,
+      chatId: data.chatId || email.split("@")[0],
+      chatIdLower: (data.chatId || email.split("@")[0]).toLowerCase(),
+      fullName: data.fullName || "VIP",
+      gender: data.gender || "person",
+      isVIP: !!data.isVIP,
+      isHost: !!data.isHost,
+      isAdmin: !!data.isAdmin,
+      hasPaid: !!data.hasPaid,
+      stars: data.stars || 0,
+      cash: data.cash || 0,
+      starsToday: data.starsToday || 0,
+      lastStarDate: data.lastStarDate || todayDate(),
+      usernameColor: data.usernameColor || "#ff69b4",
+      subscriptionActive: !!data.subscriptionActive,
+      subscriptionCount: data.subscriptionCount || 0,
+      unlockedVideos: data.unlockedVideos || [],
+      invitedBy: data.invitedBy || null,
+      inviteeGiftShown: !!data.inviteeGiftShown,
+      hostLink: data.hostLink || null,
+      vipExpiresAt: data.vipExpiresAt || null
+    };
+
+    // ====================== DAILY STAR BONUS ======================
+    await giveDailyStarBonus(uid);
+
+    // ADMIN MODE
+    if (currentUser.isAdmin) {
+      currentAdmin = { uid, email, chatId: currentUser.chatId };
+      ("%cADMIN MODE ACTIVATED", "color:#0f9;font-size:18px;font-weight:bold");
+      const pollSection = document.getElementById("polls");
+      if (pollSection) pollSection.style.display = "block";
+    }
+
+    // UI Setup
+    revealHostTabs?.();
+    updateInfoTab?.();
+    document.querySelectorAll(".after-login-only").forEach(el => el.style.display = "block");
+    document.querySelectorAll(".before-login-only").forEach(el => el.style.display = "none");
+
+    localStorage.setItem("userId", uid);
+    localStorage.setItem("lastVipEmail", email);
+
+    setupUsersListener?.();
+     loadActiveUsersForSocial();           // ← ADD THIS
+     setTimeout(loadActiveUsersForSocial, 1500);   // ← Add this
+    showChatUI?.(currentUser);
+    attachMessagesListener?.();
+    setupPresence?.(currentUser);
+    setupNotificationsListener?.(uid);
+    activateViewBoost?.();
+
+    if (typeof updateRedeemLink === "function") await updateRedeemLink();
+    if (typeof updateTipLink === "function") await updateTipLink();
 
    
-<!-- 🟣 HOST MODAL -->
-<div id="hostModal" class="modal">
-  <div class="modal-body">
-    <span class="close">&times;</span>
-    <h3 id="hostPanelTitle">Loading...</h3>
+   // Even better version (less delay)
+setTimeout(async () => {
+  await syncUserData();
+  loadNotifications?.();
+  if (typeof loadMyClips === "function") loadMyClips();
+}, 400);
 
-   <!-- 🧭 TAB HEADER -->
-<div class="tab-header" style="display:flex; gap:12px; padding:12px; border-bottom:1px solid #333;">
-  <button class="tab-btn" data-tab="mediaTab">Profile</button>
+    // GUEST ChatID Prompt
+    if (currentUser.chatId?.startsWith("GUEST")) {
+      setTimeout(() => {
+        // We no longer have userRef/data from old flow, so we reconstruct
+        const userRef = doc(db, "users", currentUser.uid);
+        promptForChatID?.(userRef, currentUser);
+      }, 2000);
+    }
 
-  <!-- HOST ONLY -->
-  <button class="tab-btn host-only" data-tab="infoTab">Hosts</button>
+    const hostFields = document.getElementById("hostOnlyFields");
+    if (hostFields) {
+      hostFields.style.display = currentUser.isHost ? "block" : "none";
+    }
 
-  <button id="notificationsTabBtn" class="tab-btn" data-tab="notificationsTab" style="position:relative;">
-    Notifications
-    <span id="notif-badge" style="
-      position:absolute; top:-8px; right:-10px;
-      background:#ff006e; color:#fff; font-size:10px; font-weight:900;
-      width:20px; height:20px; border-radius:50%;
-      display:none; align-items:center; justify-content:center;
-      box-shadow:0 0 16px #ff006e88;
-      animation:pulse 2s infinite;
-    ">0</span>
-  </button>
-</div>
-
-    
-<!-- NOTIFICATIONS TAB -->
-<div id="notificationsTab" class="tab-content" style="display:none; max-height:400px; overflow-y:auto;">
-  <div style="padding:8px 12px 4px; text-align:right;">
-  <button id="markAllRead" style="
-  font-size:11px; padding:6px 12px; border:none; border-radius:8px;
-  font-weight:700; transition:all 0.3s; cursor:pointer;
-  background:#333; color:#999;
-">Clear all</button>
-  </div>
-  <div id="notificationsList" style="padding:0 8px;">
-    <!-- Items will appear here -->
-  </div>
-</div>
-    
-<!-- 🎥 MEDIA TAB -->
-<div id="mediaTab" class="tab-content active" style="max-height:500px; overflow-y:auto; padding:16px 8px 16px 16px; box-sizing:border-box;">
-
-<!-- VIP Boost Countdown -->
-<div id="vipCountdown" style="text-align:center; margin:12px 0; padding:12px 16px; background:rgba(195,246,12,0.08); border-radius:16px; border:1px solid var(--neon); display:block; box-shadow:0 4px 20px rgba(195,246,12,0.15);">
-  <strong style="color:var(--neon); font-size:1.05rem;">TAB STATUS</strong><br>
-  <span id="countdownText" style="font-size:1.15rem; color:#e0ff80; line-height:1.4; display:block; margin:8px 0;"></span>
-</div>
-  
-
-<!-- Profile Section -->
-<h4 style="text-align:center; margin-bottom:10px;">Profile 👤</h4>
-
-<label>Name</label>
-<input type="text" id="fullName" placeholder="Enter your full name">
-
-
-<!-- Location -->
-<label>Location</label>
-<select id="location">
-  <option value="" disabled selected>Select your country</option>
-
-  <option value="🇳🇬 Nigeria">🇳🇬 Nigeria</option>
-  <option value="🇿🇦 South Africa">🇿🇦 South Africa</option>
-  <option value="🇬🇭 Ghana">🇬🇭 Ghana</option>
-  <option value="🇰🇪 Kenya">🇰🇪 Kenya</option>
-  <option value="🇹🇿 Tanzania">🇹🇿 Tanzania</option>
-</select>
-
-<!-- City -->
-<label>City</label>
-<select id="city">
-  <option value="" disabled selected>Select your city</option>
-</select>
-
-  
-<label>Notes</label>
-<textarea id="bio" rows="3" placeholder="What do you wanna say?..."></textarea>
-
-<!-- Inside your Media Tab — Host-Only Fields (Nature & Body Type) -->
-<div id="hostOnlyFields" style="display:none;">
-
-  <!-- Nature Pick -->
-  <label>Nature Pick</label>
-  <select id="naturePick">
-    <option value="" disabled selected>What describes you?</option>
-    <option value="Hot">Hot</option>
-    <option value="Sexy">Sexy</option>
-    <option value="Beautiful">Beautiful</option>
-    <option value="Charming">Charming</option>
-    <option value="Sweet">Sweet</option>
-    <option value="Cool">Cool</option>
-  </select>
-
-  <!-- Body Type Pick -->
-  <label>Body Type</label>
-  <select id="bodyTypePick">
-    <option value="" disabled selected>Choose your body type</option>
-    <option value="Slim">Slim</option>
-    <option value="Slim Thick">Slim thick</option>
-    <option value="Curvy">Curvy</option>
-    <option value="Chubby">Chubby</option>
-    <option value="Thick">Thick</option>
-    <option value="Athletic">Athletic</option>
-    <option value="Petite">Petite</option>
-    <option value="Plus Size">Plus Size</option>
-  </select>
-
-  <label>Vibe Pick</label>
-  <select id="fruitPick">
-  <option value="" disabled selected>Choose your vibe</option>
-<option value="🍇">🍇 Casual hangouts & new friends</option>
-<option value="🍉">🍉 Fun, thrills & paid meetups</option>
-<option value="🍒">🍒 Passion, romance & real dates</option>
-<option value="🍓">🍓 Meaningful connections & love</option>
-  </select>
-</div>
-  
-  <!-- FRUIT GUIDE BUTTON — AVAILABLE TO EVERYONE (inside Media tab) -->
-  <div style="margin:32px 0 20px; text-align:center;">
-    <button id="openFruitGuide" style="
-      padding:14px 36px;
-      background:linear-gradient(135deg,#1a1a1a,#0f0f0f);
-      color:#c3f60c;
-      border:1px solid #333;
-      border-radius:20px;
-      font-size:16px;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:0 6px 24px rgba(195,246,12,0.15);
-      transition:all 0.3s ease;
-    "
-    onmouseover="this.style.background='linear-gradient(135deg,#222,#181818)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(195,246,12,0.25)'"
-    onmouseout="this.style.background='linear-gradient(135deg,#1a1a1a,#0f0f0f)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 24px rgba(195,246,12,0.15)'">
-     🍒Read 🍇the Fruit🍉 Guide🍓
-    </button>
-  </div>
-
-
-  <!-- BUY TICKETS SECTION (OUTSIDE MODAL CARD) -->
-<div class="buy-tickets-section" style="
-  text-align: center;
-  padding: 20px 0;
-  color: #ccc;
-  font-size: 13px;
-">
-  <p class="buy-tickets-note" style="margin: 0;">
-    Want to book an experience? 
-    <a href="https://t.me/unlockye" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       style="
-         color:    #c3f60c;
-         text-decoration: underline;
-         font-weight: 600;
-         transition: color 0.3s;
-       "
-       onmouseover="this.style.color='   #c3f60c'"
-       onmouseout="this.style.color='   #c3f60c'">
-      Tap here
-    </a>
-  </p>
-</div>
-
-  <hr class="divider" style="margin:20px 0;">
-
-   <!-- Socials Section -->
-  <h4 style="text-align:center; margin-bottom:10px;">Rewards 🏦</h4>
-
-  <label>Bank Name</label>
-<select id="bankName">
-  <option value="" disabled selected>Select your bank</option>
-</select>
-
-  <label>Bank Number</label>
-  <input type="number" id="bankAccountNumber" maxlength="11" placeholder="Enter your bank account number"
-    oninput="if(this.value.length>11)this.value=this.value.slice(0,11);">
-
-  <hr class="divider" style="margin:20px 0;">
-
-  <!-- Socials Section -->
-  <h4 style="text-align:center; margin-bottom:10px;">Socials 🫱🏽‍🫲🏼</h4>
-  <label>WhatsApp</label>
-  <input type="text" id="whatsapp" placeholder="Enter WhatsApp number">
-  
-  <label>Telegram</label>
-  <input type="text" id="telegram" placeholder="@username">
-  
- <label>Snapchat</label>
-<input type="text" id="snapchat" placeholder="@username">
-
-  <!-- ORIGINAL SAVE BUTTON SIZE -->
-  <button id="saveInfo" class="small-btn" style="margin-top:10px;">Update</button>
-</div>
-    
-<!-- FRUIT GUIDE MODAL – SWIPEABLE CARDS (ONE PER VIEW) -->
-<div id="fruitGuideModal" style="
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.94);
-  z-index: 99999;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  backdrop-filter: blur(8px);
-  overflow: hidden;
-">
-  <div style="
-    background: linear-gradient(180deg, #121212, #0a0a0a);
-    border-radius: 24px;
-    width: 92%;
-    max-width: 380px;
-    height: 78vh;
-    max-height: 580px;
-    border: 1px solid #262626;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-  ">
-    <!-- Title Section – Smaller, Perfectly Centered & Balanced -->
-    <div style="padding: 20px 24px 10px; text-align:center;">
-      <h2 style="
-        font-size: 22px;
-        font-weight: 800;
-        margin: 0 0 10px;
-        background: linear-gradient(90deg, #c3f60c, #d9ff4d);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1.2;
-      ">
-        Fruit Guide
-      </h2>
-      <p style="
-        color:#aaa;
-        font-size: 13.5px;
-        margin: 0 0 8px;
-        line-height: 1.5;
-      ">
-        Understand the vibe behind each fruit, make your matches easier.
-      </p>
-      <p style="
-        color:#888;
-        font-size: 12px;
-        margin: 0;
-        line-height: 1.4;
-        font-weight: 500;
-      ">
-        Swipe to see each vibe →
-      </p>
-    </div>
-
-    <!-- Swipeable Carousel Container -->
-    <div id="fruitCarousel" style="
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    ">
-      <div id="fruitSlides" style="
-        display: flex;
-        width: 400%;
-        height: 100%;
-        transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
-      ">
-        <!-- Fruit 1: Grapes -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #9c72ff; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍇</div>
-            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
-              Grapes · Casual & Friends
-            </strong>
-            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
-           She's here for light, fun chats and friendships. No pressure, just good vibes, laughs, and easy connection.
-            </p>
-          </div>
-        </div>
-        <!-- Fruit 2: Peach -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff6b9d; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍉</div>
-            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
-              Watermelon · Thrills & Generosity
-            </strong>
-            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
-              She's open to exciting experiences where you spoil her. Think paid dates, thoughtful gifts, and consensual fun.
-            </p>
-          </div>
-        </div>
-        <!-- Fruit 3: Cherries -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff4757; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍒</div>
-            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
-              Cherries · Passion & Romance
-            </strong>
-            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
-              She's all about chemistry, flirting, and real passion. She's looking for romantic dates, sparks, and intense connection.
-            </p>
-          </div>
-        </div>
-        <!-- Fruit 4: Strawberry -->
-        <div class="fruit-slide" style="width: 25%; padding: 0 24px; box-sizing: border-box;">
-          <div style="background:#1a1a1a; padding:20px; border-radius:16px; border-left:4px solid #ff9f43; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:70px; text-align:center; margin-bottom:16px;">🍓</div>
-            <strong style="font-size:18px; color:#c3f60c; text-align:center; display:block; margin-bottom:10px;">
-              Strawberry · Love & Relationships
-            </strong>
-            <p style="color:#ccc; font-size:15px; line-height:1.6; margin:0;">
-              She's ready for deeper emotions, commitment, and building something real. Perfect for love adventures and long-term vibes.
-            </p>
-          </div>
-        </div>
+    // Welcome Popup
+    const glow = ["#FF1493", "#00FFFF", "#FFD700", "#FF00FF"][Math.floor(Math.random() * 4)];
+    showStarPopup(`
+      <div style="text-align:center;font-size:13px;">
+        Welcome back,
+        <b style="color:${glow};">${currentUser.chatId.toUpperCase()}</b>
+        ${currentUser.isAdmin ? "<br><span style='color:#0f9'>ADMIN MODE</span>" : ""}
       </div>
-    </div>
+    `);
 
-    <!-- Dots Indicator -->
-    <div style="padding: 16px 24px; text-align:center;">
-      <div id="fruitDots" style="display:inline-flex; gap:10px;">
-        <span class="dot active" data-slide="0"></span>
-        <span class="dot" data-slide="1"></span>
-        <span class="dot" data-slide="2"></span>
-        <span class="dot" data-slide="3"></span>
-      </div>
-    </div>
+  } catch (err) {
+    ("Login process error:", err);
+    showStarPopup("Login failed — try again");
+    await signOut(auth);
+  }
+});
 
-    <!-- Bottom Close Button -->
-    <div style="padding: 0 24px 28px; text-align:center;">
-      <button id="closeFruitGuideBottom" style="
-        padding:12px 40px;
-        background:#151515;
-        color:#c3f60c;
-        border:1px solid #333;
-        border-radius:18px;
-        font-size:15px;
-        font-weight:700;
-        cursor:pointer;
-      ">
-        Got it!
-      </button>
-    </div>
-  </div>
-</div>
+// ===============================================
+// NOTIFICATIONS LISTENER
+// ===============================================
+function setupNotificationsListener(userId) {
+  if (!userId) return;
 
-<!-- 📝 INFO TAB -->
-<div id="infoTab" class="tab-content"
-     style="max-height:500px; overflow-y:auto; padding:16px 8px 8px; display:none; font-family: system-ui, sans-serif; box-sizing:border-box;">
+  const list = document.getElementById("notificationsList");
+  if (!list) {
+    setTimeout(() => setupNotificationsListener(userId), 500);
+    return;
+  }
+
+  const q = query(
+    collection(db, "notifications"),
+    where("userId", "==", userId),
+    orderBy("timestamp", "desc")
+  );
+
+  notificationsUnsubscribe = onSnapshot(q, (snap) => {
+    if (snap.empty) {
+      list.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No notifications yet</p>`;
+      return;
+    }
+
+    list.innerHTML = snap.docs.map(doc => {
+      const n = doc.data();
+      const time = n.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "--:--";
+      const formattedMessage = (n.message || "").replace(/\n/g, "<br>");
+
+      return `
+        <div class="notification-item ${n.read ? '' : 'unread'}" data-type="${n.type || ''}">
+          ${n.icon ? `<div class="notif-icon">${n.icon}</div>` : ''}
+          ${n.title ? `<div class="notif-title">${n.title}</div>` : ''}
+          <div class="notif-message">${formattedMessage}</div>
+          <small class="notif-time">${time}</small>
+        </div>
+      `;
+    }).join("");
+  });
+}
+
+// MARK ALL READ
+document.getElementById("markAllRead")?.addEventListener("click", async () => {
+  const userId = localStorage.getItem("userId");
+  if (!userId) return;
+
+  const q = query(collection(db, "notifications"), where("userId", "==", userId));
+  const snap = await getDocs(q);
+  if (snap.empty) return;
+
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.update(d.ref, { read: true }));
+  await batch.commit();
+  showStarPopup("Marked as read");
+});
+
+
+function showStarPopup(text) {
+  const popup = document.getElementById("starPopup");
+  const starText = document.getElementById("starText");
+  if (!popup || !starText) return;
+
+  starText.innerHTML = text;
   
-<!-- 📱 Number Verification Bar -->
-<div id="verifyNumberBar" style="margin-bottom:24px;">
-  <h4 style="
-    text-align:center;
-    margin-bottom:12px;
-    font-weight:700;
-    font-size:22px;
-    background:linear-gradient(90deg,#c3f60c,#e8ff6a);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+  // Remove any previous classes/timers
+  popup.classList.remove("show");
+  popup.style.display = "none";
+  void popup.offsetWidth; // force reflow
+
+  // Show it
+  popup.style.display = "flex";
+  popup.classList.add("show");
+
+  // Auto-hide after 2 seconds
+  clearTimeout(popup._hideTimeout);
+  popup._hideTimeout = setTimeout(() => {
+    popup.style.display = "none";
+    popup.classList.remove("show");
+  }, 2000);
+}
+function formatNumberWithCommas(n) {
+  return new Intl.NumberFormat('en-NG').format(n || 0);
+}
+
+function randomColor() {
+  const p = ["#FFD700","#FF69B4","#87CEEB","#90EE90","#FFB6C1","#FFA07A","#8A2BE2","#00BFA6","#F4A460"];
+  return p[Math.floor(Math.random() * p.length)];
+}
+
+// GLOBAL
+window.currentUser = () => currentUser;
+window.pushNotification = pushNotification;
+window.sanitizeId = sanitizeId;
+window.getUserId = getUserId;  // ← RESTORED FOR OLD CODE
+window.formatNumberWithCommas = formatNumberWithCommas;
+
+// ==================== PRIME VIDEO STYLE HOTSPOT POPUP ====================
+function showHotspotAd() {
+  const adModal = document.createElement("div");
+  adModal.id = "hotspotAdModal";
+  adModal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(20px);
+    z-index: 10000000;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px; /* Clean space between text and icon */
-  ">
-    VERIFY NUMBER
-    <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Magnifying%20Glass%20Tilted%20Right.webp" 
-         alt="Search" 
-         width="36" 
-         height="36">
-  </h4>
-  <div style="
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 340px;
-    margin: 0 auto;
-    height: 36px;
-    border-radius: 999px;
-    box-shadow: 0 1px 6px rgba(195,246,12,0.25);
-    border: 1px solid rgba(195,246,12,0.3);
-    overflow: hidden;
-    background: rgba(0,0,0,0.85);
-  ">
-    <input
-      type="text"
-      id="verifyNumberInput"
-      placeholder="Enter phone number to verify"
-      style="
-        flex: 1;
-        height: 100%;
-        padding: 0 14px;
-        font-size: 13.5px;
-        border: none;
-        outline: none;
-        color: #eee;
-        background: transparent;
-      "
-    />
-    <button
-      id="verifyNumberBtn"
-      style="
-        flex-shrink: 0;
-        width: 90px;
-        height: 100%;
-        border: none;
-        background: linear-gradient(90deg,#c3f60c,#e8ff6a);
-        color: #000;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-      ">
-      Check
-    </button>
-  </div>
-  <p style="
-    margin:10px 0 0;
-    font-size:12.5px;
-    color:#bbb;
-    text-align:center;
-  ">
-    Your safety is our priority. This helps you verify that numbers here belong to real, verified users.
-  </p>
-</div>
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  `;
+
+  const randomHour = String(Math.floor(Math.random() * 4) + 7).padStart(2, '0');
+  const randomMin = String(Math.floor(Math.random() * 50) + 5).padStart(2, '0');
+
+  adModal.innerHTML = `
+    <div style="width: 340px; max-width: 92vw; background:#0f0a1a; border-radius: 20px; overflow:hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.9); border: 1px solid #222;">
+      
+      <!-- Header -->
+      <div style="padding:16px 20px; background:#000; display:flex; justify-content:space-between; align-items:center;">
+        <div style="color:#00ff9f; font-weight:700; font-size:15px;"></div>
+        <div id="adCloseBtn" style="color:#888; font-size:28px; cursor:pointer; line-height:1;">×</div>
+      </div>
+
+      <!-- Hero Image -->
+      <div id="adSlides" style="height:400px; position:relative; overflow:hidden;"></div>
+
+      <!-- Content -->
+      <div style="padding:24px 24px 32px; text-align:center;">
+        
+        <!-- Free Tonight? Logo Style -->
+        <span style="
+          font-family: 'Architects Daughter', cursive;
+          font-size: 25px;
+          letter-spacing: 3px;
+          background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: block;
+          margin-bottom: 8px;
+        ">
+          Free Tonight?
+        </span>
+
+        <p style="margin:0 0 16px; font-size:15.5px; color:#ddd; font-weight:500;">
+          Visit some of tonight's hotspot
+        </p>
+
+        <!-- Small faded reward text -->
+        <p style="margin:0 0 28px; font-size:13px; color:#777; font-style:italic; opacity:0.85;">
+          and unlock rewards when you visit
+        </p>
+
+        <!-- Big Action Button -->
+        <button id="imGoingBtn" style="
+          width: 100%;
+          padding: 16px;
+          font-size: 17px;
+          font-weight: 700;
+          color: #000;
+          background: linear-gradient(90deg, #00ff9f, #00d4a8);
+          border: none;
+          border-radius: 12px;
+          box-shadow: 0 8px 25px rgba(0,255,159,0.4);
+          cursor: pointer;
+          transition: all 0.3s ease;
+        ">
+          I'M IN 
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(adModal);
+
+  // Fade in
+  setTimeout(() => adModal.style.opacity = "1", 80);
+
+  // ==================== SLIDESHOW ====================
+  const adImages = [
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/LIVE_ON_FRIDAYS.png?v=1763616110"
+  ];
+
+  let current = 0;
+  const slidesContainer = adModal.querySelector("#adSlides");
+
+  adImages.forEach((src, i) => {
+    const slide = document.createElement("div");
+    slide.style.cssText = `
+      position:absolute; inset:0;
+      background:url('${src}') center/cover no-repeat;
+      opacity: ${i === 0 ? '1' : '0'};
+      transition: opacity 1s ease;
+    `;
+    slidesContainer.appendChild(slide);
+  });
+
+  // Auto slide
+  setInterval(() => {
+    const slides = slidesContainer.children;
+    slides[current].style.opacity = "0";
+    current = (current + 1) % adImages.length;
+    slides[current].style.opacity = "1";
+  }, 4000);
+
+  // Button Action
+  adModal.querySelector("#imGoingBtn").onclick = () => {
+    const btn = adModal.querySelector("#imGoingBtn");
+    btn.style.transform = "scale(0.95)";
+    btn.style.boxShadow = "0 0 40px #00ff9f";
+
+    setTimeout(() => {
+      showStarPopup("See you there tonight! 🔥", "success");
+      adModal.style.opacity = "0";
+      setTimeout(() => adModal.remove(), 600);
+    }, 250);
+  };
+
+  // Close
+  adModal.querySelector("#adCloseBtn").onclick = () => {
+    adModal.style.opacity = "0";
+    setTimeout(() => adModal.remove(), 500);
+  };
+}
+
+// ===============================================
+// VIP COUNTDOWN - WITH DIRECT BOOST LINK
+// ===============================================
+async function showVIPCountdown() {
+  const countdownEl = document.getElementById('vipCountdown');
+  const textEl = document.getElementById('countdownText');
+  if (!countdownEl || !textEl) return;
+
+  if (!currentUser) {
+    countdownEl.style.display = 'none';
+    return;
+  }
+
+  try {
+    const userData = await getCachedUserDoc(currentUser.uid);
+    if (!userData) return;
+
+    const inviterName = (userData.invitedBy || "someone").split('_')[0];
+
+    if (!userData.vipExpiresAt) {
+      textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br><span style="color:#ff9999;">No active boost</span>`;
+      countdownEl.style.display = 'block';
+      return;
+    }
+
+    const expiresAt = data.vipExpiresAt.toDate ? data.vipExpiresAt.toDate() : new Date(data.vipExpiresAt);
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = expiresAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+          <span style="color:#ff4444;">Expired</span><br>
+          <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537" 
+             style="display:inline-block; margin-top:8px; padding:8px 20px; background:var(--neon); color:#000; border-radius:30px; font-weight:700; text-decoration:none; font-size:0.95rem;">
+            BOOST YOUR TAB NOW
+          </a>`;
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+        textEl.innerHTML = `You're on <strong>${inviterName}'s</strong> VIP tab<br>
+          STATUS: <span style="color:#c3f60c;">BOOSTED</span> • Expires in ${days}d ${hours}h`;
+      }
+      countdownEl.style.display = 'block';
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+  } catch (err) {
+    ("Countdown error:", err);
+    countdownEl.style.display = 'none';
+  }
+}
+
+// ===============================================
+// Call it when Media Tab is clicked + on page load
+// ===============================================
+document.getElementById('mediaTab').addEventListener('click', () => {
+  ("🖱️ Media Tab clicked");
+  showVIPCountdown();
+});
+
+setTimeout(() => {
+  ("⏰ Initial countdown call after delay");
+  showVIPCountdown();
+}, 2000);
 
 
 
+// ===============================
+// COUNTRY → CITIES
+// ===============================
+const citiesByCountry = {
+  Nigeria: [
+    "Lagos",
+    "Abuja",
+    "Port Harcourt",
+    "Ibadan",
+    "Benin City",
+    "Enugu",
+    "Owerri",
+    "Kano",
+    "Abeokuta",
+    "Uyo",
+    "Calabar",
+    "Warri",
+    "Asaba",
+    "Kaduna",
+    "Jos"
+  ],
 
-<!-- 🔥 FREE TONIGHT – Tiny Neon Glow Panel -->
-<div id="freeTonightCard" class="neon-mini-card">
-  <div class="neon-title-container">
-    <div class="neon-title">◑△◐ Free Tonight? ◑△◐</div>
-  </div>
+  SouthAfrica: [
+    "Johannesburg",
+    "Cape Town",
+    "Durban",
+    "Pretoria",
+    "Bloemfontein",
+    "Port Elizabeth",
+    "Polokwane",
+    "East London"
+  ],
 
-  <div class="neon-sub">
-    Go live for 24 hours • connect in a safer space.  
-    No fakes. No scams. No bots.
-  </div>
+  Ghana: [
+    "Accra",
+    "Kumasi",
+    "Tamale",
+    "Takoradi",
+    "Cape Coast",
+    "Tema",
+    "Ho",
+    "Sunyani"
+  ],
 
-  <button id="freeTonightBtn" class="neon-btn">
-    I'm Free Tonight
-  </button>
+  Kenya: [
+    "Nairobi",
+    "Mombasa",
+    "Kisumu",
+    "Nakuru",
+    "Eldoret",
+    "Thika",
+    "Malindi",
+    "Nyeri"
+  ],
 
-  <div id="freeTonightMessage" class="neon-msg"></div>
-</div>
+  Tanzania: [
+    "Dar es Salaam",
+    "Dodoma",
+    "Arusha",
+    "Mwanza",
+    "Zanzibar",
+    "Mbeya",
+    "Morogoro",
+    "Tanga"
+  ]
+};
+
+// ===============================
+// ELEMENTS
+// ===============================
+const locationSelect = document.getElementById("location");
+const citySelect = document.getElementById("city");
+
+// ===============================
+// CLEAN COUNTRY NAME
+// Removes emoji flags + spaces
+// ===============================
+function cleanCountryName(value = "") {
+  return value
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+    .trim()
+    .replace(/\s+/g, "");
+}
+
+// ===============================
+// LOAD CITIES
+// ===============================
+function loadCities(countryValue, selectedCity = "") {
+  const cleanedCountry = cleanCountryName(countryValue);
+
+  citySelect.innerHTML = `
+    <option value="" disabled>
+      Select your city
+    </option>
+  `;
+
+  const cities = citiesByCountry[cleanedCountry];
+
+  if (!cities) return;
+
+  cities.forEach((city) => {
+    const option = document.createElement("option");
+    option.value = city;
+    option.textContent = city;
+
+    if (city === selectedCity) {
+      option.selected = true;
+    }
+
+    citySelect.appendChild(option);
+  });
+}
+
+// ===============================
+// COUNTRY CHANGE
+// ===============================
+locationSelect.addEventListener("change", (e) => {
+  loadCities(e.target.value);
+});
+
+// ===============================
+// GEO AUTO-DETECT COUNTRY
+// ===============================
+async function autoDetectCountry() {
+  try {
+    const response = await fetch("https://ipapi.co/json/");
+    const data = await response.json();
+
+    const detectedCountry = data.country_name;
+
+    Array.from(locationSelect.options).forEach((option) => {
+      const cleanedOption = option.value
+        .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+        .trim();
+
+      if (
+        cleanedOption.toLowerCase() ===
+        detectedCountry.toLowerCase()
+      ) {
+        option.selected = true;
+
+        // Auto-load cities
+        loadCities(option.value);
+      }
+    });
+
+  } catch (err) {
+    ("Geo detection failed:", err);
+  }
+}
+
+// Run automatically
+autoDetectCountry();
+
+// Load Nabla Font
+const nablaLink = document.createElement("link");
+nablaLink.rel = "stylesheet";
+nablaLink.href = "https://fonts.googleapis.com/css2?family=Nabla&display=swap";
+document.head.appendChild(nablaLink);
+
+/* ----------------------------
+   GIFT MODAL — FINAL ETERNAL VERSION (2025+)
+   Works perfectly with sanitized IDs • Zero bugs • Instant & reliable
+----------------------------- */
+async function showGiftModal(targetUid, targetData) {
+  if (!currentUser) {
+    showStarPopup("You must be logged in");
+    return;
+  }
+
+  if (!targetUid || !targetData?.chatId) {
+    ("Invalid gift target");
+    return;
+  }
+
+  const { giftModal, giftModalTitle, giftAmountInput, giftConfirmBtn, giftModalClose } = refs;
+
+  if (!giftModal || !giftModalTitle || !giftAmountInput || !giftConfirmBtn || !giftModalClose) {
+    ("Gift modal DOM elements missing");
+    return;
+  }
+
+  // === SETUP MODAL ===
+  giftModalTitle.textContent = `Gift Stars to ${targetData.chatId}`;
+  giftAmountInput.value = "100";
+  giftAmountInput.focus();
+  giftAmountInput.select();
+  giftModal.style.display = "flex";
+
+  // === CLOSE HANDLERS ===
+  const closeModal = () => {
+    giftModal.style.display = "none";
+  };
+
+  giftModalClose.onclick = closeModal;
+  giftModal.onclick = (e) => {
+    if (e.target === giftModal) closeModal();
+  };
+  // Allow ESC key to close
+  const escHandler = (e) => {
+    if (e.key === "Escape") closeModal();
+  };
+  document.addEventListener("keydown", escHandler);
+
+  // === CLEAN & REPLACE CONFIRM BUTTON (removes old listeners) ===
+  const newConfirmBtn = giftConfirmBtn.cloneNode(true);
+  giftConfirmBtn.replaceWith(newConfirmBtn);
+
+  // === GIFT LOGIC ===
+  newConfirmBtn.addEventListener("click", async () => {
+    const amt = parseInt(giftAmountInput.value.trim(), 10);
+
+    if (isNaN(amt) || amt < 100) {
+      showStarPopup("Minimum 100 stars");
+      return;
+    }
+
+    if ((currentUser.stars || 0) < amt) {
+      showStarPopup("Not enough stars");
+      return;
+    }
+
+    newConfirmBtn.disabled = true;
+    newConfirmBtn.textContent = "Sending...";
+
+    try {
+      const fromRef = doc(db, "users", currentUser.uid);        // sender (sanitized ID)
+      const toRef = doc(db, "users", targetUid);                // receiver (sanitized ID)
+
+      await runTransaction(db, async (transaction) => {
+        const fromSnap = await transaction.get(fromRef);
+        if (!fromSnap.exists()) throw "Sender not found";
+        if ((fromSnap.data().stars || 0) < amt) throw "Not enough stars";
+
+        transaction.update(fromRef, {
+          stars: increment(-amt),
+          starsGifted: increment(amt)
+        });
+
+        transaction.update(toRef, {
+          stars: increment(amt)
+        });
+      });
+
+           // === SUCCESS — GIFT SENT CLEAN & SILENT (NO BANNER, NO GLOW, EVER AGAIN) ===
+      showGiftAlert(`Gifted ${amt} stars to ${targetData.chatId}!`);
+      closeModal();
+
+    } catch (err) {
+      ("Gift transaction failed:", err);
+      showStarPopup("Gift failed — try again");
+      closeModal();
+    } finally {
+      newConfirmBtn.disabled = false;
+      newConfirmBtn.textContent = "Send Gift";
+      document.removeEventListener("keydown", escHandler);
+    }
+  });
+}
+
+function updateInfoTab() {
+  const cashEl = document.getElementById("infoCashBalance");
+  const starsEl = document.getElementById("infoStarBalance");
+  const lastEl = document.getElementById("infoLastEarnings");
+
+  if (currentUser) {
+    if (cashEl) cashEl.textContent = currentUser.cash.toLocaleString();
+    if (starsEl) starsEl.textContent = currentUser.stars.toLocaleString();
+    if (lastEl) lastEl.textContent = (currentUser.lastEarnings || 0).toLocaleString();
+  }
+}
+
+// CONVERT PREVIEW (unchanged)
+document.getElementById("convertAmount")?.addEventListener("input", e => {
+  const stars = Number(e.target.value) || 0;
+  document.getElementById("convertResult").textContent = (stars * 0.25).toLocaleString();
+});
+
+// WITHDRAW PREVIEW — NEW: Live update as user types
+document.getElementById("withdrawAmount")?.addEventListener("input", e => {
+  const amount = Number(e.target.value) || 0;
+  document.getElementById("withdrawPreview").textContent = amount.toLocaleString();
+});
+
+// CONVERT STRZ TO CASH (unchanged)
+document.getElementById("convertBtn")?.addEventListener("click", async () => {
+  const stars = Number(document.getElementById("convertAmount").value);
+  if (!stars || stars <= 0) return showGoldAlert("Enter valid amount");
+  if (stars > (currentUser?.stars || 0)) return showGoldAlert("Not enough STRZ");
+  const cash = stars * 0.25;
+  const ok = await showConfirm("Convert", `Convert ${stars.toLocaleString()} STRZ → ₦${cash.toLocaleString()}?`);
+  if (!ok) return;
+  showLoader("Converting...");
+  try {
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      stars: increment(-stars),
+      cash: increment(cash)
+    });
+    currentUser.stars -= stars;
+    currentUser.cash += cash;
+    updateInfoTab();
+    document.getElementById("convertAmount").value = "";
+    document.getElementById("convertResult").textContent = "0";
+    hideLoader();
+    showGoldAlert(`Success! +₦${cash.toLocaleString()}`);
+  } catch (e) {
+    hideLoader();
+    showGoldAlert("Conversion failed");
+  }
+});
+
+// WITHDRAW CASH — NOW MODAL-FREE & CLEAN
+document.getElementById("withdrawCashBtn")?.addEventListener("click", async () => {
+  const input = document.getElementById("withdrawAmount");
+  const amount = Number(input.value);
+
+  const currentCash = currentUser?.cash || 0;
+
+  // Basic validation
+  if (!amount || amount <= 0) {
+    return showGoldAlert("Enter a valid amount");
+  }
+  if (amount < 5000) {
+    return showGoldAlert("Minimum withdrawal is ₦5,000");
+  }
+  if (amount > currentCash) {
+    return showGoldAlert(`Insufficient balance. Available: ₦${currentCash.toLocaleString()}`);
+  }
+
+  // Confirm action
+  const ok = await showConfirm(
+    "Withdraw Cash",
+    `Request withdrawal of ₦${amount.toLocaleString()}?\n\nSuccessful.`
+  );
+  if (!ok) return;
+
+  showLoader("Processing withdrawal...");
+
+  try {
+    // DEDUCT CASH + CREATE REQUEST IN ONE TRANSACTION
+    await runTransaction(db, async (transaction) => {
+      const userRef = doc(db, "users", currentUser.uid);
+      const snap = await transaction.get(userRef);
+      if (!snap.exists()) throw "User not found";
+      const currentCash = snap.data().cash || 0;
+      if (currentCash < amount) throw "Not enough cash";
+
+      // Deduct cash
+      transaction.update(userRef, { cash: currentCash - amount });
+
+      // Create withdrawal request
+      const withdrawalRef = doc(collection(db, "hostWithdrawal"));
+      transaction.set(withdrawalRef, {
+        uid: currentUser.uid,
+        username: currentUser.chatId || currentUser.email.split('@')[0],
+        amount,
+        type: "cash",
+        status: "pending",
+        requestedAt: serverTimestamp(),
+        deducted: true
+      });
+    });
+
+    // Update local state
+    currentUser.cash -= amount;
+    updateInfoTab();
+
+    // Update any other cash displays
+    const cashCountEl = document.getElementById("cashCount");
+    if (cashCountEl) cashCountEl.textContent = currentUser.cash.toLocaleString();
+
+    // Reset input
+    input.value = "";
+    document.getElementById("withdrawPreview").textContent = "0";
+
+    hideLoader();
+    showGoldAlert(
+      `Withdrawal requested!\n₦${amount.toLocaleString()} deducted.`
+    );
+  } catch (e) {
+    ("Withdraw failed:", e);
+    hideLoader();
+    showGoldAlert("Request failed — please try again");
+  }
+});
+
+// CALL ON LOAD & AFTER ANY UPDATE
+document.addEventListener("DOMContentLoaded", updateInfoTab);
 
 
+// LOADER FUNCTIONS — BULLETPROOF
+const loaderOverlay = document.getElementById("loaderOverlay");
+const loaderText = document.getElementById("loaderText");
+
+// IMPROVED LOADER — Light Transparent Overlay
+function showLoader(text = "Loading...") {
+  let loaderOverlay = document.getElementById("loaderOverlay");
   
-<!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
-<div style="margin: 24px 0;">
-  <h4 style="
-    text-align: center;
-    margin-bottom: 16px;
-    font-weight: 700;
-    font-size: 18px;
-    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  ">
-    REVENUE DASHBOARD
-  </h4>
+  if (!loaderOverlay) {
+    loaderOverlay = document.createElement("div");
+    loaderOverlay.id = "loaderOverlay";
+    loaderOverlay.style.cssText = `
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.65);     /* Almost transparent dark */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+      backdrop-filter: blur(4px);
+    `;
 
-  <!-- One Unified Cute Card -->
-  <div style="
-    background: #000000;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(195, 246, 12, 0.35);
-    border-radius: 20px;
-    padding: 20px 16px;
-    max-width: 340px;
-    margin: 0 auto;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5),
-                0 0 12px rgba(195, 246, 12, 0.12);
-  ">
-    <!-- Cash Balance (top, prominent) -->
-    <div style="
-      font-size: 11px;
-      color: #bbbbbb;
-      margin-bottom: 4px;
-      text-align: center;
-    ">
-      CASH BALANCE
-    </div>
-    <div style="
-      font-size: 22px;
-      font-weight: 900;
-      color: #c3f60c;
-      text-align: center;
-      margin-bottom: 20px;
-      letter-spacing: 0.5px;
-    ">
-      ₦<span id="infoCashBalance">0</span>
-    </div>
+    loaderOverlay.innerHTML = `
+      <div style="text-align:center; color:#fff;">
+        <div style="width:48px; height:48px; margin:0 auto 16px;
+                    border:5px solid rgba(255,255,255,0.2);
+                    border-top-color:#00ffea; border-radius:50%;
+                    animation:spin 0.9s linear infinite;"></div>
+        <div id="loaderText" style="font-size:15px; font-weight:500;">${text}</div>
+      </div>
+    `;
+    document.body.appendChild(loaderOverlay);
+
+    // Add spinner animation if not exists
+    if (!document.getElementById("spinner-style")) {
+      const style = document.createElement("style");
+      style.id = "spinner-style";
+      style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+      document.head.appendChild(style);
+    }
+  }
+
+  document.getElementById("loaderText").textContent = text;
+  loaderOverlay.style.display = "flex";
+}
+
+function hideLoader() {
+  const loaderOverlay = document.getElementById("loaderOverlay");
+  if (loaderOverlay) loaderOverlay.style.display = "none";
+}
+
+// ==================== PREMIUM BLACK FROSTED GLASS LOADER ====================
+
+// ==================== PREMIUM BLACK FROSTED GLASS LOADER (Small Spinner) ====================
+
+function showLoaderBlack(text = "Loading...") {
+  let loader = document.getElementById("loaderBlack");
+
+  if (!loader) {
+    loader = document.createElement("div");
+    loader.id = "loaderBlack";
+    loader.style.cssText = `
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999999;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    `;
+
+    loader.innerHTML = `
+      <div style="text-align:center; color:#fff;">
+        <!-- Smaller Premium Spinner -->
+        <div style="width:42px; height:42px; margin:0 auto 18px;
+                    border: 4px solid rgba(255,255,255,0.12);
+                    border-top-color: #c3f60c;
+                    border-radius: 50%;
+                    animation: spin 0.95s linear infinite;"></div>
+        
+        <div id="loaderBlackText" style="
+          font-size: 15px; 
+          font-weight: 600; 
+          letter-spacing: 0.4px;
+          color: #e0e0e0;
+        ">${text}</div>
+      </div>
+    `;
+
+    document.body.appendChild(loader);
+
+    // Add animation keyframes
+    if (!document.getElementById("frosted-loader-style")) {
+      const style = document.createElement("style");
+      style.id = "frosted-loader-style";
+      style.textContent = `
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  document.getElementById("loaderBlackText").textContent = text;
+  loader.style.display = "flex";
+  
+  setTimeout(() => {
+    loader.style.opacity = "1";
+  }, 10);
+}
+
+function hideLoaderBlack() {
+  const loader = document.getElementById("loaderBlack");
+  if (loader) {
+    loader.style.opacity = "0";
+    setTimeout(() => {
+      if (loader.style.opacity === "0") {
+        loader.style.display = "none";
+      }
+    }, 350);
+  }
+}
 
 
-    <!-- Withdraw Section (flows naturally below balance) -->
-    <p style="
-      color: #cccccc;
-      margin: 0 0 12px;
-      font-size: 13.5px;
-      font-weight: 600;
-      text-align: center;
-    ">
-      WITHDRAW CASH TO BANK
-    </p>
+// MODERN CONFIRM MODAL — MATCHES MEET MODAL DESIGN
+async function showConfirm(title, msg) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.id = "confirmModalOverlay"; // optional ID for cleanup
+    Object.assign(overlay.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.75)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "999999",
+      backdropFilter: "blur(3px)",
+      WebkitBackdropFilter: "blur(3px)"
+    });
 
-    <p style="
-      color: #aaaaaa;
-      margin: -6px 0 16px;
-      font-size: 11.5px;
-      text-align: center;
-      line-height: 1.4;
-    ">
-      Fill bank details in profile before withdrawal request<br>Minimum Amount: ₦5,000
-    </p>
+    overlay.innerHTML = `
+      <div style="
+        background:#111;
+        padding:20px 22px;
+        border-radius:12px;
+        text-align:center;
+        color:#fff;
+        max-width:340px;
+        width:90%;
+        box-shadow:0 0 20px rgba(0,0,0,0.5);
+      ">
+        <h3 style="margin:0 0 10px; font-weight:600; font-size:20px;">${title}</h3>
+        <p style="margin:0 0 20px; line-height:1.5; color:#ccc; font-size:15px;">${msg}</p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+          <button id="confirmNo" style="
+            padding:10px 20px;
+            background:#333;
+            border:none;
+            color:#ccc;
+            border-radius:10px;
+            font-weight:500;
+            cursor:pointer;
+            min-width:100px;
+          ">Cancel</button>
+          <button id="confirmYes" style="
+            padding:10px 20px;
+            background:linear-gradient(90deg,#c3f60c,#e8ff6a);
+            border:none;
+            color:#000;
+            border-radius:10px;
+            font-weight:700;
+            cursor:pointer;
+            min-width:100px;
+          ">Confirm</button>
+        </div>
+      </div>
+    `;
 
-    <input
-      type="number"
-      id="withdrawAmount"
-      placeholder="Enter amount"
-      style="
-        width: 100%;
-        max-width: 260px;
-        padding: 11px;
-        border-radius: 12px;
-        background: #1a1a1a;
-        color: #fff;
-        border: 1px solid #444;
-        font-size: 15px;
-        text-align: center;
-        box-sizing: border-box;
-        margin: 0 auto 16px;
-        display: block;
-      "
-    />
+    document.body.appendChild(overlay);
 
-    <div style="
-      color: #c3f60c;
+    overlay.querySelector("#confirmNo").onclick = () => {
+      overlay.remove();
+      resolve(false);
+    };
+
+    overlay.querySelector("#confirmYes").onclick = () => {
+      overlay.remove();
+      resolve(true);
+    };
+
+    // Optional: click outside to cancel
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
+}
+// ==============================
+// CHAT.JS — CLEAN FULL VERSION
+// ==============================
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Grab chat elements
+  const chatContainer = document.getElementById('chatContainer');
+  const messagesEl = document.getElementById('messages');
+  const sendArea = document.getElementById('sendArea');
+  if (!chatContainer || !messagesEl || !sendArea) return;
+
+  // ------------------------------
+  // Helper: check if chat has real messages
+  // ------------------------------
+  function hasRealMessages() {
+    return !!messagesEl.querySelector('.msg');
+  }
+
+  // ------------------------------
+  // Update placeholder visibility
+  // ------------------------------
+  function updateMessagesPlaceholder() {
+    if (hasRealMessages()) {
+      messagesEl.classList.remove('show-placeholder');
+    } else if (messagesEl.classList.contains('active')) {
+      messagesEl.classList.add('show-placeholder');
+    } else {
+      // Startup page, do not show placeholder
+      messagesEl.classList.remove('show-placeholder');
+    }
+  }
+
+  // ------------------------------
+  // MutationObserver for  updates
+  // ------------------------------
+  const messagesObserver = new MutationObserver(updateMessagesPlaceholder);
+  messagesObserver.observe(messagesEl, { childList: true });
+
+  // ------------------------------
+  // Global function to reveal chat AFTER login
+  // ------------------------------
+  window.revealChatAfterLogin = function() {
+    chatContainer.style.display = 'flex';   // show chat container
+    sendArea.style.display = 'flex';        // show input area
+    messagesEl.classList.add('active');     // gray placeholder logic
+    updateMessagesPlaceholder();            // show/hide placeholder if empty
+  };
+
+  // ------------------------------
+  // Startup: everything hidden
+  // ------------------------------
+  chatContainer.style.display = 'none';
+  sendArea.style.display = 'none';
+  messagesEl.classList.remove('active');
+  updateMessagesPlaceholder();
+
+});
+
+
+// ==================== SECURE ONE-TIME TOKEN + LONG SESSION SYSTEM ====================
+
+let currentLoginToken = null;
+
+/**
+ * Create One-Time Shareable Token (15 minutes)
+ */
+async function createLoginToken(uid) {
+  if (!uid) return null;
+
+  if (currentLoginToken) return currentLoginToken;
+
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  const expiresAt = Date.now() + (15 * 60 * 1000); // 15 minutes
+
+  try {
+    await setDoc(doc(db, "loginTokens", token), {
+      uid,
+      createdAt: serverTimestamp(),
+      expiresAt,
+      used: false,
+      type: "one_time"
+    });
+
+    currentLoginToken = token;
+    console.log("[TOKEN] One-time shareable token created");
+    return token;
+  } catch (err) {
+    console.error("[TOKEN] Failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Load User from One-Time Token
+ */
+async function loadUserFromToken(token) {
+  if (!token) return null;
+
+  try {
+    const tokenRef = doc(db, "loginTokens", token);
+    const snap = await getDoc(tokenRef);
+
+    if (!snap.exists()) return null;
+
+    const data = snap.data();
+
+    if (Date.now() > data.expiresAt || data.used === true) {
+      await deleteDoc(tokenRef);
+      return null;
+    }
+
+    // Mark as used and delete immediately
+    await deleteDoc(tokenRef);
+
+    // Create Long-Lived Session
+    await createLongLivedSession(data.uid);
+
+    console.log("%c✅ One-time token redeemed successfully", "color:#00ffaa");
+    return data.uid;
+
+  } catch (err) {
+    console.warn("Token redemption error:", err);
+    return null;
+  }
+}
+
+/**
+ * Create Long-Lived Session (30 days)
+ */
+async function createLongLivedSession(uid) {
+  const sessionId = `sess_${uid}_${Date.now()}`;
+  const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days
+
+  try {
+    await setDoc(doc(db, "userSessions", sessionId), {
+      uid,
+      createdAt: serverTimestamp(),
+      expiresAt,
+      lastUsed: serverTimestamp(),
+      deviceInfo: navigator.userAgent.substring(0, 100) // optional
+    });
+
+    // Save to localStorage
+    localStorage.setItem("vipUser", JSON.stringify({ 
+      uid, 
+      sessionId,
+      expiresAt 
+    }));
+
+    console.log("[SESSION] Long-lived session created (30 days)");
+  } catch (err) {
+    console.error("[SESSION] Failed to create session:", err);
+  }
+}
+
+/**
+ * Validate Long-Lived Session
+ */
+async function validateLongLivedSession(storedData) {
+  if (!storedData?.uid || !storedData?.sessionId) return null;
+
+  try {
+    const sessionRef = doc(db, "userSessions", storedData.sessionId);
+    const snap = await getDoc(sessionRef);
+
+    if (!snap.exists()) return null;
+
+    const data = snap.data();
+    if (Date.now() > data.expiresAt) {
+      await deleteDoc(sessionRef);
+      return null;
+    }
+
+    // Update last used
+    await updateDoc(sessionRef, { lastUsed: serverTimestamp() });
+
+    return data.uid;
+  } catch (err) {
+    console.warn("Session validation failed:", err);
+    return null;
+  }
+}
+
+/* ====================== LINK UPDATERS ====================== */
+
+async function updateRedeemLink() {
+  if (!refs.redeemBtn) return;
+  
+  if (!currentUser?.uid) {
+    refs.redeemBtn.href = "/tapmaster";
+    refs.redeemBtn.style.display = "inline-block";
+    return;
+  }
+
+  const token = await createLoginToken(currentUser.uid);
+  refs.redeemBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
+  refs.redeemBtn.style.display = "inline-block";
+}
+
+async function updateTipLink() {
+  if (!refs.tipBtn) return;
+  
+  if (!currentUser?.uid) {
+    refs.tipBtn.href = "/tapmaster";
+    refs.tipBtn.style.display = "inline-block";
+    return;
+  }
+
+  const token = await createLoginToken(currentUser.uid);
+  refs.tipBtn.href = token ? `/tapmaster?t=${token}` : "/tapmaster";
+  refs.tipBtn.style.display = "inline-block";
+}
+/* ----------------------------
+   GIFT ALERT (ON-SCREEN CELEBRATION)
+----------------------------- */
+function showGiftAlert(text) {
+  if (!refs.giftAlert) return;
+  refs.giftAlert.textContent = text;
+  refs.giftAlert.classList.add("show", "glow");
+  setTimeout(() => refs.giftAlert.classList.remove("show", "glow"), 4000);
+}
+
+// ---------------------- AUTO-SCROLL + TWITCH-STYLE MIDDLE DRAG BUTTON ----------------------
+let scrollPending = false;
+let scrollArrow = null;
+let middleDragBtn = null;
+
+function handleChatAutoScroll() {
+  if (!refs.messagesEl) return;
+
+  // BOTTOM ARROW (your existing one)
+  scrollArrow = document.getElementById("scrollToBottomBtn");
+  if (!scrollArrow) {
+    scrollArrow = document.createElement("div");
+    scrollArrow.id = "scrollToBottomBtn";
+    scrollArrow.textContent = "Down Arrow";
+    scrollArrow.style.cssText = `
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      padding: 10px 16px;
+      background: rgba(255,20,147,0.95);
+      color: #fff;
+      border-radius: 50px;
       font-size: 18px;
-      font-weight: 800;
-      text-align: center;
-      margin: 12px 0 20px;
-    ">
-      → ₦<span id="withdrawPreview">0</span>
-    </div>
-
-    <button id="withdrawCashBtn" style="
-      width: 100%;
-      max-width: 260px;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-      color: #000;
-      font-weight: 700;
-      font-size: 15px;
+      font-weight: 900;
       cursor: pointer;
-      margin: 0 auto;
-      display: block;
-      box-shadow: 0 4px 12px rgba(195,246,12,0.25);
-    ">
-      WITHDRAW NOW
-    </button>
-  </div>
-</div>
-  
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 9999;
+      box-shadow: 0 0 20px rgba(255,0,147,0.6);
+    `;
+    document.body.appendChild(scrollArrow);
+    scrollArrow.addEventListener("click", () => {
+      refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
+      scrollArrow.style.opacity = 0;
+      scrollArrow.style.pointerEvents = "none";
+    });
+  }
 
-   <!-- 🎉 INVITE FRIENDS SECTION -->
-<div style="margin: 24px 0 16px;">
-  <h4 style="
-    text-align: center;
-    margin-bottom: 12px;
-    font-weight: 700;
-    font-size: 18px;                    /* was 22px */
-    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  ">
-    HOST & GET REWARDED
-    <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; vertical-align: -4px; margin-left: 6px; fill: #c3f60c;">
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-    </svg>
-  </h4>
-
-  <p style="
-    text-align: center;
-    font-size: 13px;                    /* was 14px */
-    color: #ccc;
-    max-width: 340px;
-    margin: 0 auto 16px;
-    line-height: 1.45;
-  ">
-    Share your INVITE link and grow your influence.<br>
-   Get <strong>rewarded</strong> for each new host that joins your cube & <strong>more</strong> for VIP invites!
-  </p>
-
-  <div style="display: flex; justify-content: center;">
-    <button id="inviteFriendsToolBtn" style="
-      padding: 10px 28px;               /* was 12px 32px */
-      border: none;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #c3f60c, #a0d00a);
-      color: #000;
-      font-size: 14px;                  /* was 16px */
-      font-weight: 700;                 /* slightly lighter than 800 */
-      cursor: pointer;
-      box-shadow: 0 0 24px rgba(195,246,12,0.45);
+  // TWITCH-STYLE MIDDLE DRAG BUTTON
+  middleDragBtn = document.getElementById("middleScrollDrag");
+  if (!middleDragBtn) {
+    middleDragBtn = document.createElement("div");
+    middleDragBtn.id = "middleScrollDrag";
+    middleDragBtn.innerHTML = "Drag";
+    middleDragBtn.style.cssText = `
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 80px;
+      background: rgba(255,20,147,0.7);
+      color: #fff;
+      border-radius: 50px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      min-width: 200px;                 /* was 220px */
       justify-content: center;
-    ">
-      <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #000;">
-        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+      font-weight: 900;
+      font-size: 12px;
+      cursor: ns-resize;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 999;
+      box-shadow: 0 0 20px rgba(255,0,147,0.4);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    `;
+    refs.messagesEl.style.position = "relative"; // important
+    refs.messagesEl.appendChild(middleDragBtn);
+
+    // DRAG FUNCTIONALITY
+    let isDragging = false;
+    let startY = 0;
+    let startScroll = 0;
+
+    middleDragBtn.addEventListener("mousedown", e => {
+      isDragging = true;
+      startY = e.clientY;
+      startScroll = refs.messagesEl.scrollTop;
+      middleDragBtn.style.background = "rgba(255,20,147,1)";
+      e.preventDefault();
+    });
+
+    document.addEventListener("mousemove", e => {
+      if (!isDragging) return;
+      const delta = startY - e.clientY;
+      refs.messagesEl.scrollTop = startScroll + delta;
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (isDragging) {
+        isDragging = false;
+        middleDragBtn.style.background = "rgba(255,20,147,0.7)";
+      }
+    });
+  }
+
+  // SHOW/HIDE LOGIC
+  refs.messagesEl.addEventListener("scroll", () => {
+    const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+    const distanceFromTop = refs.messagesEl.scrollTop;
+
+    // Bottom arrow
+    if (distanceFromBottom > 300) {
+      scrollArrow.style.opacity = 1;
+      scrollArrow.style.pointerEvents = "auto";
+    } else {
+      scrollArrow.style.opacity = 0;
+      scrollArrow.style.pointerEvents = "none";
+    }
+
+    // Middle drag button — show when not at bottom
+    if (distanceFromBottom > 100 && distanceFromTop > 100) {
+      middleDragBtn.style.opacity = 0.8;
+      middleDragBtn.style.pointerEvents = "auto";
+    } else {
+      middleDragBtn.style.opacity = 0;
+      middleDragBtn.style.pointerEvents = "none";
+    }
+  });
+
+  // Auto-scroll on new messages (robust version)
+const observer = new MutationObserver(() => {
+  const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+  if (distanceFromBottom < 200) {
+    refs.messagesEl.scrollTo({
+      top: refs.messagesEl.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+});
+  
+observer.observe(refs.messagesEl, { childList: true, subtree: true });
+
+  // AUTO SCROLL TO BOTTOM ON NEW MESSAGES
+  if (!scrollPending) {
+    scrollPending = true;
+    requestAnimationFrame(() => {
+      refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+      scrollPending = false;
+    });
+  }
+}
+
+// CALL IT
+handleChatAutoScroll();
+
+function cancelReply() {
+  currentReplyTarget = null;
+  refs.messageInputEl.placeholder = "Type a message...";
+
+  if (refs.cancelReplyBtn && refs.cancelReplyBtn.parentNode) {
+    refs.cancelReplyBtn.remove();
+    refs.cancelReplyBtn = null;
+  }
+
+  // Optional: collapse input if empty
+  if (!refs.messageInputEl.value.trim()) {
+    resizeAndExpand();
+  }
+}
+
+// =============================
+// REPLY CANCEL BUTTON — OLD LAYOUT + NEON "×" COLOR ONLY
+// =============================
+function showReplyCancelButton() {
+  // Remove any existing button
+  if (refs.cancelReplyBtn && refs.cancelReplyBtn.parentNode) {
+    refs.cancelReplyBtn.remove();
+  }
+
+  const btn = document.createElement("button");
+  btn.textContent = "×";
+  btn.style.marginLeft = "6px";
+  btn.style.fontSize = "12px";
+  btn.style.color = "var(--accent, #FF1493)";  // Neon accent color
+  btn.style.fontWeight = "700";
+  btn.style.background = "none";
+  btn.style.border = "none";
+  btn.style.cursor = "pointer";
+  btn.style.outline = "none";
+  btn.onclick = cancelReply;
+  refs.cancelReplyBtn = btn;
+  refs.messageInputEl.parentElement.appendChild(btn);
+}
+
+// Report a message
+async function reportMessage(msgData) {
+  try {
+    const reportRef = doc(db, "reportedmsgs", msgData.id);
+    const reportSnap = await getDoc(reportRef);
+    const reporterChatId = currentUser?.chatId || "unknown";
+    const reporterUid = currentUser?.uid || null;
+
+    if (reportSnap.exists()) {
+      const data = reportSnap.data();
+      if ((data.reportedBy || []).includes(reporterChatId)) {
+        return showStarPopup("You’ve already reported this message.", { type: "info" });
+      }
+      await updateDoc(reportRef, {
+        reportCount: increment(1),
+        reportedBy: arrayUnion(reporterChatId),
+        reporterUids: arrayUnion(reporterUid),
+        lastReportedAt: serverTimestamp()
+      });
+    } else {
+      await setDoc(reportRef, {
+        messageId: msgData.id,
+        messageText: msgData.content,
+        offenderChatId: msgData.chatId,
+        offenderUid: msgData.uid || null,
+        reportedBy: [reporterChatId],
+        reporterUids: [reporterUid],
+        reportCount: 1,
+        createdAt: serverTimestamp(),
+        status: "pending"
+      });
+    }
+    showStarPopup("Report submitted!", { type: "success" });
+  } catch (err) {
+    (err);
+    showStarPopup("Error reporting message.", { type: "error" });
+  }
+}
+
+// =============================
+// TAP MODAL — FIXED (No Social Card Trigger)
+// =============================
+function showTapModal(targetEl, msgData) {
+  if (tapModalEl) {
+    tapModalEl.remove();
+    tapModalEl = null;
+  }
+
+  tapModalEl = document.createElement("div");
+  tapModalEl.className = "tap-modal";
+
+  const replyBtn = document.createElement("button");
+  replyBtn.textContent = "Reply";
+  replyBtn.onclick = (e) => {
+    e.stopPropagation();
+    currentReplyTarget = {
+      id: msgData.id,
+      chatId: msgData.chatId,
+      content: msgData.content
+    };
+    refs.messageInputEl.placeholder = `Replying to ${msgData.chatId}: ${msgData.content.substring(0, 30)}...`;
+    refs.messageInputEl.focus();
+    showReplyCancelButton();
+    tapModalEl.remove();
+    tapModalEl = null;
+  };
+
+  const reportBtn = document.createElement("button");
+  reportBtn.textContent = "Report";
+  reportBtn.onclick = async (e) => {
+    e.stopPropagation();
+    await reportMessage(msgData);
+    tapModalEl.remove();
+    tapModalEl = null;
+  };
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "×";
+  cancelBtn.onclick = (e) => {
+    e.stopPropagation();
+    tapModalEl.remove();
+    tapModalEl = null;
+  };
+
+  tapModalEl.append(replyBtn, reportBtn, cancelBtn);
+  document.body.appendChild(tapModalEl);
+
+  const rect = targetEl.getBoundingClientRect();
+  tapModalEl.style.cssText = `
+    position: absolute;
+    top: ${rect.top - 56 + window.scrollY}px;
+    left: ${rect.left}px;
+    background: #000000;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    z-index: 99999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+  `;
+
+  replyBtn.style.cssText = `background:transparent;color:#fff;padding:6px 12px;border-radius:8px;font-weight:500;cursor:pointer;`;
+  reportBtn.style.cssText = `background:transparent;color:#fff;padding:6px 12px;border-radius:8px;font-weight:500;cursor:pointer;`;
+  cancelBtn.style.cssText = `background:rgba(255,255,255,0.12);color:#FF1493;font-size:18px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;`;
+
+  setTimeout(() => {
+    if (tapModalEl) tapModalEl.remove();
+  }, 4500);
+}
+
+// =============================
+// EXTRACT COLORS FROM GRADIENT — USED FOR CONFETTI
+// =============================
+function extractColorsFromGradient(gradient) {
+  var matches = gradient.match(/#[0-9a-fA-F]{6}/g);
+  if (matches && matches.length > 0) {
+    return matches;
+  }
+  // Fallback colors if parsing fails
+  return ["#ff9a9e", "#fecfef", "#a8edea", "#fed6e3"];
+}
+
+//666
+function applyHostUI() {
+  if (!currentUser || !currentUser.isHost) return;
+
+  document.querySelectorAll(".host-only").forEach(el => {
+    el.style.display = "inline-flex"; // buttons need inline-flex
+  });
+}
+
+applyHostUI();
+
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".tab-btn");
+  if (!btn) return;
+
+  const tabId = btn.dataset.tab;
+
+  if (tabId === "infoTab" && (!currentUser || !currentUser.isHost)) {
+    ("[tabs] Non-host blocked from Tools");
+    e.preventDefault();
+    return;
+  }
+});
+
+// =============================
+// CREATE CONFETTI INSIDE STICKER — DEFINED ONCE, OUTSIDE LOOP
+// =============================
+function createConfettiInside(container, colors) {
+  for (var i = 0; i < 18; i++) {
+    var piece = document.createElement("div");
+    var size = 6 + Math.random() * 10;
+    var delay = Math.random() * 3;
+    var duration = 4 + Math.random() * 4;
+    var left = Math.random() * 100;
+    var color = colors[Math.floor(Math.random() * colors.length)];
+
+    piece.style.cssText = `
+      position: absolute;
+      left: ${left}%;
+      top: -20px;
+      width: ${size}px;
+      height: ${size * 1.8}px;
+      background: ${color};
+      border-radius: 50%;
+      opacity: 0.8;
+      pointer-events: none;
+      animation: confettiFall ${duration}s linear infinite;
+      animation-delay: ${delay}s;
+      transform: rotate(${Math.random() * 360}deg);
+    `;
+    container.appendChild(piece);
+  }
+}
+
+// =============================
+// RENDER MESSAGES — FINAL SAFARI-FIXED + SMALLER FONT (2026 ETERNAL)
+// =============================
+function renderMessagesFromArray(messages) {
+  if (!refs.messagesEl) return;
+
+  messages.forEach(function(item) {
+    const id = item.id || item.tempId || item.data?.id;
+    if (!id || document.getElementById(id)) return;
+
+    const m = item.data ?? item;
+
+    // BLOCK BANNERS & SYSTEM
+    if (
+      m.isBanner ||
+      m.type === "banner" ||
+      m.type === "gift_banner" ||
+      m.systemBanner ||
+      m.chatId === "SYSTEM" ||
+      /system/i.test(m.uid || "")
+    ) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "msg";
+    wrapper.id = id;
+
+       // === USERNAME — TAP → SOCIAL CARD (FINAL SAFE VERSION) ===
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "chat-username";
+    nameSpan.textContent = (m.chatId || "Guest") + " ";
+
+    const realUid = (m.uid || (m.email ? m.email.replace(/[.@]/g, '_') : m.chatId) || "unknown")
+      .replace(/[.@/\\]/g, '_');
+    nameSpan.dataset.userId = realUid;
+
+    const usernameColor = userColors.get(m.uid) || m.usernameColor || "#ffffff";
+
+    nameSpan.style.cssText = `
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: ${usernameColor};
+      opacity: 0.9;
+      user-select: none;
+      display: inline;
+      margin-right: 4px;
+      -webkit-tap-highlight-color: transparent;
+    `;
+
+    // SAFE OPEN FUNCTION
+    const openUserProfile = () => {
+      const chatIdLower = (m.chatId || "").toLowerCase().trim();
+      const cachedUser = usersByChatId.get(chatIdLower);
+      
+      if (cachedUser && cachedUser._docId !== currentUser?.uid) {
+        showSocialCard(cachedUser);
+        return;
+      }
+
+      // Fallback direct fetch (safe)
+      if (realUid) {
+        const spinner = document.createElement("div");
+        spinner.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(6px);`;
+        spinner.innerHTML = `<div style="text-align:center;"><div style="width:48px;height:48px;border:4px solid #00ffea;border-top-color:transparent;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div></div>`;
+        document.body.appendChild(spinner);
+
+        getDoc(doc(db, "users", realUid))
+          .then(snap => {
+            spinner.remove();
+            if (snap.exists()) showSocialCard(snap.data());
+            else showStarPopup("User profile not found", "error");
+          })
+          .catch(() => {
+            spinner.remove();
+            showStarPopup("Failed to load profile", "error");
+          });
+      }
+    };
+
+    nameSpan.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openUserProfile();
+    });
+
+    nameSpan.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      openUserProfile();
+    });
+
+    wrapper.appendChild(nameSpan);
+     
+    // === REPLY PREVIEW ===
+    let preview = null;
+    if (m.replyTo) {
+      preview = document.createElement("div");
+      preview.className = "reply-preview";
+      preview.style.cssText = `
+        background:rgba(255,255,255,0.06);
+        border-left:3px solid #b3b3b3;
+        padding:6px 10px;
+        margin:6px 0 8px;
+        border-radius:0 8px 8px 0;
+        font-size:13px;
+        color:#aaa;
+        cursor:pointer;
+        line-height:1.4;
+      `;
+      const replyText = (m.replyToContent || "Original message").replace(/\n/g, " ").trim();
+      const shortText = replyText.length > 80 ? replyText.substring(0,80) + "..." : replyText;
+      preview.innerHTML = `<strong style="color:#999;">⤿ ${m.replyToChatId || "someone"}:</strong> <span style="color:#aaa;">${shortText}</span>`;
+
+      preview.onclick = (e) => {
+        e.stopPropagation();
+        const target = document.getElementById(m.replyTo);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.style.background = "rgba(180,180,180,0.15)";
+          setTimeout(() => target.style.background = "", 2000);
+        }
+      };
+      wrapper.appendChild(preview);
+    }
+
+    // === MESSAGE CONTENT ===
+    const content = document.createElement("span");
+    content.className = "content";
+    content.textContent = m.content || "";
+
+    // NORMAL MESSAGES — LIGHT, SMALLER & AIRY
+    if (m.type !== "buzz") {
+      content.style.cssText = `
+        font-weight: 400;
+        font-size: 13px;            /* Reduced from 14.5px — cleaner */
+        line-height: 1.55;
+        color: #d0d0d0;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        display: inline;
+        opacity: 0.95;
+        cursor: pointer;
+      `;
+    }
+
+    // BUZZ MESSAGES — EPIC
+    if (m.type === "buzz" && m.stickerGradient) {
+      wrapper.className += " super-sticker";
+      wrapper.style.cssText = `
+        display: inline-block;
+        max-width: 85%;
+        margin: 14px 10px;
+        padding: 20px 24px;
+        border-radius: 28px;
+        background: ${m.stickerGradient};
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.25);
+        animation: stickerPop 0.7s ease-out;
+        backdrop-filter: blur(4px);
+      `;
+
+      const confettiContainer = document.createElement("div");
+      confettiContainer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0.7;";
+      createConfettiInside(confettiContainer, extractColorsFromGradient(m.stickerGradient));
+      wrapper.appendChild(confettiContainer);
+
+      wrapper.style.transition = "transform 0.2s";
+      wrapper.onmouseenter = () => wrapper.style.transform = "scale(1.03) translateY(-4px)";
+      wrapper.onmouseleave = () => wrapper.style.transform = "scale(1)";
+
+      setTimeout(() => {
+        wrapper.style.background = "rgba(255,255,255,0.06)";
+        wrapper.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+        wrapper.style.border = "none";
+        confettiContainer.remove();
+      }, 20000);
+
+      content.style.cssText = `
+        font-size: 1.45em;
+        font-weight: 900;
+        line-height: 1.4;
+        letter-spacing: 0.6px;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        display: block;
+        cursor: pointer;
+      `;
+    }
+
+    // TAP ON TEXT → REPLY/REPORT
+    content.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showTapModal(wrapper, {
+        id,
+        chatId: m.chatId,
+        uid: realUid,
+        content: m.content,
+        replyTo: m.replyTo,
+        replyToContent: m.replyToContent,
+        replyToChatId: m.replyToChatId
+      });
+    });
+
+    wrapper.appendChild(content);
+
+    // BUBBLE BACKGROUND — COMPLETELY UNTAPPABLE
+    wrapper.style.pointerEvents = "none";
+
+    // Re-enable on interactive parts
+    nameSpan.style.pointerEvents = "auto";
+    if (preview) preview.style.pointerEvents = "auto";
+    content.style.pointerEvents = "auto";
+
+    refs.messagesEl.appendChild(wrapper);
+  });
+
+  // Auto-scroll
+  const distanceFromBottom = refs.messagesEl.scrollHeight - refs.messagesEl.scrollTop - refs.messagesEl.clientHeight;
+  if (distanceFromBottom < 200) {
+    refs.messagesEl.scrollTo({ top: refs.messagesEl.scrollHeight, behavior: "smooth" });
+  }
+
+  if (!scrollPending) {
+    scrollPending = true;
+    requestAnimationFrame(() => {
+      refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+      scrollPending = false;
+    });
+  }
+}
+
+/* ---------- 🔔 Messages Listener – Clean & Correct (2026) ---------- */
+/*
+  ✔ Oldest messages render first (top)
+  ✔ Newest messages render last (bottom)
+  ✔ Limit applied safely
+  ✔ Optimistic message reconciliation preserved
+  ✔ Gift alerts preserved
+  ✔ Cache-aware logging
+  ✔ Proper unsubscribe handling
+*/
+
+// ===============================================
+// OPTIMIZED MESSAGES LISTENER — Major Read Saver
+// ===============================================
+let messagesUnsubscribe = null;
+
+function attachMessagesListener() {
+  // Prevent duplicate listeners
+  if (typeof messagesUnsubscribe === "function") {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
+  }
+
+  const CHAT_LIMIT = 30; // Increased a bit for better UX, still controlled
+
+  const q = query(
+    collection(db, CHAT_COLLECTION),
+    orderBy("timestamp", "asc"),
+    limit(CHAT_LIMIT)
+  );
+
+  const shownGiftAlerts = new Set(
+    JSON.parse(localStorage.getItem("shownGiftAlerts") || "[]")
+  );
+
+  let localPendingMsgs = JSON.parse(
+    localStorage.getItem("localPendingMsgs") || "{}"
+  );
+
+  messagesUnsubscribe = onSnapshot(q, 
+    { includeMetadataChanges: true },
+    (snapshot) => {
+      (`[Messages] ${snapshot.metadata.fromCache ? 'CACHE' : 'SERVER'} | ${snapshot.size} msgs`);
+
+      snapshot.docChanges().forEach((change) => {
+        if (change.type !== "added") return;
+
+        const msgId = change.doc.id;
+        const msg = change.doc.data();
+
+        // Skip temp/echo messages
+        if (msg.tempId?.startsWith("temp_")) return;
+        if (document.getElementById(msgId)) return;
+
+        // Optimistic UI reconciliation
+        for (const [tempId, pending] of Object.entries(localPendingMsgs)) {
+          if (pending.uid === msg.uid && 
+              pending.content === msg.content && 
+              Math.abs((msg.timestamp?.toMillis?.() || 0) - (pending.createdAt || 0)) < 8000) {
+            
+            const tempEl = document.getElementById(tempId);
+            if (tempEl) tempEl.remove();
+
+            delete localPendingMsgs[tempId];
+            localStorage.setItem("localPendingMsgs", JSON.stringify(localPendingMsgs));
+            break;
+          }
+        }
+
+        // Render the new message
+        renderMessagesFromArray([{ id: msgId, data: msg }]);
+
+        // Gift alert (only for receiver)
+        if (msg.highlight && msg.content?.includes("gifted")) {
+          const myChatId = currentUser?.chatId?.toLowerCase();
+          if (myChatId) {
+            const parts = msg.content.split(" ");
+            if (parts[2]?.toLowerCase() === myChatId && !shownGiftAlerts.has(msgId)) {
+              showGiftAlert(`${parts[0]} gifted you ${parts[3]} stars ⭐️`);
+              shownGiftAlerts.add(msgId);
+              localStorage.setItem("shownGiftAlerts", JSON.stringify([...shownGiftAlerts]));
+            }
+          }
+        }
+
+        // Auto-scroll when current user sends
+        if (msg.uid === currentUser?.uid && refs.messagesEl) {
+          refs.messagesEl.scrollTop = refs.messagesEl.scrollHeight;
+        }
+      });
+    },
+    (error) => {
+      ("Messages listener error:", error);
+    }
+  );
+}
+
+/* ===== NOTIFICATIONS SYSTEM — FINAL ETERNAL EDITION ===== */
+let notificationsUnsubscribe = null; // ← one true source of truth
+
+async function setupNotifications() {
+  // Prevent double setup
+  if (notificationsUnsubscribe) return;
+
+  const listEl = document.getElementById("notificationsList");
+  const markAllBtn = document.getElementById("markAllRead");
+
+  if (!listEl) {
+    ("Notifications tab not found in DOM");
+    return;
+  }
+
+  // Show loading
+  listEl.innerHTML = `<p style="opacity:0.6; text-align:center;">Loading notifications...</p>`;
+
+  if (!currentUser?.uid) {
+    listEl.innerHTML = `<p style="opacity:0.7;">Log in to see notifications.</p>`;
+    return;
+  }
+
+  const notifCol = collection(db, "users", currentUser.uid, "notifications");
+  const q = query(notifCol, orderBy("timestamp", "desc"));
+
+  notificationsUnsubscribe = onSnapshot(q, (snapshot) => {
+    if (snapshot.empty) {
+      listEl.innerHTML = `<p style="opacity:0.7; text-align:center;">No notifications yet.</p>`;
+      if (markAllBtn) markAllBtn.style.display = "none";
+      return;
+    }
+
+    if (markAllBtn) markAllBtn.style.display = "block";
+
+    const frag = document.createDocumentFragment();
+    snapshot.docs.forEach(docSnap => {
+      const n = docSnap.data();
+      const time = n.timestamp?.toDate?.() || n.timestamp?.seconds
+        ? new Date((n.timestamp.toDate?.() || n.timestamp.seconds * 1000))
+        : new Date();
+
+      const item = document.createElement("div");
+      item.className = `notification-item ${n.read ? "" : "unread"}`;
+      item.dataset.id = docSnap.id;
+      item.innerHTML = `
+        <div class="notif-message">${n.message || "New notification"}</div>
+        <div class="notif-time">${time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+      `;
+
+      // Optional: tap to mark as read
+      item.style.cursor = "pointer";
+      item.onclick = () => {
+        if (!n.read) {
+          updateDoc(doc(db, "users", currentUser.uid, "notifications", docSnap.id), { read: true });
+        }
+      };
+
+      frag.appendChild(item);
+    });
+
+    listEl.innerHTML = "";
+    listEl.appendChild(frag);
+  }, (error) => {
+    ("Notifications listener failed:", error);
+    listEl.innerHTML = `<p style="color:#ff6666;">Failed to load notifications.</p>`;
+  });
+
+  // === MARK ALL AS READ (safe + one-time) ===
+  if (markAllBtn) {
+    markAllBtn.onclick = async () => {
+      if (markAllBtn.disabled) return;
+      markAllBtn.disabled = true;
+      markAllBtn.textContent = "Marking...";
+
+      try {
+        const snapshot = await getDocs(notifCol);
+        const batch = writeBatch(db);
+        snapshot.docs.forEach(docSnap => {
+          if (!docSnap.data().read) {
+            batch.update(docSnap.ref, { read: true });
+          }
+        });
+        await batch.commit();
+        showStarPopup("All notifications marked as read");
+      } catch (err) {
+        ("Mark all failed:", err);
+        showStarPopup("Failed to mark as read");
+      } finally {
+        markAllBtn.disabled = false;
+        markAllBtn.textContent = "Mark All Read";
+      }
+    };
+  }
+}
+
+// === TAB SWITCHING — CLEAN & LAZY (only once) ===
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    // Visual switch
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
+
+    btn.classList.add("active");
+    const tab = document.getElementById(btn.dataset.tab);
+    if (tab) tab.style.display = "block";
+
+    // Lazy load notifications — only once
+    if (btn.dataset.tab === "notificationsTab" && !notificationsUnsubscribe) {
+      setupNotifications();
+    }
+  });
+});
+
+// === CLEANUP ON LOGOUT (CRITICAL) ===
+window.addEventListener("beforeunload", () => {
+  if (notificationsUnsubscribe) {
+    notificationsUnsubscribe();
+    notificationsUnsubscribe = null;
+  }
+});
+
+// ——— CLICKING THE NOTIFICATIONS TAB BUTTON ———
+document.getElementById("notificationsTabBtn")?.addEventListener("click", () => {
+  // Hide all tabs
+  document.querySelectorAll(".tab-content")?.forEach(tab => {
+    tab.style.display = "none";
+  });
+  
+  // Remove active class from all buttons
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  // Show notifications tab
+  const notifTab = document.getElementById("notificationsTab");
+  if (notifTab) notifTab.style.display = "block";
+
+  // Mark this button as active
+  document.getElementById("notificationsTabBtn")?.classList.add("active");
+
+  // Load notifications
+  loadNotifications();
+});
+
+
+// Load notifications + update badge
+async function loadNotifications() {
+  const list = document.getElementById("notificationsList");
+  const badge = document.getElementById("notif-badge");
+  const clearBtn = document.getElementById("markAllRead");
+
+  if (!list || !currentUser?.uid) return;
+
+  list.innerHTML = `<div style="padding:60px;text-align:center;color:#666;">Loading...</div>`;
+
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", currentUser.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const snapshot = await getDocs(q);
+    const unreadCount = snapshot.docs.length; // now all = "unread" visually
+
+    // UPDATE BADGE
+    if (badge) {
+      badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+      badge.style.display = unreadCount > 0 ? "flex" : "none";
+    }
+
+    // UPDATE CLEAR BUTTON — GRADIENT WHEN NOTIFS EXIST
+    if (clearBtn) {
+      if (unreadCount > 0) {
+        clearBtn.style.background = "linear-gradient(135deg, #ff006e, #ff5500)";
+        clearBtn.style.color = "#fff";
+        clearBtn.style.boxShadow = "0 4px 12px rgba(255,0,110,0.4)";
+        clearBtn.textContent = "Clear all";
+      } else {
+        clearBtn.style.background = "#333";
+        clearBtn.style.color = "#666";
+        clearBtn.style.boxShadow = "none";
+        clearBtn.textContent = "All clear";
+      }
+    }
+
+    if (snapshot.empty) {
+      list.innerHTML = `<div style="padding:100px;text-align:center;color:#888;font-size:14px;">No notifications.</div>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    snapshot.forEach(doc => {
+      const n = doc.data();
+      const age = Date.now() - (n.createdAt?.toDate?.() || 0);
+      const isFresh = age < 30_000;
+
+      const item = document.createElement("div");
+      item.style.cssText = `
+        padding:10px 12px; margin:2px 6px; border-radius:9px;
+        background:rgba(255,0,110,${isFresh ? "0.12" : "0.06"});
+        border-left:${isFresh ? "3px solid #ff006e" : "none"};
+        cursor:pointer; transition:all 0.2s;
+      `;
+
+      item.innerHTML = `
+        <div style="font-weight:800; font-size:13.5px; color:#fff;">${n.title}</div>
+        <div style="font-size:12.5px; color:#ddd; margin-top:3px;">${n.message}</div>
+        <div style="font-size:10.5px; color:#888; margin-top:5px; display:flex; justify-content:space-between;">
+          <span>${timeAgo(n.createdAt?.toDate())}</span>
+          ${isFresh ? `<span style="color:#ff006e; font-weight:900; font-size:9px; animation:blink 1.5s infinite;">NEW</span>` : ""}
+        </div>
+      `;
+
+      item.onclick = () => {
+        deleteDoc(doc.ref).then(() => loadNotifications());
+      };
+
+      list.appendChild(item);
+    });
+
+  } catch (err) {
+    ("Notifications error:", err);
+    list.innerHTML = `<div style="color:#f66; text-align:center; padding:80px;">Failed</div>`;
+  }
+}
+
+// Helper: time ago
+function timeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+  if (seconds < 86400) return Math.floor(seconds / 3600) + "h ago";
+  return Math.floor(seconds / 86400) + "d ago";
+}
+
+
+// MARK ALL AS READ BUTTON
+document.getElementById("markAllRead")?.addEventListener("click", async () => {
+  if (!currentUser?.uid) return;
+
+  const clearBtn = document.getElementById("markAllRead");
+  if (clearBtn.textContent.includes("All clear")) return;
+
+  clearBtn.textContent = "Clearing...";
+  clearBtn.disabled = true;
+
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", currentUser.uid)
+    );
+
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(db);
+
+    snapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    loadNotifications(); // refresh UI + badge gone
+    ("All notifications deleted");
+
+  } catch (err) {
+    ("Clear all failed:", err);
+    clearBtn.textContent = "Error";
+  }
+});
+
+// HOST BADGE — FINAL WORKING VERSION
+const hostBtn = document.getElementById('hostSettingsBtn');
+const hostBadge = document.getElementById('hostBadge');
+
+async function checkHostNotifications() {
+  if (!currentUser || !currentUser.isHost || !hostBadge) {
+    if (hostBadge) hostBadge.style.display = "none";
+    return;
+  }
+
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", currentUser.uid),
+      where("type", "==", "host"),
+      where("read", "==", false),
+      limit(1)
+    );
+
+    const snap = await getDocs(q);
+    if (hostBadge) {
+      hostBadge.style.display = snap.empty ? "none" : "block";
+    }
+
+  } catch (e) {
+    ("Badge check failed:", e);
+    if (hostBadge) hostBadge.style.display = "none";
+  }
+}
+
+
+// Hide badge when clicked
+hostBtn?.addEventListener("click", () => {
+  if (hostBadge) {
+    hostBadge.style.display = "none";
+  }
+});
+
+
+// Check every 15 seconds
+setInterval(checkHostNotifications, 15000);
+
+// Run immediately
+checkHostNotifications();
+
+
+/* ----------------------------
+   ⚡ Accurate + Organic Loading Bar (Best of Both)
+----------------------------- */
+function showLoadingBar() {
+  const postLoginLoader = document.getElementById("postLoginLoader");
+  const loadingBar = document.getElementById("loadingBar");
+  if (!postLoginLoader || !loadingBar) return;
+
+  postLoginLoader.style.display = "flex";
+  loadingBar.style.width = "0%";
+  loadingBar.style.transition = "width 0.35s ease-out"; // smooth real updates
+
+  let progress = 0;
+
+  // Organic fallback animation (runs in background)
+  const interval = 60;
+  let organicProgress = 0;
+  const organicStep = 1.8 + Math.random() * 1.5; // gentle natural growth
+
+  const organicInterval = setInterval(() => {
+    if (progress >= 100) return;
+    organicProgress += organicStep;
+    if (organicProgress > 92) organicProgress = 92; // never auto-reach 100%
+    if (organicProgress > progress) {
+      progress = organicProgress;
+      loadingBar.style.width = `${progress}%`;
+    }
+  }, interval);
+
+  // Manual update function — called at real steps
+  const update = (target) => {
+    progress = Math.max(progress, target);
+    loadingBar.style.width = `${Math.min(progress, 100)}%`;
+
+    if (progress >= 100) {
+      clearInterval(organicInterval);
+      // Final polish
+      setTimeout(() => {
+        loadingBar.style.width = "100%";
+        setTimeout(() => {
+          postLoginLoader.style.display = "none";
+          setTimeout(() => loadingBar.style.width = "0%", 300);
+        }, 300);
+      }, 200);
+    }
+  };
+
+  // Auto-finish after max 4 seconds (safety)
+  setTimeout(() => update(100), 4000);
+
+  // Return updater so login code can push real progress
+  return { update };
+}
+
+/* ----------------------------
+   🔁 Smart Auto Login Session
+----------------------------- */
+async function autoLogin() {
+  const vipUser = JSON.parse(localStorage.getItem("vipUser") || "{}");
+
+  // If user is already logged in via Firebase, no need to do anything
+  if (auth.currentUser) {
+    ("✅ Already logged in via Firebase");
+    return;
+  }
+
+  if (vipUser?.email) {
+    showLoadingBar(800); // shorter, smoother
+
+    try {
+      // Use the new login function that supports email OR username
+      await login(vipUser.email, vipUser.password);   // ← your new login() function
+
+      ("✅ Auto-login successful");
+      // No need for extra sleeps
+
+    } catch (err) {
+      ("Auto-login failed:", err.message);
+      localStorage.removeItem("vipUser"); // clean bad data
+    }
+  }
+}
+
+// Call it
+document.addEventListener("DOMContentLoaded", () => {
+  autoLogin();
+});
+
+/* ---------- 🆔 ChatID Modal ---------- */
+async function promptForChatID(userRef, userData) {
+  if (!refs.chatIDModal || !refs.chatIDInput || !refs.chatIDConfirmBtn)
+    return userData?.chatId || null;
+
+  // Skip if user already set chatId
+  if (userData?.chatId && !userData.chatId.startsWith("GUEST"))
+    return userData.chatId;
+
+  refs.chatIDInput.value = "";
+  refs.chatIDModal.style.display = "flex";
+  if (refs.sendAreaEl) refs.sendAreaEl.style.display = "none";
+
+  return new Promise(resolve => {
+    refs.chatIDConfirmBtn.onclick = async () => {
+      const chosen = refs.chatIDInput.value.trim();
+      if (chosen.length < 3 || chosen.length > 12)
+        return alert("Chat ID must be 3–12 characters");
+
+      const lower = chosen.toLowerCase();
+      const q = query(collection(db, "users"), where("chatIdLower", "==", lower));
+      const snap = await getDocs(q);
+
+      let taken = false;
+      snap.forEach(docSnap => {
+        if (docSnap.id !== userRef.id) taken = true;
+      });
+      if (taken) return alert("This Chat ID is taken 💬");
+
+      try {
+        await updateDoc(userRef, { chatId: chosen, chatIdLower: lower });
+        currentUser.chatId = chosen;
+        currentUser.chatIdLower = lower;
+        refs.chatIDModal.style.display = "none";
+        if (refs.sendAreaEl) refs.sendAreaEl.style.display = "flex";
+        showStarPopup(`Welcome ${chosen}! 🎉`);
+        resolve(chosen);
+      } catch (err) {
+        (err);
+        alert("Failed to save Chat ID");
+      }
+    };
+  });
+}
+
+
+/* ======================================================
+   SANITIZE FIRESTORE KEYS — REQUIRED FOR LOGIN & SOCIAL CARD
+   YAH DEMANDS CLEAN KEYS
+====================================================== */
+function sanitizeKey(email) {
+  if (!email) return "";
+  return email.toLowerCase().replace(/[@.]/g, "_").trim();
+}
+
+/* ===============================================
+   FINAL SOCIAL CARD SYSTEM (Reliable + Fallback)
+   =============================================== */
+let usersByChatId = new Map();
+
+async function loadActiveUsersForSocial() {
+  try {
+    const activeSnap = await getDocs(collection(db, `rooms/${ROOM_ID}/activeUsers`));
+    
+    usersByChatId.clear();
+    activeSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.chatId) {
+        const chatIdLower = (data.chatId || "").toLowerCase().trim();
+        usersByChatId.set(chatIdLower, {
+          ...data,
+          _docId: docSnap.id,
+          chatIdLower
+        });
+      }
+    });
+    (` Loaded ${usersByChatId.size} active users for cards`);
+  } catch (err) {
+    (" Load failed:", err);
+  }
+}
+
+function showSocialCard(user) {
+  if (!user) return;
+  document.getElementById('socialCard')?.remove();
+  showUnifiedCard(user);
+}
+
+function showUnifiedCard(user) {
+  const card = document.createElement("div");
+  card.id = "socialCard";
+
+  Object.assign(card.style, {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%) scale(0.98)",
+    background: "linear-gradient(135deg, rgba(18,18,20,0.95), rgba(22,22,25,0.95))",
+    backdropFilter: "blur(16px)",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    padding: "0",
+    color: "#ffffff",
+    width: "280px",
+    maxWidth: "92vw",
+    zIndex: "999999",
+    overflow: "hidden",
+    boxShadow: "0 15px 40px rgba(0,0,0,0.7)",
+    fontFamily: "Poppins, system-ui, sans-serif",
+    opacity: "0",
+    transition: "opacity 0.3s ease, transform 0.3s ease"
+  });
+
+  // Fade in
+  setTimeout(() => {
+    card.style.opacity = "1";
+    card.style.transform = "translate(-50%, -50%) scale(1)";
+  }, 50);
+
+  // Role & Accent Logic
+  const isHost = !!user.isHost;
+  const isVIP = !!(user.hasPaid || user.isVIP);
+  const isMale = (user.gender || "").toLowerCase() === "male";
+
+  let accentColor = isHost ? "#ff6b00" : isVIP ? "#ff00aa" : "#888888";
+  let roleName = isHost ? "HOST" : isVIP ? "VIP" : "MEMBER";
+  let roleBg = isHost ? "rgba(255,107,0,0.15)" : isVIP ? "linear-gradient(135deg, #a07010, #f0c040)" : "rgba(255,255,255,0.06)";
+
+  // Accent Bar
+  const accentBar = document.createElement("div");
+  accentBar.style.cssText = `height: 3px; width: 100%; background: linear-gradient(90deg, ${accentColor}, #ff55cc);`;
+  card.appendChild(accentBar);
+
+  const content = document.createElement("div");
+  content.style.padding = "20px 22px 24px";
+  card.appendChild(content);
+
+  // Close button
+  const closeBtn = document.createElement("div");
+  closeBtn.innerHTML = "×";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "12px",
+    right: "14px",
+    fontSize: "22px",
+    fontWeight: "700",
+    cursor: "pointer",
+    color: "#aaa",
+    zIndex: "10"
+  });
+  closeBtn.onclick = () => card.remove();
+  card.appendChild(closeBtn);
+
+  // Header
+  const header = document.createElement("h3");
+  const rawName = user.chatId?.trim();
+  header.textContent = rawName ? `@${rawName}` : "@Guest";
+  header.style.cssText = `
+    margin: 0 0 8px 0;
+    font-size: 21px;
+    font-weight: 700;
+    background: linear-gradient(90deg, ${isHost ? '#ff6b00' : isVIP ? '#ff00aa' : '#bbbbbb'}, #ff55cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  `;
+  content.appendChild(header);
+
+   // Role Chip with Special Shimmer for VIP
+  const roleChip = document.createElement("div");
+  roleChip.textContent = roleName;
+
+  if (isVIP) {
+    // Premium Gold VIP with shimmer
+    roleChip.style.cssText = `
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #b8860b, #ffd700, #ffeb3b, #ffd700, #b8860b);
+      background-size: 300% 100%;
+      color: #1a1200;
+      margin-bottom: 16px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+      animation: vipShimmer 3.5s linear infinite;
+      position: relative;
+      overflow: hidden;
+    `;
+
+    // Subtle shine overlay
+    const shine = document.createElement("div");
+    shine.style.cssText = `
+      position: absolute;
+      top: -50%;
+      left: -100%;
+      width: 40%;
+      height: 300%;
+      background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.9),
+        transparent
+      );
+      animation: shineAnimation 4s infinite linear;
+    `;
+    roleChip.appendChild(shine);
+
+  } else if (isHost) {
+    roleChip.style.cssText = `
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,107,0,0.15);
+      border: 1px solid rgba(255,107,0,0.4);
+      color: #ffaa66;
+      margin-bottom: 16px;
+    `;
+  } else {
+    roleChip.style.cssText = `
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #aaa;
+      margin-bottom: 16px;
+    `;
+  }
+
+  content.appendChild(roleChip);
+
+  // Legendary Details Logic
+  const cleanLocation = (v) => (v || "").toString().replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s?/gu, "").trim();
+  const clean = (v) => (v || "").toString().trim().replace(/^(a|an)\s+/i, "").replace(/\s+/g, " ");
+
+  const genderRaw = clean(user.gender || "person").toLowerCase();
+  const pronoun = isMale ? "his" : "her";
+  const age = Number(user.age);
+  const ageGroup = !age ? "20s" : age >= 50 ? "50s" : age >= 40 ? "40s" : age >= 30 ? "30s" : "20s";
+
+  const fruit = clean(user.fruitPick);
+  const nature = clean(user.naturePick);
+  const bodyType = clean(user.bodyTypePick);
+  const city = cleanLocation(user.city || "Lagos");
+  const location = cleanLocation(user.location);
+
+  // Build main text
+  let mainText = "";
+  const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
+  const intro = descriptors ? `${descriptors} ${genderRaw}` : genderRaw;
+
+  if (isMale && isHost) {
+    mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}, currently in ${city}`;
+  } else {
+    mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}`;
+  }
+
+  if (location) mainText += `, ${location}`;
+  mainText += ".";
+
+  if (!user.isHost && !isVIP) {
+    mainText += isMale ? " 🔥" : " 💋";
+  }
+
+  // Profile Text
+  const profileEl = document.createElement("p");
+  profileEl.textContent = mainText;
+  Object.assign(profileEl.style, {
+    margin: "0 0 18px 0",
+    fontSize: "14.5px",
+    lineHeight: "1.5",
+    color: "#d0d0d0",
+    textAlign: "center"
+  });
+  content.appendChild(profileEl);
+
+  // Trait Pills
+  const traitsContainer = document.createElement("div");
+  traitsContainer.style.cssText = `display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:18px;`;
+
+  const traits = [ageGroup, city];
+  if (bodyType) traits.push(bodyType);
+  if (nature) traits.push(nature);
+  if (fruit) traits.push(fruit);
+
+  traits.forEach(trait => {
+    const pill = document.createElement("span");
+    pill.textContent = trait;
+    pill.style.cssText = `
+      font-size: 10.5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #bbb;
+      white-space: nowrap;
+    `;
+    traitsContainer.appendChild(pill);
+  });
+  content.appendChild(traitsContainer);
+
+     // Bio - Simple typing, no cursor, better emoji support
+  const bioEl = document.createElement("div");
+  Object.assign(bioEl.style, {
+    margin: "12px 0 20px",
+    fontStyle: "italic",
+    fontSize: "13.8px",
+    lineHeight: "1.48",
+    color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#c9b8ff"][Math.floor(Math.random()*7)],
+    textAlign: "center",
+    borderLeft: "3px solid",
+    paddingLeft: "14px",
+    opacity: "0.92",
+    fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    minHeight: "52px"
+  });
+  content.appendChild(bioEl);
+  
+  typeWriterEffect(bioEl, user.bioPick || "No notes shared yet...");
+   
+   // Meet Button for Hosts - Random Dope Colors
+  if (user.isHost) {
+    const meetBtn = document.createElement("div");
+
+    // Dope color palette
+    const colorSchemes = [
+      { main: "#ff2d95", glow: "#ff6bbf" },     // Hot Pink
+      { main: "#00f5ff", glow: "#67f8ff" },     // Cyan
+      { main: "#c026d3", glow: "#e879f9" },     // Magenta
+      { main: "#f97316", glow: "#fb923c" },     // Orange
+      { main: "#a855f7", glow: "#c084fc" },     // Purple
+      { main: "#22d3ee", glow: "#67e8f9" },     // Sky Blue
+      { main: "#f472b6", glow: "#fb9ad1" },     // Pink
+      { main: "#eab308", glow: "#fcd34d" }      // Gold
+    ];
+
+    const randomScheme = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+
+    meetBtn.style.cssText = `
+      width: 56px; 
+      height: 56px; 
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      margin: 12px auto 8px;
+      cursor: pointer;
+      border: 2.5px solid ${randomScheme.main};
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 
+                  0 0 15px ${randomScheme.main}40;
+    `;
+
+    meetBtn.innerHTML = `
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" 
+           stroke="${randomScheme.main}" 
+           stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
       </svg>
-      INVITE FRIENDS
-    </button>
-  </div>
-</div>
+    `;
+
+    // Hover Effect
+    meetBtn.onmouseenter = () => {
+      meetBtn.style.background = "rgba(255,255,255,0.13)";
+      meetBtn.style.borderColor = randomScheme.glow;
+      meetBtn.style.transform = "scale(1.12)";
+      meetBtn.style.boxShadow = `0 6px 25px rgba(0,0,0,0.5), 0 0 22px ${randomScheme.main}60`;
+    };
+
+    meetBtn.onmouseleave = () => {
+      meetBtn.style.background = "rgba(255,255,255,0.06)";
+      meetBtn.style.borderColor = randomScheme.main;
+      meetBtn.style.transform = "scale(1)";
+      meetBtn.style.boxShadow = `0 4px 20px rgba(0,0,0,0.5), 0 0 15px ${randomScheme.main}40`;
+    };
+
+    meetBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (typeof showMeetModal === 'function') showMeetModal(user);
+    };
+
+    content.appendChild(meetBtn);
+  }
+
+  // ←←← THIS WAS MISSING
+  document.body.appendChild(card);
+
+  // Close on outside click
+  setTimeout(() => {
+    const closeOut = (e) => {
+      if (!card.contains(e.target)) {
+        card.remove();
+        document.removeEventListener("click", closeOut);
+      }
+    };
+    document.addEventListener("click", closeOut);
+  }, 100);
+}
+
+// Simple Typewriter - No Cursor (Your Preferred Style)
+function typeWriterEffect(el, text, speed = 35) {
+  el.textContent = "";
+  
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      el.textContent += text[i++];
+    } else {
+      clearInterval(interval);
+    }
+  }, speed);
+}
+
+
+// ===============================================
+// SAFE GLOBAL USERNAME CLICK (Social Card)
+// ===============================================
+document.addEventListener("pointerdown", e => {
+  // IMPORTANT: Ignore clicks on buttons, inputs, modals, etc.
+  if (e.target.closest("button, input, textarea, .tap-modal, #socialCard, [role='dialog']")) {
+    return;
+  }
+
+  const el = e.target.closest("[data-user-id]") || 
+             (e.target.tagName === "SPAN" && e.target.classList.contains("chat-username") ? e.target : null);
+
+  if (!el || !el.textContent) return;
+
+  const text = el.textContent.trim();
+  if (!text || text.includes(":") || text.length < 2) return;
+
+  const chatId = text.split(" ")[0].toLowerCase().trim();
+  const user = usersByChatId.get(chatId);
+
+  if (user && user._docId !== currentUser?.uid) {
+    el.style.background = "#ffcc00";
+    setTimeout(() => el.style.background = "", 250);
+    showSocialCard(user);
+  }
+});
+
+("✅ Social Card System v2 Loaded");
+window.showSocialCard = showSocialCard;
+window.typeWriterEffect = typeWriterEffect;
+
+// ────────────────────────────────────────────────
+// sendStarsToUser function (unchanged — placed outside IIFE)
+async function sendStarsToUser(targetUser, amt) {
+  if (amt < 100 || !currentUser?.uid) {
+    showGoldAlert("Invalid gift", 4000);
+    return;
+  }
+  const sanitize = (str) => str?.toLowerCase().replace(/[.@/\\]/g, '_');
+  const senderId = sanitize(currentUser.email);
+  if (!senderId) {
+    showGoldAlert("Your profile error", 4000);
+    return;
+  }
+  let receiverId = null;
+  if (targetUser._docId) {
+    receiverId = targetUser._docId;
+  } else if (targetUser.email) {
+    receiverId = sanitize(targetUser.email);
+  } else if (targetUser.chatId?.includes("@")) {
+    receiverId = sanitize(targetUser.chatId);
+  } else if (targetUser.uid) {
+    receiverId = targetUser.uid;
+  }
+  if (!receiverId) {
+    showGoldAlert("User not found", 4000);
+    return;
+  }
+  if (senderId === receiverId) {
+    showGoldAlert("Can't gift yourself", 4000);
+    return;
+  }
+  const fromRef = doc(db, "users", senderId);
+  const toRef = doc(db, "users", receiverId);
+  try {
+    // 1. Star transfer
+    await runTransaction(db, async (tx) => {
+      const senderSnap = await tx.get(fromRef);
+      const receiverSnap = await tx.get(toRef);
+      if (!senderSnap.exists()) throw "Profile missing";
+      if ((senderSnap.data().stars || 0) < amt) throw "Not enough stars";
+      if (!receiverSnap.exists()) {
+        tx.set(toRef, {
+          chatId: targetUser.chatId || "User",
+          email: targetUser.email || targetUser.chatId,
+          stars: 0
+        }, { merge: true });
+      }
+      tx.update(fromRef, { stars: increment(-amt), starsGifted: increment(amt) });
+      tx.update(toRef, { stars: increment(amt) });
+    });
+    // 2. Notification
+    await addDoc(collection(db, "notifications"), {
+      recipientId: receiverId,
+      title: "Star Gift!",
+      message: `${currentUser.chatId} gifted you ${amt} stars!`,
+      type: "starGift",
+      fromChatId: currentUser.chatId,
+      amount: amt,
+      createdAt: serverTimestamp()
+    });
+    // 3. Last gift tracker
+    await updateDoc(toRef, {
+      lastGift: { from: currentUser.chatId, amt, at: Date.now() }
+    });
+    // 4. On-screen alert
+    showGoldAlert(`You sent ${amt} stars to ${targetUser.chatId}!`, 4000);
+  } catch (err) {
+    ("Gift failed:", err);
+    showGoldAlert("Failed — try again", 4000);
+  }
+}
+
+
+/* ===============================
+   FINAL VIP LOGIN SYSTEM — 100% WORKING
+   Google disabled | VIP button works | Safe auto-login
+================================= */
+document.addEventListener("DOMContentLoaded", () => {
+  const googleBtn = document.getElementById("googleSignInBtn");
+  if (!googleBtn) return;
+
+  // Reset any previous styles / states
+  googleBtn.style.cssText = "";
+  googleBtn.disabled = false;
+
+  // Remove old listeners (safe way)
+  const newBtn = googleBtn.cloneNode(true);
+  googleBtn.parentNode.replaceChild(newBtn, googleBtn);
+
+  // Add your block handler
+  newBtn.addEventListener("click", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    showStarPopup("You're not signed in.<br>Use STRZ Email Login instead.");
+  });
+});
+
+
+// FINAL LOGIN BUTTON — Hosts & VIPs can enter regardless of hasPaid
+document.getElementById("whitelistLoginBtn")?.addEventListener("click", async () => {
+  const identifier = document.getElementById("emailInput")?.value.trim();
+  const password = document.getElementById("passwordInput")?.value;
+
+  if (!identifier || !password) {
+    showStarPopup("Enter email/username and password");
+    return;
+  }
+
+  const loader = showLoadingBar();
+
+  try {
+    loader.update(18);
+
+    const userCredential = await login(identifier, password);
+    ("Firebase Auth Success:", userCredential.user.uid);
+
+    loader.update(55);
+
+    const email = userCredential.user.email?.toLowerCase().trim();
+    const uidKey = sanitizeKey(email);
+    const userRef = doc(db, "users", uidKey);
+    const userSnap = await getDoc(userRef);
+
+    loader.update(82);
+
+    if (!userSnap.exists()) {
+      showStarPopup("Profile not found — contact support");
+      await signOut(auth);
+      loader.update(100);
+      return;
+    }
+
+    const data = userSnap.data();
+
+    // UPDATED LOGIC: Hosts & VIPs have full access
+    if (data.isHost || data.isVIP) {
+      (`✅ Access granted to ${data.isHost ? 'Host' : 'VIP'}`);
+      loader.update(100);
+      
+      // Optional: Show welcome message
+      if (data.isHost) {
+        showStarPopup("Welcome Host! 👑", "success");
+      } else {
+        showStarPopup("Welcome VIP! ✨", "success");
+      }
+
+      // Continue with your normal login flow
+      // setCurrentUserFromData(data, uidKey, email);
+
+    } else {
+      showStarPopup("Access denied.\nOnly Hosts and VIPs can enter.");
+      await signOut(auth);
+      loader.update(100);
+      return;
+    }
+
+  } catch (err) {
+    ("Login failed:", err);
+
+    if (err.message === "Invalid username or password" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found") {
+      showStarPopup("Invalid username or password");
+    } else if (err.code === "auth/too-many-requests") {
+      showStarPopup("Too many attempts. Wait a minute.");
+    } else {
+      showStarPopup(err.message || "Login failed — try again");
+    }
+    loader.update(100);
+  }
+});
+
+// HELPER — SET CURRENT USER
+function setCurrentUserFromData(data, uidKey, email) {
+  currentUser = {
+    uid: uidKey,
+    email,
+    phone: data.phone,
+    chatId: data.chatId,
+    chatIdLower: data.chatIdLower,
+    stars: data.stars || 0,
+    cash: data.cash || 0,
+    usernameColor: data.usernameColor || randomColor(),
+    isAdmin: !!data.isAdmin,
+    isVIP: !!data.isVIP,
+    hasPaid: !!data.hasPaid,
+    fullName: data.fullName || "",
+    gender: data.gender || "",
+    subscriptionActive: !!data.subscriptionActive,
+    subscriptionCount: data.subscriptionCount || 0,
+    lastStarDate: data.lastStarDate || todayDate(),
+    starsGifted: data.starsGifted || 0,
+    starsToday: data.starsToday || 0,
+    hostLink: data.hostLink || null,
+    invitedBy: data.invitedBy || null,
+    inviteeGiftShown: !!data.inviteeGiftShown,
+    isHost: !!data.isHost
+  };
+}
+
+// HELPER — ALL POST-LOGIN ACTIONS (DRY & CLEAN)
+function setupPostLogin() {
+  localStorage.setItem("vipUser", JSON.stringify({ uid: currentUser.uid }));
+  ("%c vipUser SET IN CHAT:", "color:#00ffaa", localStorage.getItem("vipUser"));
+  ("%cCurrent UID:", "color:#00ffaa", currentUser.uid);
+
+
+  updateRedeemLink();
+  setupPresence(currentUser);
+  attachMessagesListener();
+  startStarEarning(currentUser.uid);
+
+  // Prompt GUEST users for permanent chatID (non-blocking)
+  if (currentUser.chatId?.startsWith("GUEST")) {
+    promptForChatID(doc(db, "users", currentUser.uid), currentUser).catch(e => {
+      ("ChatID prompt cancelled:", e);
+    });
+  }
+
+  // UI & BALANCE UPDATES
+  showChatUI(currentUser);
+  updateInfoTab();     // Info tab balance
+  safeUpdateDOM();     // Header balances
+  revealHostTabs();    // Host features
+
+  ("%cPost-login setup complete — Welcome!", "color:#00ff9d", currentUser.chatId);
+}
+
+/* LOGOUT — CLEAN, FUN, SAFE */
+window.logoutVIP = async () => {
+  try {
+    await signOut(auth);
+  } catch (e) {
+    ("Sign out failed:", e);
+  } finally {
+    localStorage.removeItem("vipUser");
+    localStorage.removeItem("lastVipEmail");
+    sessionStorage.setItem("justLoggedOut", "true");
+    currentUser = null;
+    location.reload();
+  }
+};
+
+// HOST LOGOUT BUTTON — FUN & PREVENTS DOUBLE-CLICK
+document.getElementById("hostLogoutBtn")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const btn = e.target.closest("button");
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+
+  try {
+    await signOut(auth);
+    localStorage.removeItem("vipUser");
+    localStorage.removeItem("lastVipEmail");
+    sessionStorage.setItem("justLoggedOut", "true");
+    currentUser = null;
+
+    const messages = [
+      "See ya later, Alligator!",
+      "Off you go — $STRZ waiting when you return!",
+      "Catch you on the flip side!",
+      "Adios, Amigo!",
+      "Peace out, Player!",
+      "Hasta la vista, Baby!",
+      "Hmmm, now why'd you do that...",
+      "Off you go, Champ!"
+    ];
+    const message = messages[Math.floor(Math.random() * messages.length)];
+    showStarPopup(message);
+
+    setTimeout(() => location.reload(), 1800);
+  } catch (err) {
+    ("Logout failed:", err);
+    btn.disabled = false;
+    showStarPopup("Logout failed — try again!");
+  }
+});
+
+/* ===============================
+   💫 Daily Star Login Bonus System
+   - Gives full daily stars on login based on user status
+   - Very low reads/writes (only once per day)
+   - Clean & efficient
+================================= */
+
+let dailyStarBonusGiven = false;
+
+async function giveDailyStarBonus(uid) {
+  if (!uid || dailyStarBonusGiven) return;
+  if (!currentUser) return;
+
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const today = todayDate();
+
+    // Reset if new day
+    if (data.lastStarDate !== today) {
+      await updateDoc(userRef, {
+        starsToday: 0,
+        lastStarDate: today
+      });
+    }
+
+    const effectiveCap = getEffectiveDailyCap(data);
+    const currentToday = data.starsToday || 0;
+
+    if (currentToday >= effectiveCap) {
+      dailyStarBonusGiven = true;
+      return;
+    }
+
+    const amountToAdd = effectiveCap - currentToday;
+
+    // Award stars
+    await updateDoc(userRef, {
+      stars: increment(amountToAdd),
+      starsToday: increment(amountToAdd)
+    });
+
+    // Update local state
+    currentUser.stars = (currentUser.stars || 0) + amountToAdd;
+    currentUser.starsToday = currentToday + amountToAdd;
+
+    dailyStarBonusGiven = true;
+
+    // === Show Notification + Smooth Animation ===
+    // Small delay to make sure DOM and UI functions are ready
+    setTimeout(() => {
+      if (typeof showGoldAlert === "function") {
+        showGoldAlert(`🎁 You've received **${amountToAdd} Stars** for today!`, "success");
+      }
+
+      // Smooth count-up
+      if (typeof animateStarCount === "function") {
+        animateStarCount(currentUser.stars);
+      } else if (refs?.starCountEl) {
+        let displayed = parseInt(refs.starCountEl.textContent.replace(/[^0-9]/g, '')) || 0;
+        const target = currentUser.stars;
+        const step = Math.ceil((target - displayed) / 25);
+
+        const interval = setInterval(() => {
+          displayed += step;
+          if (displayed >= target) {
+            displayed = target;
+            clearInterval(interval);
+          }
+          refs.starCountEl.textContent = formatNumberWithCommas(displayed);
+        }, 40);
+      }
+    }, 800); // Small delay ensures everything is loaded
+
+    (`[DAILY BONUS] +${amountToAdd} stars | New Total: ${currentUser.stars}`);
+
+  } catch (err) {
+    ("[DAILY BONUS] Error:", err);
+  }
+}
+
+// Your tiers
+function getEffectiveDailyCap(userData) {
+  if (!userData) return 50;
+
+  if (userData.isHost === true) return 600;
+  if (userData.hasPaid === true) return 500;
+    if (userData.hasPaid === false) return 25;
+  return 5; // Normal user
+}
+
+// ====================== SMOOTH ANIMATION HELPER ======================
+function animateStarCount(target) {
+  if (!refs?.starCountEl) return;
+
+  let displayed = currentUser.stars || 0;
+  const diff = target - displayed;
+  if (Math.abs(diff) < 5) {
+    refs.starCountEl.textContent = formatNumberWithCommas(target);
+    return;
+  }
+
+  const step = Math.ceil(diff / 25);
+
+  const interval = setInterval(() => {
+    displayed += step;
+    if ((step > 0 && displayed >= target) || (step < 0 && displayed <= target)) {
+      displayed = target;
+      clearInterval(interval);
+    }
+    refs.starCountEl.textContent = formatNumberWithCommas(displayed);
+  }, 40);
+}
+
+/* ===============================
+   🧩 Helper Functions
+================================= */
+const todayDate = () => new Date().toISOString().split("T")[0];
+const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+
+/* ---------- UPDATE UI AFTER AUTH — IMPROVED & SAFE ---------- */
+function updateUIAfterAuth(user) {
+  const subtitle = document.getElementById("roomSubtitle");
+  const helloText = document.getElementById("helloText");
+  const roomDescText = document.querySelector(".room-desc .text");
+  const loginBar = document.getElementById("loginBar");
+
+  if (openBtn) openBtn.style.display = "block";
+
+  if (user) {
+    [subtitle, helloText, roomDescText].forEach(el => el && (el.style.display = "none"));
+    if (loginBar) loginBar.style.display = "flex";
+  } else {
+    [subtitle, helloText, roomDescText].forEach(el => el && (el.style.display = "block"));
+    if (loginBar) loginBar.style.display = "flex";
+  }
+
+  // ENSURE MODAL STAYS CLOSED
+  if (modal) {
+    modal.style.display = "none";
+    modal.style.opacity = "0";
+  }
+}
+
+/* ===============================
+   💬 Show Chat UI After Login
+================================= */
+function showChatUI(user) {
+  const { authBox, sendAreaEl, profileBoxEl, profileNameEl, starCountEl, cashCountEl, adminControlsEl } = refs;
+
+  // Hide login/auth elements
+  document.getElementById("emailAuthWrapper")?.style?.setProperty("display", "none");
+  document.getElementById("googleSignInBtn")?.style?.setProperty("display", "none");
+  document.getElementById("vipAccessBtn")?.style?.setProperty("display", "none");
+
+  // Show chat interface
+  authBox && (authBox.style.display = "none");
+  sendAreaEl && (sendAreaEl.style.display = "flex");
+  profileBoxEl && (profileBoxEl.style.display = "block");
+
+  if (profileNameEl) {
+    profileNameEl.innerText = user.chatId;
+    profileNameEl.style.color = user.usernameColor;
+  }
+
+  if (starCountEl) starCountEl.textContent = formatNumberWithCommas(user.stars);
+  if (cashCountEl) cashCountEl.textContent = formatNumberWithCommas(user.cash);
+  if (adminControlsEl) adminControlsEl.style.display = user.isAdmin ? "flex" : "none";
+
+  // 🔹 Apply additional UI updates (hide intro, show hosts)
+  updateUIAfterAuth(user);
+}
+
+/* ===============================
+   🚪 Hide Chat UI On Logout
+================================= */
+function hideChatUI() {
+  const { authBox, sendAreaEl, profileBoxEl, adminControlsEl } = refs;
+
+  authBox && (authBox.style.display = "block");
+  sendAreaEl && (sendAreaEl.style.display = "none");
+  profileBoxEl && (profileBoxEl.style.display = "none");
+  if (adminControlsEl) adminControlsEl.style.display = "none";
+
+  // 🔹 Restore intro UI (subtitle, hello text, etc.)
+  updateUIAfterAuth(null);
+}
+
+/* =======================================
+   🚀 DOMContentLoaded Bootstrap
+======================================= */
+window.addEventListener("DOMContentLoaded", () => {
 
 
   
-<!-- FREE TONIGHT UPLOAD — VIDEO ONLY + CERTIFY CHECKBOX -->
-<div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
-  <div style="text-align:center; margin-bottom:28px;">
-    <h2 style="
-      margin:0; font-size:28px; font-weight:900; letter-spacing:-1px;
-      background:linear-gradient(90deg,#ff2e78,#ff8c2e,#ff2e78);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-      background-size:200% auto; animation:gradient 4s linear infinite;
+/* ----------------------------
+   ⚡ Global setup for local message tracking
+----------------------------- */
+let localPendingMsgs = JSON.parse(localStorage.getItem("localPendingMsgs") || "{}"); 
+// structure: { tempId: { content, uid, chatId, createdAt } }
+
+/* ================================
+   SEND MESSAGE + BUZZ (2025 FINAL)
+   - Secure Firestore paths
+   - Uses getUserId() correctly
+   - No permission errors
+   - Buzz works perfectly
+   - Instant local echo + reply support
+================================ */
+
+// Helper: Clear reply state
+function clearReplyAfterSend() {
+  if (typeof cancelReply === "function") cancelReply();
+  currentReplyTarget = null;
+  refs.messageInputEl.placeholder = "Type a message...";
+}
+
+/* ===============================================
+   SEND MESSAGE + BUZZ + PRIVATE MESSAGES — FINAL CLEAN 2026
+   =============================================== */
+
+// Helper: Clear reply state
+function clearReplyAfterSend() {
+  if (typeof cancelReply === "function") cancelReply();
+  currentReplyTarget = null;
+  if (refs.messageInputEl) refs.messageInputEl.placeholder = "Type a message...";
+}
+
+// ====================== SEND REGULAR MESSAGE ======================
+refs.sendBtn?.addEventListener("click", async () => {
+  const btn = refs.sendBtn;
+  if (!btn || btn.disabled) return;
+
+  btn.disabled = true;
+  btn.style.opacity = "0.7";
+
+  try {
+    if (!currentUser?.uid) {
+      return showStarPopup("Please sign in to chat.");
+    }
+
+    const txt = (refs.messageInputEl?.value || "").trim();
+    if (!txt) {
+      return showStarPopup("Type a message first.");
+    }
+
+    if ((currentUser.stars || 0) < SEND_COST) {
+      return showStarPopup("Not enough stars to send message.");
+    }
+
+    // Prepare reply data
+    const replyData = currentReplyTarget ? {
+      replyTo: currentReplyTarget.id,
+      replyToContent: (currentReplyTarget.content || "Original message")
+        .replace(/\n/g, " ").trim().substring(0, 80) + "...",
+      replyToChatId: currentReplyTarget.chatId || "someone"
+    } : {};
+
+    // Deduct stars
+    currentUser.stars -= SEND_COST;
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      stars: increment(-SEND_COST)
+    });
+
+    // Send message
+    await addDoc(collection(db, CHAT_COLLECTION), {
+      content: txt,
+      uid: currentUser.uid,
+      chatId: currentUser.chatId,
+      usernameColor: currentUser.usernameColor || "#ff69b4",
+      timestamp: serverTimestamp(),
+      highlight: false,
+      ...replyData
+    });
+
+    // Success cleanup
+    refs.messageInputEl.value = "";
+    clearReplyAfterSend();
+    resizeAndExpand?.();
+
+    ("✅ Message sent successfully");
+
+  } catch (err) {
+    ("Send failed:", err);
+    showStarPopup("Failed to send message — try again", "error");
+
+    // Refund stars
+    currentUser.stars += SEND_COST;
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+  } finally {
+    btn.disabled = false;
+    btn.style.opacity = "1";
+  }
+});
+
+// ====================== BUZZ MESSAGE ======================
+const buzzSound = document.getElementById("buzz-sound"); // Make sure this element exists in HTML
+
+refs.buzzBtn?.addEventListener("click", async () => {
+  const btn = refs.buzzBtn;
+  if (!btn || btn.disabled) return;
+
+  // Disable button immediately
+  btn.disabled = true;
+  btn.style.opacity = "0.6";
+
+  try {
+    if (!currentUser?.uid) {
+      showStarPopup("Sign in to BUZZ.");
+      return;
+    }
+
+    const text = (refs.messageInputEl?.value || "").trim();
+    if (!text) {
+      showStarPopup("Write something to BUZZ");
+      return;
+    }
+    if (text.length > 21) {
+      showStarPopup("BUZZ limited to 21 characters", "error");
+      return;
+    }
+    if ((currentUser.stars || 0) < BUZZ_COST) {
+      showStarPopup(`BUZZ costs ${BUZZ_COST} stars`, "error");
+      return;
+    }
+
+    const gradient = typeof randomStickerGradient === "function"
+      ? randomStickerGradient()
+      : "linear-gradient(135deg, #ff9a9e, #fecfef)";
+
+    const newMsgRef = doc(collection(db, CHAT_COLLECTION));
+
+    // Atomic transaction
+    await runTransaction(db, async (transaction) => {
+      transaction.update(doc(db, "users", currentUser.uid), {
+        stars: increment(-BUZZ_COST)
+      });
+
+      transaction.set(newMsgRef, {
+        content: text,
+        uid: currentUser.uid,
+        chatId: currentUser.chatId,
+        usernameColor: currentUser.usernameColor || "#ff69b4",
+        timestamp: serverTimestamp(),
+        type: "buzz",
+        stickerGradient: gradient,
+        highlight: true,
+        buzzLevel: "epic",        // restored from old version
+        screenShake: true,
+        sound: "buzz_sound"
+      });
+    });
+
+    // === SUCCESS PATH ===
+    // Local update
+    currentUser.stars -= BUZZ_COST;
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+
+    // Clear input
+    refs.messageInputEl.value = "";
+    clearReplyAfterSend?.();
+    resizeAndExpand?.();
+
+    // Visuals & Sound
+    if (buzzSound) {
+      buzzSound.currentTime = 0;
+      buzzSound.play().catch(e => ("Sound play prevented:", e));
+    }
+
+    if (typeof triggerStickerBuzz === "function") {
+      triggerStickerBuzz(gradient, text, currentUser.username || "Someone");
+    }
+
+    showStarPopup("🎉 BUZZ SENT — The chat is shaking!", {
+      type: "success",
+      duration: 4000
+    });
+
+  } catch (err) {
+    ("Buzz failed:", err);
+
+    // Only refund if we actually deducted stars
+    if (err.code !== 'permission-denied' && err.code !== 'not-found') {
+      currentUser.stars += BUZZ_COST;
+      if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+    }
+
+    showStarPopup("BUZZ failed — stars refunded", "error");
+  } finally {
+    // Always re-enable button
+    btn.disabled = false;
+    btn.style.opacity = "1";
+  }
+});
+   
+// =============================
+// MILDER APOCALYPSE — STICKER-FOCUSED (Flash + Confetti + Shake)
+// =============================
+function triggerStickerBuzz(gradient, text, name) {
+  // 1. SUBTLE FULL SCREEN FLASH (using gradient)
+  var flash = document.createElement("div");
+  flash.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:" + gradient + ";opacity:0.7;pointer-events:none;z-index:99999;animation:stickerFlash 1s ease-out;";
+  document.body.appendChild(flash);
+
+  // 2. GENTLE SCREEN SHAKE
+  document.body.classList.add("screen-shake");
+  setTimeout(function() {
+    document.body.classList.remove("screen-shake");
+  }, 800);
+
+  // 3. CONFETTI BURST (from sticker colors)
+  if (typeof launchConfetti === "function") {
+    launchConfetti({
+      particleCount: 200,
+      spread: 90,
+      origin: { y: 0.7 },
+      colors: extractColorsFromGradient(gradient)  // Pulls from gradient
+    });
+  }
+
+  // 4. SOUND
+  if (typeof playSound === "function") {
+    playSound("buzz_sound");
+  }
+
+  // 5. STICKER ANNOUNCE (smaller text)
+  var announce = document.createElement("div");
+  announce.textContent = name + " SENT A STICKER BUZZ!";
+  announce.style.cssText = "position:fixed;top:20%;left:50%;transform:translate(-50%,-50%);font-size:2.5rem;font-weight:700;color:#fff;text-shadow:0 0 20px rgba(0,0,0,0.5);pointer-events:none;z-index:99999;animation:stickerAnnounce 2s ease-out forwards;letter-spacing:4px;";
+  document.body.appendChild(announce);
+
+  // Cleanup
+  setTimeout(function() {
+    if (flash && flash.parentNode) flash.remove();
+    if (announce && announce.parentNode) announce.remove();
+  }, 2500);
+}
+
+// =============================
+// RANDOM STICKER GRADIENTS — CLASSY, NON-NEON (YouTube-Style)
+// =============================
+function randomStickerGradient() {
+  var gradients = [
+    // Warm sunset (orange-pink, soft)
+    "linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)",
+    // Cool ocean (blue-teal, calming)
+    "linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #a8edea 100%)",
+    // Vibrant purple (elegant, not neon)
+    "linear-gradient(135deg, #d299c2 0%, #fef9d7 50%, #d299c2 100%)",
+    // Fresh green (nature-inspired)
+    "linear-gradient(135deg, #89f7fe 0%, #66a6ff 50%, #89f7fe 100%)",
+    // Golden hour (warm yellow-orange)
+    "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f093fb 100%)",
+    // Soft lavender (pastel purple-blue)
+    "linear-gradient(135deg, #fa709a 0%, #fee140 50%, #fa709a 100%)",
+    // Earthy terracotta (red-brown fade)
+    "linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%)",
+    // Minty fresh (green-cyan)
+    "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #a1c4fd 100%)"
+  ];
+  return gradients[Math.floor(Math.random() * gradients.length)];
+}
+
+// HELPER: Extract 3-4 colors from gradient for confetti
+function extractColorsFromGradient(gradient) {
+  // Simple regex to pull hex colors (e.g., #ff9a9e, #fecfef)
+  var colors = gradient.match(/#[0-9a-f]{6}/gi) || ["#ff9a9e", "#fecfef", "#fff"];
+  return colors.slice(0, 4).concat("#fff");  // Add white for confetti pop
+}
+
+
+   // ====================== PRIVATE MESSAGE ======================
+const privateMsgBtn = document.getElementById('privateMsgBtn');
+const privateMsgModal = document.getElementById('privateMsgModal');
+const privateClose = document.querySelector('.private-close');
+const privateMsgInput = document.getElementById('privateMsgInput');
+const privateSendBtn = document.getElementById('privateSendBtn');
+
+if (privateMsgBtn && privateMsgModal) {
+  privateMsgBtn.addEventListener('click', () => {
+    privateMsgModal.classList.add('open');
+    privateMsgInput?.focus();
+  });
+
+  privateClose?.addEventListener('click', () => {
+    privateMsgModal.classList.remove('open');
+    if (privateMsgInput) privateMsgInput.value = '';
+  });
+
+  privateMsgModal.addEventListener('click', (e) => {
+    if (e.target === privateMsgModal) {
+      privateMsgModal.classList.remove('open');
+      if (privateMsgInput) privateMsgInput.value = '';
+    }
+  });
+}
+
+privateSendBtn?.addEventListener('click', async () => {
+  const message = privateMsgInput?.value.trim();
+  if (!message) return;
+
+  if (!currentUser) {
+    return showStarPopup("Sign in to send private messages.");
+  }
+  if ((currentUser.stars || 0) < 100) {
+    return showStarPopup("Need 100 stars to send a private message 💌");
+  }
+
+  const btn = privateSendBtn;
+  btn.disabled = true;
+  btn.style.opacity = "0.7";
+
+  try {
+    currentUser.stars -= 100;
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      stars: increment(-100)
+    });
+
+    await addDoc(collection(db, "privateLiveMessages"), {
+      content: message,
+      senderUid: currentUser.uid,
+      senderChatId: currentUser.chatId || "anonymous",
+      timestamp: serverTimestamp(),
+      read: false
+    });
+
+    privateMsgInput.value = '';
+    privateMsgModal.classList.remove('open');
+    showStarPopup("Private message sent! Host only sees it 💌", "success");
+
+  } catch (err) {
+    ("Private message failed:", err);
+    showStarPopup("Failed to send private message", "error");
+
+    currentUser.stars += 100;
+    if (refs.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+  } finally {
+    btn.disabled = false;
+    btn.style.opacity = "1";
+  }
+});
+
+// Auto-resize for private input
+privateMsgInput?.addEventListener('input', () => {
+  privateMsgInput.style.height = 'auto';
+  privateMsgInput.style.height = privateMsgInput.scrollHeight + 'px';
+});
+
+// Enter key support for private message
+privateMsgInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    privateSendBtn?.click();
+  }
+});
+  /* ----------------------------
+     👋 Rotating Hello Text
+  ----------------------------- */
+  const greetings = [
+  "HELLO",          // English
+  "HOLA",           // Spanish
+  "BONJOUR",        // French
+  "CIAO",           // Italian
+  "HALLO",          // German
+  "こんにちは",       // Japanese
+  "你好",            // Chinese
+  "안녕하세요",        // Korean
+  "SALUT",          // Romanian/French casual
+  "OLÁ",            // Portuguese
+  "NAMASTE",        // Hindi
+  "MERHABA",        // Turkish
+
+  "NDEWO",          // Igbo
+  "BAWO",           // Yoruba
+  "SANNu",          // Hausa
+  "M̀MÈ",           // Efik
+  "SAWUBONA",       // Zulu
+  "JAMBO",          // Swahili
+  "DUMELA",         // Setswana
+  "AVUXENI",        // Tsonga
+  "MORO",           // Sesotho
+  "MHORO",          // Shona
+  "MAKADHI",        // Venda
+  "LUMELA",         // Sepedi/Northern Sotho
+  "WAALEYKUM",      // Fulfulde greeting style
+  "MBOTE",          // Lingala
+  "AKWAABA",        // Twi (Akan)
+  "KÉLÉ WULI",      // Ewe
+  "MONI",           // Chichewa
+  "YÁ'ÁT'ÉÉH",      // Navajo
+  "ALOHA"           // Hawaiian
+];
+  const helloEl = document.getElementById("helloText");
+  let greetIndex = 0;
+
+  setInterval(() => {
+    if (!helloEl) return;
+    helloEl.style.opacity = "0";
+
+    setTimeout(() => {
+      helloEl.innerText = greetings[greetIndex++ % greetings.length];
+      helloEl.style.color = randomColor();
+      helloEl.style.opacity = "1";
+    }, 220);
+  }, 1500);
+
+  /* ----------------------------
+     🧩 Tiny Helpers
+  ----------------------------- */
+  const scrollToBottom = el => {
+    if (!el) return;
+    requestAnimationFrame(() => el.scrollTop = el.scrollHeight);
+  };
+  const sleep = ms => new Promise(res => setTimeout(res, ms));
+});
+
+/* =====================================
+   🎥 Video Navigation & UI Fade Logic
+======================================= */
+(() => {
+  const videoPlayer = document.getElementById("videoPlayer");
+  const prevBtn = document.getElementById("prev");
+  const nextBtn = document.getElementById("next");
+  const container = document.querySelector(".video-container");
+  const navButtons = [prevBtn, nextBtn].filter(Boolean);
+
+  if (!videoPlayer || navButtons.length === 0) return;
+
+  // Wrap the video in a relative container if not already
+  const videoWrapper = document.createElement("div");
+  videoWrapper.style.position = "relative";
+  videoWrapper.style.display = "inline-block";
+  videoPlayer.parentNode.insertBefore(videoWrapper, videoPlayer);
+  videoWrapper.appendChild(videoPlayer);
+
+  // ---------- Create hint overlay inside video ----------
+  const hint = document.createElement("div");
+  hint.className = "video-hint";
+  hint.style.position = "absolute";
+  hint.style.bottom = "10%"; // slightly above bottom
+  hint.style.left = "50%";
+  hint.style.transform = "translateX(-50%)"; // horizontal center
+  hint.style.padding = "2px 8px";
+  hint.style.background = "rgba(0,0,0,0.5)";
+  hint.style.color = "#fff";
+  hint.style.borderRadius = "12px";
+  hint.style.fontSize = "14px";
+  hint.style.opacity = "0";
+  hint.style.pointerEvents = "none";
+  hint.style.transition = "opacity 0.4s";
+  videoWrapper.appendChild(hint);
+
+  const showHint = (msg, timeout = 1500) => {
+    hint.textContent = msg;
+    hint.style.opacity = "1";
+    clearTimeout(hint._t);
+    hint._t = setTimeout(() => (hint.style.opacity = "0"), timeout);
+  };
+
+  // 🎞️ Video list (Shopify video)
+  const videos = [
+    "https://cdn.shopify.com/videos/c/o/v/45c20ba8df2c42d89807c79609fe85ac.mp4"
+  ];
+
+  let currentVideo = 0;
+  let hideTimeout = null;
+
+  /* ----------------------------
+       ▶️ Load & Play Video
+  ----------------------------- */
+  const loadVideo = (index) => {
+    if (index < 0) index = videos.length - 1;
+    if (index >= videos.length) index = 0;
+
+    currentVideo = index;
+    videoPlayer.src = videos[currentVideo];
+    videoPlayer.muted = true;
+
+    // Wait for metadata before playing
+    videoPlayer.addEventListener("loadedmetadata", function onMeta() {
+      videoPlayer.play().catch(() => ("Autoplay may be blocked by browser"));
+      videoPlayer.removeEventListener("loadedmetadata", onMeta);
+    });
+  };
+
+  /* ----------------------------
+       🔊 Toggle Mute on Tap
+  ----------------------------- */
+  videoPlayer.addEventListener("click", () => {
+    videoPlayer.muted = !videoPlayer.muted;
+    showHint(videoPlayer.muted ? "Tap to unmute" : "Sound on");
+  });
+
+  /* ----------------------------
+       ⏪⏩ Navigation Buttons
+  ----------------------------- */
+  prevBtn?.addEventListener("click", () => loadVideo(currentVideo - 1));
+  nextBtn?.addEventListener("click", () => loadVideo(currentVideo + 1));
+
+  /* ----------------------------
+       👀 Auto Hide/Show Buttons
+  ----------------------------- */
+  const showButtons = () => {
+    navButtons.forEach(btn => {
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
+    });
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+      navButtons.forEach(btn => {
+        btn.style.opacity = "0";
+        btn.style.pointerEvents = "none";
+      });
+    }, 3000);
+  };
+
+  navButtons.forEach(btn => {
+    btn.style.transition = "opacity 0.6s ease";
+    btn.style.opacity = "0";
+    btn.style.pointerEvents = "none";
+  });
+
+  ["mouseenter", "mousemove", "click"].forEach(evt => container?.addEventListener(evt, showButtons));
+  container?.addEventListener("mouseleave", () => {
+    navButtons.forEach(btn => {
+      btn.style.opacity = "0";
+      btn.style.pointerEvents = "none";
+    });
+  });
+
+  // Start with first video
+  loadVideo(0);
+
+  // Show initial hint after video metadata loads
+  videoPlayer.addEventListener("loadedmetadata", () => {
+    showHint("Tap to unmute", 1500);
+  });
+})();
+
+
+// URL of your custom star SVG hosted on Shopify
+const customStarURL = "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/starssvg.svg?v=1761770774";
+
+// Replace stars in text nodes with SVG + floating stars (invisible)
+function replaceStarsWithSVG(root = document.body) {
+  if (!root) return;
+
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: node => {
+        if (node.nodeValue.includes("⭐") || node.nodeValue.includes("⭐️")) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+        return NodeFilter.FILTER_REJECT;
+      }
+    }
+  );
+
+  const nodesToReplace = [];
+  while (walker.nextNode()) nodesToReplace.push(walker.currentNode);
+
+  nodesToReplace.forEach(textNode => {
+    const parent = textNode.parentNode;
+    if (!parent) return;
+
+    const fragments = textNode.nodeValue.split(/⭐️?|⭐/);
+
+    fragments.forEach((frag, i) => {
+      if (frag) parent.insertBefore(document.createTextNode(frag), textNode);
+
+      if (i < fragments.length - 1) {
+        // Inline star
+        const span = document.createElement("span");
+        span.style.display = "inline-flex";
+        span.style.alignItems = "center";
+        span.style.position = "relative";
+
+        const inlineStar = document.createElement("img");
+        inlineStar.src = customStarURL;
+        inlineStar.alt = "⭐";
+        inlineStar.style.width = "1.2em";
+        inlineStar.style.height = "1.2em";
+        inlineStar.style.display = "inline-block";
+        inlineStar.style.verticalAlign = "text-bottom";
+        inlineStar.style.transform = "translateY(0.15em) scale(1.2)";
+
+        span.appendChild(inlineStar);
+        parent.insertBefore(span, textNode);
+
+        // Floating star (fully invisible)
+        const floatingStar = document.createElement("img");
+        floatingStar.src = customStarURL;
+        floatingStar.alt = "⭐";
+        floatingStar.style.width = "40px";
+        floatingStar.style.height = "40px";
+        floatingStar.style.position = "absolute";
+        floatingStar.style.pointerEvents = "none";
+        floatingStar.style.zIndex = "9999";
+        floatingStar.style.opacity = "0"; // invisible
+        floatingStar.style.transform = "translate(-50%, -50%)";
+
+        const rect = inlineStar.getBoundingClientRect();
+        floatingStar.style.top = `${rect.top + rect.height / 2 + window.scrollY}px`;
+        floatingStar.style.left = `${rect.left + rect.width / 2 + window.scrollX}px`;
+
+        document.body.appendChild(floatingStar);
+
+        // Remove immediately (optional, keeps DOM cleaner)
+        setTimeout(() => floatingStar.remove(), 1);
+      }
+    });
+
+    parent.removeChild(textNode);
+  });
+}
+
+// Observe dynamic content including BallerAlert
+const observer = new MutationObserver(mutations => {
+  mutations.forEach(m => {
+    m.addedNodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) replaceStarsWithSVG(node.parentNode);
+      else if (node.nodeType === Node.ELEMENT_NODE) replaceStarsWithSVG(node);
+    });
+  });
+});
+observer.observe(document.body, { childList: true, subtree: true });
+
+// Initial run
+replaceStarsWithSVG();
+
+
+
+
+/* ===============================
+   FEATURED HOSTS MODAL — FINAL 2025 BULLETPROOF
+   NEVER OPENS ON RELOAD — ONLY WHEN USER CLICKS
+================================= */
+
+/* ---------- DOM Elements (KEEP THESE) ---------- */
+const openBtn = document.getElementById("openHostsBtn");
+const modal = document.getElementById("featuredHostsModal");
+const closeModal = document.querySelector(".featured-close");
+const videoFrame = document.getElementById("featuredHostVideo");
+const usernameEl = document.getElementById("featuredHostUsername");
+const detailsEl = document.getElementById("featuredHostDetails");
+const hostListEl = document.getElementById("featuredHostList");
+const giftSlider = document.getElementById("giftSlider");
+const modalGiftBtn = document.getElementById("featuredGiftBtn");
+const giftAmountEl = document.getElementById("giftAmount");
+const prevBtn = document.getElementById("prevHost");
+const nextBtn = document.getElementById("nextHost");
+
+// =============================================
+// SHARED PAGINATION & CACHE UTILITIES
+// =============================================
+
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function saveToCache(key, data, lastDocId = null) {
+  localStorage.setItem(key, JSON.stringify({
+    data,
+    timestamp: Date.now(),
+    lastDocId: lastDocId ? lastDocId.id : null
+  }));
+}
+
+function loadFromCache(key) {
+  const cached = localStorage.getItem(key);
+  if (!cached) return null;
+  try {
+    const { data, timestamp, lastDocId } = JSON.parse(cached);
+    if (Date.now() - timestamp < CACHE_TTL) {
+      return { data, lastDocId };
+    }
+  } catch {}
+  return null;
+}
+
+// =============================================
+// FEATURED HOSTS – Lazy Pagination (20 per page)
+// =============================================
+
+let hosts = [];
+let currentHostIndex = 0;
+let lastVisibleHostDoc = null;
+let hasMoreHosts = true;
+let isFetchingHosts = false;
+const HOSTS_PAGE_SIZE = 20;
+const HOSTS_CACHE_KEY = "featuredHostsCache_v2";
+
+async function loadHostsPage(isFirstPage = true) {
+  if (isFetchingHosts) return [];
+  isFetchingHosts = true;
+
+  try {
+    const docRef = doc(db, "featuredHosts", "current");
+    const snap = await getDoc(docRef);
+
+    if (!snap.exists() || !snap.data().hosts?.length) {
+      hasMoreHosts = false;
+      hosts = [];
+      return [];
+    }
+
+    const allHostIds = snap.data().hosts;
+    const startIdx = isFirstPage ? 0 : hosts.length;
+    const pageIds = allHostIds.slice(startIdx, startIdx + HOSTS_PAGE_SIZE);
+
+    if (pageIds.length === 0) {
+      hasMoreHosts = false;
+      return [];
+    }
+
+    // Fetch in chunks of 10 (in query limit)
+    const chunks = [];
+    for (let i = 0; i < pageIds.length; i += 10) {
+      chunks.push(pageIds.slice(i, i + 10));
+    }
+
+    const pageHosts = [];
+    await Promise.all(chunks.map(async chunk => {
+      if (chunk.length === 0) return;
+      const q = query(
+        collection(db, "users"),
+        where(firebase.firestore.FieldPath.documentId(), "in", chunk)
+      );
+      const snap = await getDocs(q);
+      snap.forEach(doc => pageHosts.push({ id: doc.id, ...doc.data() }));
+    }));
+
+    lastVisibleHostDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
+    hasMoreHosts = startIdx + pageIds.length < allHostIds.length;
+
+    return pageHosts;
+  } catch (err) {
+    ("Hosts fetch failed:", err);
+    return [];
+  } finally {
+    isFetchingHosts = false;
+  }
+}
+
+// ---------- STAR HOSTS BUTTON – LAZY + PAGINATED ----------
+if (openBtn) {
+  openBtn.onclick = async () => {
+    const cache = loadFromCache(HOSTS_CACHE_KEY);
+    if (cache) {
+      hosts = cache.data;
+      lastVisibleHostDoc = cache.lastDocId ? { id: cache.lastDocId } : null;
+      hasMoreHosts = hosts.length % HOSTS_PAGE_SIZE === 0;
+      ("Hosts from cache:", hosts.length);
+    } else {
+      hosts = [];
+      lastVisibleHostDoc = null;
+      hasMoreHosts = true;
+      const firstPage = await loadHostsPage(true);
+      hosts = firstPage;
+      saveToCache(HOSTS_CACHE_KEY, hosts, lastVisibleHostDoc);
+    }
+
+    if (hosts.length === 0) {
+      showGiftAlert("No Star Hosts online right now!");
+      return;
+    }
+
+    // Open modal with first host
+    loadHost(currentIndex);
+    modal.style.display = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+    setTimeout(() => modal.style.opacity = "1", 50);
+
+    if (giftSlider) giftSlider.style.background = randomFieryGradient();
+
+    ("Star Hosts Modal Opened —", hosts.length, "loaded so far");
+  };
+}
+
+// ---------- CLOSE MODAL ----------
+if (closeModal) {
+  closeModal.onclick = () => {
+    modal.style.opacity = "0";
+    setTimeout(() => modal.style.display = "none", 300);
+  };
+}
+if (modal) {
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.style.opacity = "0";
+      setTimeout(() => modal.style.display = "none", 300);
+    }
+  };
+}
+
+// ---------- FETCH FIRST OR NEXT PAGE ----------
+async function fetchFeaturedHostsPage(isFirstPage = false) {
+  if (isFetchingHosts) return;
+  isFetchingHosts = true;
+
+  try {
+    // Get the list of featured host IDs
+    const docRef = doc(db, "featuredHosts", "current");
+    const snap = await getDoc(docRef);
+
+    if (!snap.exists() || !snap.data().hosts?.length) {
+      ("No featured hosts found.");
+      hosts = [];
+      hasMoreHosts = false;
+      renderHostAvatars();
+      return;
+    }
+
+    const allHostIds = snap.data().hosts; // full array of IDs
+
+    // For pagination: determine which slice of IDs to fetch next
+    const startIndex = isFirstPage ? 0 : hosts.length;
+    const endIndex = startIndex + PAGE_SIZE;
+    const pageIds = allHostIds.slice(startIndex, endIndex);
+
+    if (pageIds.length === 0) {
+      hasMoreHosts = false;
+      return;
+    }
+
+    // Fetch user docs for this page
+    const pageHosts = [];
+
+    // Chunk IDs into groups of 10 (Firestore 'in' limit)
+    const chunks = [];
+    for (let i = 0; i < pageIds.length; i += 10) {
+      chunks.push(pageIds.slice(i, i + 10));
+    }
+
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        if (chunk.length === 0) return;
+        const q = query(
+          collection(db, "users"),
+          where(firebase.firestore.FieldPath.documentId(), "in", chunk)
+        );
+        const querySnap = await getDocs(q);
+        querySnap.forEach((doc) => {
+          pageHosts.push({ id: doc.id, ...doc.data() });
+        });
+      })
+    );
+
+    // Append new hosts
+    hosts = isFirstPage ? pageHosts : [...hosts, ...pageHosts];
+
+    // Update pagination state
+    lastVisibleDoc = pageHosts.length > 0 ? pageHosts[pageHosts.length - 1] : null;
+    hasMoreHosts = endIndex < allHostIds.length;
+
+    (`Loaded page ${Math.ceil(hosts.length / PAGE_SIZE)}: ${pageHosts.length} hosts`);
+
+    renderHostAvatars();
+    updateLoadMoreButton();
+  } catch (err) {
+    ("Featured hosts fetch failed:", err);
+    showStarPopup("Error loading hosts", { type: "error" });
+  } finally {
+    isFetchingHosts = false;
+  }
+}
+
+// ---------- RENDER AVATARS + LOAD MORE BUTTON ----------
+function renderHostAvatars() {
+  hostListEl.innerHTML = "";
+
+  hosts.forEach((host, idx) => {
+    const img = document.createElement("img");
+    img.src = host.popupPhoto || "";
+    img.alt = host.chatId || "Host";
+    img.classList.add("featured-avatar");
+    if (idx === currentIndex) img.classList.add("active");
+    img.addEventListener("click", () => loadHost(idx));
+    hostListEl.appendChild(img);
+  });
+
+  // Add "Load More" button if there are more
+  updateLoadMoreButton();
+}
+
+function updateLoadMoreButton() {
+  // Remove old button if exists
+  const existingBtn = document.getElementById("loadMoreHostsBtn");
+  if (existingBtn) existingBtn.remove();
+
+  if (!hasMoreHosts || isFetchingHosts) return;
+
+  const loadMoreBtn = document.createElement("button");
+  loadMoreBtn.id = "loadMoreHostsBtn";
+  loadMoreBtn.textContent = "Load More Hosts";
+  loadMoreBtn.style.cssText = `
+    margin: 20px auto;
+    padding: 10px 24px;
+    background: linear-gradient(90deg, #ff3366, #ff9933);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    display: block;
+  `;
+
+  loadMoreBtn.onclick = async () => {
+    await fetchFeaturedHostsPage(false); // false = next page
+    saveToCache();
+  };
+
+  hostListEl.appendChild(loadMoreBtn);
+}
+/* ---------- Load Host (Faster Video Loading) ---------- */
+async function loadHost(idx) {
+  const host = hosts[idx];
+  if (!host) return;
+  currentIndex = idx;
+
+  const videoContainer = document.getElementById("featuredHostVideo");
+  if (!videoContainer) return;
+  videoContainer.innerHTML = "";
+  videoContainer.style.position = "relative";
+  videoContainer.style.touchAction = "manipulation";
+
+  // Shimmer loader
+  const shimmer = document.createElement("div");
+  shimmer.className = "video-shimmer";
+  videoContainer.appendChild(shimmer);
+
+  // Video element
+  const videoEl = document.createElement("video");
+  Object.assign(videoEl, {
+    src: host.videoUrl || "",
+    autoplay: true,
+    muted: true,
+    loop: true,
+    playsInline: true,
+    preload: "auto", // preload more data
+    style: "width:100%;height:100%;object-fit:cover;border-radius:8px;display:none;cursor:pointer;"
+  });
+  videoEl.setAttribute("webkit-playsinline", "true");
+  videoContainer.appendChild(videoEl);
+
+  // Force video to start loading immediately
+  videoEl.load();
+
+  // Hint overlay
+  const hint = document.createElement("div");
+  hint.className = "video-hint";
+  hint.textContent = "Tap to unmute";
+  videoContainer.appendChild(hint);
+
+  function showHint(msg, timeout = 1400) {
+    hint.textContent = msg;
+    hint.classList.add("show");
+    clearTimeout(hint._t);
+    hint._t = setTimeout(() => hint.classList.remove("show"), timeout);
+  }
+
+  let lastTap = 0;
+  function onTapEvent() {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      document.fullscreenElement ? document.exitFullscreen?.() : videoEl.requestFullscreen?.();
+    } else {
+      videoEl.muted = !videoEl.muted;
+      showHint(videoEl.muted ? "Tap to unmute" : "Sound on", 1200);
+    }
+    lastTap = now;
+  }
+  videoEl.addEventListener("click", onTapEvent);
+  videoEl.addEventListener("touchend", (ev) => {
+    if (ev.changedTouches.length < 2) {
+      ev.preventDefault?.();
+      onTapEvent();
+    }
+  }, { passive: false });
+
+  // Show video as soon as it can play
+  videoEl.addEventListener("canplay", () => {
+    shimmer.style.display = "none";
+    videoEl.style.display = "block";
+    showHint("Tap to unmute", 1400);
+    videoEl.play().catch(() => {});
+  });
+
+/* ---------- Host Info — FIXED 2025 ---------- */
+const usernameEl = document.createElement('span');
+usernameEl.textContent = (host.chatId || "Unknown Host")
+  .toLowerCase()
+  .replace(/\b\w/g, char => char.toUpperCase());
+
+// THESE 3 LINES ARE THE MAGIC
+usernameEl.className = 'tapable-username';           // any class you like
+usernameEl.dataset.userId = host.uid;                // CRITICAL — your Firestore doc ID
+usernameEl.style.cssText = 'cursor:pointer; font-weight:600; color:#ff69b4; user-select:none;';
+
+// Optional: nice little hover/tap feedback
+usernameEl.addEventListener('pointerdown', () => {
+  usernameEl.style.opacity = '0.7';
+});
+usernameEl.addEventListener('pointerup', () => {
+  usernameEl.style.opacity = '1';
+});
+  
+const gender = (host.gender || "person").toLowerCase();
+const pronoun = gender === "male" ? "his" : "her";
+const ageGroup = !host.age ? "20s" : host.age >= 30 ? "30s" : "20s";
+const flair = gender === "male" ? "😎" : "💋";
+
+const fruit = host.fruitPick || "🍇";
+const nature = host.naturePick || "cool";
+const bodyType = host.bodyTypePick || ""; // ← THIS is all you add
+
+const city = host.location || "Lagos";
+const country = host.country || "Nigeria";
+detailsEl.innerHTML = `A ${fruit} ${nature} ${gender} in ${pronoun} ${ageGroup}, currently in ${city}, ${country}. ${flair}`;
+
+// Typewriter bio
+if (host.bioPick) {
+  const bioText = host.bioPick.length > 160 ? host.bioPick.slice(0, 160) + "…" : host.bioPick;
+
+  // Create a container for bio
+  const bioEl = document.createElement("div");
+  bioEl.style.marginTop = "6px";
+  bioEl.style.fontWeight = "600";  // little bold
+  bioEl.style.fontSize = "0.95em";
+  bioEl.style.whiteSpace = "pre-wrap"; // keep formatting
+
+  // Pick a random bright color
+  const brightColors = ["#FF3B3B", "#FF9500", "#FFEA00", "#00FFAB", "#00D1FF", "#FF00FF", "#FF69B4"];
+  bioEl.style.color = brightColors[Math.floor(Math.random() * brightColors.length)];
+
+  detailsEl.appendChild(bioEl);
+
+  // Typewriter effect
+  let index = 0;
+  function typeWriter() {
+    if (index < bioText.length) {
+      bioEl.textContent += bioText[index];
+      index++;
+      setTimeout(typeWriter, 40); // typing speed (ms)
+    }
+  }
+  typeWriter();
+}
+/* ---------- Meet Button ---------- */
+let meetBtn = document.getElementById("meetBtn");
+if (!meetBtn) {
+  meetBtn = document.createElement("button");
+  meetBtn.id = "meetBtn";
+  meetBtn.textContent = "Meet";
+  Object.assign(meetBtn.style, {
+    marginTop: "6px",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    background: "linear-gradient(90deg,#ff0099,#ff6600)",
+    color: "#fff",
+    border: "none",
+    fontWeight: "bold",
+    cursor: "pointer"
+  });
+  detailsEl.insertAdjacentElement("afterend", meetBtn);
+}
+meetBtn.onclick = () => showMeetModal(host);
+
+/* ---------- Avatar Highlight ---------- */
+hostListEl.querySelectorAll("img").forEach((img, i) => {
+  img.classList.toggle("active", i === idx);
+});
+
+giftSlider.value = 1;
+giftAmountEl.textContent = "1";
+}
+
+/* ---------- Meet Modal - Matching Social Card Design ---------- */
+function showMeetModal(host) {
+  if (!host) return;
+
+  // Remove existing modal
+  let existing = document.getElementById("meetModal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "meetModal";
+
+  Object.assign(modal.style, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    background: "rgba(0,0,0,0.8)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: "9999999",
+    opacity: "0",
+    transition: "opacity 0.3s ease"
+  });
+
+  modal.innerHTML = `
+    <div id="meetModalContent" style="
+      background: linear-gradient(135deg, rgba(18,18,20,0.95), rgba(22,22,25,0.95));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px 26px 26px;
+      max-width: 340px;
+      width: 92%;
+      text-align: center;
+      color: #ffffff;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+      font-family: Poppins, system-ui, sans-serif;
     ">
-      GO LIVE TONIGHT
-    </h2>
-    <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
-      Your clip goes live instantly for everyone.
-    </p>
-  </div>
-
-  <!-- Main Card -->
-  <div style="
-    background:rgba(12,12,14,0.75); backdrop-filter:blur(20px);
-    border:1px solid rgba(255,255,255,0.08); border-radius:24px;
-    padding:32px 28px; box-shadow:0 20px 40px rgba(0,0,0,0.5),
-                               inset 0 1px 0 rgba(255,255,255,0.05);
-    position:relative; overflow:hidden;
-  ">
-    <div style="position:absolute; inset:0; pointer-events:none;
-                 background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
-                 opacity:0.6;"></div>
-
-    <div style="position:relative; z-index:2;">
-
+     
+      <h3 style="margin: 0 0 10px; font-size: 21px; font-weight: 700;">
+        Meet <span style="background: linear-gradient(90deg, #ff6b00, #ff55cc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">@${host.chatId || "Host"}</span>?
+      </h3>
       
-      <!-- Video Upload -->
-      <div style="margin-bottom:32px; text-align:center;">
-        <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
-          Upload Your Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
+      <p style="color: #d0d0d0; margin-bottom: 24px; line-height: 1.5; font-size: 14.5px;">
+       Access direct messaging & chat privately <br>
+        <strong style="color:#ffd700;">250 STRZ ⭐</strong>
+      </p>
+
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="cancelMeet" style="
+          flex: 1; 
+          padding: 11px 18px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.15);
+          color: #ddd;
+          border-radius: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        ">No</button>
+        
+        <button id="confirmMeet" style="
+          flex: 1; 
+          padding: 13px 20px;
+          background: linear-gradient(90deg, #ff0099, #ff6600);
+          border: none;
+          color: white;
+          border-radius: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(255,0,153,0.35);
+          transition: all 0.2s ease;
+        ">Yes</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Fade in
+  setTimeout(() => modal.style.opacity = "1", 20);
+
+  const cancelBtn = modal.querySelector("#cancelMeet");
+  const confirmBtn = modal.querySelector("#confirmMeet");
+  const modalContent = modal.querySelector("#meetModalContent");
+
+  cancelBtn.onclick = () => modal.remove();
+
+  confirmBtn.onclick = async () => {
+    const COST = 250;
+
+    if (!currentUser?.uid) {
+      showGiftAlert("⚠️ Please log in to request meets");
+      modal.remove();
+      return;
+    }
+
+    if ((currentUser.stars || 0) < COST) {
+      showGiftAlert("⚠️ Not enough stars ⭐");
+      modal.remove();
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = 0.6;
+    confirmBtn.style.cursor = "not-allowed";
+
+    try {
+      // Deduct stars
+      currentUser.stars -= COST;
+      if (refs?.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+      await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-COST) });
+
+      // === PLAYFUL STAGED ANIMATION (SAME FOR TELEGRAM & WHATSAPP) ===
+      const fixedStages = ["Handling your request…", "Collecting host’s identity…"];
+      const playfulMessages = [
+        "Oh, she’s hella cute…💋", "Careful, she may be naughty..😏",
+        "Be generous with her, she’ll like you..", "Ohh, she’s a real star.. 🤩",
+        "Be a real gentleman, when she texts u..", "She’s ready to dazzle you tonight.. ✨",
+        "Watch out, she might steal your heart.. ❤️", "Look sharp, she’s got a sparkle.. ✨",
+        "Don’t blink, or you’ll miss her charm.. 😉", "Get ready for some fun surprises.. 😏",
+        "She knows how to keep it exciting.. 🎉", "Better behave, she’s watching.. 👀",
+        "She might just blow your mind.. 💥", "Keep calm, she’s worth it.. 😘",
+        "She’s got a twinkle in her eyes.. ✨", "Brace yourself for some charm.. 😎",
+        "She’s not just cute, she’s 🔥", "Careful, her smile is contagious.. 😁",
+        "She might make you blush.. 😳", "She’s a star in every way.. 🌟",
+        "Don’t miss this chance.. ⏳"
+      ];
+
+      const randomPlayful = [];
+      while (randomPlayful.length < 3) {
+        const choice = playfulMessages[Math.floor(Math.random() * playfulMessages.length)];
+        if (!randomPlayful.includes(choice)) randomPlayful.push(choice);
+      }
+
+      const stages = [...fixedStages, ...randomPlayful, "Generating secure link…"];
+
+      modalContent.innerHTML = `<p id="stageMsg" style="margin-top:20px; font-weight:500; font-size:15px;"></p>`;
+      const stageMsgEl = modalContent.querySelector("#stageMsg");
+
+      let totalTime = 0;
+      stages.forEach((stage, index) => {
+        const duration = index < 2
+          ? 1500 + Math.random() * 1000
+          : index < stages.length - 1
+          ? 1700 + Math.random() * 600
+          : 2000 + Math.random() * 500;
+
+        totalTime += duration;
+
+        setTimeout(() => {
+          stageMsgEl.textContent = stage;
+ 
+          // Final stage → show success screen
+          if (index === stages.length - 1) {
+            setTimeout(() => {
+              const firstName = currentUser.fullName?.split(" ")[0] || "VIP";
+              const baseMsg = `Hey ${host.chatId}! 👋\nMy name is ${firstName} (VIP on CUBE) and I’d love to meet you.`;
+              let openURL = "";
+              let buttonColor = "";
+              let platform = "";
+              let contact = "";
+              // Telegram first
+              if (host.telegram && host.telegram.trim()) {
+                const username = host.telegram.trim().replace(/^@/, "");
+                openURL = `https://t.me/${username}?text=${encodeURIComponent(baseMsg)}`;
+                buttonColor = "#0088cc";
+                platform = "Telegram";
+                contact = `@${username}`;
+              }
+              // Then WhatsApp
+              else if (host.whatsapp && host.whatsapp.trim()) {
+                const countryCodes = { Nigeria: "+234", Ghana: "+233", "United States": "+1", "United Kingdom": "+44", "South Africa": "+27" };
+                const hostCountry = host.country || "Nigeria";
+                let waNumber = host.whatsapp.trim();
+                if (waNumber.startsWith("0")) waNumber = waNumber.slice(1);
+                waNumber = countryCodes[hostCountry] + waNumber;
+                openURL = `https://wa.me/${waNumber}?text=${encodeURIComponent(baseMsg)}`;
+                buttonColor = "#25D366";
+                platform = "WhatsApp";
+                contact = host.chatId;
+              } else {
+                showSocialRedirectModal(modalContent, host);
+                return;
+              }
+              // Unified final screen — SMALL, CUTE & CLEAN (no phone emoji)
+modalContent.innerHTML = `
+  <h3 style="
+    margin:0 0 12px;
+    font-weight:600;
+    font-size:18px;
+    line-height:1.3;
+  ">
+   Request to meet ${host.chatId} is approved!
+  </h3>
+  <p style="
+    margin:0 0 24px;
+    font-size:15px;
+    color:#ddd;
+  ">
+    Chat with <b>${contact}</b> on ${platform}
+  </p>
+  <button id="openChatBtn" style="
+    padding:12px 36px;
+    border:none;
+    border-radius:50px;
+    font-weight:700;
+    font-size:16px;
+    background:${buttonColor};
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,0.4);
+    transition:transform 0.2s ease;
+  "
+  onmouseover="this.style.transform='translateY(-2px)'"
+  onmouseout="this.style.transform='translateY(0)'">
+    Send Message
+  </button>
+`;
+              const openBtn = modalContent.querySelector("#openChatBtn");
+              openBtn.onclick = () => {
+                window.open(openURL, "_blank");
+                modal.remove();
+              };
+              // Auto-open chat
+              window.open(openURL, "_blank");
+              // Auto-close modal
+              setTimeout(() => modal.remove(), 8000);
+            }, 500);
+          }
+        }, totalTime);
+      });
+    } catch (err) {
+      console.error("Meet request failed:", err);
+      showGiftAlert("Something went wrong. Try again.");
+      modal.remove();
+    }
+  };
+}
+
+/* ---------- Social Fallback (Snapchat Version) ---------- */
+function showSocialRedirectModal(modalContent, host) {
+  let snapHandle = (host.snapchat || "").trim();
+  const hostName = host.chatId || "this host";
+  
+  // Clean handle
+  snapHandle = snapHandle.replace(/^@/, "").trim();
+
+  const snapUrl = snapHandle 
+    ? `https://www.snapchat.com/add/${snapHandle}` 
+    : "#";
+
+  modalContent.innerHTML = `
+    <div style="position:relative; padding-top: 8px;">
+      
+      <!-- Small Close Button -->
+      <div id="cancelMeet" style="
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: #aaa;
+        cursor: pointer;
+        z-index: 10;
+      ">×</div>
+
+      <!-- Snapchat Logo -->
+      <div style="margin-bottom: 18px;">
+        <svg width="78" height="78" viewBox="0 0 24 24" fill="#FFFC00" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 18.5C8.96 18.5 6.5 16.04 6.5 13C6.5 9.96 8.96 7.5 12 7.5C15.04 7.5 17.5 9.96 17.5 13C17.5 16.04 15.04 18.5 12 18.5Z"/>
+          <path d="M12 4.5C9.24 4.5 7 6.74 7 9.5C7 11.43 8.18 13.07 10 13.85V15.5H14V13.85C15.82 13.07 17 11.43 17 9.5C17 6.74 14.76 4.5 12 4.5Z"/>
+        </svg>
+      </div>
+
+      <h3 style="margin: 0 0 8px; font-size: 19px; font-weight: 700;">
+        Add ${hostName} on Snapchat
+      </h3>
+      
+      <p style="color: #bbb; margin-bottom: 22px; line-height: 1.45;">
+        ${snapHandle 
+          ? `Add <b>@${snapHandle}</b> and send her a message` 
+          : "She hasn't shared a Snapchat yet"}
+      </p>
+
+      ${snapHandle ? `
+      <a href="${snapUrl}" target="_blank" id="goSocialBtn" style="
+        display: inline-block;
+        padding: 13px 34px;
+        background: #FFFC00;
+        color: #000;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 16px;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(255, 252, 0, 0.45);
+        transition: all 0.2s ease;
+      ">
+        Open
+      </a>` : ''}
+      
+    </div>
+  `;
+
+  // Close button functionality
+  const closeBtn = modalContent.querySelector("#cancelMeet");
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const modal = document.getElementById("meetModal");
+      if (modal) modal.remove();
+    };
+  }
+}
+/* ---------- Gift Slider ---------- */
+const fieryColors = [
+  ["#ff0000", "#ff8c00"], // red to orange
+  ["#ff4500", "#ffd700"], // orange to gold
+  ["#ff1493", "#ff6347"], // pinkish red
+  ["#ff0055", "#ff7a00"], // magenta to orange
+  ["#ff5500", "#ffcc00"], // deep orange to yellow
+  ["#ff3300", "#ff0066"], // neon red to hot pink
+];
+
+// Generate a random fiery gradient
+function randomFieryGradient() {
+  const [c1, c2] = fieryColors[Math.floor(Math.random() * fieryColors.length)];
+  return `linear-gradient(90deg, ${c1}, ${c2})`;
+}
+
+/* ---------- Gift Slider ---------- */
+giftSlider.addEventListener("input", () => {
+  giftAmountEl.textContent = giftSlider.value;
+  giftSlider.style.background = randomFieryGradient(); // change fiery color as it slides
+});
+
+/*
+=========================================
+🚫 COMMENTED OUT: Duplicate modal opener
+=========================================
+openBtn.addEventListener("click", () => {
+  modal.style.display = "flex";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
+
+  // Give it a fiery flash on open
+  giftSlider.style.background = randomFieryGradient();
+  ("📺 Modal opened");
+});
+*/
+
+
+/* ===============================
+   SEND GIFT + DUAL NOTIFICATION — FINAL 2025 GOD-TIER EDITION
+   CLEAN, SAFE, ELEGANT — WORKS FOREVER
+================================= */
+async function sendGift() {
+  const receiver = hosts[currentIndex];
+  if (!receiver?.id) return showGiftAlert("No host selected.");
+  if (!currentUser?.uid) return showGiftAlert("Please log in to send stars");
+
+  const giftStars = parseInt(giftSlider.value, 10);
+  if (!giftStars || giftStars <= 0) return showGiftAlert("Invalid star amount");
+
+  const giftBtn = document.getElementById("featuredGiftBtn"); // ← correct ID
+  if (!giftBtn) return;
+
+  const originalText = giftBtn.textContent;
+  giftBtn.disabled = true;
+  giftBtn.innerHTML = `<span class="gift-spinner"></span>`;
+
+  try {
+    const senderRef = doc(db, "users", currentUser.uid);
+    const receiverRef = doc(db, "users", receiver.id);
+    const featuredRef = doc(db, "featuredHosts", receiver.id);
+
+    await runTransaction(db, async (tx) => {
+      const [senderSnap, receiverSnap] = await Promise.all([
+        tx.get(senderRef),
+        tx.get(receiverRef)
+      ]);
+
+      if (!senderSnap.exists()) throw new Error("Your profile not found");
+      
+      const senderData = senderSnap.data();
+      if ((senderData.stars || 0) < giftStars) {
+        throw new Error("Not enough stars");
+      }
+
+      // Update sender
+      tx.update(senderRef, {
+        stars: increment(-giftStars),
+        starsGifted: increment(giftStars)
+      });
+
+      // Update receiver (create if missing)
+      if (receiverSnap.exists()) {
+        tx.update(receiverRef, { stars: increment(giftStars) });
+      } else {
+        tx.set(receiverRef, { stars: giftStars }, { merge: true });
+      }
+
+      // Update featured host stats
+      tx.set(featuredRef, { stars: increment(giftStars) }, { merge: true });
+
+      // Track last gift from this user
+      tx.update(receiverRef, {
+        [`lastGiftSeen.${currentUser.chatId || currentUser.uid}`]: giftStars
+      });
+    });
+
+    // DUAL NOTIFICATIONS — BOTH SIDES
+    const senderName = currentUser.chatId || "Someone";
+    const receiverName = receiver.chatId || receiver.username || "Host";
+
+    await Promise.all([
+      pushNotification(receiver.id, `${senderName} gifted you ${giftStars} stars!`),
+      pushNotification(currentUser.uid, `You gifted ${giftStars} stars to ${receiverName}!`)
+    ]);
+
+    // Success feedback
+    showGiftAlert(`Sent ${giftStars} stars to ${receiverName}!`);
+
+    // If user gifted themselves (rare but possible)
+    if (currentUser.uid === receiver.id) {
+      setTimeout(() => {
+        showGiftAlert(`${senderName} gifted you ${giftStars} stars!`);
+      }, 1200);
+    }
+
+    (`Gift sent: ${giftStars} stars → ${receiverName}`);
+
+  } catch (err) {
+    ("Gift failed:", err);
+    const msg = err.message.includes("enough")
+      ? "Not enough stars"
+      : "Gift failed — try again";
+    showGiftAlert(msg);
+  } finally {
+    // Always restore button
+    giftBtn.innerHTML = originalText;
+    giftBtn.disabled = false;
+  }
+}
+
+/* ---------- Navigation ---------- */
+prevBtn.addEventListener("click", e => {
+  e.preventDefault();
+  loadHost((currentIndex - 1 + hosts.length) % hosts.length);
+});
+
+nextBtn.addEventListener("click", e => {
+  e.preventDefault();
+  loadHost((currentIndex + 1) % hosts.length);
+});
+
+// --- ✅ Prevent redeclaration across reloads ---
+if (!window.verifyHandlersInitialized) {
+  window.verifyHandlersInitialized = true;
+
+  // ---------- ✨ SIMPLE GOLD MODAL ALERT ----------
+  window.showGoldAlert = function (message, duration = 3000) {
+    const existing = document.getElementById("goldAlert");
+    if (existing) existing.remove();
+
+    const alertEl = document.createElement("div");
+    alertEl.id = "goldAlert";
+    Object.assign(alertEl.style, {
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      background: "linear-gradient(90deg, #ffcc00, #ff9900)",
+      color: "#111",
+      padding: "12px 30px", // increased padding for one-liner
+      borderRadius: "10px",
+      fontWeight: "600",
+      fontSize: "14px",
+      zIndex: "999999",
+      boxShadow: "0 0 12px rgba(255, 215, 0, 0.5)",
+      whiteSpace: "nowrap",
+      animation: "slideFade 0.4s ease-out",
+    });
+    alertEl.innerHTML = message;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes slideFade {
+        from {opacity: 0; transform: translate(-50%, -60%);}
+        to {opacity: 1; transform: translate(-50%, -50%);}
+      }
+    `;
+    document.head.appendChild(style);
+    document.body.appendChild(alertEl);
+    setTimeout(() => alertEl.remove(), duration);
+  };
+
+
+
+  // ---------- PHONE NORMALIZER (for backend matching) ----------
+  function normalizePhone(number) {
+    return number.replace(/\D/g, "").slice(-10); // last 10 digits
+  }
+
+  // ---------- CLICK HANDLER ----------
+  document.addEventListener("click", (e) => {
+    if (e.target.id === "verifyNumberBtn") {
+      const input = document.getElementById("verifyNumberInput");
+      const numberRaw = input?.value.trim();
+      const COST = 21;
+
+      if (!currentUser?.uid) return showGoldAlert("⚠️ Please log in first.");
+      if (!numberRaw) return showGoldAlert("⚠️ Please enter a phone number.");
+
+      showConfirmModal(numberRaw, COST);
+    }
+  });
+
+ // ---------- CONFIRM MODAL ----------
+  window.showConfirmModal = function (number, cost = 21) {
+    let modal = document.getElementById("verifyConfirmModal");
+    if (modal) modal.remove();
+
+    modal = document.createElement("div");
+    modal.id = "verifyConfirmModal";
+    Object.assign(modal.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.7)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "999999",
+      backdropFilter: "blur(2px)",
+    });
+
+    modal.innerHTML = `
+      <div style="background:#111;padding:16px 18px;border-radius:10px;text-align:center;color:#fff;max-width:280px;box-shadow:0 0 12px rgba(0,0,0,0.5);">
+        <h3 style="margin-bottom:10px;font-weight:600;">Verification</h3>
+        <p>Scan phone number <b>${number}</b> for <b>${cost} STRZ ⭐</b>?</p>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
+          <button id="cancelVerify" style="padding:6px 12px;border:none;border-radius:6px;background:#333;color:#fff;font-weight:600;cursor:pointer;">Cancel</button>
+          <button id="confirmVerify" style="padding:6px 12px;border:none;border-radius:6px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Yes</button>
         </div>
-        <label for="highlightUploadInput" style="
-          display:block; padding:32px 24px;
-          background:#111111; border:2px dashed #444;
-          border-radius:16px; cursor:pointer; transition:all 0.3s ease;
-          color:#888; font-size:15px; font-weight:500;
-          margin:0 auto; max-width:340px;
-        "
-        onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
-        onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
-          <div id="uploadPlaceholder">
-            <div style="margin-bottom:8px; font-size:36px;">↑</div>
-            Click or drag video here
-            <div style="margin-top:8px; font-size:13px; color:#666;">
-              MP4 • max 50MB
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const cancelBtn = modal.querySelector("#cancelVerify");
+    const confirmBtn = modal.querySelector("#confirmVerify");
+
+    cancelBtn.onclick = () => modal.remove();
+
+confirmBtn.onclick = async () => {
+  if (!currentUser?.uid) {
+    showGoldAlert("⚠️ Please log in first");
+    modal.remove();
+    return;
+  }
+
+  if ((currentUser.stars || 0) < cost) {
+    showGoldAlert("⚠️ Not enough stars ⭐");
+    modal.remove();
+    return;
+  }
+
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = 0.6;
+      confirmBtn.style.cursor = "not-allowed";
+
+      try {
+        // Deduct stars
+        await updateDoc(doc(db, "users", currentUser.uid), { stars: increment(-cost) });
+        currentUser.stars -= cost;
+        if (refs?.starCountEl) refs.starCountEl.textContent = formatNumberWithCommas(currentUser.stars);
+
+        // Run verification
+        await runNumberVerification(number);
+        modal.remove();
+      } catch (err) {
+        (err);
+        showGoldAlert("❌ Verification failed, please retry!");
+        modal.remove();
+      }
+    };
+  };
+
+  // ---------- RUN VERIFICATION ----------
+  async function runNumberVerification(number) {
+    try {
+      const lastDigits = normalizePhone(number);
+
+      const usersRef = collection(db, "users");
+      const qSnap = await getDocs(usersRef);
+
+      let verifiedUser = null;
+      qSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.phone) {
+          const storedDigits = normalizePhone(data.phone);
+          if (storedDigits === lastDigits) verifiedUser = data;
+        }
+      });
+
+      showVerificationModal(verifiedUser, number);
+    } catch (err) {
+      (err);
+      showGoldAlert("❌ Verification failed, please retry!");
+    }
+  }
+
+  // ---------- VERIFICATION MODAL ----------
+  function showVerificationModal(user, inputNumber) {
+    let modal = document.getElementById("verifyModal");
+    if (modal) modal.remove();
+
+    modal = document.createElement("div");
+    modal.id = "verifyModal";
+    Object.assign(modal.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.75)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "999999",
+      backdropFilter: "blur(2px)",
+    });
+
+    modal.innerHTML = `
+      <div id="verifyModalContent" style="background:#111;padding:14px 16px;border-radius:10px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 12px rgba(0,0,0,0.5);">
+        <p id="stageMsg" style="margin-top:12px;font-weight:500;"></p>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const modalContent = modal.querySelector("#verifyModalContent");
+    const stageMsgEl = modalContent.querySelector("#stageMsg");
+
+    // fixed + random stages
+    const fixedStages = ["Gathering information…", "Checking phone number validity…"];
+    const playfulMessages = [
+      "Always meet in public spaces for the first time..",
+      "Known hotels are safer for meetups 😉",
+      "Condoms should be in the conversation always..",
+      "Trust your instincts, always..",
+      "Keep things fun and safe 😎",
+      "Be polite and confident when messaging..",
+      "Avoid sharing sensitive info too soon..",
+      "Remember, first impressions last ✨",
+      "Don’t rush, enjoy the conversation..",
+      "Check for verified accounts before proceeding..",
+      "Safety first, fun second 😏",
+      "Listen carefully to their plans..",
+      "Pick neutral locations for first meets..",
+      "Be respectful and courteous..",
+      "Share your location with a friend..",
+      "Always verify identity before meeting..",
+      "Plan ahead, stay alert 👀",
+      "Keep communication clear and honest..",
+      "Bring a friend if unsure..",
+      "Set boundaries clearly..",
+      "Have fun, but stay safe!"
+    ];
+    const randomPlayful = [];
+    while (randomPlayful.length < 5) {
+      const choice = playfulMessages[Math.floor(Math.random() * playfulMessages.length)];
+      if (!randomPlayful.includes(choice)) randomPlayful.push(choice);
+    }
+    const stages = [...fixedStages, ...randomPlayful, "Finalizing check…"];
+
+    let totalTime = 0;
+    stages.forEach((stage, index) => {
+      let duration = 1400 + Math.random() * 600;
+      totalTime += duration;
+
+      setTimeout(() => {
+        stageMsgEl.textContent = stage;
+
+        if (index === stages.length - 1) {
+          setTimeout(() => {
+            modalContent.innerHTML = user
+              ? `<h3>Number Verified! ✅</h3>
+                 <p>This number belongs to <b>${user.fullName}</b></p>
+                 <p style="margin-top:8px; font-size:13px; color:#ccc;">You’re free to chat, they’re legit 😌</p>
+                 <button id="closeVerifyModal" style="margin-top:12px;padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Close</button>`
+              : `<h3>Number Not Verified! ❌</h3>
+                 <p>The number <b>${inputNumber}</b> does not exist on verified records — be careful!</p>
+                 <button id="closeVerifyModal" style="margin-top:12px;padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(90deg,#ff0099,#ff6600);color:#fff;font-weight:600;cursor:pointer;">Close</button>`;
+
+            modal.querySelector("#closeVerifyModal").onclick = () => modal.remove();
+
+            if (user) setTimeout(() => modal.remove(), 8000 + Math.random() * 1000);
+          }, 500);
+        }
+      }, totalTime);
+    });
+  }
+}
+
+
+// ====================== Optimized View Boost (Every 60 seconds) ======================
+let viewBoostInterval = null;
+
+function activateViewBoost() {
+  if (viewBoostInterval) clearInterval(viewBoostInterval);
+
+  viewBoostInterval = setInterval(async () => {
+    if (!auth?.currentUser?.uid) return;
+
+    try {
+      const docRef = doc(db, "highlightVideos", auth.currentUser.uid);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return;
+
+      let highlights = snap.data().highlights || [];
+      const now = Date.now();
+      let hasUpdates = false;
+
+      highlights = highlights.map(v => {
+        if (v.isTrending === true && v.trendingUntil && v.trendingUntil > now) {
+          const randomAdd = Math.floor(Math.random() * 9) + 1; // 1-9 views
+          v.views = (v.views || 0) + randomAdd;
+          hasUpdates = true;
+        }
+        return v;
+      });
+
+      if (hasUpdates) {
+        await updateDoc(docRef, { highlights });
+      }
+    } catch (err) {
+      ("[VIEW BOOST] Error:", err);
+    }
+  }, 60000); // 60 seconds
+}
+
+function stopViewBoost() {
+  if (viewBoostInterval) {
+    clearInterval(viewBoostInterval);
+    viewBoostInterval = null;
+  }
+}
+
+
+// ====================== FREE TONIGHT HELPERS ======================
+function isFreeTonightActive() {
+  const savedEndTime = localStorage.getItem('freeTonightEndTime');
+  return !!(savedEndTime && Number(savedEndTime) > Date.now());
+}
+
+function getFreeTonightEndTime() {
+  const saved = localStorage.getItem('freeTonightEndTime');
+  return saved ? Number(saved) : null;
+}
+
+function isAdmin() {
+  // Update this with your actual admin logic (recommended: custom claim or role in user doc)
+  return auth?.currentUser?.email?.includes('@admin') || 
+         localStorage.getItem('isAdmin') === 'true';
+}
+
+        
+// ================================
+// THUMBNAIL GENERATOR + UPLOAD HANDLER (COMPLETE)
+// ================================
+
+function toCloudflareUrl(firebaseUrl) {
+  const clean = firebaseUrl.split('?')[0];
+  return clean
+    .replace('https://firebasestorage.googleapis.com/v0/b/', 'https://media.visitcube.xyz/')
+    .replace('/o/', '/')
+    .replace(/%2F/g, '/') + '?alt=media';
+}
+
+// ====================== GENERATE THUMBNAIL ======================
+async function generateThumbnail(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const objectUrl = URL.createObjectURL(file);
+    
+    video.preload = 'metadata';
+    video.muted = true;
+    video.src = objectUrl;
+
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.min(2, video.duration * 0.08 || 1);
+    };
+
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 480;
+      canvas.height = Math.round(480 * (video.videoHeight / video.videoWidth));
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(objectUrl);
+        if (blob) {
+          resolve(new File([blob], 'thumb.jpg', { type: 'image/jpeg' }));
+        } else {
+          reject(new Error('Canvas toBlob failed'));
+        }
+      }, 'image/jpeg', 0.85);
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Video load error'));
+    };
+  });
+}
+
+// ====================== RESET FUNCTIONS ======================
+function resetUploadUI() {
+  const btn = document.getElementById('uploadHighlightBtn');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Go Live on Free Tonight';
+    btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+  }
+  const progressContainer = document.getElementById('progressContainer');
+  if (progressContainer) progressContainer.style.opacity = '0';
+  resetForm();
+}
+
+function resetForm() {
+  const fileInput = document.getElementById('highlightUploadInput');
+  if (fileInput) fileInput.value = '';
+
+  ['highlightTitleInput', 'highlightDescInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const priceInput = document.getElementById('highlightPriceInput');
+  if (priceInput) priceInput.value = '50';
+
+  const cb = document.getElementById('boostTrendingCheckbox');
+  if (cb) cb.checked = false;
+
+  const videoPreview = document.getElementById('videoPreview');
+  const previewContainer = document.getElementById('videoPreviewContainer');
+  const placeholder = document.getElementById('uploadPlaceholder');
+
+  if (videoPreview) {
+    videoPreview.pause();
+    videoPreview.src = '';
+    videoPreview.load();
+  }
+  if (previewContainer) previewContainer.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'block';
+
+  document.querySelectorAll('.tag-btn.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// ====================== MAIN UPLOAD HANDLER - FULL REWRITE ======================
+document.getElementById('uploadHighlightBtn')?.addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+  if (btn.disabled) return;
+
+  const fileInput = document.getElementById('highlightUploadInput');
+  const file = fileInput?.files?.[0];
+
+  if (!file) return showStarPopup('Please select a video', 'error');
+
+  // ====================== FREE TONIGHT CHECK ======================
+  if (isFreeTonightActive() && !isAdmin()) {
+    const endTime = getFreeTonightEndTime();
+    const remainingMs = endTime - Date.now();
+    const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
+    
+  return showStarPopup(
+  `Free Tonight is already active!<br><br>
+   Wait ${remainingMinutes} minute(s)<br>
+   or contact an admin.`,
+  'error'
+);
+  }
+
+  // ====================== BASIC VALIDATIONS ======================
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (!['mp4', 'mov'].includes(ext)) {
+    return showStarPopup('Only MP4 and MOV files allowed', 'error');
+  }
+
+  if (file.size > 50 * 1024 * 1024) {
+    return showStarPopup('Maximum file size is 50MB', 'error');
+  }
+
+  const highlightsRef = doc(db, "highlightVideos", currentUser.uid);
+  const snap = await getDoc(highlightsRef);
+
+  // Optional strict check: prevent multiple active clips (except for admin)
+  if (snap.exists() && !isAdmin()) {
+    const hasActive = (snap.data().highlights || []).some(v => 
+      v.isTrending === true && (v.trendingUntil || 0) > Date.now()
+    );
+    if (hasActive) {
+      return showStarPopup("You already have an active clip.\nDelete the current one first.", "error");
+    }
+  }
+
+  // ====================== START UPLOAD UI ======================
+  btn.disabled = true;
+  btn.textContent = 'Uploading...';
+  btn.style.background = '#555';
+
+  const progressContainer = document.getElementById('progressContainer');
+  if (progressContainer) progressContainer.style.opacity = '1';
+
+  showStarPopup('Uploading your clip...', 'loading');
+
+  try {
+    const ts = Date.now();
+    const rand = Math.random().toString(36).slice(2, 12);
+    const extLower = ext;
+    const videoName = `${ts}_${rand}.${extLower}`;
+    const videoPath = `users/${currentUser.uid}/${videoName}`;
+
+    const videoRef = ref(storage, videoPath);
+
+    // ====================== GENERATE THUMBNAIL ======================
+    let thumbnailFile = null;
+    try {
+      ("🎨 Generating thumbnail...");
+      thumbnailFile = await generateThumbnail(file);
+      ("✅ Thumbnail generated!");
+    } catch (err) {
+      ("❌ Thumbnail generation failed:", err);
+    }
+
+    // ====================== UPLOAD VIDEO ======================
+    const uploadTask = uploadBytesResumable(videoRef, file, {
+      contentType: file.type,
+      cacheControl: 'public, max-age=31536000'
+    });
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        const bar = document.getElementById('progressBar');
+        const txt = document.getElementById('progressText');
+        if (bar) bar.style.width = `${percent}%`;
+        if (txt) txt.textContent = `Uploading ${percent}%`;
+      },
+      (error) => {
+        (error);
+        showStarPopup('Upload failed', 'error');
+        resetUploadUI();
+      },
+      async () => {
+        try {
+          const rawVideoUrl = await getDownloadURL(videoRef);
+          const videoUrl = toCloudflareUrl(rawVideoUrl);
+
+          let thumbnailUrl = "";
+          let thumbnailStoragePath = "";
+
+          if (thumbnailFile) {
+            try {
+              const thumbName = videoName.replace(/\.[^/.]+$/, "") + ".jpg";
+              const thumbPath = `users/${currentUser.uid}/thumbnails/${thumbName}`;
+              const thumbRef = ref(storage, thumbPath);
+
+              await uploadBytes(thumbRef, thumbnailFile, { contentType: 'image/jpeg' });
+              const rawThumbUrl = await getDownloadURL(thumbRef);
+              thumbnailUrl = toCloudflareUrl(rawThumbUrl);
+              thumbnailStoragePath = thumbPath;
+              ("✅ Thumbnail uploaded!");
+            } catch (e) {
+              ("Thumbnail upload failed:", e);
+            }
+          }
+
+          // ====================== CREATE NEW HIGHLIGHT OBJECT ======================
+          const newHighlight = {
+            id: `${ts}_${rand}`,
+            videoUrl,
+            thumbnailUrl,
+            storagePath: videoPath,
+            thumbnailStoragePath,
+            views: 0,
+            isTrending: true,
+            trendingUntil: Date.now() + (86400000 * 7), // Default 7 days
+            uploadedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString()
+          };
+
+          // ====================== FREE TONIGHT AUTO-ACTIVATION ======================
+          let freeTonightEndTime = null;
+
+          if (!isFreeTonightActive()) {
+            freeTonightEndTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+            newHighlight.trendingUntil = freeTonightEndTime;
+
+            // Save to localStorage and start countdown
+            localStorage.setItem('freeTonightEndTime', freeTonightEndTime);
+
+            const freeBtn = document.getElementById('freeTonightBtn');
+            if (freeBtn) startCountdown(freeBtn, freeTonightEndTime);
+
+            activateViewBoost?.(); // Safe call
+          }
+
+          // ====================== SAVE TO FIRESTORE ======================
+          if (snap.exists()) {
+            await updateDoc(highlightsRef, {
+              highlights: arrayUnion(newHighlight),
+              lastUploadAt: serverTimestamp(),
+              totalVideos: increment(1)
+            });
+          } else {
+            await setDoc(highlightsRef, {
+              uploaderId: currentUser.uid,
+              uploaderName: currentUser.chatId || 'Anonymous',
+              highlights: [newHighlight],
+              lastUploadAt: serverTimestamp(),
+              totalVideos: 1
+            });
+          }
+
+          // ====================== SUCCESS ======================
+          resetUploadUI();
+          showStarPopup('✅ You are now LIVE on Free Tonight!', 'success');
+
+          if (typeof loadMyClips === 'function') loadMyClips();
+
+        } catch (err) {
+          (err);
+          showStarPopup('Upload succeeded but database save failed', 'error');
+          resetUploadUI();
+        }
+      }
+    );
+
+  } catch (err) {
+    (err);
+    showStarPopup('Failed to start upload', 'error');
+    resetUploadUI();
+  }
+});
+
+
+
+
+(function() {
+  const onlineCountEl = document.getElementById('onlineCount');
+  const storageKey = 'fakeOnlineCount';
+
+  function formatCount(n) {
+    if (n >= 10000) return (n / 10000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K';
+    return n;
+  }
+
+  // Start in a realistic zone for a moderately active site
+  let count = parseInt(localStorage.getItem(storageKey)) || 1240;
+
+  function updateDisplay() {
+    onlineCountEl.textContent = formatCount(count);
+    localStorage.setItem(storageKey, count);
+  }
+
+  updateDisplay();
+
+  let baseTrend = 0; // -1 = drifting down, 0 = neutral, 1 = drifting up
+
+  setInterval(() => {
+    const dice = Math.random();
+
+    // 1. Most of the time: very small natural breathing (±1–8)
+    if (dice < 0.55) {
+      count += Math.floor(Math.random() * 17) - 8;
+    }
+    // 2. Small group join/leave waves (±10–35)
+    else if (dice < 0.82) {
+      count += Math.floor(Math.random() * 51) - 25;
+    }
+    // 3. Occasional medium bump (new share / small promo / refresh wave) +45–+140
+    else if (dice < 0.94) {
+      count += Math.floor(Math.random() * 96) + 45;
+      // slightly increase upward pressure after a bump
+      baseTrend = Math.min(1, baseTrend + 0.3);
+    }
+    // 4. Small drop-off after video ends / tab closed (±40–110 down)
+    else if (dice < 0.99) {
+      count -= Math.floor(Math.random() * 71) + 40;
+      // slight downward pressure
+      baseTrend = Math.max(-1, baseTrend - 0.3);
+    }
+    // 5. Rare bigger spike — feels like influencer just mentioned it
+    else {
+      count += Math.floor(Math.random() * 220) + 120; // +120–340
+      baseTrend = 1;
+    }
+
+    // Gentle time-of-day influence (assumes your audience timezone)
+    const hour = new Date().getHours();
+    if (hour >= 23 || hour < 7) {
+      baseTrend = -1; // night → slow drain
+    } else if ((hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 22)) {
+      baseTrend = 1;  // lunch + evening = active
+    } else if (hour >= 8 && hour <= 11) {
+      baseTrend = 0.3; // morning slow build
+    } else {
+      baseTrend = 0;
+    }
+
+    // Apply very gentle trend force
+    if (baseTrend > 0) {
+      count += Math.random() > 0.6 ? 2 : 1;
+    } else if (baseTrend < 0) {
+      count -= Math.random() > 0.6 ? 2 : 1;
+    }
+
+    // ------------------- Hard realistic boundaries -------------------
+    // Almost never go below ~650 or above ~1950
+    if (count < 650) {
+      count = 650 + Math.floor(Math.random() * 350); // jump back into believable range
+      baseTrend = 0.5; // give it some upward momentum after floor hit
+    }
+    if (count > 1950) {
+      count = 1950 - Math.floor(Math.random() * 450);
+      baseTrend = -0.5;
+    }
+
+    // Prevent staying stuck on xxx0 or xxx00 too long
+    if ((count % 100 === 0 || count % 1000 === 0) && Math.random() < 0.85) {
+      count += Math.floor(Math.random() * 70) - 35;
+    }
+
+    // Keep it integer
+    count = Math.round(count);
+
+    updateDisplay();
+  }, 2800 + Math.floor(Math.random() * 3400)); // ~3–6 second updates → natural jitter
+
+  // Very gentle long-term recentering (prevents infinite upward/downward creep)
+  setInterval(() => {
+    const target = 1100 + Math.floor(Math.random() * 700); // 1100–1800 zone
+    const diff = target - count;
+    count += Math.round(diff * 0.08); // move ~8% toward target
+    updateDisplay();
+  }, 8 * 60 * 1000); // every ~8 minutes
+
+})();
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+// === ELEMENTS ===
+const liveModal = document.getElementById('liveModal');
+const liveConsentModal = document.getElementById('adultConsentModal'); // Optional: for adult content consent
+const livePlayerContainer = document.getElementById('livePlayerContainer');
+const livePostersSection = document.getElementById('upcomingPosters');
+const liveCloseBtn = document.querySelector('.live-close');
+const tabBtns = document.querySelectorAll('.live-tab-btn');
+const tabContents = document.querySelectorAll('.live-tab-content');
+const openHostsBtn = document.getElementById('openHostsBtn');
+// Consent buttons (only if adult tab exists)
+const consentAgreeBtn = document.getElementById('consentAgree');
+const consentCancelBtn = document.getElementById('consentCancel');
+// Reels videos for preview interaction
+const reelVideos = document.querySelectorAll('.reel-item video');
+
+
+// === CONFIG ===
+let fadeTimer;
+const POSTER_FADE_DELAY = 8000;
+
+// Real Playback IDs (from your Render creation)
+const PLAYBACK_IDS = {
+  regular: '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58',
+  adult:   '00ArRcw4u5aRgIh02qWDfGKzpEZ1G7QWcgESUwS003KP58' // same stream
+};
+
+// Real Live Stream IDs (reference only – backend uses env var)
+const MUX_LIVE_STREAM_IDS = {
+  regular: '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk',
+  adult:   '02QJjwFbcAgD9SUV9KlXML00v1wlE9o3d1ddKP01HFXNnk'
+};
+
+// Offline placeholder customization
+const OFFLINE_IMAGE_URL = 'https://cdn.shopify.com/s/files/1/0962/6648/6067/files/livestream_offline.jpg?v=1767572776';
+const OFFLINE_TITLE = 'Live stream is currently offline';
+const OFFLINE_MESSAGE = "We'll be back soon, check upcoming for the next broadcast!";
+
+// Backend URL – IMPORTANT: change if your Render service name changes
+const BACKEND_URL = 'https://mux-backend-service.onrender.com';
+
+// === CORE FUNCTIONS ===
+
+function switchContent(type) {
+  if (type === 'regular' || type === 'adult') {
+    showTab('live');
+    startStream(type);
+  }
+}
+
+async function startStream(type = 'regular') {
+  const playbackId = PLAYBACK_IDS[type];
+  const liveStreamId = MUX_LIVE_STREAM_IDS[type]; // reference only
+
+  // Show loading state immediately
+  livePlayerContainer.innerHTML = `
+    <div style="color:#aaa; text-align:center; padding:80px 20px; font-size:18px;">
+      Checking for active livestreams...
+    </div>
+  `;
+
+  // Basic config check
+  if (!playbackId || !liveStreamId) {
+    showOfflineState('Stream configuration missing');
+    return;
+  }
+
+  try {
+    // Call backend with full URL (fixes 404 when domains differ)
+    const response = await fetch(`${BACKEND_URL}/api/mux-live-status?type=${type}`, {
+      cache: 'no-store' // prevent caching issues
+    });
+
+    ('Backend response status:', response.status); // debug
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'No details');
+      throw new Error(`Backend returned ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.isActive) {
+      // Stream is LIVE → show player
+      livePlayerContainer.innerHTML = '';
+      const player = document.createElement('mux-player');
+      player.setAttribute('playback-id', playbackId);
+      player.setAttribute('stream-type', 'live');
+      player.setAttribute('autoplay', 'muted');
+      player.setAttribute('muted', 'true');
+      player.setAttribute('controls', 'true');
+   player.setAttribute('poster', `https://image.mux.com/${playbackId}/thumbnail.webp?time=10&width=720&height=1280&fit_mode=preserve`);
+
+      player.style.width = '100%';
+      player.style.height = '100%';
+      player.style.objectFit = 'contain';
+
+      livePlayerContainer.appendChild(player);
+    } else {
+      // Not live → show custom offline UI
+      showOfflineState(data.error || 'Stream is idle');
+    }
+  } catch (err) {
+    ('Failed to check live stream status:', err.message);
+    // Show friendly message (Render free tier sleeps sometimes → first call takes 10-30s)
+    showOfflineState(
+      err.message.includes('503') || err.message.includes('failed to fetch')
+        ? 'Stream service waking up... try Refresh in 20 seconds'
+        : 'Unable to check stream status right now'
+    );
+  }
+}
+
+// Custom offline placeholder – mobile-optimized
+// Custom offline placeholder – super mobile-optimized (tiny text, image priority)
+function showOfflineState(customError = '') {
+  livePlayerContainer.innerHTML = `
+    <div style="
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      box-sizing: border-box;
+      overflow: hidden;
+    ">
+      <!-- Image takes almost all space on mobile -->
+      <div style="
+        flex: 1;
+        width: 100%;
+        max-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+      ">
+        <img
+          src="${OFFLINE_IMAGE_URL}"
+          alt="Live stream offline"
+          style="
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+          "
+        >
+      </div>
+
+      <!-- Tiny text section – minimal & mobile-friendly -->
+      <div style="
+        width: 100%;
+        max-width: 90%;
+      ">
+        <h2 style="
+          margin: 0 0 6px;
+          font-size: clamp(1.1rem, 4.5vw, 1.4rem); /* way smaller */
+          font-weight: 700;
+        ">
+          ${OFFLINE_TITLE}
+        </h2>
+        <p style="
+          margin: 0 0 14px;
+          font-size: clamp(0.8rem, 3.5vw, 0.95rem); /* tiny subtext */
+          opacity: 0.85;
+          line-height: 1.4;
+        ">
+          ${OFFLINE_MESSAGE}
+        </p>
+        ${customError ? `
+          <p style="
+            color: #ff6b6b;
+            margin: 0 0 12px;
+            font-size: clamp(0.75rem, 3vw, 0.9rem);
+          ">
+            ${customError}
+          </p>` : ''}
+
+        <button
+          onclick="startStream('regular')"
+          style="
+            padding: 9px 24px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: clamp(0.9rem, 3.8vw, 1rem);
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 130px;
+          "
+          onmouseover="this.style.background='#c40810'"
+          onmouseout="this.style.background='#e50914'"
+        >
+          Refresh Stream
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function closeAllLiveModal() {
+  liveModal.style.display = 'none';
+  if (liveConsentModal) liveConsentModal.style.display = 'none';
+  livePlayerContainer.innerHTML = '';
+  livePlayerContainer.classList.remove('portrait', 'landscape');
+  livePostersSection?.classList.remove('fading');
+  clearTimeout(fadeTimer);
+  liveCloseBtn?.classList.remove('hidden');
+}
+
+function resetPosterFade() {
+  livePostersSection?.classList.remove('fading');
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
+    livePostersSection?.classList.add('fading');
+  }, POSTER_FADE_DELAY);
+}
+
+// Expose startStream globally so inline onclick="startStream('regular')" works
+window.startStream = startStream;
+// (your showTab function can stay exactly as it was – omitted here for brevity)
+
+  function showTab(tabId) {
+    tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.content === tabId));
+    tabContents.forEach(content => content.classList.toggle('active', content.id === tabId));
+
+    // Tab-specific behavior
+    if (tabId === 'live') {
+      startStream('regular'); // Always load regular stream in Live tab
+      resetPosterFade();
+    } else if (tabId === 'upcoming') {
+      resetPosterFade();
+    } else if (tabId === 'reels') {
+      // Reset reel previews
+      reelVideos.forEach(video => {
+        video.pause();
+        video.currentTime = 0;
+      });
+    }
+  }
+
+  // === REELS INTERACTION (TikTok-style) ===
+  reelVideos.forEach(video => {
+    const reelItem = video.parentElement;
+
+    // Desktop: hover preview
+    reelItem.addEventListener('mouseenter', () => video.play().catch(() => {}));
+    reelItem.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+
+    // Mobile: tap to play/pause + try fullscreen
+    reelItem.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      if (video.paused) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+
+      // Optional: attempt fullscreen on play
+      if (!video.paused) {
+        if (video.requestFullscreen) video.requestFullscreen();
+        else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); // iOS
+      }
+    });
+  });
+
+  // === EVENT LISTENERS ===
+  // Open modal — ONLY FOR LOGGED-IN VIP/HOST USERS
+  if (openHostsBtn) {
+    openHostsBtn.onclick = () => {
+      if (!currentUser?.uid) {
+        showGoldAlert("Please log in to watch liveshows");
+        return;
+      }
+
+      liveModal.style.display = 'block';
+      showTab('live'); // Default to Live tab
+      resetPosterFade();
+      liveCloseBtn?.classList.remove('hidden');
+    };
+  }
+
+  // Close button
+  if (liveCloseBtn) {
+    liveCloseBtn.onclick = closeAllLiveModal;
+  }
+
+  // Backdrop close
+  if (liveModal) {
+    liveModal.onclick = (e) => {
+      if (e.target === liveModal) {
+        closeAllLiveModal();
+      }
+    };
+  }
+
+  // Tab switching
+  tabBtns.forEach(btn => {
+    btn.onclick = () => {
+      const target = btn.dataset.content;
+
+      // Optional adult consent gate (remove if not using adult content)
+      if (target === 'adult' && liveConsentModal) {
+        liveConsentModal.style.display = 'flex';
+        liveCloseBtn?.classList.add('hidden');
+        return;
+      }
+
+      showTab(target);
+    };
+  });
+
+  // Consent: Agree
+  if (consentAgreeBtn) {
+    consentAgreeBtn.onclick = () => {
+      liveConsentModal.style.display = 'none';
+      liveCloseBtn?.classList.remove('hidden');
+
+      // If you have an adult tab, switch to it and load adult stream
+      const adultBtn = document.querySelector('.live-tab-btn[data-content="adult"]');
+      if (adultBtn) {
+        showTab('adult');
+        startStream('adult');
+      }
+    };
+  }
+
+  // Consent: Cancel or backdrop
+  if (consentCancelBtn) {
+    consentCancelBtn.onclick = () => {
+      liveConsentModal.style.display = 'none';
+      liveCloseBtn?.classList.remove('hidden');
+      showTab('live');
+    };
+  }
+
+  if (liveConsentModal) {
+    liveConsentModal.onclick = (e) => {
+      if (e.target === liveConsentModal) {
+        liveConsentModal.style.display = 'none';
+        liveCloseBtn?.classList.remove('hidden');
+        showTab('live');
+      }
+    };
+  }
+
+  // Legacy support for old tab buttons (if any still exist)
+  document.querySelectorAll('.live-tab-btn[data-content="regular"], .live-tab-btn[data-content="adult"]').forEach(oldBtn => {
+    oldBtn.onclick = () => switchContent(oldBtn.dataset.content);
+  });
+});
+
+// ---------- DEBUGGABLE HOST INIT (drop-in) ----------
+(function () {
+  // Toggle this dynamically in your app
+  const isHost = true; // <-- make sure this equals true at runtime for hosts
+
+  // Small helper: wait for a set of elements to exist (polling)
+  function waitForElements(selectors = [], { timeout = 5000, interval = 80 } = {}) {
+    const start = Date.now();
+    return new Promise((resolve, reject) => {
+      (function poll() {
+        const found = selectors.map(s => document.querySelector(s));
+        if (found.every(el => el)) return resolve(found);
+        if (Date.now() - start > timeout) return reject(new Error("waitForElements timeout: " + selectors.join(", ")));
+        setTimeout(poll, interval);
+      })();
+    });
+  }
+
+  // Safe getter w/ default
+  const $ = (sel) => document.querySelector(sel);
+
+  // run everything after DOM ready (and still robust if DOM already loaded)
+  function ready(fn) {
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+      setTimeout(fn, 0);
+    } else {
+      document.addEventListener("DOMContentLoaded", fn);
+    }
+  }
+
+  ready(async () => {
+    ("[host-init] DOM ready. isHost =", isHost);
+
+    if (!isHost) {
+      ("[host-init] not a host. exiting host init.");
+      return;
+    }
+
+    // 1) Wait for the most important elements that must exist for host flow.
+    try {
+      const [
+        hostSettingsWrapperEl,
+        hostModalEl,
+        hostSettingsBtnEl,
+      ] = await waitForElements(
+        ["#hostSettingsWrapper", "#hostModal", "#hostSettingsBtn"],
+        { timeout: 7000 }
+      );
+
+      ("[host-init] Found host elements:", {
+        hostSettingsWrapper: !!hostSettingsWrapperEl,
+        hostModal: !!hostModalEl,
+        hostSettingsBtn: !!hostSettingsBtnEl,
+      });
+
+      // Show wrapper/button
+      hostSettingsWrapperEl.style.display = "block";
+
+      // close button - optional but preferred
+      const closeModalEl = hostModalEl.querySelector(".close");
+      if (!closeModalEl) {
+        ("[host-init] close button (.close) not found inside #hostModal.");
+      }
+
+      // --- attach tab init (shared across modals)
+      function initTabsForModal(modalEl) {
+        modalEl.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            modalEl.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+            // Hide only tab-content referenced by dataset or global shared notifications
+            document.querySelectorAll(".tab-content").forEach((tab) => (tab.style.display = "none"));
+            btn.classList.add("active");
+            const target = document.getElementById(btn.dataset.tab);
+            if (target) target.style.display = "block";
+            else ("[host-init] tab target not found:", btn.dataset.tab);
+          });
+        });
+      }
+      initTabsForModal(hostModalEl);
+
+      // --- host button click: show modal + populate
+      hostSettingsBtnEl.addEventListener("click", async () => {
+        try {
+          hostModalEl.style.display = "block";
+
+          if (!currentUser?.uid) {
+            ("[host-init] currentUser.uid missing");
+            return showStarPopup("⚠️ Please log in first.");
+          }
+
+          const userRef = doc(db, "users", currentUser.uid);
+          const snap = await getDoc(userRef);
+          if (!snap.exists()) {
+            ("[host-init] user doc not found for uid:", currentUser.uid);
+            return showStarPopup("⚠️ User data not found.");
+          }
+          const data = snap.data() || {};
+          // populate safely (guard each element)
+          const safeSet = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value ?? "";
+          };
+
+          safeSet("fullName", data.fullName || "");
+          safeSet("city", data.city || "");
+          safeSet("location", data.location || "");
+           if (data.location) {
+  loadCities(data.location, data.city || "");
+}
+          safeSet("bio", data.bioPick || "");
+          safeSet("bankAccountNumber", data.bankAccountNumber || "");
+          safeSet("bankName", data.bankName || "");
+          safeSet("telegram", data.telegram || "");
+          safeSet("tiktok", data.tiktok || "");
+              safeSet("snapchat", data.snapchat || "");
+          safeSet("whatsapp", data.whatsapp || "");
+          safeSet("instagram", data.instagram || "");
+          // picks
+          const natureEl = document.getElementById("naturePick");
+          if (natureEl) natureEl.value = data.naturePick || "";
+          const fruitEl = document.getElementById("fruitPick");
+          if (fruitEl) fruitEl.value = data.fruitPick || "";
+          
+// --- NEW: body type pick
+const bodyTypeEl = document.getElementById("bodyTypePick");
+if (bodyTypeEl) bodyTypeEl.value = data.bodyTypePick || "";
+
+          // preview photo
+          if (data.popupPhoto) {
+            const photoPreview = document.getElementById("photoPreview");
+            const photoPlaceholder = document.getElementById("photoPlaceholder");
+            if (photoPreview) {
+              photoPreview.src = data.popupPhoto;
+              photoPreview.style.display = "block";
+            }
+            if (photoPlaceholder) photoPlaceholder.style.display = "none";
+          } else {
+            // ensure preview hidden if no photo
+            const photoPreview = document.getElementById("photoPreview");
+            const photoPlaceholder = document.getElementById("photoPlaceholder");
+            if (photoPreview) photoPreview.style.display = "none";
+            if (photoPlaceholder) photoPlaceholder.style.display = "inline-block";
+          }
+
+        } catch (err) {
+          ("[host-init] error in hostSettingsBtn click:", err);
+          showStarPopup("⚠️ Failed to open settings. Check ");
+        }
+      });
+
+      // --- close handlers
+      if (closeModalEl) {
+        closeModalEl.addEventListener("click", () => (hostModalEl.style.display = "none"));
+      }
+      window.addEventListener("click", (e) => {
+        if (e.target === hostModalEl) hostModalEl.style.display = "none";
+      });
+
+      // --- photo preview handler (delegated)
+      document.addEventListener("change", (e) => {
+        if (e.target && e.target.id === "popupPhoto") {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const photoPreview = document.getElementById("photoPreview");
+            const photoPlaceholder = document.getElementById("photoPlaceholder");
+            if (photoPreview) {
+              photoPreview.src = reader.result;
+              photoPreview.style.display = "block";
+            }
+            if (photoPlaceholder) photoPlaceholder.style.display = "none";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+// --- save info button (safe + allows clearing fields)
+const maybeSaveInfo = document.getElementById("saveInfo");
+if (maybeSaveInfo) {
+  maybeSaveInfo.addEventListener("click", async () => {
+    if (!currentUser?.uid) {
+      return showStarPopup("⚠️ Please log in first.");
+    }
+
+    const getVal = id => {
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : "";
+    };
+
+    let dataToUpdate = {
+      fullName: (getVal("fullName") || "").replace(/\b\w/g, l => l.toUpperCase()),
+      city: getVal("city"),
+      location: getVal("location"),
+      bioPick: getVal("bio"),
+      bankAccountNumber: getVal("bankAccountNumber"),
+      bankName: getVal("bankName"),
+      telegram: getVal("telegram"),
+      snapchat: getVal("snapchat"),
+      tiktok: getVal("tiktok"),
+      whatsapp: getVal("whatsapp"),
+      instagram: getVal("instagram"),
+      naturePick: getVal("naturePick"),
+      fruitPick: getVal("fruitPick"),
+      bodyTypePick: getVal("bodyTypePick"),
+    };
+
+    // Bank normalization
+    if (dataToUpdate.bankName) {
+      const selectedBankName = dataToUpdate.bankName.trim();
+      const normalizedBankName = selectedBankName.replace(/\s+/g, ' ').trim();
+      const bankSlug = normalizedBankName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      dataToUpdate.bankName = normalizedBankName;
+      dataToUpdate.bankSlug = bankSlug;
+    }
+
+    // Validation
+    if (dataToUpdate.bankAccountNumber && !/^\d{1,11}$/.test(dataToUpdate.bankAccountNumber)) {
+      return showStarPopup("⚠️ Bank account number must be digits only (max 11).");
+    }
+    if (dataToUpdate.whatsapp && !/^\d+$/.test(dataToUpdate.whatsapp)) {
+      return showStarPopup("⚠️ WhatsApp number must be numbers only.");
+    }
+
+    const originalHTML = maybeSaveInfo.innerHTML;
+    maybeSaveInfo.innerHTML = `<div class="spinner" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation: spin 0.6s linear infinite;margin:auto;"></div>`;
+    maybeSaveInfo.disabled = true;
+
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      const filteredData = Object.fromEntries(
+        Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined && v !== "")
+      );
+
+      await updateDoc(userRef, { 
+        ...filteredData, 
+        lastUpdated: serverTimestamp() 
+      });
+
+      // Optional: mirror to featuredHosts
+      const hostRef = doc(db, "featuredHosts", currentUser.uid);
+      const hostSnap = await getDoc(hostRef);
+      if (hostSnap.exists()) {
+        await updateDoc(hostRef, { 
+          ...filteredData, 
+          lastUpdated: serverTimestamp() 
+        });
+      }
+
+      showStarPopup("✅ Profile updated successfully!");
+      
+      // blur inputs
+      document.querySelectorAll("#mediaTab input, #mediaTab textarea, #mediaTab select").forEach(i => i.blur());
+
+    } catch (err) {
+      ("[host-init] saveInfo error:", err);
+      showStarPopup("⚠️ Failed to update info. Please try again.");
+    } finally {
+      maybeSaveInfo.innerHTML = originalHTML;
+      maybeSaveInfo.disabled = false;
+    }
+  });
+} else {
+  ("[host-init] saveInfo button not found.");
+}
+
+      // --- save media button (optional)
+      const maybeSaveMedia = document.getElementById("saveMedia");
+      if (maybeSaveMedia) {
+        maybeSaveMedia.addEventListener("click", async () => {
+          if (!currentUser?.uid) return showStarPopup("⚠️ Please log in first.");
+          const popupPhotoFile = document.getElementById("popupPhoto")?.files?.[0];
+          const uploadVideoFile = document.getElementById("uploadVideo")?.files?.[0];
+          if (!popupPhotoFile && !uploadVideoFile) return showStarPopup("⚠️ Please select a photo or video to upload.");
+          try {
+            showStarPopup("⏳ Uploading media...");
+            const formData = new FormData();
+            if (popupPhotoFile) formData.append("photo", popupPhotoFile);
+            if (uploadVideoFile) formData.append("video", uploadVideoFile);
+            const res = await fetch("/api/uploadShopify", { method: "POST", body: formData });
+            if (!res.ok) throw new Error("Upload failed.");
+            const data = await res.json();
+            const userRef = doc(db, "users", currentUser.uid);
+            await updateDoc(userRef, {
+              ...(data.photoUrl && { popupPhoto: data.photoUrl }),
+              ...(data.videoUrl && { videoUrl: data.videoUrl }),
+              lastUpdated: serverTimestamp()
+            });
+            if (data.photoUrl) {
+              const photoPreview = document.getElementById("photoPreview");
+              const photoPlaceholder = document.getElementById("photoPlaceholder");
+              if (photoPreview) {
+                photoPreview.src = data.photoUrl;
+                photoPreview.style.display = "block";
+              }
+              if (photoPlaceholder) photoPlaceholder.style.display = "none";
+            }
+            showStarPopup("✅ Media uploaded successfully!");
+            hostModalEl.style.display = "none";
+          } catch (err) {
+            ("[host-init] media upload error:", err);
+            showStarPopup(`⚠️ Failed to upload media: ${err.message}`);
+          }
+        });
+      } else {
+        ("[host-init] saveMedia button not present (ok if VIP-only UI).");
+      }
+
+      ("[host-init] Host logic initialized successfully.");
+    } catch (err) {
+      ("[host-init] Could not find required host elements:", err);
+      // helpful message for debugging during development:
+      showStarPopup("⚠️ Host UI failed to initialize. Check console for details.");
+    }
+  }); // ready
+})();
+
+/* =======================================
+   Dynamic Host Panel Greeting (No Images)
+========================================== */
+function capitalizeFirstLetter(str) {
+  if (!str) return "Guest";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function setGreeting() {
+  if (!currentUser?.chatId) {
+    document.getElementById("hostPanelTitle").textContent = "Host Panel";
+    return;
+  }
+
+  const name = capitalizeFirstLetter(currentUser.chatId.replace(/_/g, " "));
+  const hour = new Date().getHours();
+
+  let greetingText;
+  if (hour < 12) {
+    greetingText = `Good Morning, ${name}!`;
+  } else if (hour < 18) {
+    greetingText = `Good Afternoon, ${name}!`;
+  } else {
+    greetingText = `Good Evening, ${name}!`;
+  }
+
+  const titleEl = document.getElementById("hostPanelTitle");
+  if (titleEl) {
+    titleEl.textContent = greetingText;  // Plain text only
+  }
+}
+
+/* Run greeting when host panel opens */
+document.getElementById("hostSettingsBtn")?.addEventListener("click", () => {
+  setGreeting();
+});
+
+let videoModal = null;
+let modalVideo = null;
+
+function initVideoModal() {
+  if (videoModal) return;
+
+  videoModal = document.createElement("div");
+  Object.assign(videoModal.style, {
+    position: "fixed",
+    inset: "0",
+    background: "rgba(0,0,0,0.95)",
+    zIndex: "9999999",
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "12px",
+  });
+
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = `
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: #000;
+    border-radius: 18px;
+    overflow: hidden;
+  `;
+
+  modalVideo = document.createElement("video");
+  modalVideo.controls = true;
+  modalVideo.playsInline = true;
+  modalVideo.loop = true;
+  modalVideo.style.cssText = "width:100%; height:auto; max-height:82vh; display:block;";
+
+  // Close Button
+  const closeBtn = document.createElement("div");
+  closeBtn.textContent = "✕";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "14px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "rgba(0,0,0,0.8)",
+    color: "#fff",
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    cursor: "pointer",
+    zIndex: "10",
+    border: "2px solid #fff",
+    transition: "opacity 0.4s ease"
+  });
+
+  // Shimmer Loading Effect
+  const shimmer = document.createElement("div");
+  shimmer.style.cssText = `
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 5;
+  `;
+
+  wrapper.appendChild(modalVideo);
+  wrapper.appendChild(closeBtn);
+  wrapper.appendChild(shimmer);
+  videoModal.appendChild(wrapper);
+  document.body.appendChild(videoModal);
+
+  // Close handlers
+  closeBtn.onclick = () => closeVideoModal();
+  videoModal.onclick = (e) => {
+    if (e.target === videoModal) closeVideoModal();
+  };
+
+  // Auto fade close button after 3 seconds
+  modalVideo.onplay = () => {
+    setTimeout(() => {
+      closeBtn.style.opacity = "0.12";
+    }, 3000);
+  };
+
+  // Shimmer while loading
+  modalVideo.onwaiting = () => shimmer.style.opacity = "0.6";
+  modalVideo.onplaying = () => shimmer.style.opacity = "0";
+}
+
+function openVideoModal(videoUrl) {
+  if (!videoUrl) return;
+
+  initVideoModal();
+
+  modalVideo.pause();
+  modalVideo.src = "";
+
+  modalVideo.src = videoUrl;
+  videoModal.style.display = "flex";
+
+  setTimeout(() => {
+    modalVideo.play().catch(() => {});
+  }, 200);
+}
+
+function closeVideoModal() {
+  if (!videoModal || !modalVideo) return;
+  modalVideo.pause();
+  modalVideo.src = "";
+  modalVideo.load();
+  videoModal.style.display = "none";
+}
+
+// Global access
+window.openFullScreenVideo = openVideoModal;
+window.closeVideoModal = closeVideoModal;
+
+highlightsBtn.onclick = async () => {
+  if (!currentUser?.uid) {
+    showGoldAlert("Please log in to view Free Tonight");
+    return;
+  }
+
+  showLoaderBlack("");
+
+  try {
+    const snap = await getDocs(collection(db, "highlightVideos"));
+    const allClips = [];
+
+    // First collect all uploader IDs
+    const uploaderIds = new Set();
+    snap.forEach(userDoc => {
+      const data = userDoc.data();
+      if (data.highlights?.length) uploaderIds.add(userDoc.id);
+    });
+
+    // Fetch full user profiles in one go
+    const userPromises = Array.from(uploaderIds).map(id => 
+      getDoc(doc(db, "users", id))
+    );
+    const userSnaps = await Promise.all(userPromises);
+
+    const userMap = {};
+    userSnaps.forEach(us => {
+      if (us.exists()) userMap[us.id] = us.data();
+    });
+
+    // Build clips with full user data
+    snap.forEach(userDoc => {
+      const highlights = userDoc.data().highlights || [];
+      const userData = userMap[userDoc.id] || {};
+
+      highlights.forEach(clip => {
+        if (clip.isTrending !== true) return;
+        if (clip.trendingUntil && clip.trendingUntil < Date.now()) return;
+
+        allClips.push({
+          ...clip,
+          uploaderId: userDoc.id,
+          uploaderName: userData.uploaderName || userData.chatId || "Anonymous",
+
+          // FULL PROFILE DATA
+          fruitPick: userData.fruitPick,
+          naturePick: userData.naturePick,
+          gender: userData.gender,
+          age: userData.age,
+          location: userData.location,
+          city: userData.city,
+        });
+      });
+    });
+
+    if (allClips.length === 0) {
+      hideLoaderBlack();
+      showGoldAlert("Free Tonight is brewing... check back soon! 🔥");
+      return;
+    }
+
+    showHighlightsModal(allClips);
+
+  } catch (err) {
+    ("Highlights load error:", err);
+    showGoldAlert("Error loading Free Tonight");
+  } finally {
+    hideLoaderBlack();
+  }
+};
+
+// ===============================
+// HELPER FUNCTIONS
+// ===============================
+function getFlagEmoji(location = "") {
+  const match = location.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
+  return match ? match[0] : "🌍";
+}
+
+function cleanLocation(location = "") {
+  return location
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+    .trim();
+}
+
+/* ================================================
+   FREE TONIGHT MODAL – GLASSY LUXE BLACK + CUBE NEON GREEN
+   ================================================ */
+function showHighlightsModal(initialVideos, loadMoreFn) {
+  document.getElementById("highlightsModal")?.remove();
+  
+  const modal = document.createElement("div");
+  modal.id = "highlightsModal";
+  
+Object.assign(modal.style, {
+  position: "fixed", 
+  top: 0, 
+  left: 0, 
+  width: "100vw", 
+  height: "100vh",
+  
+  /* Deep Black + Subtle WhatsApp-style Texture */
+  background: "rgba(6, 2, 18, 0.98)",
+  backgroundImage: `
+    radial-gradient(circle at 20% 30%, rgba(0, 255, 159, 0.07) 1px, transparent 0),
+    radial-gradient(circle at 80% 25%, rgba(0, 255, 159, 0.05) 1px, transparent 0),
+    radial-gradient(circle at 45% 75%, rgba(138, 43, 226, 0.06) 1px, transparent 0),
+    radial-gradient(circle at 70% 80%, rgba(0, 230, 192, 0.04) 1px, transparent 0)
+  `,
+  backgroundSize: "90px 90px",
+  
+  backdropFilter: "blur(22px)",
+  WebkitBackdropFilter: "blur(22px)",
+  
+  display: "flex", 
+  flexDirection: "column",
+  alignItems: "center", 
+  justifyContent: "flex-start",
+  zIndex: "999999", 
+  overflowY: "auto", 
+  padding: "20px 12px", 
+  boxSizing: "border-box",
+  fontFamily: "system-ui, sans-serif",
+  color: "#e0d0ff"
+});
+
+// ==================== GLASSY LUXE HEADER - ONE LINER ====================
+const intro = document.createElement("div");
+intro.innerHTML = `
+  <div style="text-align:center; max-width:680px; margin:0 auto 32px; position:relative;">
+    
+    <div style="
+      background: rgba(15, 8, 35, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 255, 159, 0.25);
+      border-radius: 24px;
+      padding: 26px 48px 24px;           /* Reduced top padding + more right padding */
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      display: inline-block;
+    ">
+      
+      <!-- ONE LINER - STRONG & CLEAN -->
+      <span id="freeTonightText" style="
+        font-family: 'Architects Daughter', cursive;
+        font-size: 27px;
+        font-weight: 400;
+        letter-spacing: 5px;
+        background: linear-gradient(90deg, #00ff9f, #00e6c0, #00ff9f);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 200% 200%;
+        display: block;
+        margin-bottom: 18px;
+        text-shadow:
+          0 0 25px #00ff9f,
+          0 0 45px #00ff9f,
+          0 6px 15px rgba(0,0,0,0.9),
+          0 10px 25px rgba(0,0,0,0.85);
+        animation: cubeNeonGreen 2.5s ease-in-out infinite alternate,
+                   tonightShift 7s linear infinite;
+      ">
+        FREE TONIGHT?
+      </span>
+      
+     <p style="margin:0 0 7px; font-size:13px; font-weight:700; color:#b0ffeb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+        Real moments • Real matches • Right away
+      </p>
+      <p style="margin:0; color:#8899aa; font-size:13.5px;">
+    Own your vibe. Own the night.
+      </p>
+      <p style="margin:0; color:#8899aa; font-size:13.5px;">
+        www.freetonight.app
+      </p>
+    </div>
+  </div>
+`;
+
+modal.appendChild(intro);
+
+// ==================== CLOSE BUTTON - BETTER POSITION ====================
+const closeBtn = document.createElement("div");
+closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+  <path d="M18 6L6 18M6 6L18 18" stroke="#00ff9f" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
+
+Object.assign(closeBtn.style, {
+  position: "absolute",
+  top: "8px",           // Moved further up
+  right: "12px",        // Shifted more to the right
+  width: "44px",        // Slightly bigger touch area
+  height: "44px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: "1002",
+  filter: "drop-shadow(0 0 12px #00ff9f)",
+  transition: "all 0.25s ease"
+});
+
+closeBtn.onmouseenter = () => closeBtn.style.transform = "rotate(90deg) scale(1.2)";
+closeBtn.onmouseleave = () => closeBtn.style.transform = "rotate(0deg) scale(1)";
+
+closeBtn.onclick = (e) => {
+  e.stopPropagation();
+  closeBtn.style.transform = "rotate(180deg) scale(1.35)";
+  setTimeout(() => modal.remove(), 280);
+};
+
+intro.firstElementChild.appendChild(closeBtn);
+   
+   
+ // ==================== CONTROLS - GLASSY LUXE STYLE ====================
+const controls = document.createElement("div");
+controls.style.cssText = `
+  width: 100%; 
+  max-width: 640px; 
+  margin: 0 auto 32px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 20px;
+`;
+
+const locationBtn = document.createElement("button");
+locationBtn.textContent = "Enter Location";
+Object.assign(locationBtn.style, {
+  padding: "14px 32px",
+  borderRadius: "50px",
+  fontSize: "15px",
+  fontWeight: "700",
+  letterSpacing: "0.5px",
+  
+  /* Glassy Luxe Look */
+  background: "rgba(15, 8, 35, 0.75)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  border: "1px solid rgba(0, 255, 159, 0.35)",
+  color: "#00ff9f",
+  
+  cursor: "pointer", 
+  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+  boxShadow: "0 8px 25px rgba(0, 0, 0, 0.5)",
+  textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)"
+});
+
+locationBtn.onmouseenter = () => {
+  locationBtn.style.background = "rgba(0, 255, 159, 0.12)";
+  locationBtn.style.borderColor = "#00ff9f";
+  locationBtn.style.transform = "translateY(-3px)";
+  locationBtn.style.boxShadow = "0 12px 30px rgba(0, 255, 159, 0.25)";
+};
+
+locationBtn.onmouseleave = () => {
+  locationBtn.style.background = "rgba(15, 8, 35, 0.75)";
+  locationBtn.style.borderColor = "rgba(0, 255, 159, 0.35)";
+  locationBtn.style.transform = "translateY(0)";
+  locationBtn.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.5)";
+};
+
+locationBtn.onclick = () => openLocationModal();
+controls.appendChild(locationBtn);
+
+// ==================== TAG CONTAINER ====================
+const tagContainer = document.createElement("div");
+tagContainer.id = "tagButtons";
+tagContainer.style.cssText = `
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+  justify-content: center; 
+  max-width: 520px;
+  padding: 8px 0;
+`;
+controls.appendChild(tagContainer);
+
+modal.appendChild(controls);
+   
+  // ==================== GRID ====================
+const grid = document.createElement("div");
+grid.id = "highlightsGrid";
+grid.style.cssText = `
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 120px;
+  contain: content;
+  content-visibility: auto;
+  will-change: transform;           /* helps scrolling */
+`;
+  modal.appendChild(grid);
+  // Load more trigger
+    // ==================== LOAD MORE TRIGGER (Nice Spinner) ====================
+  const loadMoreDiv = document.createElement("div");
+  loadMoreDiv.id = "loadMoreTrigger";
+  loadMoreDiv.style.cssText = `
+    grid-column: 1 / -1;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 15px;
+    padding: 40px 20px;
+  `;
+
+  loadMoreDiv.innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <div style="width:28px; height:28px; border:3px solid rgba(0,255,234,0.2); 
+                  border-top-color:#00ffea; border-radius:50%; 
+                  animation:spin 1s linear infinite;"></div>
+      <span style="opacity:0.7;">Loading more profiles...</span>
+    </div>
+  `;
+
+  grid.appendChild(loadMoreDiv);
+
+   // After rendering cards, if you know there's no more data:
+loadMoreDiv.style.display = "none";   // or change text to "No more clips"
+
+   
+  // State
+  let allVideos = [...initialVideos];
+  let activeTags = new Set();
+  let activeLocation = null;
+   
+// ==================== RENDER CARDS (Static Thumbnails Only) ====================
+
+let renderTimeout = null;
+
+let isRendering = false;
+
+function renderCards() {
+
+  if (isRendering) return;
+
+  isRendering = true;
+
+  clearTimeout(renderTimeout);
+
+  renderTimeout = setTimeout(() => {
+
+    grid.innerHTML = "";
+
+    tagContainer.innerHTML = "";
+
+    // === FILTERING (Must be done BEFORE rendering) ===
+
+    let visibleVideos = allVideos.filter(v => {
+
+      const now = Date.now();
+
+      return v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+
+    });
+
+    if (activeLocation) {
+
+      visibleVideos = visibleVideos.filter(v =>
+
+        (v.location || "").toLowerCase().trim() === activeLocation.toLowerCase().trim()
+
+      );
+
+    }
+
+    if (activeTags.size > 0) {
+
+      visibleVideos = visibleVideos.filter(v => {
+
+        const videoTags = (v.tags || []).map(t => (t || "").trim().toLowerCase());
+
+        return [...activeTags].every(tag => videoTags.includes(tag));
+
+      });
+
+    }
+
+     // === TAG BUTTONS (from visible videos only) ===
+    const visibleTags = new Set();
+    visibleVideos.forEach(v => {
+      (v.tags || []).forEach(t => {
+        if (t && typeof t === "string") {
+          const trimmed = t.trim().toLowerCase();
+          if (trimmed && trimmed !== (v.location || "").trim().toLowerCase()) {
+            visibleTags.add(trimmed);
+          }
+        }
+      });
+    });
+
+    // ==================== TAG BUTTONS - GLASSY NEON GREEN ====================
+    [...visibleTags].sort().forEach(tag => {
+      const btn = document.createElement("button");
+      btn.textContent = tag;
+      btn.dataset.tag = tag;
+
+      Object.assign(btn.style, {
+        padding: "8px 18px",
+        borderRadius: "30px",
+        fontSize: "13.5px",
+        fontWeight: "600",
+        letterSpacing: "0.3px",
+
+        background: activeTags.has(tag) 
+          ? "rgba(0, 255, 159, 0.18)" 
+          : "rgba(15, 8, 35, 0.65)",
+        
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+
+        color: activeTags.has(tag) ? "#00ff9f" : "#a0ffe0",
+        border: activeTags.has(tag) 
+          ? "1px solid #00ff9f" 
+          : "1px solid rgba(0, 255, 159, 0.25)",
+
+        cursor: "pointer",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.4)",
+        textShadow: "0 1px 4px rgba(0,0,0,0.6)"
+      });
+
+      // Hover Effect
+      btn.onmouseenter = () => {
+        btn.style.transform = "translateY(-2px)";
+        btn.style.boxShadow = "0 8px 20px rgba(0, 255, 159, 0.25)";
+        if (!activeTags.has(tag)) {
+          btn.style.background = "rgba(0, 255, 159, 0.12)";
+          btn.style.borderColor = "rgba(0, 255, 159, 0.5)";
+        }
+      };
+
+      btn.onmouseleave = () => {
+        btn.style.transform = "translateY(0)";
+        btn.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.4)";
+        if (!activeTags.has(tag)) {
+          btn.style.background = "rgba(15, 8, 35, 0.65)";
+          btn.style.borderColor = "rgba(0, 255, 159, 0.25)";
+        }
+      };
+
+      btn.onclick = () => {
+        if (activeTags.has(tag)) activeTags.delete(tag);
+        else activeTags.add(tag);
+        renderCards();
+      };
+
+      tagContainer.appendChild(btn);
+    });
+
+    // === EMPTY STATE ===
+    if (visibleVideos.length === 0) {
+      const empty = document.createElement("div");
+      empty.textContent = activeLocation
+        ? `No profiles found in ${activeLocation}...`
+        : "No profiles match your filters...";
+      empty.style.cssText = "grid-column:1/-1; text-align:center; padding:80px; color:#888; font-size:16px;";
+      grid.appendChild(empty);
+      grid.appendChild(loadMoreDiv);
+      isRendering = false;
+      return;
+    }
+
+       // === RENDER CARDS - GLASSY LUXE STYLE ===
+    const fragment = document.createDocumentFragment();
+    
+    visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
+      
+      console.log("🎥 Free Tonight Video Data:", {
+        uploaderName: video.uploaderName,
+        fruitPick: video.fruitPick,
+        naturePick: video.naturePick,
+        gender: video.gender,
+        age: video.age,
+        location: video.location,
+        city: video.city
+      });
+
+      // ==================== CARD - GLASSY LUXE ====================
+      const card = document.createElement("div");
+      Object.assign(card.style, {
+        position: "relative",
+        aspectRatio: "9/16",
+        borderRadius: "20px",
+        overflow: "hidden",
+        background: "#0a0614",
+        cursor: "pointer",
+        
+        /* Glassy Luxe Premium Look */
+        border: "1px solid rgba(0, 255, 159, 0.25)",
+        boxShadow: "0 8px 28px rgba(0, 0, 0, 0.65)",
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+      });
+
+      // Premium Hover Effect
+      card.onmouseenter = () => {
+        card.style.transform = "scale(1.06) translateY(-8px)";
+        card.style.boxShadow = "0 20px 45px rgba(0, 255, 159, 0.28)";
+        card.style.borderColor = "rgba(0, 255, 159, 0.45)";
+      };
+      
+      card.onmouseleave = () => {
+        card.style.transform = "scale(1) translateY(0)";
+        card.style.boxShadow = "0 8px 28px rgba(0, 0, 0, 0.65)";
+        card.style.borderColor = "rgba(0, 255, 159, 0.25)";
+      };
+
+      // ==================== ROBUST THUMBNAIL ====================
+      const thumbUrl = (video.thumbnail || video.thumbnailUrl || "").trim();
+      const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=Free+Tonight";
+      
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = video.uploaderName || "Free Tonight";
+      img.style.cssText = `
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        display: block; 
+        background: #0a0614;
+      `;
+      
+      img.onerror = () => {
+        img.src = fallback;
+        img.onerror = null;
+      };
+      
+      img.src = thumbUrl || fallback;
+
+      const thumbContainer = document.createElement("div");
+      thumbContainer.style.cssText = `
+        width: 100%; 
+        height: 100%; 
+        position: relative;
+        background: #000;
+      `;
+      thumbContainer.appendChild(img);
+
+      // Click to play video
+      thumbContainer.onclick = (e) => {
+        e.stopImmediatePropagation();
+        if (video.videoUrl) openFullScreenVideo(video.videoUrl);
+      };
+
+      card.appendChild(thumbContainer);
+       
+
+ 
+ // ==================== INFO LAYER ====================
+      const info = document.createElement("div");
+      info.style.cssText = `
+        position:absolute; bottom:0; left:0; right:0;
+        background:linear-gradient(to top, rgba(15,10,26,0.95), transparent);
+        padding:60px 12px 12px;
+      `;
+     // Username (Clickable)
+      const user = document.createElement("div");
+      user.textContent = `@${video.uploaderName || "cutie"}`;
+      user.style.cssText = `
+        font-size: 15.5px;
+        font-weight: 700;
+        color: #00ff9f;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        cursor: pointer;
+        display: inline-block;
+      `;
+      user.onclick = (e) => {
+        e.stopPropagation();
+       
+        if (!video.uploaderId) {
+          showStarPopup("Profile ID missing", "error");
+          return;
+        }
+      // Loading Spinner
+        const fullSpinner = document.createElement("div");
+        fullSpinner.style.cssText = `
+          position:fixed; top:0; left:0; width:100vw; height:100vh;
+          background:rgba(0,0,0,0.4); display:flex; align-items:center;
+          justify-content:center; z-index:999999; backdrop-filter:blur(6px);
+        `;
+        fullSpinner.innerHTML = `
+          <div style="text-align:center;">
+            <div style="width:48px;height:48px;border:4px solid #00ff9f;
+                        border-top-color:transparent;border-radius:50%;
+                        animation:spin 0.9s linear infinite;margin:0 auto 14px;"></div>
+          </div>`;
+        document.body.appendChild(fullSpinner);
+        // Try multiple possible ID formats
+        const tryIds = [
+          video.uploaderId,
+          video.uploaderId.toLowerCase ? video.uploaderId.toLowerCase() : null,
+          video.uploaderId.replace(/[@.]/g, '_')
+        ].filter(Boolean);
+        let attempts = 0;
+        const tryFetch = (id) => {
+          getDoc(doc(db, "users", id))
+            .then(userSnap => {
+              if (userSnap.exists()) {
+                fullSpinner.remove();
+                showSocialCard(userSnap.data());
+                return;
+              }
+              attempts++;
+              if (attempts < tryIds.length) {
+                tryFetch(tryIds[attempts]);
+              } else {
+                fullSpinner.remove();
+                showStarPopup("User profile not found", "error");
+              }
+            })
+            .catch(err => {
+              attempts++;
+              if (attempts < tryIds.length) {
+                tryFetch(tryIds[attempts]);
+              } else {
+                fullSpinner.remove();
+                showStarPopup("Failed to load profile", "error");
+              }
+            });
+        };
+        tryFetch(tryIds[0]);
+      };
+   // ==================== ONE-LINER — SUPER DEFENSIVE ====================
+      const naturePick = (video.naturePick || "").trim();
+      const genderRaw = String(video.gender || "person").toLowerCase().trim();
+      const isMale = genderRaw === "male" || genderRaw === "man";
+      const pronoun = isMale ? "his" : "her";
+      const age = parseInt(video.age) || 25;
+      const ageGroup = age >= 50 ? "50s" :
+                      age >= 40 ? "40s" :
+                      age >= 30 ? "30s" : "20s";
+      const oneLinerText = naturePick
+        ? `A ${naturePick} ${genderRaw} in ${pronoun} ${ageGroup}`
+        : `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+      const oneLiner = document.createElement("div");
+      oneLiner.textContent = oneLinerText;
+      oneLiner.style.cssText = `
+        font-size: 11px;
+        color: #aaa;
+        margin-top: 4px;
+      `;
+                  // ==================== TAGS (Emoji + City) ====================
+      const tagsEl = document.createElement("div");
+      tagsEl.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;";
+
+      // Location Badge
+      const locValue = video.location || video.city || "";
+      if (locValue) {
+        const locSpan = document.createElement("span");
+        const flag = getFlagEmoji(locValue);
+        const cityName = (video.city || cleanLocation(locValue)).trim() || "Unknown";
+
+        locSpan.textContent = `${flag} ${cityName}`;
+        locSpan.style.cssText = `
+          font-size:11px; 
+          padding:3px 10px; 
+          border-radius:10px; 
+          background: rgba(0,255,234,0.25); 
+          color: #00ffea; 
+          border: 1px solid rgba(0,255,234,0.5);
+          font-weight: 500;
+        `;
+        tagsEl.appendChild(locSpan);
+      }
+
+      // Other tags
+      (video.tags || []).forEach(t => {
+        if (t && typeof t === "string" && t.trim()) {
+          const span = document.createElement("span");
+          span.textContent = t.trim();
+          span.style.cssText = `
+            font-size:11px; 
+            padding:2px 8px; 
+            border-radius:10px; 
+            background: rgba(255,46,120,0.22); 
+            color: #ff4d8a; 
+            border: 1px solid rgba(255,46,120,0.6);
+          `;
+          tagsEl.appendChild(span);
+        }
+      });
+   
+      info.append(user, oneLiner, tagsEl);
+      card.appendChild(info);
+
+        // ==================== FRUIT PICK BADGE — PREMIUM GLOW ====================
+      if (video.fruitPick && String(video.fruitPick).trim()) {
+        const fruitEl = document.createElement("div");
+        fruitEl.textContent = String(video.fruitPick).trim();
+        
+                 fruitEl.style.cssText = `
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          font-size: 16px;
+          line-height: 1;
+          color: #fff;
+          text-shadow: 0 0 3px rgba(255,255,255,0.5);
+          z-index: 3;
+        `;
+
+        // Slight hover effect
+        fruitEl.onmouseenter = () => fruitEl.style.transform = "scale(1.15)";
+        fruitEl.onmouseleave = () => fruitEl.style.transform = "scale(1)";
+
+        card.appendChild(fruitEl);
+      }
+      // Badge
+
+      const badge = document.createElement("div");
+
+      badge.textContent = "Free Tonight ♡";
+
+      Object.assign(badge.style, {
+
+        position: "absolute", top: "12px", right: "12px", padding: "6px 12px", borderRadius: "12px",
+
+        fontSize: "12px", fontWeight: "700", color: "#fff",
+
+        background: "linear-gradient(135deg, #ff3366, #ff9f1c, #ff6b6b)",
+
+        boxShadow: "0 0 18px rgba(255,51,102,0.9)", border: "1px solid rgba(255,255,255,0.3)",
+
+        textShadow: "0 0 4px rgba(0,0,0,0.7)"
+
+      });
+
+      card.appendChild(badge);
+
+   card.appendChild(info);
+
+      fragment.appendChild(card);
+
+    });
+
+    grid.appendChild(fragment);
+
+    grid.appendChild(loadMoreDiv);
+
+    isRendering = false;
+
+  }, 16);
+
+}
+
+  
+ // ==================== LOCATION MODAL (Compact & Glassy) ====================
+function openLocationModal() {
+  const locModal = document.createElement("div");
+  locModal.style.cssText = `
+    position:fixed; 
+    inset:0; 
+    background:rgba(0,0,0,0.85); 
+    backdrop-filter:blur(16px); 
+    z-index:1000000; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+  `;
+
+  locModal.innerHTML = `
+    <div style="
+      background:rgba(15, 10, 28, 0.95);
+      border:1px solid rgba(0, 255, 159, 0.3);
+      border-radius:20px; 
+      padding:28px 24px; 
+      max-width:360px; 
+      width:90%; 
+      text-align:center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+    ">
+      
+      <h3 style="color:#00ff9f; margin:0 0 22px 0; font-size:19px; font-weight:600;">
+        Choose Location
+      </h3>
+      
+      <div id="locList" style="
+        display:flex; 
+        flex-wrap:wrap; 
+        gap:10px; 
+        justify-content:center; 
+        max-height:280px; 
+        overflow-y:auto; 
+        padding:8px 4px;
+      "></div>
+      
+      <button id="clearLocBtn" style="
+        margin-top:20px; 
+        padding:11px 32px; 
+        background:rgba(255,255,255,0.08); 
+        color:#ccc; 
+        border:1px solid rgba(255,255,255,0.2); 
+        border-radius:30px; 
+        font-size:14px;
+        cursor:pointer;
+        transition: all 0.3s;
+      ">
+        Clear Filter
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(locModal);
+
+  const container = locModal.querySelector("#locList");
+  const locations = new Set();
+
+  allVideos.forEach(v => {
+    if (v.location) locations.add(v.location.trim());
+  });
+
+  [...locations].sort().forEach(loc => {
+    const btn = document.createElement("button");
+    btn.textContent = loc;
+    btn.style.cssText = `
+      padding:9px 18px; 
+      border-radius:25px; 
+      background:rgba(0, 255, 159, 0.12); 
+      color:#b0ffe0; 
+      border:1px solid rgba(0, 255, 159, 0.3); 
+      cursor:pointer;
+      font-size:14px;
+      transition: all 0.25s;
+    `;
+
+    btn.onmouseenter = () => {
+      btn.style.background = "rgba(0, 255, 159, 0.25)";
+      btn.style.color = "#00ff9f";
+      btn.style.transform = "scale(1.05)";
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = "rgba(0, 255, 159, 0.12)";
+      btn.style.color = "#b0ffe0";
+      btn.style.transform = "scale(1)";
+    };
+
+    btn.onclick = () => {
+      activeLocation = loc;
+      renderCards();
+      locModal.remove();
+    };
+    container.appendChild(btn);
+  });
+
+  // Clear Button
+  locModal.querySelector("#clearLocBtn").onclick = () => {
+    activeLocation = null;
+    renderCards();
+    locModal.remove();
+  };
+
+  // Close when clicking outside
+  locModal.onclick = (e) => {
+    if (e.target === locModal) locModal.remove();
+  };
+}
+
+   // ==================== SHOW AD AFTER 6 SECONDS ====================
+  setTimeout(() => {
+    showHotspotAd();
+  }, 6000);
+   
+// Initial render
+renderCards();
+document.body.appendChild(modal);
+}
+
+function showUnlockConfirm(video, onUnlockCallback) {
+    document.querySelectorAll("video").forEach(v => v.pause());
+    document.getElementById("unlockConfirmModal")?.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "unlockConfirmModal";
+    Object.assign(modal.style, {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(0,0,0,0.93)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: "1000001",
+        opacity: "1",
+    });
+
+    modal.innerHTML = `
+        <div style="background:#111;padding:20px;border-radius:12px;text-align:center;color:#fff;max-width:320px;box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <h3 style="margin-bottom:10px;font-weight:600;">Unlock "${video.title}"?</h3>
+            <p style="margin-bottom:16px;">This will cost <b>${video.highlightVideoPrice} STRZ</b></p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button id="cancelUnlock" style="padding:8px 16px;background:#333;border:none;color:#fff;border-radius:8px;font-weight:500;">Cancel</button>
+                <button id="confirmUnlock" style="padding:8px 16px;background:linear-gradient(90deg,#00ffea,#ff00f2,#8a2be2);border:none;color:#fff;border-radius:8px;font-weight:600;">Yes</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector("#cancelUnlock").onclick = () => modal.remove();
+
+    modal.querySelector("#confirmUnlock").onclick = async () => {
+        modal.remove();
+        await unlockVideo(video);
+    };
+}
+
+async function unlockVideo(video) {
+    if (!currentUser?.uid) {
+        return showGoldAlert("Login required");
+    }
+
+    if (currentUser.uid === video.uploaderId) {
+        return showGoldAlert("You already own this clip");
+    }
+
+    const cost = Number(video.highlightVideoPrice) || 0;
+    if (cost <= 0) {
+        return showGoldAlert("Invalid price");
+    }
+
+    try {
+        // ─── ATOMIC TRANSACTION ─────────────────────────────────────────────
+        await runTransaction(db, async (tx) => {
+            const buyerRef = doc(db, "users", currentUser.uid);
+            const buyerSnap = await tx.get(buyerRef);
+            if (!buyerSnap.exists()) throw new Error("Buyer account not found");
+
+            const buyerData = buyerSnap.data();
+            const buyerStars = buyerData?.stars || 0;
+
+            if (buyerStars < cost) {
+                throw new Error("NOT_ENOUGH_STRZ");
+            }
+
+            const uploaderRef = doc(db, "users", video.uploaderId);
+            const uploaderSnap = await tx.get(uploaderRef);
+            if (!uploaderSnap.exists()) throw new Error("Uploader not found");
+
+            const highlightsRef = doc(db, "highlightVideos", video.uploaderId);
+            const highlightsSnap = await tx.get(highlightsRef);
+            if (!highlightsSnap.exists()) throw new Error("Highlights document not found");
+
+            const highlightsData = highlightsSnap.data();
+            const currentHighlights = highlightsData.highlights || [];
+
+            const clipIndex = currentHighlights.findIndex(c => c.id === video.id);
+            if (clipIndex === -1) throw new Error("Clip not found in array");
+
+            const updatedClip = { ...currentHighlights[clipIndex] };
+            updatedClip.unlockedBy = [...(updatedClip.unlockedBy || []), currentUser.uid];
+
+            const updatedArray = [...currentHighlights];
+            updatedArray[clipIndex] = updatedClip;
+
+            tx.update(buyerRef, { stars: increment(-cost) });
+            tx.update(uploaderRef, { stars: increment(cost) });
+            tx.update(highlightsRef, {
+                highlights: updatedArray,
+                lastUploadAt: serverTimestamp()
+            });
+
+            tx.update(buyerRef, {
+                unlockedVideos: arrayUnion(video.id)
+            });
+        });
+
+        // ─── Success: Confetti explosion ────────────────────────────────────
+        let unlocked = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+        if (!unlocked.includes(video.id)) {
+            unlocked.push(video.id);
+            localStorage.setItem("userUnlockedVideos", JSON.stringify(unlocked));
+        }
+
+        // Notification (non-blocking)
+        try {
+            await addDoc(collection(db, "notifications"), {
+                type: "clip_purchased",
+                title: "Your clip was unlocked!",
+                message: `${currentUser.chatId || "Someone"} paid ${cost} STRZ for "${video.title}"`,
+                videoId: video.id,
+                videoTitle: video.title,
+                buyerId: currentUser.uid,
+                buyerName: currentUser.chatId || "Anonymous",
+                recipientId: video.uploaderId,
+                read: false,
+                createdAt: serverTimestamp()
+            });
+        } catch (notifErr) {
+            ("Notification failed (non-critical):", notifErr);
+        }
+
+        // Slutty morphine confetti
+        if (typeof confetti === "function") {
+            confetti({
+                particleCount: 220,
+                spread: 100,
+                startVelocity: 45,
+                ticks: 200,
+                origin: { y: 0.6 },
+                colors: ['#FF1493', '#00FFEA', '#FF00F2', '#8A2BE2', '#FFD700', '#FF69B4', '#0FF'],
+                zIndex: 2147483647
+            });
+
+            // Second burst for extra drip
+            setTimeout(() => {
+                confetti({
+                    particleCount: 120,
+                    angle: 60,
+                    spread: 80,
+                    origin: { x: 0.2, y: 0.7 },
+                    colors: ['#FF1493', '#00FFEA', '#FF00F2', '#8A2BE2'],
+                });
+                confetti({
+                    particleCount: 120,
+                    angle: 120,
+                    spread: 80,
+                    origin: { x: 0.8, y: 0.7 },
+                    colors: ['#FFD700', '#FF69B4', '#0FF'],
+                });
+            }, 150);
+        }
+
+        showGoldAlert(`You unlocked "${video.title}"!`);
+
+        // Refresh UI
+        document.getElementById("highlightsModal")?.remove();
+        setTimeout(() => {
+            if (typeof highlightsBtn?.click === 'function') highlightsBtn.click();
+            if (typeof loadMyClips === 'function') loadMyClips();
+        }, 600);
+
+        if (typeof loadNotifications === "function") loadNotifications();
+
+    } catch (error) {
+        ("Unlock failed:", error);
+
+        let userMessage = "Unlock failed — try again";
+
+        if (error.message === "NOT_ENOUGH_STRZ") {
+            userMessage = "Not enough STRZ to unlock this clip";
+        } else if (error.message.includes("No document to update") || error.code === "not-found") {
+            userMessage = "Clip not found or already processed";
+        }
+
+        showGoldAlert(userMessage);
+    }
+}
+
+
+// Main Function - UPDATED & OPTIMIZED
+async function loadMyClips() {
+  const grid = document.getElementById("myClipsGrid");
+  const noMsg = document.getElementById("noClipsMessage");
+  if (!grid || !currentUser?.uid) return;
+
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:100px;color:#666;font-size:17px;">
+    Loading your Free Tonight clips...
+  </div>`;
+
+  try {
+    const docRef = doc(db, "highlightVideos", currentUser.uid);
+
+    const unsubscribe = onSnapshot(docRef, (snap) => {
+      if (!snap.exists() || !snap.data()?.highlights?.length) {
+        grid.innerHTML = "";
+        if (noMsg) noMsg.style.display = "block";
+        return;
+      }
+
+      if (noMsg) noMsg.style.display = "none";
+      grid.innerHTML = "";
+
+      let highlights = snap.data().highlights || [];
+      const now = Date.now();
+
+      // Auto-expire trending clips
+      let needsUpdate = false;
+      highlights = highlights.map(v => {
+        if (v.isTrending === true && v.trendingUntil && v.trendingUntil < now) {
+          v.isTrending = false;
+          needsUpdate = true;
+        }
+        return v;
+      });
+
+      if (needsUpdate) {
+        updateDoc(docRef, { highlights }).catch(() => {});
+      }
+
+      // Sort newest first
+      highlights.sort((a, b) => (b.uploadedAt || 0) - (a.uploadedAt || 0));
+
+      highlights.forEach(v => {
+        const isActive = v.isTrending === true && (!v.trendingUntil || v.trendingUntil > now);
+        const thumbnailSrc = v.thumbnailUrl || "";
+        const fallback = "https://via.placeholder.com/300x500/1a0033/00ffea?text=No+Thumbnail";
+
+        // Cute unique clip ID (kept as you wanted)
+        const clipId = `freetonightclip-${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+        const card = document.createElement("div");
+        card.style.cssText = `
+          background: #111;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+          border: 1px solid ${isActive ? '#00ff9d33' : '#333'};
+          display: flex;
+          flex-direction: column;
+          height: 245px;
+          position: relative;
+        `;
+
+        card.innerHTML = `
+          <div style="display:flex; height:100%; background:#0a0a0a;">
+            <!-- Thumbnail Preview -->
+            <div style="width:140px; flex-shrink:0; position:relative; overflow:hidden; background:#000;">
+              <img 
+                src="${thumbnailSrc || fallback}" 
+                alt="thumbnail"
+                loading="lazy"
+                style="width:100%; height:100%; object-fit:cover;"
+              >
+              
+              ${isActive ? `
+              <div style="position:absolute; top:12px; right:12px; background:#00ff9d; color:#000; font-size:10px; font-weight:900; padding:4px 11px; border-radius:20px; box-shadow:0 0 15px #00ff9d;">
+                LIVE
+              </div>` : ''}
+
+              <!-- Play Icon Overlay -->
+              <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); 
+                          width:48px; height:48px; background:rgba(0,0,0,0.55); border-radius:50%; 
+                          display:flex; align-items:center; justify-content:center; border:2.5px solid rgba(255,255,255,0.9); z-index:2;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                  <path d="M8 5.14v14l11-7z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Right Content -->
+            <div style="flex:1; padding:16px 18px; display:flex; flex-direction:column; position:relative;">
+              <div style="flex-grow:1;">
+                <div style="color:#fff; font-weight:800; font-size:15px; line-height:1.35; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                  ${v.title || "Free Tonight Clip"}
+                </div>
+                <div style="color:#00ffea; font-size:11px; font-family:monospace; margin-top:4px; opacity:0.85;">
+                  ${clipId}
+                </div>
+              </div>
+
+              <!-- Status + Delete -->
+              <div style="margin-top:auto; padding-top:12px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                  <div style="width:10px; height:10px; background:${isActive ? '#00ff9d' : '#666'}; border-radius:50%; box-shadow:0 0 12px ${isActive ? '#00ff9d' : '#444'};"></div>
+                  <span style="color:${isActive ? '#00ff9d' : '#888'}; font-weight:900; font-size:13px; letter-spacing:0.5px;">
+                    ${isActive ? 'FREE TONIGHT' : 'Offline'}
+                  </span>
+                </div>
+
+                <button class="delete-clip-btn"
+                        data-id="${v.id}"
+                        data-title="${(v.title || 'Clip').replace(/"/g, '&quot;')}"
+                        style="background:#ff3366; color:white; border:none; padding:9px 18px; border-radius:12px; font-size:11px; font-weight:800; cursor:pointer; width:100%; box-shadow:0 4px 15px rgba(255,51,102,0.4);">
+                  DELETE
+                </button>
+              </div>
             </div>
           </div>
-          <div id="videoPreviewContainer" style="display:none; text-align:center;">
-            <video id="videoPreview" controls muted style="
-              width:100%;
-              max-height:220px;
-              border-radius:12px;
-              background:#000;
-              object-fit:contain;
-            "></video>
-            <div id="fileSizeInfo" style="
-              margin-top:12px;
-              font-size:13px;
-              color:#888;
-            "></div>
-          </div>
-          <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
-        </label>
-      </div>
+        `;
 
-      <div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
-  <label style="display:inline-flex; align-items:center; gap:12px; cursor:pointer;">
-    <input type="checkbox" id="itsMeCheckbox" style="width:20px; height:20px; accent-color:#ff2e78;">
-    I certify it's me in this video
-  </label>
-</div>
+        grid.appendChild(card);
+      });
 
-      <!-- Upload Button + Progress + Disclaimer -->
-      <div style="text-align:center; margin-top:32px;">
-        <button id="uploadHighlightBtn" disabled style="
-          padding:14px 40px; background:#444;
-          color:#888; border:none; border-radius:50px; font-weight:700; font-size:16px;
-          cursor:not-allowed; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(0,0,0,0.3);
-          transition:all 0.3s ease; position:relative; z-index:2;
-        ">
-          I'm Free Tonight
+      // Attach delete listeners
+      setTimeout(() => {
+        document.querySelectorAll(".delete-clip-btn").forEach(btn => {
+          btn.onclick = () => showDeleteConfirm(btn.dataset.id, btn.dataset.title);
+        });
+      }, 100);
+    });
+
+  } catch (err) {
+    ("loadMyClips error:", err);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:100px;color:#f66;">Failed to load your clips</div>`;
+  }
+}
+
+async function showDeleteConfirm(clipId, clipTitle) {
+  if (!clipId || !currentUser?.uid) {
+    showGoldAlert?.("Please log in again");
+    return;
+  }
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    position:fixed; inset:0; background:rgba(0,0,0,0.92);
+    display:flex; align-items:center; justify-content:center;
+    z-index:99999; font-family:system-ui, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="background:#111; padding:28px; border-radius:16px; text-align:center; color:#fff; max-width:340px; box-shadow:0 0 30px rgba(0,0,0,0.6);">
+      <h3 style="margin:0 0 12px; color:#ff3366; font-size:21px;">Delete Clip?</h3>
+      <p style="color:#ccc; margin:0 0 24px; line-height:1.5;">
+        "<strong style="color:#ff6699;">${(clipTitle || 'This clip').replace(/</g, '&lt;')}</strong>"<br>
+        will be permanently deleted.
+      </p>
+      <div style="display:flex; gap:14px; justify-content:center;">
+        <button id="cancelDelete" style="padding:10px 20px; background:#333; border:none; color:#fff; border-radius:10px; font-weight:500; cursor:pointer; flex:1;">
+          Cancel
         </button>
+        <button id="confirmDelete" style="padding:10px 20px; background:linear-gradient(90deg,#ff3366,#ff0066); border:none; color:#fff; border-radius:10px; font-weight:700; cursor:pointer; flex:1;">
+          Delete
+        </button>
+      </div>
+    </div>
+  `;
 
-      <div style="text-align:center; margin-top:12px; font-size:13px; color:#888; opacity:0.8;">
-  By clicking "I'm Free Tonight" you agree to the 
-  <span id="termsLink" style="
-    color:#ff2e78;
-    cursor:pointer;
-    transition:all 0.2s ease;
-  "
-  onmouseover="this.style.textShadow='0 0 8px rgba(255,46,120,0.6)'"
-  onmouseout="this.style.textShadow='none'">
-    consent & terms
-  </span>.
-</div>
+  document.body.appendChild(modal);
 
-        <div id="progressContainer" style="
-          margin:14px auto 0;
-          width:80%;
-          max-width:340px;
-          height:8px;
-          background:rgba(255,255,255,0.08);
-          border-radius:4px;
-          overflow:hidden;
-          opacity:0;
-          transition:opacity 0.4s ease;
-        ">
-          <div id="progressBar" style="
-            width:0%;
-            height:100%;
-            background:linear-gradient(90deg, #ff2e78, #ff8c2e);
-            border-radius:4px;
-            transition:width 0.3s ease-out;
-          "></div>
+  const confirmBtn = modal.querySelector("#confirmDelete");
+  const cancelBtn = modal.querySelector("#cancelDelete");
+
+  cancelBtn.onclick = () => modal.remove();
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+  confirmBtn.onclick = async () => {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Deleting...";
+
+    try {
+      const userDocRef = doc(db, "highlightVideos", currentUser.uid);
+      const snap = await getDoc(userDocRef);
+
+      if (!snap.exists()) throw new Error("Document not found");
+
+      let highlights = snap.data().highlights || [];
+      const clipToDelete = highlights.find(c => c.id === clipId);
+
+      if (!clipToDelete) throw new Error("Clip not found");
+
+      // Delete thumbnail from Storage
+      if (clipToDelete.thumbnailStoragePath) {
+        try {
+          const thumbRef = ref(storage, clipToDelete.thumbnailStoragePath);
+          await deleteObject(thumbRef);
+          ("Thumbnail deleted from storage");
+        } catch (e) {
+          ("Thumbnail delete failed (might not exist):", e);
+        }
+      }
+
+      // Remove clip from array
+      highlights = highlights.filter(clip => clip.id !== clipId);
+
+      // Update Firestore
+      await updateDoc(userDocRef, {
+        highlights: highlights,
+        totalVideos: Math.max(0, (snap.data().totalVideos || 0) - 1),
+        lastUpdatedAt: serverTimestamp()
+      });
+
+      showGoldAlert?.("Clip deleted successfully ✓");
+      modal.remove();
+
+      if (typeof loadMyClips === 'function') {
+        setTimeout(loadMyClips, 300);
+      }
+
+    } catch (err) {
+      ("Delete error:", err);
+      showGoldAlert?.("Failed to delete clip. Please try again.");
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Yes, Delete";
+    }
+  };
+}
+
+  // INVITE FOLKS!!!!!
+document.getElementById('inviteFriendsToolBtn')?.addEventListener('click', () => {
+  if (!currentUser?.chatId) {
+    showGoldAlert('Error', 'User not loaded yet');
+    return;
+  }
+
+  const chatId = currentUser.chatId || 'friend';
+  const prettyHandle = chatId.startsWith('@') ? chatId : `@${chatId}`;
+  const message = `Hey! join my Cube and let’s win some together! Sign up using my invite link: `;
+  const link = `https://cube.xixi.live/sign-up?ref=${encodeURIComponent(prettyHandle)}`;
+  const fullText = message + link;
+
+  navigator.clipboard.writeText(fullText)
+    .then(() => {
+      showStarPopup('Invite link copied!', 'Your invite link is ready to share!', 2500);
+    })
+    .catch(() => {
+      showStarPopup('Error', 'Could not copy link — try again', 3000);
+    });
+});
+
+/*********************************
+ * REELS DATA
+ *********************************/
+const reelsData = [
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/3901931aca4f497f834b1a7d07d06f92.mp4",
+    title: "Hot Dance Reel",
+    description: "Turning up the heat with this fire routine 🔥 Who's joining next?",
+    views: 42300
+  },
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/ac4b7566814a497ca3d4b2309ff9fa5d.mp4",
+    title: "Behind the Scenes",
+    description: "Day in the life — prep, laughs, and real moments backstage 🎥",
+    views: 18700
+  },
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/31941326eb1745428c65ee9bb2a42e81.mp4",
+    title: "Late Night Vibes",
+    description: "Chill session after hours — just vibes and good energy 🌙",
+    views: 105200
+  },
+  {
+    videoUrl: "https://cdn.shopify.com/videos/c/o/v/eb50a3c972c642a48ceef0c8424679b9.mp4",
+    title: "Exclusive Drop",
+    description: "First look at tomorrow's surprise... you saw it here first 👀",
+    views: 89100
+  }
+];
+
+/*********************************
+ * FORMAT VIEWS
+ *********************************/
+function formatViews(count) {
+  if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + 'M';
+  if (count >= 1_000) return (count / 1_000).toFixed(1) + 'K';
+  return count.toString();
+}
+
+/*********************************
+ * LOAD REELS
+ *********************************/
+function loadReels() {
+  const gallery = document.getElementById('reelsGallery');
+  if (!gallery) return;
+
+  gallery.innerHTML = '';
+
+  reelsData.forEach(reel => {
+    gallery.insertAdjacentHTML('beforeend', `
+      <div class="reel-item">
+        <video
+          src="${reel.videoUrl}"
+          muted
+          preload="metadata"
+        ></video>
+
+        <!-- BIG PLAY BUTTON (UNCHANGED) -->
+        <div class="play-icon">▶</div>
+
+        <div class="reel-overlay">
+          <div class="reel-info">
+            <div class="reel-views">
+              ${formatViews(reel.views)} views
+            </div>
+            <div class="reel-title">${reel.title}</div>
+            <div class="reel-description">${reel.description}</div>
+          </div>
         </div>
       </div>
+    `);
+  });
+
+  attachReelInteractions();
+}
+
+/*********************************
+ * INTERACTIONS
+ *********************************/
+function attachReelInteractions() {
+  document.querySelectorAll('.reel-item').forEach(item => {
+    const video = item.querySelector('video');
+    const playIcon = item.querySelector('.play-icon');
+    if (!video || !playIcon) return;
+
+    // Reset on load
+    video.muted = true;
+    playIcon.style.opacity = '1';
+
+    /* Desktop hover preview (muted) */
+    item.addEventListener('mouseenter', () => {
+      video.muted = true;
+      video.play().catch(() => {});
+    });
+    item.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+      playIcon.style.opacity = '1';
+    });
+
+    /* MOBILE & DESKTOP: Tap anywhere on reel to play with sound */
+    item.addEventListener('click', async (e) => {
+      e.stopPropagation();
+
+      try {
+        // First play muted to "unlock" audio on iOS/Android
+        video.muted = true;
+        await video.play();
+
+        // Then unmute and replay with sound
+        video.muted = false;
+        video.currentTime = 0;
+        await video.play();
+
+        // Hide play icon
+        playIcon.style.opacity = '0';
+
+        // Optional: Enter fullscreen on mobile
+        if (video.requestFullscreen) {
+          await video.requestFullscreen();
+        } else if (video.webkitEnterFullscreen) { // iOS Safari
+          await video.webkitEnterFullscreen();
+        }
+      } catch (err) {
+        ('Play failed:', err);
+        // Fallback: show play icon if blocked
+        playIcon.style.opacity = '1';
+      }
+    });
+
+    // Sync play icon visibility
+    video.addEventListener('play', () => playIcon.style.opacity = '0');
+    video.addEventListener('pause', () => playIcon.style.opacity = '1');
+    video.addEventListener('ended', () => {
+      playIcon.style.opacity = '1';
+      video.currentTime = 0;
+    });
+  });
+}
+
+// Private Message Reader - Host Only (fixed listener cleanup)
+const privateMsgReader = document.getElementById('privateMsgReader');
+const privateMessagesList = document.getElementById('privateMessagesList');
+const privateMsgCount = document.getElementById('privateMsgCount');
+let unreadCount = 0;
+let privateMsgUnsubscribe = null;
+
+if (currentUser && currentUser.isLive) {
+  privateMsgReader.style.display = 'block';
+
+  const q = query(
+    collection(db, "privateLiveMessages"),
+    orderBy("timestamp", "asc")
+  );
+
+  privateMsgUnsubscribe = onSnapshot(q, (snapshot) => {
+    privateMessagesList.innerHTML = '';
+    unreadCount = 0;
+
+    if (snapshot.empty) {
+      privateMessagesList.innerHTML = '<p class="no-messages">No private messages yet... waiting for secrets ✨</p>';
+      privateMsgCount.textContent = '0';
+      return;
+    }
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      unreadCount++;
+      const msgEl = document.createElement('div');
+      msgEl.className = 'private-message-item';
+      msgEl.innerHTML = `
+        <div class="msg-time">${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : 'Just now'}</div>
+        <div class="msg-text">${data.content || '💕'}</div>
+      `;
+      privateMessagesList.appendChild(msgEl);
+    });
+
+    privateMsgCount.textContent = unreadCount;
+    privateMessagesList.scrollTop = privateMessagesList.scrollHeight;
+  });
+} else {
+  privateMsgReader.style.display = 'none';
+}
+
+// Cleanup private messages listener
+function stopPrivateMsgListener() {
+  if (privateMsgUnsubscribe) {
+    privateMsgUnsubscribe();
+    privateMsgUnsubscribe = null;
+  }
+}
+
+document.getElementById("closePrivateMsgBtn")?.addEventListener("click", stopPrivateMsgListener);
+window.addEventListener("beforeunload", stopPrivateMsgListener);
+
+
+// ==================== WIN $STRZ POLL — EXPERT FIXED VERSION ====================
+
+let pollUnsubscribe = null;
+let votesUnsubscribe = null;
+let pollTimerInterval = null;
+
+// Open Poll Modal
+document.getElementById("topBallersBtn")?.addEventListener("click", openPollModal);
+
+async function openPollModal() {
+  if (!currentUser) {
+    showGoldAlert("Login to vote & win $STRZ!");
+    return;
+  }
+
+  showLoaderBlack("");
+
+  // Clean up previous listeners
+  cleanupPollListeners();
+
+  try {
+    pollUnsubscribe = onSnapshot(doc(db, "polls", "current"), async (pollSnap) => {
+      if (!pollSnap.exists()) {
+        hideLoaderBlack();
+        document.getElementById("pollModal").style.display = "none";
+        showStarPopup("No active poll right now");
+        return;
+      }
+
+      const poll = pollSnap.data();
+
+      const endTime = getPollEndTime(poll.endsAt);
+      const now = Date.now();
+
+      if (now > endTime) {
+        hideLoaderBlack();
+        document.getElementById("pollModal").style.display = "none";
+        showStarPopup("This poll has ended!");
+        return;
+      }
+
+      // Reset everything for new poll
+      resetPollUI();
+
+      startVotesListener(poll, endTime);
+    }, (err) => {
+      hideLoaderBlack();
+      ("Poll snapshot error:", err);
+      showStarPopup("Failed to load poll");
+    });
+  } catch (err) {
+    hideLoaderBlack();
+    (err);
+  }
+}
+
+// Helper: Safely get endTime
+function getPollEndTime(endsAt) {
+  if (!endsAt) return 0;
+  if (endsAt.toMillis) return endsAt.toMillis();
+  if (endsAt.getTime) return endsAt.getTime();
+  if (typeof endsAt === 'number') return endsAt;
+  return 0;
+}
+
+// Clean previous data & listeners
+function cleanupPollListeners() {
+  if (pollUnsubscribe) pollUnsubscribe();
+  if (votesUnsubscribe) votesUnsubscribe();
+  if (pollTimerInterval) clearInterval(pollTimerInterval);
+
+  pollUnsubscribe = null;
+  votesUnsubscribe = null;
+  pollTimerInterval = null;
+}
+
+function resetPollUI() {
+  document.getElementById("pollOptions").innerHTML = "";
+  document.getElementById("resultBars").innerHTML = "";
+  document.getElementById("pollResult").style.display = "none";
+}
+
+// Votes Listener
+function startVotesListener(poll, endTime) {
+  // Clean old votes listener first
+  if (votesUnsubscribe) votesUnsubscribe();
+
+  votesUnsubscribe = onSnapshot(collection(db, "pollVotes"), (votesSnap) => {
+    hideLoaderBlack();
+
+    const voteCounts = {};
+    poll.options.forEach(opt => voteCounts[opt] = 0);
+
+    votesSnap.forEach(doc => {
+      const vote = doc.data();
+      if (vote.choice && poll.options.includes(vote.choice)) {
+        voteCounts[vote.choice]++;
+      }
+    });
+
+    poll.liveVotes = voteCounts;
+    renderPoll(poll, endTime);
+    document.getElementById("pollModal").style.display = "flex";
+  });
+}
+
+// Main Render
+function renderPoll(poll, endTime) {
+  document.getElementById("pollQuestion").textContent = poll.question || "Poll Question";
+
+  // Timer UI
+  document.getElementById("pollTimer").innerHTML = `
+    <div class="poll-reward-line">
+      <strong>Reward: <span class="reward-amount">${poll.reward || 50} $STRZ</span> ⭐️</strong>
     </div>
-  </div>
-</div>
-
- <div id="termsModal" style="
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.85);
-  backdrop-filter:blur(10px);
-  z-index:999999;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  text-align:center;
-">
-
-  <div style="
-    background:#111;
-    border:1px solid #333;
-    border-radius:16px;
-    max-width:420px;
-    width:100%;
-    padding:24px;
-    color:#e0e0e0;
-    box-shadow:0 20px 60px rgba(0,0,0,0.6);
-    text-align:center;
-  ">
-
-    <div style="font-size:18px; font-weight:700; margin-bottom:14px;">
-      Terms & Consent
+    <div class="poll-timer-line">
+      <strong>Time left: <span id="countdown"></span></strong>
     </div>
+  `;
 
-    <div style="font-size:14px; line-height:1.7; color:#aaa; text-align:center;">
-      By uploading this video, you confirm that:
-      <br><br>
-      • You are the person shown in the content<br>
-      • You have full rights to upload and share it<br>
-      • You grant permission for platform use<br>
-      • You understand it may be publicly displayed
-    </div>
+  startPollTimer(endTime);
 
-    <button id="closeTerms" style="
-      margin-top:20px;
-      width:100%;
-      padding:12px;
-      background:#ff2e78;
-      color:#fff;
-      border:none;
-      border-radius:10px;
-      font-weight:700;
+  // Check if user already voted
+  getDoc(doc(db, "pollVotes", currentUser.uid)).then((voteSnap) => {
+    if (voteSnap.exists()) {
+      const userChoice = voteSnap.data().choice;
+      showLiveResults(poll, userChoice);
+    } else {
+      showVotingOptions(poll);
+    }
+  }).catch(() => {
+    showVotingOptions(poll);
+  });
+}
+
+function showVotingOptions(poll) {
+  const container = document.getElementById("pollOptions");
+  container.innerHTML = "";
+
+  poll.options.forEach(option => {
+    const btn = document.createElement("button");
+    btn.textContent = option;
+    btn.style.cssText = `
+      width:100%; 
+      padding:18px; 
+      margin:12px 0; 
+      background:#222; 
+      color:#fff; 
+      border:2px solid #444; 
+      border-radius:16px; 
+      font-size:18px; 
+      font-weight:bold; 
       cursor:pointer;
-    ">
-      Got it
-    </button>
-  </div>
-</div>
-  
-<!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
-<div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
-  <h2 style="
-    text-align:center;
-    font-size:28px;
-    font-weight:900;
-    background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    margin:0 0 20px;
-    letter-spacing:1px;
-  ">
-    MY CLIPS LIST
-  </h2>
-  <p style="text-align:center; color:#aaa; font-size:14px; margin:-10px 0 30px;">
-    Your uploaded highlights
-  </p>
+      transition:all 0.2s;
+    `;
 
-  <div id="myClipsGrid" style="
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
-    gap:18px;
-    padding:10px;
-  ">
-    <!-- CLIPS WILL BE INJECTED HERE BY JS -->
-  </div>
+    btn.onclick = async () => {
+      try {
+        await setDoc(doc(db, "pollVotes", currentUser.uid), {
+          choice: option,
+          votedAt: serverTimestamp()
+        });
 
-  <div id="noClipsMessage" style="
-    text-align:center;
-    padding:60px 20px;
-    color:#666;
-    font-size:16px;
-    display:none;
-  ">
-    <div style="font-size:60px; margin-bottom:20px;">.____.</div>
-    You haven't uploaded any clips yet.<br>
-    <span style="color:#ffcc00">Upload to earn bonus $STRZ!</span>
-  </div>
+        await updateDoc(doc(db, "users", currentUser.uid), {
+          stars: increment(poll.reward || 50)
+        });
 
+        // ==================== NUCLEAR CONFETTI ====================
+        nuclearConfettiBurst();
 
+        showStarPopup(`Voted for ${option}! +${poll.reward} $STRZ 🎉`);
+        showLiveResults(poll, option);
 
-  
-      <!-- POLL SECTION – ADMIN ONLY (Header + Form attached as one unit) -->
-<div id="polls" class="section" style="margin:40px auto; max-width:900px;">
+      } catch (err) {
+        (err);
+        showStarPopup("Vote failed. Try again.");
+      }
+    };
 
-  <!-- Integrated Header – attached directly to the content below -->
-  <div style="text-align:center; padding:0 0 24px 0;">
-    <span style="
-      display:block;
-      color:#00ff9d;
-      font-size:14px;
-      font-weight:800;
-      letter-spacing:3px;
-      text-transform:uppercase;
-      margin-bottom:8px;
-      opacity:0.9;
-    ">ADMIN CONTROL</span>
-    
-    <h2 style="
-      font-size:32px;
-      font-weight:900;
-      background:linear-gradient(90deg, #00ffea, #ff00c8, #ffea00);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-      margin:0 0 12px 0;
-      letter-spacing:1.5px;
-      text-shadow:0 2px 10px rgba(0,255,234,0.3);
-    ">
-      POLL
-    </h2>
-    
-    <p style="
-      color:#aaa;
-      font-size:15px;
-      margin:0;
-      font-weight:500;
-    ">
-      Create daily community polls & reward winners with $STRZ
-    </p>
-  </div>
+    container.appendChild(btn);
+  });
 
-  <!-- Poll Creation Box – directly follows the header with no extra gap -->
-  <div class="poll-creation-box" style="
-    background:#111;
-    border-radius:16px;
-    border:1px solid #222;
-    padding:24px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  ">
-    <!-- Question -->
-    <div style="margin-bottom:24px;">
-      <label for="poll-question" style="
-        display:block;
-        color:#ccc;
-        font-size:14px;
-        font-weight:600;
-        margin-bottom:8px;
-      ">Poll Question</label>
-      <input
-        id="poll-question"
-        class="poll-input"
-        placeholder="Who has the cutest vibe today?"
-        maxlength="120"
-        style="width:100%;"
-      />
+  document.getElementById("pollResult").style.display = "none";
+}
+
+// ====================== NUCLEAR CONFETTI FUNCTION ======================
+function nuclearConfettiBurst() {
+  const colors = ['#ff1493', '#ff69b4', '#c3f60c', '#00ffea', '#ffd700', '#ff00ff', '#00ffff'];
+
+  // Main heavy burst
+  confetti({
+    particleCount: 280,
+    spread: 100,
+    origin: { y: 0.55 },
+    colors: colors,
+    zIndex: 100000,
+    ticks: 300
+  });
+
+  // Left cannon
+  confetti({
+    particleCount: 160,
+    angle: 60,
+    spread: 55,
+    origin: { x: 0.1, y: 0.6 },
+    colors: colors
+  });
+
+  // Right cannon
+  confetti({
+    particleCount: 160,
+    angle: 120,
+    spread: 55,
+    origin: { x: 0.9, y: 0.6 },
+    colors: colors
+  });
+
+  // Extra top burst
+  setTimeout(() => {
+    confetti({
+      particleCount: 200,
+      spread: 120,
+      origin: { y: 0.4 },
+      colors: colors
+    });
+  }, 120);
+
+  // Final shower
+  setTimeout(() => {
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.7 },
+      colors: ['#ffd700', '#c3f60c', '#ff1493']
+    });
+  }, 350);
+}
+
+// Show Results
+function showLiveResults(poll, yourChoice) {
+  document.getElementById("pollResult").style.display = "block";
+  document.getElementById("yourChoice").textContent = yourChoice || "—";
+
+  const container = document.getElementById("resultBars");
+  container.innerHTML = "";
+
+  const totalVotes = Object.values(poll.liveVotes || {}).reduce((a, b) => a + b, 0);
+
+  if (totalVotes === 0) {
+    container.innerHTML = `<p style="color:#888; font-style:italic; text-align:center;">No votes yet — be the first!</p>`;
+    return;
+  }
+
+  poll.options.forEach(option => {
+    const votes = poll.liveVotes[option] || 0;
+    const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
+
+    const barHTML = `
+      <div class="result-bar-label">
+        <strong>${option}</strong>
+        <span>${votes} votes (${percentage}%)</span>
+      </div>
+      <div class="result-bar">
+        <div class="result-bar-fill" style="width: ${percentage}%;"></div>
+      </div>
+    `;
+
+    const bar = document.createElement("div");
+    bar.innerHTML = barHTML;
+    bar.style.margin = "16px 0";
+    container.appendChild(bar);
+  });
+}
+
+// Timer
+function startPollTimer(endTime) {
+  if (pollTimerInterval) clearInterval(pollTimerInterval);
+
+  const countdownEl = document.getElementById("countdown");
+
+  pollTimerInterval = setInterval(() => {
+    const left = endTime - Date.now();
+    if (left <= 0) {
+      countdownEl.textContent = "ENDED";
+      clearInterval(pollTimerInterval);
+      return;
+    }
+
+    const hours = Math.floor(left / 3600000);
+    const mins = Math.floor((left % 3600000) / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+    countdownEl.textContent = `${hours}h ${mins}m ${secs}s`;
+  }, 1000);
+}
+
+// Close Button
+document.getElementById("closePollBtn").onclick = () => {
+  document.getElementById("pollModal").style.display = "none";
+  cleanupPollListeners();
+};
+
+// ==================== POLL CAROUSEL - INSTAGRAM STYLE (Fixed) ====================
+function loadPollCarousel() {
+  const carousel = document.getElementById("pollCarousel");
+  if (!carousel) return;
+
+  carousel.innerHTML = "";
+
+  const images = [
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356",
+    "https://cdn.shopify.com/s/files/1/0962/6648/6067/files/128_x_128_px_Instagram_Post_45.jpg?v=1765857356"
+  ];
+
+  // Main Wrapper - Instagram Square Ratio
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = `
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #0a0a0a;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  `;
+
+  // Slides Track
+  const track = document.createElement("div");
+  track.id = "carouselSlides";
+  track.style.cssText = `
+    display: flex;
+    width: ${images.length * 100}%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+    transform: translateX(0%);
+  `;
+
+  images.forEach(src => {
+    const slide = document.createElement("div");
+    slide.style.cssText = `
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+      position: relative;
+    `;
+
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Poll Visual";
+    img.style.cssText = `
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    `;
+
+    slide.appendChild(img);
+    track.appendChild(slide);
+  });
+
+  wrapper.appendChild(track);
+  carousel.appendChild(wrapper);
+
+  // ==================== DOTS & CONTROLS ====================
+  let currentIndex = 0;
+  const totalSlides = images.length;
+
+  const dotsContainer = document.createElement("div");
+  dotsContainer.style.cssText = `
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    z-index: 20;
+  `;
+
+  dotsContainer.innerHTML = images.map((_, i) => `
+    <div class="carousel-dot" data-index="${i}" 
+         style="width:8px;height:8px;border-radius:50%;background:${i===0?'#c3f60c':'rgba(255,255,255,0.5)'};transition:all 0.3s;cursor:pointer;">
     </div>
+  `).join('');
 
-    <!-- Options -->
-    <div style="margin-bottom:24px;">
-      <label style="
-        display:block;
-        color:#ccc;
-        font-size:14px;
-        font-weight:600;
-        margin-bottom:8px;
-      ">Options</label>
-      <div id="poll-options-container" class="options-grid" style="display:grid; grid-template-columns:1fr; gap:12px;">
-        <input class="poll-option-input" placeholder="Option 1 (required)" maxlength="60" required />
-        <input class="poll-option-input" placeholder="Option 2 (required)" maxlength="60" required />
-        <input class="poll-option-input" placeholder="Option 3 (optional)" maxlength="60" />
-        <input class="poll-option-input" placeholder="Option 4 (optional)" maxlength="60" />
-      </div>
-    </div>
+  wrapper.appendChild(dotsContainer);
 
-    <!-- Reward + Duration -->
-    <div class="poll-meta-row" style="display:flex; flex-wrap:wrap; gap:16px;">
-      <div class="meta-field" style="flex:1; min-width:140px;">
-        <label for="poll-reward" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
-          Reward ($STRZ)
-        </label>
-        <input
-          id="poll-reward"
-          type="number"
-          min="10"
-          max="1000"
-          value="50"
-          class="poll-meta-input"
-          style="width:100%;"
-        />
-      </div>
-      <div class="meta-field" style="flex:1; min-width:140px;">
-        <label for="poll-duration" style="color:#ccc;font-size:14px;font-weight:600;margin-bottom:8px;display:block;">
-          Duration (hours)
-        </label>
-        <input
-          id="poll-duration"
-          type="number"
-          min="1"
-          max="168"
-          value="24"
-          class="poll-meta-input"
-          style="width:100%;"
-        />
-      </div>
-    </div>
-  </div>
+  const dots = dotsContainer.querySelectorAll('.carousel-dot');
 
-  <!-- Create Button -->
-  <div style="text-align:center; margin:24px 0;">
-    <button id="create-new-poll" class="create-btn">
-      Create Poll
-    </button>
-  </div>
+  function updateCarousel() {
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    dots.forEach((dot, i) => {
+      dot.style.background = i === currentIndex ? '#c3f60c' : 'rgba(255,255,255,0.5)';
+    });
+  }
 
-  <!-- Preview Area -->
-  <div id="current-poll-admin" class="preview-box">
-    <p class="preview-placeholder">Preview will appear here after creation</p>
-  </div>
-</div>
-</div>
+  // Dot Click
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentIndex = parseInt(dot.dataset.index);
+      updateCarousel();
+    });
+  });
 
+  // Touch Swipe
+  let touchStartX = 0;
+  wrapper.addEventListener("touchstart", e => {
+    touchStartX = e.touches[0].clientX;
+  });
+
+  wrapper.addEventListener("touchend", e => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && currentIndex < totalSlides - 1) currentIndex++;
+      else if (diff < 0 && currentIndex > 0) currentIndex--;
+      updateCarousel();
+    }
+  });
+
+  // Auto Play
+  let autoPlayInterval = setInterval(() => {
+    currentIndex = (currentIndex + 1) % totalSlides;
+    updateCarousel();
+  }, 4500);
+
+  // Pause on hover/touch (optional improvement)
+  wrapper.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+  wrapper.addEventListener('mouseleave', () => {
+    autoPlayInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % totalSlides;
+      updateCarousel();
+    }, 4500);
+  });
+}
+
+// ==================== CREATE NEW POLL - ROBUST VERSION ====================
+
+function initCreatePollButton() {
+  const createBtn = document.getElementById("create-new-poll");
+
+  if (!createBtn) {
+    ("⚠️ Create Poll button (#create-new-poll) not found in DOM yet.");
+    // Retry after a short delay (in case modal loads late)
+    setTimeout(initCreatePollButton, 800);
+    return;
+  }
+
+  // Remove old listener if exists to prevent duplicates
+  createBtn.removeEventListener("click", handleCreatePoll);
+
+  createBtn.addEventListener("click", handleCreatePoll);
+  ("✅ Create Poll button initialized successfully");
+}
+
+// Main Handler
+async function handleCreatePoll() {
+  const btn = document.getElementById("create-new-poll");
+  if (!btn) return;
+
+  if (!currentAdmin || !currentAdmin.uid) {
+    showGoldAlert("Admin login required to create poll!");
+    return;
+  }
+
+  const question = document.getElementById("poll-question")?.value.trim();
+  const optionInputs = document.querySelectorAll(".poll-option-input");
+  const options = Array.from(optionInputs)
+    .map(input => input.value.trim())
+    .filter(v => v.length > 0);
+
+  const reward = parseInt(document.getElementById("poll-reward")?.value) || 50;
+  const hours = parseInt(document.getElementById("poll-duration")?.value) || 24;
+
+  // Validation
+  if (!question) {
+    showGoldAlert("Please enter a poll question ♡");
+    return;
+  }
+  if (options.length < 2) {
+    showGoldAlert("Need at least 2 options!");
+    return;
+  }
+
+  // UI Feedback
+  const originalText = btn.innerHTML;
+  const originalStyle = btn.style.cssText || "";
+  btn.innerHTML = '<span class="btn-spinner visible"></span> Creating...';
+  btn.disabled = true;
+
+  try {
+    const endsAt = Timestamp.fromMillis(Date.now() + hours * 60 * 60 * 1000);
+
+    await setDoc(doc(db, "polls", "current"), {
+      question,
+      options,
+      votes: options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+      endsAt,
+      reward,
+      createdAt: serverTimestamp(),
+      createdBy: currentAdmin.uid,
+      status: "active"
+    });
+
+    btn.innerHTML = '✓ Poll Created Successfully!';
+    btn.style.background = 'linear-gradient(90deg, #40c057, #69db7c)';
+
+    showGoldAlert(`New poll is now live!\n${options.length} options • ${reward} $STRZ`, "SUCCESS");
+
+    // Clear form
+    document.getElementById("poll-question").value = "";
+    optionInputs.forEach(input => input.value = "");
+    document.getElementById("poll-reward").value = "50";
+    document.getElementById("poll-duration").value = "24";
+
+  } catch (err) {
+    ("Create Poll Error:", err);
+    btn.innerHTML = '✗ Failed';
+    btn.style.background = 'linear-gradient(90deg, #fa5252, #ff6b6b)';
+    showGoldAlert("Failed to create poll. Check ");
+  }
+
+  // Reset button after 2.5 seconds
+  setTimeout(() => {
+    btn.innerHTML = originalText;
+    btn.style.cssText = originalStyle;
+    btn.disabled = false;
+  }, 2500);
+}
+
+// Initialize when page loads
+document.addEventListener("DOMContentLoaded", initCreatePollButton);
+
+// Also try initializing immediately (in case script loads late)
+initCreatePollButton();
+
+/*********************************
+ * fruity punch!!
+ *********************************/
+let currentFruitSlide = 0;
+const totalFruitSlides = 4;
+
+function updateFruitCarousel() {
+  document.getElementById("fruitSlides").style.transform = `translateX(-${currentFruitSlide * 25}%)`;
   
-  
-  
-      <!-- Messages / Additional Info -->
-      <div id="hostMessagesContainer" style="padding:6px 0;">
-        <!-- Messages or host-specific info will be dynamically loaded here -->
+  document.querySelectorAll("#fruitDots .dot").forEach((dot, i) => {
+    dot.classList.toggle("active", i === currentFruitSlide);
+  });
+}
+
+// Touch/Swipe Support
+let touchStartX = 0;
+const carousel = document.getElementById("fruitCarousel");
+carousel.addEventListener("touchstart", e => {
+  touchStartX = e.touches[0].clientX;
+});
+carousel.addEventListener("touchend", e => {
+  const touchEndX = e.changedTouches[0].clientX;
+  const diff = touchStartX - touchEndX;
+  if (Math.abs(diff) > 50) { // minimum swipe distance
+    if (diff > 0 && currentFruitSlide < totalFruitSlides - 1) {
+      currentFruitSlide++;
+    } else if (diff < 0 && currentFruitSlide > 0) {
+      currentFruitSlide--;
+    }
+    updateFruitCarousel();
+  }
+});
+
+// Dot clicks
+document.querySelectorAll("#fruitDots .dot").forEach(dot => {
+  dot.addEventListener("click", () => {
+    currentFruitSlide = parseInt(dot.dataset.slide);
+    updateFruitCarousel();
+  });
+});
+
+// Open & Close
+document.getElementById("openFruitGuide").addEventListener("click", () => {
+  currentFruitSlide = 0;
+  updateFruitCarousel();
+  document.getElementById("fruitGuideModal").style.display = "flex";
+});
+
+// Only the bottom button remains (top × is gone)
+document.getElementById("closeFruitGuideBottom").addEventListener("click", () => {
+  document.getElementById("fruitGuideModal").style.display = "none";
+});
+
+// Function to toggle host-only fields
+function toggleHostFields() {
+  const hostFields = document.getElementById("hostOnlyFields");
+  if (!hostFields) return; // Safety check
+
+  if (currentUser && currentUser.isHost === true) {
+    hostFields.style.display = "block"; // Show for hosts
+  } else {
+    hostFields.style.display = "none"; // Hide for non-hosts
+  }
+}
+
+// ——— NEW: EXPANDING INPUT (Grok-style) ———
+// This replaces your old input, but uses your original send/buzz logic
+const messageInput = document.getElementById("messageInput");
+
+// Auto-resize and expand like Grok
+function resizeAndExpand() {
+  messageInput.style.height = "auto";
+  messageInput.style.height = messageInput.scrollHeight + "px";
+  document.getElementById("sendArea").classList.toggle("expanded", messageInput.scrollHeight > 60);
+}
+messageInput.addEventListener("input", resizeAndExpand);
+
+// Enter = send (mobile & desktop), Shift+Enter = new line
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    refs.sendBtn.click();  // Triggers your original send logic
+  }
+});
+
+// Make send button work on mobile tap
+refs.sendBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  refs.sendBtn.click();
+});
+
+// Make buzz button work on mobile tap
+refs.buzzBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  refs.buzzBtn.click();
+});
+
+// Initial resize
+resizeAndExpand();
+
+const paystackNigeriaBanks = [
+  "Access Bank",
+  "Access Bank (Diamond)",
+  "Abbey Mortgage Bank",
+  "Above Only MFB",
+  "ALAT by Wema",
+  "ASOSavings",
+  "Bowen Microfinance Bank",
+  "Carbon",
+  "Citibank Nigeria",
+  "Coronation Merchant Bank",
+  "Ecobank Nigeria",
+  "FairMoney Microfinance Bank",
+  "Fidelity Bank",
+  "First Bank of Nigeria",
+  "First City Monument Bank (FCMB)",
+  "Globus Bank",
+  "Guaranty Trust Bank (GTBank)",
+  "Heritage Bank",
+  "Jaiz Bank",
+  "Keystone Bank",
+  "Kuda Bank",
+  "Moniepoint MFB",
+  "Opay",
+  "PalmPay",
+  "Parallex Bank",
+  "Paycom (Opay)",
+  "Polaris Bank",
+  "PremiumTrust Bank",
+  "Providus Bank",
+  "Stanbic IBTC Bank",
+  "Standard Chartered Bank",
+  "Sterling Bank",
+  "Suntrust Bank",
+  "TAJ Bank",
+  "Titan Trust Bank",
+  "Union Bank of Nigeria",
+  "United Bank for Africa (UBA)",
+  "Unity Bank",
+  "VFD Microfinance Bank",
+  "Wema Bank",
+  "Zenith Bank"
+];
+
+const bankSelect = document.getElementById("bankName");
+
+paystackNigeriaBanks.forEach(bank => {
+  const option = document.createElement("option");
+  option.value = bank;
+  option.textContent = bank;
+  bankSelect.appendChild(option);
+});
+
+// ───────────────────────────────────────────────
+// Client-side Free Tonight Toggle + FruitPick Picker (Neon Style)
+// ───────────────────────────────────────────────
+document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('freeTonightBtn');
+  if (!btn) return;
+
+  if (!auth?.currentUser?.uid) {
+    showStarPopup('Please sign in first', 'error');
+    return;
+  }
+
+  const savedEndTime = localStorage.getItem('freeTonightEndTime');
+  if (savedEndTime && Number(savedEndTime) > Date.now()) {
+    showStarPopup('Already active! Wait for countdown.', 'info');
+    startCountdown(btn, Number(savedEndTime));
+    return;
+  }
+
+  // Show neon fruit picker modal
+  const fruitModal = document.createElement("div");
+  fruitModal.style.cssText = `
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000000;
+    display:flex; align-items:center; justify-content:center;
+  `;
+
+  fruitModal.innerHTML = `
+    <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative;">
+      <!-- Tiny X close button -->
+      <div id="closeFruitModal" style="
+        position:absolute; top:14px; right:14px; width:28px; height:28px;
+        display:flex; align-items:center; justify-content:center;
+        cursor:pointer; color:#ff00f2; font-size:22px; font-weight:900;
+        text-shadow:0 0 8px #ff00f2;">
+        ×
       </div>
-    </div>
-  </div>
-</div>
 
-
-
-<div class="star-popup" id="starPopup">
-  <div id="starText">You've just earned +1 STRZ! ⭐</div>
-</div>
-
-
-<!-- 🌟 Featured Hosts Modal (move here, at page root) -->
-<div id="featuredHostsModal" class="featured-modal">
-  <div class="featured-modal-content">
-
-    <span class="featured-close">&times;</span>
-
-    <!-- 🎥 Video + Info -->
-    <div id="featuredHostVideo" class="featured-host-video-container"></div>
-    <div class="video-shimmer"></div>
-
-    <div class="featured-host-footer">
-      <div>
-        <div id="featuredHostUsername" class="featured-host-username"></div>
-        <div id="featuredHostDetails" class="featured-host-details"></div>
+      <div class="neon-title-container">
+        <div class="neon-title">Choose your vibe for tonight</div>
       </div>
 
-      <div class="gift-slider-container">
-        <input type="range" id="giftSlider" min="1" max="999" value="1">
-        <span id="giftDisplay">
-          <span id="giftAmount">1</span>
-          <span class="star-emoji">⭐</span>
-        </span>
-        <button id="featuredGiftBtn" class="featured-gift-btn">GIFT</button>
+           <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
+        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout & Friendships"
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍇
+        </button>
+        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Paid Meetups"
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍉
+        </button>
+        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates"
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍒
+        </button>
+        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures"
+                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
+          🍓
+        </button>
       </div>
 
-      <div id="featuredHostList" class="featured-host-list"></div>
-
-      <div class="featured-nav-buttons">
-        <a href="#" id="prevHost" class="featured-nav-link">Previous</a>
-        <a href="#" id="nextHost" class="featured-nav-link">Next</a>
+      <!-- Centered GO Button -->
+      <div style="display: flex; justify-content: center; margin-top: 28px;">
+        <button id="confirmFruit" disabled style="
+          padding: 10px 32px;
+          background: #444;
+          color: #888;
+          border: none;
+          border-radius: 50px;
+          font-weight: 700;
+          font-size: 14px;
+          cursor: not-allowed;
+          width: auto;
+          min-width: 140px;
+          white-space: nowrap;
+        ">
+          GO
+        </button>
       </div>
-    </div>
-  </div>
-</div>
+  `;
 
-  
+  document.body.appendChild(fruitModal);
 
-<!-- Gift Alert -->
-<div id="giftAlert" class="gift-alert"></div>
-<script type="module" src="chat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
-</body>
-  </html>
+  let selectedFruit = null;
+
+  // Fruit button interaction
+  fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
+    btn.onclick = () => {
+      // Deselect all
+      fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
+        b.style.borderColor = '#666';
+        b.style.transform = 'scale(1)';
+      });
+
+      // Select this one
+      btn.style.borderColor = '#ff00f2';
+      btn.style.transform = 'scale(1.15)';
+      selectedFruit = btn.dataset.fruit;
+
+      // Enable confirm button
+      const confirmBtn = fruitModal.querySelector('#confirmFruit');
+      confirmBtn.disabled = false;
+      confirmBtn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+      confirmBtn.style.color = '#fff';
+      confirmBtn.style.cursor = 'pointer';
+    };
+  });
+  // Confirm button
+  fruitModal.querySelector('#confirmFruit').onclick = async () => {
+    if (!selectedFruit) return;
+    fruitModal.remove();
+
+    btn.disabled = true;
+    btn.textContent = 'Activating... ✨';
+
+    try {
+      const rawUid = auth.currentUser.uid;
+      const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
+      const userSnap = await getDocs(usersQuery);
+      if (userSnap.empty) throw new Error("Profile not found");
+
+      const userDoc = userSnap.docs[0];
+      const sanitizedId = userDoc.id;
+
+      // Save fruitPick
+      await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
+
+      // Activate trending for 24 hours
+      const highlightsRef = doc(db, "highlightVideos", sanitizedId);
+      const highlightsSnap = await getDoc(highlightsRef);
+      if (!highlightsSnap.exists()) throw new Error("No highlights found");
+
+      const highlightsData = highlightsSnap.data() || {};
+      const highlights = [...(highlightsData.highlights || [])];
+
+      if (highlights.length === 0) throw new Error("Upload some clips first!");
+
+      const endTime = Date.now() + 24 * 60 * 60 * 1000;
+
+      highlights.forEach(h => {
+        h.isTrending = true;
+        h.trendingUntil = endTime;
+      });
+
+      await updateDoc(highlightsRef, { highlights });
+
+      // Success actions
+      localStorage.setItem('freeTonightEndTime', endTime);
+      startCountdown(btn, endTime);
+      activateViewBoost();                    // ← Fixed: correct function name
+      showStarPopup(`Free Tonight activated! Vibe set to ${selectedFruit} 🔥`, 'success');
+
+      if (typeof loadMyClips === 'function') loadMyClips();
+    } catch (err) {
+      let msg = err.message || 'Failed to activate';
+      if (msg.includes("No clips")) msg = "Upload some clips first!";
+      showStarPopup(msg, 'error');
+      ('Free Tonight failed:', err);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  // Close modal with X button
+  fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
+});
+
+function startCountdown(btn, endTime) {
+  function updateTimer() {
+    const now = Date.now();
+    const remaining = endTime - now;
+
+    if (remaining <= 0) {
+      btn.disabled = false;
+      btn.textContent = "I'm Free Tonight";
+      localStorage.removeItem('freeTonightEndTime');
+      stopViewBoost();           // ← Important: stop boosting when time ends
+      return;
+    }
+
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
+
+    setTimeout(updateTimer, 1000);
+  }
+  updateTimer();
+}
+// Auto-start countdown on load
+window.addEventListener('load', () => {
+  const savedEndTime = localStorage.getItem('freeTonightEndTime');
+  if (savedEndTime && Number(savedEndTime) > Date.now()) {
+    const btn = document.getElementById('freeTonightBtn');
+    if (btn) startCountdown(btn, Number(savedEndTime));
+  }
+});
+
+// Enable upload button only when checkbox is ticked
+document.getElementById('itsMeCheckbox')?.addEventListener('change', (e) => {
+  const btn = document.getElementById('uploadHighlightBtn');
+  if (e.target.checked) {
+    btn.disabled = false;
+    btn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.style.background = '#444';
+    btn.style.color = '#888';
+    btn.style.cursor = 'not-allowed';
+  }
+});
+
+// Video preview on select
+document.getElementById('highlightUploadInput')?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const placeholder = document.getElementById('uploadPlaceholder');
+  const previewCont = document.getElementById('videoPreviewContainer');
+  const videoEl = document.getElementById('videoPreview');
+  const sizeInfo = document.getElementById('fileSizeInfo');
+  if (!videoEl || !previewCont || !placeholder) return;
+  placeholder.style.display = 'none';
+  previewCont.style.display = 'block';
+  videoEl.src = URL.createObjectURL(file);
+  videoEl.load();
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+  if (sizeInfo) sizeInfo.textContent = `${sizeMB} MB`;
+  videoEl.onloadeddata = () => videoEl.currentTime = 0;
+});
+
+
+  const termsModal = document.getElementById('termsModal');
+  const termsLink = document.getElementById('termsLink');
+  const closeTerms = document.getElementById('closeTerms');
+
+  termsLink.addEventListener('click', () => {
+    termsModal.style.display = 'flex';
+  });
+
+  closeTerms.addEventListener('click', () => {
+    termsModal.style.display = 'none';
+  });
+
+  // close on outside click
+  termsModal.addEventListener('click', (e) => {
+    if (e.target === termsModal) {
+      termsModal.style.display = 'none';
+    }
+  });
+
+
+/*********************************
+ * INIT
+ *********************************/
+loadReels();
+loadPollCarousel()
