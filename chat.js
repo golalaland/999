@@ -6896,6 +6896,7 @@ function initVideoModal() {
   modalVideo.controls = true;
   modalVideo.playsInline = true;
   modalVideo.loop = true;
+   modalVideo.muted = true;
   modalVideo.style.cssText = "width:100%; height:auto; max-height:82vh; display:block;";
 
   // Close Button
