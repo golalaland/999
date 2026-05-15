@@ -5022,7 +5022,8 @@ function showMeetModal(host) {
       </h3>
       
       <p style="color: #d0d0d0; margin-bottom: 24px; line-height: 1.5; font-size: 14.5px;">
-       Access direct messaging & chat privately <br>
+       Unlock direct messaging & chat privately <br>
+      
         <strong style="color:#ffd700;">250 STRZ ⭐</strong>
       </p>
 
