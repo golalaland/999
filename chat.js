@@ -2993,7 +2993,7 @@ function showUnifiedCard(user) {
 
   // Role & Accent Logic
   const isHost = !!user.isHost;
-  const isVIP = !!(user.hasPaid || user.isVIP);
+ const isVIP = !!(user.hasPaid && user.isVIP);
   const isMale = (user.gender || "").toLowerCase() === "male";
 
   let accentColor = isHost ? "#ff6b00" : isVIP ? "#ff00aa" : "#888888";
@@ -3151,7 +3151,7 @@ if (!isHost && !isVIP) {
   const traitsContainer = document.createElement("div");
   traitsContainer.style.cssText = `display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:18px;`;
 
-  const traits = [ageGroup, city];
+  const traits = [, city];
   if (bodyType) traits.push(bodyType);
   if (nature) traits.push(nature);
   if (fruit) traits.push(fruit);
