@@ -2153,6 +2153,13 @@ function createConfettiInside(container, colors) {
   }
 }
 
+// GLOBAL BADGE UPDATER - CAN BE CALLED FROM ANY FILE
+window.updateHostNotifBadge = function(hasUnread) {
+  const badge = document.getElementById("hostNotifBadge");
+  if (!badge) return;
+  badge.style.display = hasUnread ? "flex" : "none";
+};
+
 // =============================
 // RENDER MESSAGES — FINAL SAFARI-FIXED + SMALLER FONT (2026 ETERNAL)
 // =============================
