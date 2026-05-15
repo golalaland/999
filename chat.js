@@ -3103,78 +3103,108 @@ function showUnifiedCard(user) {
   content.appendChild(header);
 
   // Badge
-  const roleChip = document.createElement("div");
+ // Badge
+const roleChip = document.createElement("div");
 
-  if (isVIP) {
-    roleChip.textContent = "VIP";
+if (isBusiness) {
 
-    roleChip.style.cssText = `
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      letter-spacing: 1.2px;
-      font-weight: 700;
-      padding: 5px 14px;
-      border-radius: 999px;
-      background: linear-gradient(
-        90deg,
-        #b8860b,
-        #ffd700,
-        #ffeb3b,
-        #ffd700,
-        #b8860b
-      );
-      background-size: 300% 100%;
-      color: #1a1200;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 14px rgba(255,215,0,0.55);
-      animation: vipShimmer 3.5s linear infinite;
-    `;
+  roleChip.textContent = "BRAND";
 
-    const shine = document.createElement("div");
+  roleChip.style.cssText = `
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    letter-spacing:1.4px;
+    font-weight:700;
+    padding:5px 14px;
+    border-radius:999px;
+    background:linear-gradient(
+      90deg,
+      #1d1d1d,
+      #2e2e2e,
+      #444,
+      #2e2e2e,
+      #1d1d1d
+    );
+    color:#f3f3f3;
+    border:1px solid rgba(255,255,255,0.14);
+    margin-bottom:16px;
+    text-transform:uppercase;
+    box-shadow:0 0 18px rgba(255,255,255,0.06);
+  `;
 
-    shine.style.cssText = `
-      position: absolute;
-      top: -50%;
-      left: -100%;
-      width: 40%;
-      height: 300%;
-      background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,0.9),
-        transparent
-      );
-      animation: shineAnimation 4s linear infinite;
-    `;
+} else if (isVIP) {
 
-    roleChip.appendChild(shine);
+  roleChip.textContent = "VIP";
 
-  } else {
-    // EVERYONE ELSE INCLUDING HOSTS
-    roleChip.textContent = "MEMBER";
+  roleChip.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      #b8860b,
+      #ffd700,
+      #ffeb3b,
+      #ffd700,
+      #b8860b
+    );
+    background-size: 300% 100%;
+    color: #1a1200;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 14px rgba(255,215,0,0.55);
+    animation: vipShimmer 3.5s linear infinite;
+  `;
 
-    roleChip.style.cssText = `
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      letter-spacing: 1px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.10);
-      color: #bdbdbd;
-      margin-bottom: 16px;
-      backdrop-filter: blur(10px);
-    `;
-  }
+  const shine = document.createElement("div");
 
-  content.appendChild(roleChip);
+  shine.style.cssText = `
+    position:absolute;
+    top:-50%;
+    left:-100%;
+    width:40%;
+    height:300%;
+    background:linear-gradient(
+      120deg,
+      transparent,
+      rgba(255,255,255,0.9),
+      transparent
+    );
+    animation:shineAnimation 4s linear infinite;
+  `;
+
+  roleChip.appendChild(shine);
+
+} else {
+
+  roleChip.textContent = "MEMBER";
+
+  roleChip.style.cssText = `
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    letter-spacing:1px;
+    font-weight:600;
+    padding:4px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.10);
+    color:#bdbdbd;
+    margin-bottom:16px;
+    backdrop-filter:blur(10px);
+  `;
+}
+
+content.appendChild(roleChip);
 
   // Legendary Details Logic
   const cleanLocation = (v) => (v || "").toString().replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s?/gu, "").trim();
@@ -3190,25 +3220,43 @@ function showUnifiedCard(user) {
   const bodyType = clean(user.bodyTypePick);
   const city = cleanLocation(user.city || "Lagos");
   const location = cleanLocation(user.location);
+   const isBusiness = !!user.isBusiness;
 
 // Build cleaner main text
-let mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+let mainText = "";
 
-if (city) {
-  mainText += ` currently in ${city}`;
+if (isBusiness) {
+
+  mainText = "Official account";
+
+  if (city) {
+    mainText += ` in ${city}`;
+  }
+
+  if (location) {
+    mainText += `, ${location}`;
+  }
+
+  mainText += ".";
+
+} else {
+
+  mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}`;
+
+  if (city) {
+    mainText += ` currently in ${city}`;
+  }
+
+  if (location) {
+    mainText += `, ${location}`;
+  }
+
+  mainText += ".";
+
+  if (!isHost && !isVIP) {
+    mainText += isMale ? " 🔥" : " 💋";
+  }
 }
-
-if (location) {
-  mainText += `, ${location}`;
-}
-
-mainText += ".";
-
-// Fun ending for regular users only
-if (!isHost && !isVIP) {
-  mainText += isMale ? " 🔥" : " 💋";
-}
-
   // Profile Text
   const profileEl = document.createElement("p");
   profileEl.textContent = mainText;
@@ -3225,10 +3273,17 @@ if (!isHost && !isVIP) {
   const traitsContainer = document.createElement("div");
   traitsContainer.style.cssText = `display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:18px;`;
 
-  const traits = [, city];
+ const traits = [];
+
+if (city) traits.push(city);
+
+if (location) traits.push(location);
+
+if (!isBusiness) {
   if (bodyType) traits.push(bodyType);
   if (nature) traits.push(nature);
   if (fruit) traits.push(fruit);
+}
 
   traits.forEach(trait => {
     const pill = document.createElement("span");
