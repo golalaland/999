@@ -646,14 +646,14 @@ setTimeout(async () => {
 
 
 // ===============================================
-// NOTIFICATIONS LISTENER + HOST BADGE
+// NOTIFICATIONS LISTENER + HOST RED ✱ BADGE
 // ===============================================
 function setupNotificationsListener(userId) {
   if (!userId) return;
 
   const list = document.getElementById("notificationsList");
   if (!list) {
-    setTimeout(() => setupNotificationsListener(userId), 800);
+    setTimeout(() => setupNotificationsListener(userId), 600);
     return;
   }
 
@@ -666,7 +666,7 @@ function setupNotificationsListener(userId) {
   notificationsUnsubscribe = onSnapshot(q, (snap) => {
     const unreadCount = snap.docs.filter(doc => !doc.data().read).length;
 
-    // Update red ✱ badge on Host Button
+    // Update red ✱ on Host Button
     updateHostNotifBadge(unreadCount > 0);
 
     if (snap.empty) {
@@ -696,49 +696,6 @@ function updateHostNotifBadge(hasUnread) {
   const badge = document.getElementById("hostNotifBadge");
   if (!badge) return;
   badge.style.display = hasUnread ? "flex" : "none";
-}
-
-// NOTIFICATIONS LISTENER
-function setupNotificationsListener(userId) {
-  if (!userId) return;
-
-  const list = document.getElementById("notificationsList");
-  if (!list) {
-    setTimeout(() => setupNotificationsListener(userId), 500);
-    return;
-  }
-
-  const q = query(
-    collection(db, "notifications"),
-    where("userId", "==", userId),
-    orderBy("timestamp", "desc")
-  );
-
-  notificationsUnsubscribe = onSnapshot(q, (snap) => {
-    const unreadCount = snap.docs.filter(doc => !doc.data().read).length;
-
-    updateHostNotifBadge(unreadCount > 0);   // ← THIS UPDATES THE RED ✱
-
-    if (snap.empty) {
-      list.innerHTML = `<p style="opacity:0.6;text-align:center;padding:30px 10px;">No notifications yet</p>`;
-      return;
-    }
-
-    list.innerHTML = snap.docs.map(doc => {
-      const n = doc.data();
-      const time = n.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "--:--";
-      const formattedMessage = (n.message || "").replace(/\n/g, "<br>");
-
-      return `
-        <div class="notification-item ${n.read ? '' : 'unread'}" data-id="${doc.id}">
-          ${n.icon ? `<div class="notif-icon">${n.icon}</div>` : ''}
-          ${n.title ? `<div class="notif-title">${n.title}</div>` : ''}
-          <div class="notif-message">${formattedMessage}</div>
-          <small class="notif-time">${time}</small>
-        </div>
-      `;
-    }).join("");
-  });
 }
 
 // MARK ALL READ + CLEAR BADGE
