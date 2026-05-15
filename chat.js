@@ -2961,6 +2961,9 @@ function showSocialCard(user) {
 }
 
 function showUnifiedCard(user) {
+  const oldCard = document.getElementById("socialCard");
+  if (oldCard) oldCard.remove();
+
   const card = document.createElement("div");
   card.id = "socialCard";
 
@@ -2969,12 +2972,11 @@ function showUnifiedCard(user) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%) scale(0.98)",
-    background: "linear-gradient(135deg, rgba(18,18,20,0.95), rgba(22,22,25,0.95))",
+    background: "linear-gradient(135deg, rgba(18,18,20,0.96), rgba(22,22,25,0.96))",
     backdropFilter: "blur(16px)",
-    borderRadius: "16px",
+    borderRadius: "18px",
     border: "1px solid rgba(255,255,255,0.08)",
-    padding: "0",
-    color: "#ffffff",
+    color: "#fff",
     width: "280px",
     maxWidth: "92vw",
     zIndex: "999999",
@@ -2982,36 +2984,44 @@ function showUnifiedCard(user) {
     boxShadow: "0 15px 40px rgba(0,0,0,0.7)",
     fontFamily: "Poppins, system-ui, sans-serif",
     opacity: "0",
-    transition: "opacity 0.3s ease, transform 0.3s ease"
+    transition: "all 0.3s ease"
   });
 
-  // Fade in
-  setTimeout(() => {
+  document.body.appendChild(card);
+
+  requestAnimationFrame(() => {
     card.style.opacity = "1";
     card.style.transform = "translate(-50%, -50%) scale(1)";
-  }, 50);
+  });
 
-  // Role & Accent Logic
+  // Logic
   const isHost = !!user.isHost;
- const isVIP = !!(user.hasPaid && user.isVIP);
+  const isVIP = !!(user.hasPaid && user.isVIP);
   const isMale = (user.gender || "").toLowerCase() === "male";
 
-  let accentColor = isHost ? "#ff6b00" : isVIP ? "#ff00aa" : "#888888";
-  let roleName = isVIP ? "VIP" : "MEMBER";
-  let roleBg = isHost ? "rgba(255,107,0,0.15)" : isVIP ? "linear-gradient(135deg, #a07010, #f0c040)" : "rgba(255,255,255,0.06)";
+  const accentColor = isHost
+    ? "#ff6b00"
+    : isVIP
+    ? "#ff00aa"
+    : "#8e8e8e";
 
-  // Accent Bar
+  // Top Accent Bar
   const accentBar = document.createElement("div");
-  accentBar.style.cssText = `height: 3px; width: 100%; background: linear-gradient(90deg, ${accentColor}, #ff55cc);`;
+  accentBar.style.cssText = `
+    height: 3px;
+    width: 100%;
+    background: linear-gradient(90deg, ${accentColor}, #ff55cc);
+  `;
   card.appendChild(accentBar);
 
+  // Main Content
   const content = document.createElement("div");
   content.style.padding = "20px 22px 24px";
   card.appendChild(content);
 
-  // Close button
+  // Close Button
   const closeBtn = document.createElement("div");
-  closeBtn.innerHTML = "×";
+
   Object.assign(closeBtn.style, {
     position: "absolute",
     top: "12px",
@@ -3020,85 +3030,124 @@ function showUnifiedCard(user) {
     fontWeight: "700",
     cursor: "pointer",
     color: "#aaa",
-    zIndex: "10"
+    zIndex: "20",
+    transition: "0.2s ease"
   });
-  closeBtn.onclick = () => card.remove();
+
+  closeBtn.innerHTML = "×";
+
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.color = "#fff";
+  };
+
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.color = "#aaa";
+  };
+
+  closeBtn.onclick = () => {
+    card.style.opacity = "0";
+    card.style.transform = "translate(-50%, -50%) scale(0.95)";
+    setTimeout(() => card.remove(), 220);
+  };
+
   card.appendChild(closeBtn);
 
-  // Header
+  // Username
   const header = document.createElement("h3");
+
   const rawName = user.chatId?.trim();
+
   header.textContent = rawName ? `@${rawName}` : "@Guest";
+
   header.style.cssText = `
-    margin: 0 0 8px 0;
+    margin: 0 0 10px;
     font-size: 21px;
     font-weight: 700;
-    background: linear-gradient(90deg, ${isHost ? '#ff6b00' : isVIP ? '#ff00aa' : '#bbbbbb'}, #ff55cc);
+    line-height: 1.2;
+    background: linear-gradient(
+      90deg,
+      ${isHost ? "#ff6b00" : isVIP ? "#ff00aa" : "#bbbbbb"},
+      #ff55cc
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   `;
+
   content.appendChild(header);
 
-// Role Chip Logic
-const roleChip = document.createElement("div");
+  // Badge
+  const roleChip = document.createElement("div");
 
-if (isVIP) {
-  roleChip.textContent = "VIP";
+  if (isVIP) {
+    roleChip.textContent = "VIP";
 
-  roleChip.style.cssText = `
-    display: inline-block;
-    font-size: 10px;
-    letter-spacing: 1.2px;
-    font-weight: 700;
-    padding: 5px 14px;
-    border-radius: 30px;
-    background: linear-gradient(90deg, #b8860b, #ffd700, #ffeb3b, #ffd700, #b8860b);
-    background-size: 300% 100%;
-    color: #1a1200;
-    margin-bottom: 16px;
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-    animation: vipShimmer 3.5s linear infinite;
-    position: relative;
-    overflow: hidden;
-  `;
+    roleChip.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        #b8860b,
+        #ffd700,
+        #ffeb3b,
+        #ffd700,
+        #b8860b
+      );
+      background-size: 300% 100%;
+      color: #1a1200;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 14px rgba(255,215,0,0.55);
+      animation: vipShimmer 3.5s linear infinite;
+    `;
 
-  const shine = document.createElement("div");
-  shine.style.cssText = `
-    position: absolute;
-    top: -50%;
-    left: -100%;
-    width: 40%;
-    height: 300%;
-    background: linear-gradient(
-      120deg,
-      transparent,
-      rgba(255,255,255,0.9),
-      transparent
-    );
-    animation: shineAnimation 4s infinite linear;
-  `;
+    const shine = document.createElement("div");
 
-  roleChip.appendChild(shine);
+    shine.style.cssText = `
+      position: absolute;
+      top: -50%;
+      left: -100%;
+      width: 40%;
+      height: 300%;
+      background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.9),
+        transparent
+      );
+      animation: shineAnimation 4s linear infinite;
+    `;
 
-} else {
-  roleChip.textContent = "MEMBER";
+    roleChip.appendChild(shine);
 
-  roleChip.style.cssText = `
-    display: inline-block;
-    font-size: 10px;
-    letter-spacing: 1px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #aaa;
-    margin-bottom: 16px;
-  `;
-}
+  } else {
+    // EVERYONE ELSE INCLUDING HOSTS
+    roleChip.textContent = "MEMBER";
 
-content.appendChild(roleChip);
-}
+    roleChip.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: #bdbdbd;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+    `;
+  }
+
+  content.appendChild(roleChip);
 
   // Legendary Details Logic
   const cleanLocation = (v) => (v || "").toString().replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s?/gu, "").trim();
