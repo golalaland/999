@@ -666,7 +666,7 @@ function setupNotificationsListener(userId) {
   notificationsUnsubscribe = onSnapshot(q, (snap) => {
     const unreadCount = snap.docs.filter(doc => !doc.data().read).length;
 
-    // Update red ✱ on Host Button
+    // Update red ✱ on Host Gear Button
     updateHostNotifBadge(unreadCount > 0);
 
     if (snap.empty) {
@@ -712,7 +712,7 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
   await batch.commit();
 
   showStarPopup("All notifications marked as read");
-  updateHostNotifBadge(false);   // Clear the red ✱
+  updateHostNotifBadge(false);
 });
 
 
