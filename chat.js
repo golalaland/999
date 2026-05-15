@@ -3039,12 +3039,13 @@ function showUnifiedCard(user) {
   `;
   content.appendChild(header);
 
-   // Role Chip with Special Shimmer for VIP
+// Role Chip Logic
+if (!isHost) {
   const roleChip = document.createElement("div");
-  roleChip.textContent = roleName;
 
   if (isVIP) {
-    // Premium Gold VIP with shimmer
+    roleChip.textContent = "VIP";
+
     roleChip.style.cssText = `
       display: inline-block;
       font-size: 10px;
@@ -3062,7 +3063,7 @@ function showUnifiedCard(user) {
       overflow: hidden;
     `;
 
-    // Subtle shine overlay
+    // Shine overlay
     const shine = document.createElement("div");
     shine.style.cssText = `
       position: absolute;
@@ -3078,22 +3079,12 @@ function showUnifiedCard(user) {
       );
       animation: shineAnimation 4s infinite linear;
     `;
+
     roleChip.appendChild(shine);
 
-  } else if (isHost) {
-    roleChip.style.cssText = `
-      display: inline-block;
-      font-size: 10px;
-      letter-spacing: 1px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: rgba(255,107,0,0.15);
-      border: 1px solid rgba(255,107,0,0.4);
-      color: #ffaa66;
-      margin-bottom: 16px;
-    `;
   } else {
+    roleChip.textContent = "MEMBER";
+
     roleChip.style.cssText = `
       display: inline-block;
       font-size: 10px;
@@ -3109,6 +3100,7 @@ function showUnifiedCard(user) {
   }
 
   content.appendChild(roleChip);
+}
 
   // Legendary Details Logic
   const cleanLocation = (v) => (v || "").toString().replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s?/gu, "").trim();
@@ -3125,23 +3117,23 @@ function showUnifiedCard(user) {
   const city = cleanLocation(user.city || "Lagos");
   const location = cleanLocation(user.location);
 
-  // Build main text
-  let mainText = "";
-  const descriptors = [nature, bodyType].filter(Boolean).join(" ").trim();
-  const intro = descriptors ? `${descriptors} ${genderRaw}` : genderRaw;
+// Build cleaner main text
+let mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}`;
 
-  if (isMale && isHost) {
-    mainText = `A ${genderRaw} in ${pronoun} ${ageGroup}, currently in ${city}`;
-  } else {
-    mainText = `A ${intro} in ${pronoun} ${ageGroup} currently in ${city}`;
-  }
+if (city) {
+  mainText += ` currently in ${city}`;
+}
 
-  if (location) mainText += `, ${location}`;
-  mainText += ".";
+if (location) {
+  mainText += `, ${location}`;
+}
 
-  if (!user.isHost && !isVIP) {
-    mainText += isMale ? " 🔥" : " 💋";
-  }
+mainText += ".";
+
+// Fun ending for regular users only
+if (!isHost && !isVIP) {
+  mainText += isMale ? " 🔥" : " 💋";
+}
 
   // Profile Text
   const profileEl = document.createElement("p");
