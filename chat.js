@@ -716,18 +716,6 @@ document.getElementById("markAllRead")?.addEventListener("click", async () => {
   updateHostNotifBadge(false);
 });
 
-// UPDATE HOST BUTTON RED ASTERISK
-function updateHostNotifBadge(hasUnread) {
-  const badge = document.getElementById("hostNotifBadge");
-  if (!badge) return;
-
-  if (hasUnread) {
-    badge.style.display = "flex";
-  } else {
-    badge.style.display = "none";
-  }
-}
-
 function showStarPopup(text) {
   const popup = document.getElementById("starPopup");
   const starText = document.getElementById("starText");
