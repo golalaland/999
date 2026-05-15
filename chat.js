@@ -3172,24 +3172,19 @@ if (!isHost && !isVIP) {
   });
   content.appendChild(traitsContainer);
 
-     // Bio - Simple typing, no cursor, better emoji support
-  const bioEl = document.createElement("div");
-  Object.assign(bioEl.style, {
-    margin: "12px 0 20px",
-    fontStyle: "italic",
-    fontSize: "13.8px",
-    lineHeight: "1.48",
-    color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#c9b8ff"][Math.floor(Math.random()*7)],
-    textAlign: "center",
-    borderLeft: "3px solid",
-    paddingLeft: "14px",
-    opacity: "0.92",
-    fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    minHeight: "52px"
-  });
-  content.appendChild(bioEl);
-  
-  typeWriterEffect(bioEl, user.bioPick || "No notes shared yet...");
+    // Bio with typewriter
+    const bioEl = document.createElement("div");
+    Object.assign(bioEl.style, {
+      margin: "12px 0 8px",
+      fontStyle: "italic",
+      fontWeight: "600",
+      fontSize: "13px",
+      lineHeight: "1.4",
+      color: ["#ff99cc","#ffcc33","#66ff99","#66ccff","#ff6699","#ff9966","#ccccff","#f8b500"][Math.floor(Math.random()*8)]
+    });
+    card.appendChild(bioEl);
+
+    typeWriterEffect(bioEl, user.bioPick || "No notes shared yet...");
    
    // Meet Button for Hosts - Random Dope Colors
   if (user.isHost) {
@@ -3271,19 +3266,15 @@ if (!isHost && !isVIP) {
   }, 100);
 }
 
-// Simple Typewriter - No Cursor (Your Preferred Style)
-function typeWriterEffect(el, text, speed = 35) {
-  el.textContent = "";
-  
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < text.length) {
-      el.textContent += text[i++];
-    } else {
-      clearInterval(interval);
-    }
-  }, speed);
-}
+ // Typewriter effect
+  function typeWriterEffect(el, text, speed = 40) {
+    el.textContent = "";
+    let i = 0;
+    const t = setInterval(() => {
+      if (i < text.length) el.textContent += text[i++];
+      else clearInterval(t);
+    }, speed);
+  }
 
 
 // ===============================================
