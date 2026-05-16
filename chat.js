@@ -4084,8 +4084,8 @@ refs.buzzBtn?.addEventListener("click", async () => {
       showStarPopup("Write something to BUZZ");
       return;
     }
-    if (text.length > 21) {
-      showStarPopup("BUZZ limited to 21 characters", "error");
+    if (text.length > 25) {
+      showStarPopup("BUZZ limited to 25 characters", "error");
       return;
     }
     if ((currentUser.stars || 0) < BUZZ_COST) {
