@@ -3227,7 +3227,7 @@ let mainText = "";
 
 if (isBusiness) {
 
-  mainText = "Official account";
+  mainText = "A Verified Brand Account";
 
   if (city) {
     mainText += ` in ${city}`;
