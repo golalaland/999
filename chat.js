@@ -1087,16 +1087,16 @@ async function showVIPCountdown() {
               font-weight:700;
               color:#fff;
             ">
-             Your VIP access is expired
+             Your VIP access on ${inviterName}'s tab is expired
             </div>
 
             <div style="
-              margin-top:8px;
+              margin-top:5px;
               color:#ff4d4d;
               font-weight:700;
               font-size:0.95rem;
             ">
-              BOOST REQUIRED
+              BOOST & CLAIM REWARDS
             </div>
 
           <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
