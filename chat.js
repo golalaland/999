@@ -336,14 +336,12 @@ async function login(identifier, password) {
   }
 }
 
-
 // ===============================================
-// SYNC VIP EXPIRATION LOGIC
+// SYNC VIP EXPIRATION LOGIC (SAFE VERSION)
 // ===============================================
 async function syncVIPExpiration(userSnap) {
   const data = userSnap.data();
 
-  // No VIP expiry OR already expired
   if (!data.vipExpiresAt || data.hasPaid === false) {
     return data;
   }
@@ -352,50 +350,40 @@ async function syncVIPExpiration(userSnap) {
     ? data.vipExpiresAt.toDate()
     : new Date(data.vipExpiresAt);
 
-  // Expired → update ONCE only
   if (expiresAt < new Date() && data.hasPaid !== false) {
 
     await updateDoc(userSnap.ref, {
       hasPaid: false
-      // Keep isVIP untouched
     });
 
-    return {
-      ...data,
-      hasPaid: false
-    };
+    return { ...data, hasPaid: false };
   }
 
   return data;
 }
 
-
-// ===============================================
-// OPTIMIZED USER SYNC — ONE READ MAX
-// ===============================================
 async function syncUserData() {
-
   if (!currentUser?.uid) return;
 
   try {
+    const userData = await getCachedUserDoc(currentUser.uid, true);
 
-    // Force fresh user fetch on login
-    const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+    if (!userData) return;
 
-    if (!userSnap.exists()) return;
+    // IMPORTANT: reuse existing snapshot logic safely
+    const fakeSnap = {
+      data: () => userData,
+      ref: doc(db, "users", currentUser.uid)
+    };
 
-    // Sync VIP expiration
-    const userData = await syncVIPExpiration(userSnap);
+    const synced = await syncVIPExpiration(fakeSnap);
 
-    // Update local currentUser cache
-    Object.assign(currentUser, userData);
+    Object.assign(currentUser, synced);
 
-    return userData;
+    return synced;
 
   } catch (err) {
-
     console.error("syncUserData error:", err);
-
   }
 }
     // Unlocks sync
