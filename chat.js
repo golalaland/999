@@ -343,45 +343,61 @@ async function login(identifier, password) {
 async function syncVIPExpiration(userSnap) {
   const data = userSnap.data();
 
+  // No VIP expiry OR already expired
   if (!data.vipExpiresAt || data.hasPaid === false) {
     return data;
   }
 
-  const expiresAt = data.vipExpiresAt.toDate 
-    ? data.vipExpiresAt.toDate() 
+  const expiresAt = data.vipExpiresAt.toDate
+    ? data.vipExpiresAt.toDate()
     : new Date(data.vipExpiresAt);
 
-  if (expiresAt < new Date()) {
-    await updateDoc(userSnap.ref, { 
-      hasPaid: false 
-      // Do NOT change isVIP
+  // Expired → update ONCE only
+  if (expiresAt < new Date() && data.hasPaid !== false) {
+
+    await updateDoc(userSnap.ref, {
+      hasPaid: false
+      // Keep isVIP untouched
     });
 
-    return { ...data, hasPaid: false };
+    return {
+      ...data,
+      hasPaid: false
+    };
   }
 
   return data;
 }
 
 
-// OPTIMIZED SYNC — ONE READ MAX
+// ===============================================
+// OPTIMIZED USER SYNC — ONE READ MAX
+// ===============================================
 async function syncUserData() {
+
   if (!currentUser?.uid) return;
 
   try {
-    const userData = await getCachedUserDoc(currentUser.uid, true); // force fresh on login
 
-    if (!userData) return;
+    // Force fresh user fetch on login
+    const userSnap = await getDoc(doc(db, "users", currentUser.uid));
 
-    // VIP Expiration
-    if (userData.vipExpiresAt) {
-      const expiresAt = userData.vipExpiresAt.toDate ? userData.vipExpiresAt.toDate() : new Date(userData.vipExpiresAt);
-      if (expiresAt < new Date()) {
-        await updateDoc(doc(db, "users", currentUser.uid), { hasPaid: false });
-        currentUser.hasPaid = false;
-      }
-    }
+    if (!userSnap.exists()) return;
 
+    // Sync VIP expiration
+    const userData = await syncVIPExpiration(userSnap);
+
+    // Update local currentUser cache
+    Object.assign(currentUser, userData);
+
+    return userData;
+
+  } catch (err) {
+
+    console.error("syncUserData error:", err);
+
+  }
+}
     // Unlocks sync
     const localUnlocks = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
     const merged = [...new Set([...localUnlocks, ...(userData.unlockedVideos || [])])];
