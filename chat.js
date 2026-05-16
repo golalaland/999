@@ -1087,7 +1087,7 @@ async function showVIPCountdown() {
               font-weight:700;
               color:#fff;
             ">
-              ${inviterName}'s VIP tab expired
+             Your VIP access is expired
             </div>
 
             <div style="
@@ -1099,30 +1099,26 @@ async function showVIPCountdown() {
               BOOST REQUIRED
             </div>
 
-            <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
-               style="
-                 display:inline-block;
-                 margin-top:14px;
-                 padding:11px 24px;
-                 border-radius:999px;
-                 text-decoration:none;
-                 font-weight:800;
-                 background:
-                   linear-gradient(
-                     90deg,
-                     #ff2d95,
-                     #ff5dc1
-                   );
-                 color:#fff;
-                 box-shadow:
-                   0 0 18px rgba(255,45,149,0.35);
-               ">
-              REBOOST NOW
-            </a>
-
-          </div>
-        `;
-
+          <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
+   style="
+     display:inline-block;
+     margin-top:14px;
+     padding:11px 24px;
+     border-radius:999px;
+     text-decoration:none;
+     font-weight:800;
+     background:
+       linear-gradient(
+         90deg,
+         #ff0099,
+         #ff6600
+       );
+     color:#fff;
+     box-shadow:
+       0 0 18px rgba(255,102,0,0.35);
+   ">
+  BOOST NOW
+</a>
         return;
       }
 
