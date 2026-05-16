@@ -1119,10 +1119,10 @@ async function showVIPCountdown() {
    ">
   BOOST NOW
 </a>
+</div>
+`;
 
-</div> 
-;
-        return;
+return;
       }
 
       // Time Left
@@ -1203,6 +1203,8 @@ async function showVIPCountdown() {
     countdownEl.style.display = "none";
   }
 }
+
+
 // ===============================================
 // Call it when Media Tab is clicked + on page load
 // ===============================================
