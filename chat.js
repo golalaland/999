@@ -3021,10 +3021,11 @@ function showUnifiedCard(user) {
     card.style.transform = "translate(-50%, -50%) scale(1)";
   });
 
-  // Logic
-  const isHost = !!user.isHost;
-  const isVIP = !!(user.hasPaid && user.isVIP);
-  const isMale = (user.gender || "").toLowerCase() === "male";
+ // Logic
+const isHost = !!user.isHost;
+const isVIP = !!(user.hasPaid && user.isVIP);
+const isBusiness = !!user.isBusiness;
+const isMale = (user.gender || "").toLowerCase() === "male";
 
   const accentColor = isHost
     ? "#ff6b00"
@@ -3220,7 +3221,6 @@ content.appendChild(roleChip);
   const bodyType = clean(user.bodyTypePick);
   const city = cleanLocation(user.city || "Lagos");
   const location = cleanLocation(user.location);
-   const isBusiness = !!user.isBusiness;
 
 // Build cleaner main text
 let mainText = "";
