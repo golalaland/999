@@ -337,7 +337,7 @@ async function login(identifier, password) {
 }
 
 // ===============================================
-// SYNC VIP EXPIRATION LOGIC (SAFE VERSION)
+// SYNC VIP EXPIRATION LOGIC
 // ===============================================
 async function syncVIPExpiration(userSnap) {
   const data = userSnap.data();
@@ -346,14 +346,14 @@ async function syncVIPExpiration(userSnap) {
     return data;
   }
 
-  const expiresAt = data.vipExpiresAt.toDate
-    ? data.vipExpiresAt.toDate()
+  const expiresAt = data.vipExpiresAt.toDate 
+    ? data.vipExpiresAt.toDate() 
     : new Date(data.vipExpiresAt);
 
-  if (expiresAt < new Date() && data.hasPaid !== false) {
-
-    await updateDoc(userSnap.ref, {
-      hasPaid: false
+  if (expiresAt < new Date()) {
+    await updateDoc(userSnap.ref, { 
+      hasPaid: false 
+      // Do NOT change isVIP
     });
 
     return { ...data, hasPaid: false };
@@ -362,30 +362,25 @@ async function syncVIPExpiration(userSnap) {
   return data;
 }
 
+
+// OPTIMIZED SYNC — ONE READ MAX
 async function syncUserData() {
   if (!currentUser?.uid) return;
 
   try {
-    const userData = await getCachedUserDoc(currentUser.uid, true);
+    const userData = await getCachedUserDoc(currentUser.uid, true); // force fresh on login
 
     if (!userData) return;
 
-    // IMPORTANT: reuse existing snapshot logic safely
-    const fakeSnap = {
-      data: () => userData,
-      ref: doc(db, "users", currentUser.uid)
-    };
-
-    const synced = await syncVIPExpiration(fakeSnap);
-
-    Object.assign(currentUser, synced);
-
-    return synced;
-
-  } catch (err) {
-    console.error("syncUserData error:", err);
-  }
-}
+    // VIP Expiration
+    if (userData.vipExpiresAt) {
+      const expiresAt = userData.vipExpiresAt.toDate ? userData.vipExpiresAt.toDate() : new Date(userData.vipExpiresAt);
+      if (expiresAt < new Date()) {
+        await updateDoc(doc(db, "users", currentUser.uid), { hasPaid: false });
+        currentUser.hasPaid = false;
+      }
+    }
+     
     // Unlocks sync
     const localUnlocks = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
     const merged = [...new Set([...localUnlocks, ...(userData.unlockedVideos || [])])];
@@ -404,6 +399,7 @@ async function syncUserData() {
     ("syncUserData failed:", err);
   }
 }
+
 /* ===============================
    GLOBAL DOM REFERENCES — POPULATE THE refs OBJECT (ONLY ONCE!)
    THIS RUNS IMMEDIATELY — NO DUPLICATE DECLARATION
