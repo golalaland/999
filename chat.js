@@ -1119,6 +1119,9 @@ async function showVIPCountdown() {
    ">
   BOOST NOW
 </a>
+
+</div> 
+;
         return;
       }
 
