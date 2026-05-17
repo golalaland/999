@@ -9,9 +9,32 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* === GITHUB PAGES RENDER FIX === */
+    html, body {
+      background-color: #f5f3ee !important;
+    }
+    section, footer, nav {
+      position: relative;
+    }
+    .search-section, .pricing-card, footer, .footer-bottom,
+    .phone-mockup, .phone-inner, .modal-overlay {
+      color: inherit;
+    }
+    /* Force all section backgrounds explicitly */
+    section.search-section { background-color: #0a0a0f !important; }
+    section.how-section { background-color: #f5f3ee !important; }
+    section.pricing-section { background-color: #ede9e0 !important; }
+    section.hero { background-color: #f5f3ee !important; }
+    footer { background-color: #0a0a0f !important; }
+    .footer-bottom { background-color: #0a0a0f !important; }
+    .pricing-card { background-color: #0a0a0f !important; }
+    .phone-mockup { background-color: #111118 !important; }
+    .phone-inner { background-color: #111118 !important; }
+    /* === END FIX === */
 
 ```
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
   --ink: #0a0a0f;
   --ink-soft: #1a1a2e;
@@ -33,14 +56,18 @@
   --shadow-lg: 0 24px 80px rgba(10,10,15,0.18);
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  background: #f5f3ee;
+}
 
 body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--surface);
-  color: var(--ink);
+  font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  background: #f5f3ee;
+  color: #0a0a0f;
   overflow-x: hidden;
   cursor: none;
+  min-height: 100vh;
 }
 
 /* CUSTOM CURSOR */
@@ -89,10 +116,10 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(245,243,238,0.85);
+  background: rgba(245,243,238,0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(10,10,15,0.08);
 }
 
 .nav-logo {
@@ -133,7 +160,7 @@ nav {
 }
 
 .logo-text {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-weight: 800;
   font-size: 18px;
   color: var(--ink);
@@ -178,6 +205,7 @@ nav {
   align-items: center;
   position: relative;
   overflow: hidden;
+  background: #f5f3ee;
 }
 
 .hero-bg {
@@ -234,7 +262,7 @@ nav {
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
 h1 {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: clamp(48px, 5.5vw, 80px);
   font-weight: 800;
   line-height: 1.02;
@@ -330,7 +358,7 @@ h1 em::after {
 }
 .stat-item {}
 .stat-num {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 32px;
   font-weight: 800;
   color: var(--ink);
@@ -356,7 +384,7 @@ h1 em::after {
 
 .phone-mockup {
   width: 320px;
-  background: var(--ink);
+  background: #0a0a0f;
   border-radius: 44px;
   padding: 16px;
   box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.05);
@@ -421,7 +449,7 @@ h1 em::after {
   border-radius: 50%;
 }
 .phone-app-name {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 14px;
   font-weight: 700;
   color: white;
@@ -495,7 +523,7 @@ h1 em::after {
 }
 @keyframes glowPulse { 0%,100%{box-shadow: 0 0 8px var(--green-bright)} 50%{box-shadow: 0 0 16px var(--green-bright)} }
 .status-text {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--green-bright);
@@ -609,7 +637,7 @@ h1 em::after {
 /* FLOATING CARDS */
 .float-card {
   position: absolute;
-  background: var(--white);
+  background: #ffffff;
   border-radius: var(--radius);
   padding: 14px 18px;
   box-shadow: var(--shadow);
@@ -636,7 +664,7 @@ h1 em::after {
   font-weight: 500;
 }
 .float-card-value {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 18px;
   font-weight: 800;
   color: var(--ink);
@@ -660,7 +688,7 @@ h1 em::after {
 /* SEARCH SECTION */
 .search-section {
   padding: 80px 48px;
-  background: var(--ink);
+  background: #0a0a0f;
   position: relative;
   overflow: hidden;
 }
@@ -693,7 +721,7 @@ h1 em::after {
 }
 
 .search-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: clamp(32px, 4vw, 52px);
   font-weight: 800;
   color: var(--white);
@@ -723,6 +751,7 @@ h1 em::after {
   border-color: rgba(201,168,76,0.5);
   box-shadow: 0 0 0 4px rgba(201,168,76,0.08);
 }
+
 
 .search-input {
   flex: 1;
@@ -780,7 +809,7 @@ h1 em::after {
   border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
 }
 .result-badge.clean { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
 .result-badge.stolen { background: rgba(192,57,43,0.15); color: #ef4444; border: 1px solid rgba(192,57,43,0.2); }
@@ -828,7 +857,7 @@ h1 em::after {
 /* HOW IT WORKS */
 .how-section {
   padding: 100px 48px;
-  background: var(--surface);
+  background: #f5f3ee;
 }
 
 .section-header {
@@ -837,7 +866,7 @@ h1 em::after {
 }
 
 .section-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: clamp(32px, 4vw, 52px);
   font-weight: 800;
   letter-spacing: -1.5px;
@@ -863,7 +892,7 @@ h1 em::after {
 }
 
 .step-card {
-  background: var(--white);
+  background: #ffffff;
   border-radius: 24px;
   padding: 36px 32px;
   border: 1px solid var(--border);
@@ -884,7 +913,7 @@ h1 em::after {
 .step-card:hover::before { opacity: 1; }
 
 .step-number {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 64px;
   font-weight: 800;
   color: rgba(10,10,15,0.04);
@@ -905,7 +934,7 @@ h1 em::after {
 }
 
 .step-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 20px;
   font-weight: 700;
   color: var(--ink);
@@ -923,13 +952,13 @@ h1 em::after {
 /* PRICING */
 .pricing-section {
   padding: 100px 48px;
-  background: var(--surface-warm);
+  background: #ede9e0;
 }
 
 .pricing-card {
   max-width: 480px;
   margin: 0 auto;
-  background: var(--ink);
+  background: #0a0a0f;
   border-radius: 28px;
   padding: 48px;
   position: relative;
@@ -961,13 +990,13 @@ h1 em::after {
   margin-bottom: 8px;
 }
 .pricing-currency {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 28px;
   font-weight: 700;
   color: rgba(255,255,255,0.5);
 }
 .pricing-number {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 72px;
   font-weight: 800;
   color: var(--white);
@@ -1020,7 +1049,7 @@ h1 em::after {
   border: none;
   border-radius: 100px;
   padding: 18px;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 16px;
   font-weight: 700;
   cursor: none;
@@ -1048,7 +1077,7 @@ h1 em::after {
 .modal-overlay.open { opacity: 1; pointer-events: all; }
 
 .modal {
-  background: var(--white);
+  background: #ffffff;
   border-radius: 28px;
   width: 100%;
   max-width: 500px;
@@ -1079,7 +1108,7 @@ h1 em::after {
   margin-bottom: 6px;
 }
 .modal-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 24px;
   font-weight: 800;
   color: var(--ink);
@@ -1120,7 +1149,7 @@ h1 em::after {
 .form-input {
   width: 100%;
   padding: 14px 18px;
-  background: var(--surface);
+  background: #f5f3ee;
   border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
   font-family: 'DM Sans', sans-serif;
@@ -1150,7 +1179,7 @@ h1 em::after {
 .form-select {
   width: 100%;
   padding: 14px 18px;
-  background: var(--surface);
+  background: #f5f3ee;
   border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
   font-family: 'DM Sans', sans-serif;
@@ -1233,7 +1262,7 @@ h1 em::after {
   border: none;
   border-radius: 100px;
   padding: 16px;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 15px;
   font-weight: 700;
   cursor: none;
@@ -1277,7 +1306,7 @@ h1 em::after {
 }
 @keyframes scaleIn { from{transform:scale(0.5); opacity:0} to{transform:scale(1); opacity:1} }
 .success-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--ink);
@@ -1292,7 +1321,7 @@ h1 em::after {
   font-weight: 300;
 }
 .cert-preview {
-  background: var(--surface);
+  background: #f5f3ee;
   border-radius: var(--radius);
   padding: 20px;
   border: 1px solid var(--border);
@@ -1313,7 +1342,7 @@ h1 em::after {
 
 /* FOOTER */
 footer {
-  background: var(--ink);
+  background: #0a0a0f;
   padding: 60px 48px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -1336,7 +1365,7 @@ footer {
 }
 
 .footer-col-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Georgia', serif;
   font-size: 13px;
   font-weight: 700;
   color: var(--white);
@@ -1355,7 +1384,7 @@ footer {
 .footer-links a:hover { color: var(--gold); }
 
 .footer-bottom {
-  background: var(--ink);
+  background: #0a0a0f;
   border-top: 1px solid rgba(255,255,255,0.06);
   padding: 20px 48px;
   display: flex;
@@ -1375,7 +1404,7 @@ footer {
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: var(--ink);
+  background: #0a0a0f;
   color: white;
   padding: 14px 24px;
   border-radius: 100px;
