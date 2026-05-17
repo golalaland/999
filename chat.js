@@ -217,6 +217,8 @@ neonStyle.textContent = `
 `;
 document.head.appendChild(neonStyle);
 
+
+
 // ==================== COMBINED STYLES (Media Queries + Tonight Animations) ====================
 const combinedStyle = document.createElement('style');
 combinedStyle.textContent = `
@@ -292,6 +294,7 @@ function setupUsersListener() {
     ("[COLORS] Listener error:", err);
   });
 }
+
 
 
 // ====================== LOGIN WITH EMAIL OR CHATID ======================
@@ -3670,18 +3673,43 @@ typeWriterEffect(
   }, 100);
 }
 
- // Smooth Typewriter
-function typeWriterEffect(el, text, speed = 34) {
+// Smooth Typewriter with Cursor
+function typeWriterEffect(el, text, speed = 40) {
   el.textContent = "";
 
-  const chars = [...text]; // fixes emoji splitting
+  const chars = [...text]; // keeps emojis intact
+
+  // Cursor
+  const cursor = document.createElement("span");
+  cursor.className = "cursor";
+
+  Object.assign(cursor.style, {
+    display: "inline-block",
+    width: "2px",
+    height: "1em",
+    marginLeft: "3px",
+    background: "currentColor",
+    verticalAlign: "middle",
+    animation: "blinkCursor 0.8s infinite"
+  });
+
+  el.appendChild(cursor);
+
   let i = 0;
 
   const interval = setInterval(() => {
     if (i < chars.length) {
-      el.textContent += chars[i++];
+      el.insertBefore(
+        document.createTextNode(chars[i++]),
+        cursor
+      );
     } else {
       clearInterval(interval);
+
+      // remove cursor after typing finishes
+      setTimeout(() => {
+        cursor.remove();
+      }, 1200);
     }
   }, speed);
 }
