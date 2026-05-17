@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WIO — WhoisOwner | Africa's Gadget Ownership Registry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+```
+:root {
+  --ink: #0a0a0f;
+  --ink-soft: #1a1a2e;
+  --surface: #f5f3ee;
+  --surface-warm: #ede9e0;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-dim: rgba(201,168,76,0.15);
+  --green: #1a5c3a;
+  --green-bright: #22c55e;
+  --red: #c0392b;
+  --red-dim: rgba(192,57,43,0.12);
+  --white: #ffffff;
+  --text-muted: #6b6b7b;
+  --border: rgba(10,10,15,0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 4px 32px rgba(10,10,15,0.10);
+  --shadow-lg: 0 24px 80px rgba(10,10,15,0.18);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CUSTOM CURSOR */
+.cursor {
+  width: 10px; height: 10px;
+  background: var(--gold);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.1s ease, width 0.2s ease, height 0.2s ease, background 0.2s ease;
+  mix-blend-mode: multiply;
+}
+.cursor-ring {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform 0.18s ease, width 0.25s ease, height 0.25s ease, opacity 0.2s ease;
+  opacity: 0.6;
+}
+.cursor.hover { width: 18px; height: 18px; background: var(--ink); }
+.cursor-ring.hover { width: 54px; height: 54px; opacity: 0.3; }
+
+/* NOISE TEXTURE OVERLAY */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 20px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(245,243,238,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 38px; height: 38px;
+  background: var(--ink);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.logo-mark::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 2.5px solid var(--gold);
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.logo-mark::before {
+  content: '';
+  position: absolute;
+  width: 5px; height: 5px;
+  background: var(--gold);
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+.logo-text span { color: var(--gold); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--ink); }
+
+.nav-cta {
+  background: var(--ink) !important;
+  color: var(--surface) !important;
+  padding: 10px 22px;
+  border-radius: 100px;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  transition: background 0.2s, transform 0.2s !important;
+}
+.nav-cta:hover { background: var(--gold) !important; color: var(--ink) !important; transform: translateY(-1px); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  padding: 140px 48px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hero-bg-circle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+}
+.hero-bg-circle-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--gold-light), transparent 70%);
+  top: -100px; right: -100px;
+  animation: float1 8s ease-in-out infinite;
+}
+.hero-bg-circle-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(26,92,58,0.3), transparent 70%);
+  bottom: 0; left: 100px;
+  animation: float2 10s ease-in-out infinite;
+}
+
+@keyframes float1 { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-30px) scale(1.05)} }
+@keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(20px)} }
+
+.hero-left { position: relative; z-index: 2; }
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8b6914;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  animation: fadeUp 0.6s ease both;
+}
+.hero-badge-dot {
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(48px, 5.5vw, 80px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -2px;
+  color: var(--ink);
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+h1 em {
+  font-style: normal;
+  color: var(--gold);
+  position: relative;
+}
+h1 em::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+  opacity: 0.4;
+}
+
+.hero-sub {
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  max-width: 460px;
+  margin-bottom: 44px;
+  font-weight: 300;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--ink);
+  color: var(--white);
+  padding: 16px 32px;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: none;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 4px 24px rgba(10,10,15,0.2);
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(10,10,15,0.25);
+  background: var(--gold);
+  color: var(--ink);
+}
+.btn-primary svg { transition: transform 0.2s; }
+.btn-primary:hover svg { transform: translateX(4px); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--ink);
+  padding: 16px 24px;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1.5px solid var(--border);
+  cursor: none;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-ghost:hover { border-color: var(--ink); background: var(--ink); color: var(--white); }
+
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+.stat-item {}
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -1px;
+  display: block;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+/* HERO RIGHT — PHONE MOCKUP */
+.hero-right {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.phone-mockup {
+  width: 320px;
+  background: var(--ink);
+  border-radius: 44px;
+  padding: 16px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.05);
+  position: relative;
+}
+.phone-inner {
+  background: #111118;
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
+}
+.phone-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px 8px;
+}
+.phone-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--white);
+  font-weight: 500;
+}
+.phone-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.phone-icon-bar {
+  width: 16px; height: 8px;
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.phone-icon-bar::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 70%;
+  background: white;
+  border-radius: 1px;
+}
+
+.phone-app-header {
+  padding: 8px 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.phone-app-logo {
+  width: 28px; height: 28px;
+  background: var(--gold);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.phone-app-logo-inner {
+  width: 10px; height: 10px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+.phone-app-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+.phone-search {
+  margin: 0 16px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.phone-search-icon {
+  width: 14px; height: 14px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.phone-search-icon::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; right: -4px;
+  width: 5px; height: 1.5px;
+  background: rgba(255,255,255,0.3);
+  transform: rotate(45deg);
+}
+.phone-search-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.5px;
+}
+.phone-search-cursor {
+  width: 1px; height: 14px;
+  background: var(--gold);
+  animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.phone-result {
+  margin: 0 16px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 16px;
+  animation: slideResult 3s ease-in-out infinite;
+}
+@keyframes slideResult {
+  0%,40%{ opacity:1; transform: translateY(0); }
+  50%{ opacity:0; transform: translateY(-8px); }
+  60%{ opacity:0; transform: translateY(8px); }
+  70%,100%{ opacity:1; transform: translateY(0); }
+}
+
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green-bright);
+  box-shadow: 0 0 8px var(--green-bright);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse { 0%,100%{box-shadow: 0 0 8px var(--green-bright)} 50%{box-shadow: 0 0 16px var(--green-bright)} }
+.status-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-bright);
+  letter-spacing: 0.5px;
+}
+
+.result-device {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.result-device-img {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.result-device-info {}
+.result-device-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 2px;
+}
+.result-device-imei {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+}
+
+.result-owner {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.result-owner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.owner-avatar {
+  width: 28px; height: 28px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.owner-name {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 400;
+}
+.owner-verified {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 100px;
+  padding: 3px 10px;
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.phone-bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 20px 20px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-top: 8px;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.nav-item-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+.nav-item-dot.inactive { background: rgba(255,255,255,0.2); }
+.nav-item-label {
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  font-family: 'DM Mono', monospace;
+}
+.nav-item.active .nav-item-label { color: var(--gold); }
+
+.phone-notch {
+  width: 100px; height: 28px;
+  background: var(--ink);
+  border-radius: 0 0 20px 20px;
+  margin: 0 auto;
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+}
+
+/* FLOATING CARDS */
+.float-card {
+  position: absolute;
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.float-card-1 {
+  top: 60px; right: -40px;
+  animation: floatCard1 6s ease-in-out infinite;
+}
+.float-card-2 {
+  bottom: 80px; left: -60px;
+  animation: floatCard2 7s ease-in-out infinite;
+}
+@keyframes floatCard1 { 0%,100%{transform:translateY(0) rotate(2deg)} 50%{transform:translateY(-12px) rotate(2deg)} }
+@keyframes floatCard2 { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(10px) rotate(-2deg)} }
+
+.float-card-title {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.float-card-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+.float-card-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.float-card-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* SEARCH SECTION */
+.search-section {
+  padding: 80px 48px;
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.search-section::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(201,168,76,0.12), transparent 70%);
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.search-inner {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.section-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.search-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -1.5px;
+  margin-bottom: 16px;
+  line-height: 1.05;
+}
+
+.search-sub {
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+.search-box {
+  display: flex;
+  gap: 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  padding: 6px 6px 6px 24px;
+  align-items: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within {
+  border-color: rgba(201,168,76,0.5);
+  box-shadow: 0 0 0 4px rgba(201,168,76,0.08);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+.search-input::placeholder { color: rgba(255,255,255,0.25); }
+
+.search-btn {
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 100px;
+  padding: 12px 28px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: none;
+  transition: transform 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.search-btn:hover { transform: scale(1.03); background: var(--gold-light); }
+
+/* RESULT DISPLAY */
+.search-result {
+  margin-top: 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: left;
+  display: none;
+  animation: fadeUp 0.4s ease;
+}
+.search-result.visible { display: block; }
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Syne', sans-serif;
+}
+.result-badge.clean { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+.result-badge.stolen { background: rgba(192,57,43,0.15); color: #ef4444; border: 1px solid rgba(192,57,43,0.2); }
+.result-badge.registered { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.result-field { }
+.result-field-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.result-field-value {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 400;
+}
+.result-field-value.mono { font-family: 'DM Mono', monospace; font-size: 13px; }
+
+.result-message-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  background: var(--gold);
+  color: var(--ink);
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: transform 0.2s;
+}
+.result-message-btn:hover { transform: translateY(-2px); }
+
+/* HOW IT WORKS */
+.how-section {
+  padding: 100px 48px;
+  background: var(--surface);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 72px;
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.section-sub {
+  font-size: 17px;
+  color: var(--text-muted);
+  max-width: 500px;
+  margin: 0 auto;
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.step-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 36px 32px;
+  border: 1px solid var(--border);
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+}
+.step-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.step-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+.step-card:hover::before { opacity: 1; }
+
+.step-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 64px;
+  font-weight: 800;
+  color: rgba(10,10,15,0.04);
+  line-height: 1;
+  margin-bottom: 20px;
+  letter-spacing: -2px;
+}
+
+.step-icon {
+  width: 48px; height: 48px;
+  background: var(--surface);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.step-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.step-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+/* PRICING */
+.pricing-section {
+  padding: 100px 48px;
+  background: var(--surface-warm);
+}
+
+.pricing-card {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--ink);
+  border-radius: 28px;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.pricing-card::before {
+  content: '';
+  position: absolute;
+  top: -100px; right: -100px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(201,168,76,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.pricing-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.pricing-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.pricing-currency {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+}
+.pricing-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 72px;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -3px;
+  line-height: 1;
+}
+.pricing-period {
+  font-size: 16px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 300;
+}
+
+.pricing-tagline {
+  font-size: 14px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 36px;
+  font-style: italic;
+}
+
+.pricing-features {
+  list-style: none;
+  margin-bottom: 40px;
+}
+.pricing-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-weight: 300;
+}
+.pricing-features li:last-child { border-bottom: none; }
+.feature-check {
+  width: 20px; height: 20px;
+  background: rgba(34,197,94,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+.pricing-cta {
+  width: 100%;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 100px;
+  padding: 18px;
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  letter-spacing: -0.3px;
+}
+.pricing-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(201,168,76,0.3); }
+
+/* MODALS */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,15,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--white);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+.modal-header {
+  padding: 32px 32px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-title-wrap {}
+.modal-eyebrow {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.modal-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+
+.modal-close {
+  width: 36px; height: 36px;
+  background: var(--surface);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: none;
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--text-muted);
+  transition: background 0.2s, color 0.2s;
+}
+.modal-close:hover { background: var(--ink); color: white; }
+
+.modal-body { padding: 24px 32px 32px; }
+
+.form-group {
+  margin-bottom: 20px;
+}
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: 0.1px;
+}
+.form-label span { color: var(--gold); }
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  background: white;
+}
+.form-input::placeholder { color: var(--text-muted); font-weight: 300; }
+
+.form-input.mono { font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+
+.form-helper {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 300;
+}
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.form-select {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  cursor: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b7b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  padding-right: 44px;
+  transition: border-color 0.2s;
+}
+.form-select:focus { border-color: var(--gold); }
+
+.imei-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+.imei-hint-icon { font-size: 18px; flex-shrink: 0; }
+.imei-hint-text {
+  font-size: 12px;
+  color: #8b6914;
+  line-height: 1.5;
+  font-weight: 400;
+}
+.imei-hint-text strong { font-weight: 600; }
+
+.colour-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.colour-option {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: none;
+  transition: transform 0.2s, border-color 0.2s;
+  position: relative;
+}
+.colour-option:hover { transform: scale(1.15); }
+.colour-option.selected { border-color: var(--ink); }
+.colour-option.selected::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.modal-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-modal-submit {
+  flex: 1;
+  background: var(--ink);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  padding: 16px;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: none;
+  transition: background 0.2s, transform 0.2s;
+  letter-spacing: -0.2px;
+}
+.btn-modal-submit:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); }
+
+.btn-modal-cancel {
+  padding: 16px 24px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-modal-cancel:hover { border-color: var(--ink); color: var(--ink); }
+
+/* SUCCESS STATE */
+.success-state {
+  text-align: center;
+  padding: 20px 0;
+  display: none;
+}
+.success-state.visible { display: block; }
+.success-icon {
+  width: 72px; height: 72px;
+  background: rgba(34,197,94,0.1);
+  border: 2px solid rgba(34,197,94,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 20px;
+  animation: scaleIn 0.4s ease;
+}
+@keyframes scaleIn { from{transform:scale(0.5); opacity:0} to{transform:scale(1); opacity:1} }
+.success-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+.success-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  font-weight: 300;
+}
+.cert-preview {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.cert-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.cert-row:last-child { border-bottom: none; }
+.cert-key { color: var(--text-muted); font-weight: 400; }
+.cert-val { color: var(--ink); font-weight: 500; font-family: 'DM Mono', monospace; font-size: 12px; }
+.cert-status { color: #22c55e; font-weight: 600; font-family: 'DM Sans', sans-serif; font-size: 12px; }
+
+/* FOOTER */
+footer {
+  background: var(--ink);
+  padding: 60px 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+
+.footer-brand {}
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.footer-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.7;
+  font-weight: 300;
+  max-width: 220px;
+}
+
+.footer-col-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 20px;
+  letter-spacing: 0.3px;
+}
+.footer-links { list-style: none; }
+.footer-links li { margin-bottom: 10px; }
+.footer-links a {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  transition: color 0.2s;
+  font-weight: 300;
+}
+.footer-links a:hover { color: var(--gold); }
+
+.footer-bottom {
+  background: var(--ink);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 20px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+  font-weight: 300;
+}
+.footer-copy span { color: var(--gold); }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink);
+  color: white;
+  padding: 14px 24px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2000;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .hero { grid-template-columns: 1fr; padding: 120px 24px 60px; gap: 60px; }
+  .hero-right { display: none; }
+  .hero-stats { gap: 24px; }
+  .search-section { padding: 60px 24px; }
+  .how-section { padding: 60px 24px; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .pricing-section { padding: 60px 24px; }
+  footer { grid-template-columns: 1fr 1fr; padding: 48px 24px; gap: 32px; }
+  .footer-bottom { padding: 16px 24px; flex-direction: column; gap: 8px; text-align: center; }
+  .form-row { grid-template-columns: 1fr; }
+  .modal { border-radius: 20px; }
+  .modal-header, .modal-body { padding-left: 24px; padding-right: 24px; }
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+```
+
+  </style>
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="logo-mark"></div>
+      <span class="logo-text">Whois<span>Owner</span></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#lookup">Check IMEI</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#" class="nav-cta" onclick="openModal('register')">Register Device</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-bg-circle hero-bg-circle-1"></div>
+      <div class="hero-bg-circle hero-bg-circle-2"></div>
+    </div>
+
+```
+<div class="hero-left">
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    Africa's #1 Gadget Registry
+  </div>
+
+  <h1>Know Before<br/>You <em>Buy</em>.<br/>Own What's <em>Yours</em>.</h1>
+
+  <p class="hero-sub">
+    Register your gadgets. Protect your ownership. If stolen — the whole of Africa knows. For less than the cost of pure water a day.
+  </p>
+
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="openModal('register')">
+      Register Your Device
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <a href="#lookup" class="btn-ghost">Check an IMEI</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-num">25M+</span>
+      <span class="stat-label">Phones stolen in Nigeria/yr</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">₦100</span>
+      <span class="stat-label">Monthly protection</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">99%</span>
+      <span class="stat-label">IMEI survives factory reset</span>
+    </div>
+  </div>
+</div>
+
+<div class="hero-right">
+  <!-- Phone Mockup -->
+  <div style="position:relative">
+    <div class="phone-mockup">
+      <div class="phone-inner">
+        <div class="phone-status-bar">
+          <span class="phone-time">9:41</span>
+          <div class="phone-icons">
+            <div class="phone-icon-bar"></div>
+          </div>
+        </div>
+
+        <div class="phone-app-header">
+          <div class="phone-app-logo"><div class="phone-app-logo-inner"></div></div>
+          <span class="phone-app-name">WhoisOwner</span>
+        </div>
+
+        <div class="phone-search">
+          <div class="phone-search-icon"></div>
+          <span class="phone-search-text">354823110987654</span>
+          <div class="phone-search-cursor"></div>
+        </div>
+
+        <div class="phone-result">
+          <div class="result-status">
+            <div class="status-dot"></div>
+            <span class="status-text">CLEAN — REGISTERED</span>
+          </div>
+          <div class="result-device">
+            <div class="result-device-img">📱</div>
+            <div class="result-device-info">
+              <div class="result-device-name">Samsung Galaxy A54</div>
+              <div class="result-device-imei">354823110987654</div>
+            </div>
+          </div>
+          <div class="result-owner">
+            <div class="result-owner-left">
+              <div class="owner-avatar">👤</div>
+              <span class="owner-name">C. Okonkwo</span>
+            </div>
+            <div class="owner-verified">✓ Verified</div>
+          </div>
+        </div>
+
+        <div class="phone-bottom-nav">
+          <div class="nav-item active">
+            <div class="nav-item-dot"></div>
+            <span class="nav-item-label">Search</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-item-dot inactive"></div>
+            <span class="nav-item-label">Devices</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-item-dot inactive"></div>
+            <span class="nav-item-label">Messages</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-item-dot inactive"></div>
+            <span class="nav-item-label">Profile</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="float-card float-card-1">
+      <div class="float-card-icon">🛡️</div>
+      <div class="float-card-title">Protection Active</div>
+      <div class="float-card-value">5 Devices</div>
+      <div class="float-card-sub">All clean & registered</div>
+    </div>
+
+    <div class="float-card float-card-2">
+      <div class="float-card-icon">🏆</div>
+      <div class="float-card-title">Owner Tokens</div>
+      <div class="float-card-value">127 WIO</div>
+      <div class="float-card-sub">Earned this month</div>
+    </div>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- IMEI LOOKUP -->
+
+  <section class="search-section" id="lookup">
+    <div class="search-inner">
+      <span class="section-tag">Free IMEI Check</span>
+      <h2 class="search-title">Is This Device<br/>Clean?</h2>
+      <p class="search-sub">Enter any IMEI number and instantly see if a device is registered, stolen, or clean before you buy.</p>
+
+```
+  <div class="search-box">
+    <input type="text" class="search-input" id="imeiInput" placeholder="Enter 15-digit IMEI (dial *#06# to find it)" maxlength="15" />
+    <button class="search-btn" onclick="checkIMEI()">Check Now</button>
+  </div>
+
+  <div class="search-result" id="searchResult">
+    <div class="result-header">
+      <div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:6px;font-family:'DM Mono',monospace;" id="resultImei"></div>
+        <div class="result-badge" id="resultBadge"></div>
+      </div>
+      <div style="font-size:28px;" id="resultEmoji"></div>
+    </div>
+    <div class="result-grid">
+      <div class="result-field">
+        <div class="result-field-label">Device</div>
+        <div class="result-field-value" id="resultDevice"></div>
+      </div>
+      <div class="result-field">
+        <div class="result-field-label">Brand</div>
+        <div class="result-field-value" id="resultBrand"></div>
+      </div>
+      <div class="result-field">
+        <div class="result-field-label">Colour</div>
+        <div class="result-field-value" id="resultColour"></div>
+      </div>
+      <div class="result-field">
+        <div class="result-field-label">Registered</div>
+        <div class="result-field-value" id="resultDate"></div>
+      </div>
+    </div>
+    <div id="ownerSection" style="display:none">
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+        <div class="result-field-label" style="margin-bottom:8px">Owner</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="owner-avatar" style="width:36px;height:36px;font-size:16px">👤</div>
+            <div>
+              <div style="color:rgba(255,255,255,0.8);font-size:14px;font-weight:500" id="resultOwner"></div>
+              <div style="color:rgba(255,255,255,0.35);font-size:12px">Verified Owner</div>
+            </div>
+          </div>
+          <button class="result-message-btn" onclick="openModal('message')">
+            📩 Message Owner
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="stolenSection" style="display:none;margin-top:16px;padding:16px;background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.2);border-radius:12px">
+      <div style="color:#ef4444;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px">⚠️ This device has been reported stolen</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:13px;font-weight:300" id="rewardText"></div>
+    </div>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- HOW IT WORKS -->
+
+  <section class="how-section" id="how">
+    <div class="section-header">
+      <span class="section-tag" style="color:var(--gold)">Simple Process</span>
+      <h2 class="section-title">Three Steps.<br/>Total Protection.</h2>
+      <p class="section-sub">Register once. Protected forever. Even if the phone is wiped.</p>
+    </div>
+
+```
+<div class="steps-grid">
+  <div class="step-card">
+    <div class="step-number">01</div>
+    <div class="step-icon">📱</div>
+    <h3 class="step-title">Register Your Gadget</h3>
+    <p class="step-desc">Enter your IMEI or serial number. We auto-detect your device details, photo, and colour. Your ownership is certified on our registry.</p>
+  </div>
+  <div class="step-card">
+    <div class="step-number">02</div>
+    <div class="step-icon">🛡️</div>
+    <h3 class="step-title">Stay Protected</h3>
+    <p class="step-desc">For ₦100/month — less than a sachet of water — your device is visible to buyers across Africa. Factory reset cannot erase our records.</p>
+  </div>
+  <div class="step-card">
+    <div class="step-number">03</div>
+    <div class="step-icon">🔍</div>
+    <h3 class="step-title">Check Before You Buy</h3>
+    <p class="step-desc">Anyone buying a used device checks the IMEI on WIO first. Stolen devices can't be sold. Clean devices sell faster. Everyone wins.</p>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- PRICING -->
+
+  <section class="pricing-section" id="pricing">
+    <div class="section-header">
+      <span class="section-tag">Pricing</span>
+      <h2 class="section-title">Ridiculously<br/>Affordable.</h2>
+      <p class="section-sub">Less than what you spend on data in a day. Protects everything you own.</p>
+    </div>
+
+```
+<div class="pricing-card">
+  <div class="pricing-label">WIO Guardian Plan</div>
+  <div class="pricing-amount">
+    <span class="pricing-currency">₦</span>
+    <span class="pricing-number">100</span>
+    <span class="pricing-period">/month</span>
+  </div>
+  <p class="pricing-tagline">Less than a sachet of pure water a day</p>
+
+  <ul class="pricing-features">
+    <li><div class="feature-check">✓</div>Register unlimited gadgets</li>
+    <li><div class="feature-check">✓</div>5 owner tokens for IMEI checks monthly</li>
+    <li><div class="feature-check">✓</div>Instant stolen device alerts</li>
+    <li><div class="feature-check">✓</div>Digital ownership certificate</li>
+    <li><div class="feature-check">✓</div>In-app messaging from buyers</li>
+    <li><div class="feature-check">✓</div>Theft report PDF generation</li>
+    <li><div class="feature-check">✓</div>Access from any device, any time</li>
+  </ul>
+
+  <button class="pricing-cta" onclick="openModal('register')">Protect My Gadgets Now →</button>
+</div>
+```
+
+  </section>
+
+  <!-- FOOTER -->
+
+  <footer>
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="logo-mark"></div>
+        <span class="logo-text" style="color:white">Whois<span>Owner</span></span>
+      </div>
+      <p class="footer-desc">Africa's gadget ownership registry. Stopping theft resale, one IMEI at a time.</p>
+    </div>
+
+```
+<div>
+  <div class="footer-col-title">Platform</div>
+  <ul class="footer-links">
+    <li><a href="#">Register Device</a></li>
+    <li><a href="#">Check IMEI</a></li>
+    <li><a href="#">Report Stolen</a></li>
+    <li><a href="#">Owner Dashboard</a></li>
+  </ul>
+</div>
+
+<div>
+  <div class="footer-col-title">Company</div>
+  <ul class="footer-links">
+    <li><a href="#">About WIO</a></li>
+    <li><a href="#">How It Works</a></li>
+    <li><a href="#">For Dealers</a></li>
+    <li><a href="#">Press</a></li>
+  </ul>
+</div>
+
+<div>
+  <div class="footer-col-title">Legal</div>
+  <ul class="footer-links">
+    <li><a href="#">Privacy Policy</a></li>
+    <li><a href="#">Terms of Service</a></li>
+    <li><a href="#">NDPR Compliance</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</div>
+```
+
+  </footer>
+
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 <span>WhoisOwner.org</span> — All rights reserved.</span>
+    <span class="footer-copy">Built for Africa 🌍</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- MODAL 1: REGISTER DEVICE               -->
+
+  <!-- ═══════════════════════════════════════ -->
+
+  <div class="modal-overlay" id="registerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-eyebrow">Device Registration</div>
+          <div class="modal-title">Protect Your Gadget</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('register')">✕</button>
+      </div>
+
+```
+  <div class="modal-body" id="registerForm">
+    <!-- IMEI Hint -->
+    <div class="imei-hint">
+      <span class="imei-hint-icon">💡</span>
+      <span class="imei-hint-text">Dial <strong>*#06#</strong> on your phone to instantly see your IMEI — no digging through settings needed.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Full Name <span>*</span></label>
+      <input type="text" class="form-input" id="regName" placeholder="e.g. Chidi Okonkwo" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Phone Number <span>*</span></label>
+        <input type="tel" class="form-input" id="regPhone" placeholder="08012345678" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address <span>*</span></label>
+        <input type="email" class="form-input" id="regEmail" placeholder="you@email.com" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">IMEI Number <span>*</span></label>
+      <input type="text" class="form-input mono" id="regImei" placeholder="15-digit IMEI number" maxlength="15" oninput="autoDetectDevice(this.value)" />
+      <div class="form-helper">Dial *#06# on your phone to find this</div>
+    </div>
+
+    <!-- Auto-detected device preview -->
+    <div id="devicePreview" style="display:none;background:var(--surface);border-radius:12px;padding:16px;margin-bottom:20px;border:1px solid var(--border);animation:fadeUp 0.3s ease">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;font-weight:500">Device Detected ✓</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:32px" id="previewEmoji">📱</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--ink);font-size:16px" id="previewName"></div>
+          <div style="font-size:12px;color:var(--text-muted)" id="previewBrand"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Device Type <span>*</span></label>
+        <select class="form-select" id="regType">
+          <option value="">Select type</option>
+          <option value="smartphone">📱 Smartphone</option>
+          <option value="laptop">💻 Laptop</option>
+          <option value="tablet">📟 Tablet</option>
+          <option value="smartwatch">⌚ Smartwatch</option>
+          <option value="generator">🔋 Generator</option>
+          <option value="tv">📺 Smart TV</option>
+          <option value="camera">📷 Camera</option>
+          <option value="other">📦 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">State <span>*</span></label>
+        <select class="form-select" id="regState">
+          <option value="">Select state</option>
+          <option>Lagos</option>
+          <option>Abuja (FCT)</option>
+          <option>Kano</option>
+          <option>Rivers</option>
+          <option>Oyo</option>
+          <option>Anambra</option>
+          <option>Delta</option>
+          <option>Kaduna</option>
+          <option>Enugu</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Device Colour</label>
+      <div class="colour-picker" id="colourPicker">
+        <div class="colour-option" style="background:#1a1a1a" data-colour="Midnight Black" onclick="selectColour(this)" title="Midnight Black"></div>
+        <div class="colour-option" style="background:#f5f5f5;border:1px solid #ddd" data-colour="Pearl White" onclick="selectColour(this)" title="Pearl White"></div>
+        <div class="colour-option" style="background:#4a6fa5" data-colour="Ocean Blue" onclick="selectColour(this)" title="Ocean Blue"></div>
+        <div class="colour-option" style="background:#7b5ea7" data-colour="Lavender Purple" onclick="selectColour(this)" title="Lavender Purple"></div>
+        <div class="colour-option" style="background:#2d8a4e" data-colour="Forest Green" onclick="selectColour(this)" title="Forest Green"></div>
+        <div class="colour-option" style="background:#c0392b" data-colour="Crimson Red" onclick="selectColour(this)" title="Crimson Red"></div>
+        <div class="colour-option" style="background:#c9a84c" data-colour="Champagne Gold" onclick="selectColour(this)" title="Champagne Gold"></div>
+        <div class="colour-option" style="background:#708090" data-colour="Silver Grey" onclick="selectColour(this)" title="Silver Grey"></div>
+      </div>
+    </div>
+
+    <div class="modal-divider"></div>
+
+    <div style="background:var(--gold-dim);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:16px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--ink)">₦100/month</div>
+        <div style="font-size:12px;color:var(--text-muted)">Includes 5 owner tokens + full protection</div>
+      </div>
+      <div style="font-size:22px">🛡️</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('register')">Cancel</button>
+      <button class="btn-modal-submit" onclick="submitRegistration()">Register & Protect →</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div class="success-state" id="registerSuccess">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Device Registered!</div>
+    <p class="success-sub">Your gadget is now protected on WIO. If stolen, nobody in Africa can resell it without being caught.</p>
+    <div class="cert-preview" id="certPreview"></div>
+    <div style="margin-top:20px;display:flex;gap:12px">
+      <button class="btn-modal-submit" style="flex:1" onclick="closeModal('register')">Go to Dashboard →</button>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- MODAL 2: MESSAGE OWNER                 -->
+
+  <!-- ═══════════════════════════════════════ -->
+
+  <div class="modal-overlay" id="messageModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-eyebrow">Safe Communication</div>
+          <div class="modal-title">Message the Owner</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('message')">✕</button>
+      </div>
+
+```
+  <div class="modal-body" id="messageForm">
+    <div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:28px">📱</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--ink);font-size:15px">Samsung Galaxy A54</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">354823110987654</div>
+      </div>
+      <div style="margin-left:auto" class="owner-verified">✓ Verified Owner</div>
+    </div>
+
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#166534;font-weight:400;line-height:1.5">
+      🔒 Your message is sent safely through WIO. The owner's real phone number is never revealed. All messages are logged for accountability.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Your Name <span>*</span></label>
+      <input type="text" class="form-input" id="msgName" placeholder="Your full name" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Your Phone Number <span>*</span></label>
+      <input type="tel" class="form-input" id="msgPhone" placeholder="08012345678" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Message Purpose <span>*</span></label>
+      <select class="form-select" id="msgPurpose">
+        <option value="">Select reason for contact</option>
+        <option>I want to buy this device</option>
+        <option>I found this device</option>
+        <option>I have information about this device</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Your Message <span>*</span></label>
+      <textarea class="form-input" id="msgContent" rows="4" placeholder="Write your message to the owner here. Be clear and honest." style="resize:vertical;border-radius:12px;line-height:1.6"></textarea>
+    </div>
+
+    <div class="modal-divider"></div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('message')">Cancel</button>
+      <button class="btn-modal-submit" onclick="submitMessage()">Send Message →</button>
+    </div>
+  </div>
+
+  <div class="success-state" id="messageSuccess">
+    <div class="success-icon">📩</div>
+    <div class="success-title">Message Sent!</div>
+    <p class="success-sub">The owner has been notified through WIO. They'll reply directly to your phone number. Thank you for being honest.</p>
+    <button class="btn-modal-submit" style="width:100%;margin-top:8px" onclick="closeModal('message')">Close</button>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- TOAST -->
+
+  <div class="toast" id="toast">
+    <span id="toastIcon">✓</span>
+    <span id="toastMsg">Done!</span>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════
+    // CURSOR
+    // ══════════════════════════════════════
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      cursor.style.left = mouseX + 'px';
+      cursor.style.top = mouseY + 'px';
+    });
+
+    function animateRing() {
+      ringX += (mouseX - ringX) * 0.12;
+      ringY += (mouseY - ringY) * 0.12;
+      ring.style.left = ringX + 'px';
+      ring.style.top = ringY + 'px';
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    document.querySelectorAll('a, button, .colour-option, input, select, textarea').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.classList.add('hover'); ring.classList.add('hover'); });
+      el.addEventListener('mouseleave', () => { cursor.classList.remove('hover'); ring.classList.remove('hover'); });
+    });
+
+
+    // ══════════════════════════════════════
+    // MOCK DEVICE DATABASE (TAC lookup sim)
+    // ══════════════════════════════════════
+    const mockDevices = {
+      '35482311': { name: 'Galaxy A54', brand: 'Samsung', emoji: '📱', colour: 'Awesome Blue' },
+      '35984610': { name: 'iPhone 14', brand: 'Apple', emoji: '📱', colour: 'Midnight' },
+      '86471202': { name: 'Tecno Spark 10', brand: 'Tecno', emoji: '📱', colour: 'Meta Black' },
+      '35619405': { name: 'Infinix Hot 30', brand: 'Infinix', emoji: '📱', colour: 'Blade Silver' },
+      '35302708': { name: 'Redmi Note 12', brand: 'Xiaomi', emoji: '📱', colour: 'Ice Blue' },
+      '86332201': { name: 'Itel P38 Pro', brand: 'Itel', emoji: '📱', colour: 'Gradation Blue' },
+    };
+
+    // Mock registered devices for demo
+    const registeredIMEIs = {
+      '354823110987654': { status: 'clean', owner: 'C. Okonkwo', device: 'Samsung Galaxy A54', brand: 'Samsung', colour: 'Awesome Blue', date: 'Jan 2026', reward: null },
+      '359846100123456': { status: 'stolen', owner: 'A. Ibrahim', device: 'iPhone 14', brand: 'Apple', colour: 'Midnight', date: 'Mar 2026', reward: '₦80,000' },
+      '864712020654321': { status: 'clean', owner: 'F. Adeyemi', device: 'Tecno Spark 10', brand: 'Tecno', colour: 'Meta Black', date: 'Feb 2026', reward: null },
+    };
+
+    let selectedColour = '';
+
+
+    // ══════════════════════════════════════
+    // AUTO DETECT DEVICE FROM IMEI
+    // ══════════════════════════════════════
+    function autoDetectDevice(imei) {
+      const preview = document.getElementById('devicePreview');
+      if (imei.length >= 8) {
+        const tac = imei.substring(0, 8);
+        const device = mockDevices[tac];
+        if (device) {
+          document.getElementById('previewName').textContent = device.name;
+          document.getElementById('previewBrand').textContent = device.brand;
+          document.getElementById('previewEmoji').textContent = device.emoji;
+          preview.style.display = 'block';
+        } else {
+          // Generic detection for demo
+          document.getElementById('previewName').textContent = 'Mobile Device';
+          document.getElementById('previewBrand').textContent = 'Detected from IMEI';
+          document.getElementById('previewEmoji').textContent = '📱';
+          preview.style.display = 'block';
+        }
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+
+
+    // ══════════════════════════════════════
+    // COLOUR PICKER
+    // ══════════════════════════════════════
+    function selectColour(el) {
+      document.querySelectorAll('.colour-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedColour = el.dataset.colour;
+    }
+
+
+    // ══════════════════════════════════════
+    // IMEI CHECK
+    // ══════════════════════════════════════
+    function checkIMEI() {
+      const imei = document.getElementById('imeiInput').value.trim();
+      const resultEl = document.getElementById('searchResult');
+
+      if (!imei || imei.length < 15) {
+        showToast('⚠️', 'Please enter a valid 15-digit IMEI');
+        document.getElementById('imeiInput').focus();
+        return;
+      }
+
+      // Simulate API call
+      setTimeout(() => {
+        const data = registeredIMEIs[imei];
+        resultEl.classList.add('visible');
+
+        document.getElementById('resultImei').textContent = 'IMEI: ' + imei;
+
+        if (!data) {
+          // Not in registry
+          document.getElementById('resultBadge').className = 'result-badge registered';
+          document.getElementById('resultBadge').textContent = '⚪ Not Registered';
+          document.getElementById('resultEmoji').textContent = '❓';
+          document.getElementById('resultDevice').textContent = 'Unknown — not registered';
+          document.getElementById('resultBrand').textContent = 'N/A';
+          document.getElementById('resultColour').textContent = 'N/A';
+          document.getElementById('resultDate').textContent = 'Unregistered';
+          document.getElementById('ownerSection').style.display = 'none';
+          document.getElementById('stolenSection').style.display = 'none';
+          showToast('ℹ️', 'Device not found in WIO registry');
+        } else if (data.status === 'clean') {
+          document.getElementById('resultBadge').className = 'result-badge clean';
+          document.getElementById('resultBadge').textContent = '✅ Clean & Registered';
+          document.getElementById('resultEmoji').textContent = '✅';
+          document.getElementById('resultDevice').textContent = data.device;
+          document.getElementById('resultBrand').textContent = data.brand;
+          document.getElementById('resultColour').textContent = data.colour;
+          document.getElementById('resultDate').textContent = data.date;
+          document.getElementById('resultOwner').textContent = data.owner;
+          document.getElementById('ownerSection').style.display = 'block';
+          document.getElementById('stolenSection').style.display = 'none';
+          showToast('✅', 'Device is clean and registered');
+        } else if (data.status === 'stolen') {
+          document.getElementById('resultBadge').className = 'result-badge stolen';
+          document.getElementById('resultBadge').textContent = '🚨 REPORTED STOLEN';
+          document.getElementById('resultEmoji').textContent = '🚨';
+          document.getElementById('resultDevice').textContent = data.device;
+          document.getElementById('resultBrand').textContent = data.brand;
+          document.getElementById('resultColour').textContent = data.colour;
+          document.getElementById('resultDate').textContent = data.date;
+          document.getElementById('ownerSection').style.display = 'none';
+          document.getElementById('stolenSection').style.display = 'block';
+          document.getElementById('rewardText').textContent = data.reward
+            ? `💰 Reward offered: ${data.reward} — Contact WIO to claim.`
+            : 'No reward currently offered. Purchasing this device may be a criminal offence.';
+          showToast('🚨', 'Warning: This device has been reported stolen!');
+        }
+
+        resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 600);
+    }
+
+
+    // ══════════════════════════════════════
+    // REGISTRATION SUBMIT
+    // ══════════════════════════════════════
+    function submitRegistration() {
+      const name = document.getElementById('regName').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const imei = document.getElementById('regImei').value.trim();
+      const type = document.getElementById('regType').value;
+      const state = document.getElementById('regState').value;
+
+      if (!name || !phone || !email || !imei || !type || !state) {
+        showToast('⚠️', 'Please fill in all required fields');
+        return;
+      }
+      if (imei.length < 15) {
+        showToast('⚠️', 'IMEI must be 15 digits');
+        return;
+      }
+      if (!email.includes('@')) {
+        showToast('⚠️', 'Please enter a valid email address');
+        return;
+      }
+
+      // Show loading state
+      const btn = document.querySelector('#registerForm .btn-modal-submit');
+      btn.textContent = 'Registering...';
+      btn.style.opacity = '0.7';
+
+      setTimeout(() => {
+        // Generate cert data
+        const certId = 'WIO-' + Date.now().toString(36).toUpperCase();
+        const today = new Date().toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' });
+
+        document.getElementById('certPreview').innerHTML = `
+          <div class="cert-row">
+            <span class="cert-key">Certificate ID</span>
+            <span class="cert-val">${certId}</span>
+          </div>
+          <div class="cert-row">
+            <span class="cert-key">Owner</span>
+            <span class="cert-val">${name}</span>
+          </div>
+          <div class="cert-row">
+            <span class="cert-key">IMEI</span>
+            <span class="cert-val">${imei}</span>
+          </div>
+          <div class="cert-row">
+            <span class="cert-key">Device</span>
+            <span class="cert-val">${document.getElementById('previewName').textContent || 'Mobile Device'}</span>
+          </div>
+          <div class="cert-row">
+            <span class="cert-key">Colour</span>
+            <span class="cert-val">${selectedColour || 'Not specified'}</span>
+          </div>
+          <div class="cert-row">
+            <span class="cert-key">Registered</span>
+            <span class="cert-val">${today}</span>
+          </div>
+          <div class="cert-row">
+            <span class="cert-key">Status</span>
+            <span class="cert-status">✅ CLEAN & PROTECTED</span>
+          </div>
+        `;
+
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('registerSuccess').classList.add('visible');
+        showToast('🎉', 'Device registered successfully!');
+      }, 1500);
+    }
+
+
+    // ══════════════════════════════════════
+    // MESSAGE SUBMIT
+    // ══════════════════════════════════════
+    function submitMessage() {
+      const name = document.getElementById('msgName').value.trim();
+      const phone = document.getElementById('msgPhone').value.trim();
+      const purpose = document.getElementById('msgPurpose').value;
+      const content = document.getElementById('msgContent').value.trim();
+
+      if (!name || !phone || !purpose || !content) {
+        showToast('⚠️', 'Please fill in all fields');
+        return;
+      }
+
+      const btn = document.querySelector('#messageForm .btn-modal-submit');
+      btn.textContent = 'Sending...';
+      btn.style.opacity = '0.7';
+
+      setTimeout(() => {
+        document.getElementById('messageForm').style.display = 'none';
+        document.getElementById('messageSuccess').classList.add('visible');
+        showToast('📩', 'Message sent to owner!');
+      }, 1200);
+    }
+
+
+    // ══════════════════════════════════════
+    // MODAL CONTROLS
+    // ══════════════════════════════════════
+    function openModal(type) {
+      const modal = document.getElementById(type + 'Modal');
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(type) {
+      const modal = document.getElementById(type + 'Modal');
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+
+      // Reset forms
+      if (type === 'register') {
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('registerSuccess').classList.remove('visible');
+        document.getElementById('devicePreview').style.display = 'none';
+        document.querySelectorAll('.colour-option').forEach(o => o.classList.remove('selected'));
+        selectedColour = '';
+        document.querySelectorAll('#registerModal input, #registerModal select').forEach(el => el.value = '');
+        document.querySelector('#registerForm .btn-modal-submit').textContent = 'Register & Protect →';
+        document.querySelector('#registerForm .btn-modal-submit').style.opacity = '1';
+      }
+      if (type === 'message') {
+        document.getElementById('messageForm').style.display = 'block';
+        document.getElementById('messageSuccess').classList.remove('visible');
+        document.querySelectorAll('#messageModal input, #messageModal select, #messageModal textarea').forEach(el => el.value = '');
+        const btn = document.querySelector('#messageForm .btn-modal-submit');
+        if (btn) { btn.textContent = 'Send Message →'; btn.style.opacity = '1'; }
+      }
+    }
+
+    // Close on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) {
+          const id = overlay.id.replace('Modal', '');
+          closeModal(id);
+        }
+      });
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => {
+          closeModal(m.id.replace('Modal', ''));
+        });
+      }
+    });
+
+    // Enter to search
+    document.getElementById('imeiInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkIMEI();
+    });
+
+
+    // ══════════════════════════════════════
+    // TOAST
+    // ══════════════════════════════════════
+    let toastTimer;
+    function showToast(icon, msg) {
+      clearTimeout(toastTimer);
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastMsg').textContent = msg;
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+
+    // ══════════════════════════════════════
+    // SCROLL ANIMATIONS
+    // ══════════════════════════════════════
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.step-card, .pricing-card').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(el);
+    });
+
+
+    // ══════════════════════════════════════
+    // DEMO IMEI HINTS
+    // ══════════════════════════════════════
+    const demoHint = document.createElement('div');
+    demoHint.style.cssText = 'margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center';
+    demoHint.innerHTML = `
+      <span style="font-size:12px;color:rgba(255,255,255,0.35);font-weight:300">Try these demo IMEIs:</span>
+      <button onclick="fillDemo('354823110987654')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:4px 14px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);cursor:none;transition:background 0.2s" onmouseenter="this.style.background='rgba(201,168,76,0.15)';this.style.color='var(--gold)'" onmouseleave="this.style.background='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.5)'">354823110987654 ✅</button>
+      <button onclick="fillDemo('359846100123456')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:4px 14px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);cursor:none;transition:background 0.2s" onmouseenter="this.style.background='rgba(192,57,43,0.15)';this.style.color='#ef4444'" onmouseleave="this.style.background='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.5)'">359846100123456 🚨</button>
+    `;
+    document.querySelector('.search-box').after(demoHint);
+
+    function fillDemo(imei) {
+      document.getElementById('imeiInput').value = imei;
+      checkIMEI();
+    }
+  </script>
+
+</body>
+</html>
