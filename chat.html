@@ -3194,84 +3194,200 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   height: 8px;               /* slightly thicker = more visible */
   ...
 }
+/* =========================================
+   FREE TONIGHT – MINI CONNECTED VERSION
+   Same compact size, upgraded aesthetic
+   ========================================= */
+
 .neon-mini-card {
-  background: #0a0012;
-  border: 2px solid #ff00f2;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 
-    0 0 12px rgba(255, 0, 242, 0.6),
-    inset 0 0 10px rgba(0, 255, 234, 0.15);
-  max-width: 260px;
+  position: relative;
+  overflow: hidden;
+
+  background: linear-gradient(
+    180deg,
+    rgba(10, 0, 18, 0.96),
+    rgba(6, 0, 14, 0.98)
+  );
+
+  border: 1.5px solid rgba(0,255,159,0.22);
+  border-radius: 16px;
+
+  padding: 14px 15px;
+
+  max-width: 268px;
   margin: 16px auto;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
+
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 0 14px rgba(0,255,159,0.14),
+    0 0 24px rgba(0,0,0,0.7),
+    inset 0 0 10px rgba(0,255,159,0.04);
+
+  transition: all 0.28s ease;
+}
+
+/* subtle luxe texture */
+.neon-mini-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0,255,159,0.06) 1px, transparent 0),
+    radial-gradient(circle at 75% 25%, rgba(0,255,159,0.04) 1px, transparent 0),
+    radial-gradient(circle at 50% 80%, rgba(138,43,226,0.05) 1px, transparent 0);
+
+  background-size: 80px 80px;
+
+  pointer-events:none;
 }
 
 .neon-mini-card:hover {
-  box-shadow: 
-    0 0 24px rgba(255, 0, 242, 0.9),
-    inset 0 0 16px rgba(0, 255, 234, 0.25);
   transform: translateY(-2px);
+
+  box-shadow:
+    0 0 18px rgba(0,255,159,0.2),
+    0 0 34px rgba(0,0,0,0.8),
+    inset 0 0 16px rgba(0,255,159,0.06);
 }
 
+/* =========================================
+   TITLE AREA
+   ========================================= */
+
 .neon-title-container {
-  text-align: center;
-  margin-bottom: 12px;   /* gives nice spacing before sub text */
+  position: relative;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  margin-bottom: 10px;
+}
+
+/* glowing side lines */
+.neon-title-container::before,
+.neon-title-container::after{
+  content:"";
+  flex:1;
+  height:1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0,255,159,0.28),
+    transparent
+  );
 }
 
 .neon-title {
-  font-size: 17px;
-  font-weight: 900;
-  background: linear-gradient(90deg, #00ffea, #ff00f2, #8a2be2);
+  position: relative;
+  z-index: 2;
+
+  font-family: 'Architects Daughter', cursive;
+  font-size: 18px;
+  font-weight: 400;
+
+  letter-spacing: 2px;
+  white-space: nowrap;
+
+  background: linear-gradient(
+    90deg,
+    #00ff9f,
+    #00e6c0,
+    #00ff9f
+  );
+
+  background-size: 200% 200%;
+
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  display: inline-block;   /* better than flex for single line + emoji below */
-  /* remove these if you had them — we don't need flex here anymore */
-  /* display: flex; */
-  /* align-items: center; */
-  /* justify-content: center; */
-  /* gap: 6px; */
+
+  text-shadow:
+    0 0 14px rgba(0,255,159,0.65),
+    0 0 28px rgba(0,255,159,0.28),
+    0 3px 10px rgba(0,0,0,0.8);
+
+  animation:
+    tonightShift 7s linear infinite,
+    miniGlow 2.5s ease-in-out infinite alternate;
 }
 
-.neon-fire {
-  font-size: 22px;
-  background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff9f1c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1;          /* tighter spacing under title */
-  margin-top: 4px;         /* small gap between title text and 🔥 */
-  display: block;
-}
+/* =========================================
+   SUB TEXT
+   ========================================= */
 
 .neon-sub {
   font-size: 11px;
-  color: #ccc;
+  color: #bfd8d2;
+
   text-align: center;
+  line-height: 1.45;
+
   margin-bottom: 12px;
-  line-height: 1.4;
+
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
+
+/* =========================================
+   BUTTON
+   ========================================= */
 
 .neon-btn {
   width: 100%;
-  max-width: 180px; /* shorter button */
+  max-width: 180px;
+
   margin: 0 auto;
   display: block;
+
   padding: 10px;
-  background: linear-gradient(90deg, #ff2e78, #ff5e2e);
-  color: white;
+
   border: none;
   border-radius: 50px;
-  font-weight: 700;
-  font-size: 14px;
+
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255,46,120,0.4);
-  transition: all 0.3s ease;
+
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 1px;
+
+  color: #03150d;
+
+  background: linear-gradient(
+    135deg,
+    #00ff9f,
+    #00e6c0
+  );
+
+  box-shadow:
+    0 4px 14px rgba(0,255,159,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    filter .18s ease;
 }
 
 .neon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255,46,120,0.6);
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 20px rgba(0,255,159,0.35),
+    0 0 18px rgba(0,255,159,0.18);
+}
+
+/* tap feel */
+.neon-btn:active {
+  transform: scale(0.96);
+
+  filter: brightness(0.92);
+
+  box-shadow:
+    0 3px 10px rgba(0,255,159,0.2),
+    inset 0 2px 6px rgba(0,0,0,0.18);
 }
 
 .neon-btn:disabled {
@@ -3281,33 +3397,54 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   opacity: 0.7;
 }
 
-.neon-cost {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: #ff4fd8;
-  font-weight: 600;
-}
+/* =========================================
+   MESSAGE
+   ========================================= */
 
 .neon-msg {
   margin-top: 10px;
-  font-size: 11.5px;
+
+  font-size: 11px;
   text-align: center;
+
   padding: 6px 10px;
   border-radius: 10px;
+
   min-height: 18px;
 }
 
 .neon-msg.success {
-  background: rgba(0,255,234,0.12);
-  color: #00ffea;
-  border: 1px solid rgba(0,255,234,0.3);
+  background: rgba(0,255,159,0.08);
+  color: #00ffbf;
+  border: 1px solid rgba(0,255,159,0.18);
 }
 
 .neon-msg.error {
-  background: rgba(255,51,102,0.12);
-  color: #ff3366;
-  border: 1px solid rgba(255,51,102,0.3);
+  background: rgba(255,70,120,0.08);
+  color: #ff5b88;
+  border: 1px solid rgba(255,70,120,0.18);
+}
+
+/* =========================================
+   ANIMATIONS
+   ========================================= */
+
+@keyframes tonightShift{
+  0%{
+    background-position:0% 50%;
+  }
+  100%{
+    background-position:200% 50%;
+  }
+}
+
+@keyframes miniGlow{
+  from{
+    filter: drop-shadow(0 0 2px rgba(0,255,159,0.2));
+  }
+  to{
+    filter: drop-shadow(0 0 10px rgba(0,255,159,0.55));
+  }
 }
 /* Optional: make it pulse subtly like glowing cube core */
 @keyframes cubePulse {
@@ -4388,46 +4525,33 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </p>
 </div>
 
-
-
-
 <!-- =========================================
-     🔥 FREE TONIGHT – CONNECTED GLASS MINI PANEL
+     FREE TONIGHT – MINI CONNECTED CARD
      ========================================= -->
-<div id="freeTonightCard" class="ft-mini-card">
+<div id="freeTonightCard" class="neon-mini-card">
 
-  <!-- Connected Neon Header -->
-  <div class="ft-header-wrap">
-    <div class="ft-header-glow"></div>
-
-    <div class="ft-title-line"></div>
-
-    <div class="ft-title" id="miniFreeTonightText">
+  <!-- Title -->
+  <div class="neon-title-container">
+    <div class="neon-title">
       FREE TONIGHT?
     </div>
-
-    <div class="ft-title-line"></div>
   </div>
 
-  <!-- Sub Text -->
-  <div class="ft-sub">
-    Go live for 24 hours • connect in a safer space
-  </div>
-
-  <div class="ft-sub-small">
+  <!-- Sub -->
+  <div class="neon-sub">
+    Go live for 24 hours • connect in a safer space.<br>
     No fakes • No scams • No bots
   </div>
 
-  <!-- CTA -->
-  <button id="freeTonightBtn" class="ft-btn">
-    I’M FREE TONIGHT
+  <!-- Button -->
+  <button id="freeTonightBtn" class="neon-btn">
+    I'M FREE TONIGHT
   </button>
 
   <!-- Message -->
-  <div id="freeTonightMessage" class="ft-msg"></div>
+  <div id="freeTonightMessage" class="neon-msg"></div>
 
 </div>
-
   
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
 <div style="margin: 24px 0;">
