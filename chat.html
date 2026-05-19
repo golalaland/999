@@ -3369,6 +3369,259 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   20% { transform: translateX(400%) skewX(-25deg); }
   100% { transform: translateX(400%) skewX(-25deg); }
 }
+
+/* =========================================
+   FREE TONIGHT – CONNECTED MINI CARD
+   Matches modal aesthetic from Code 1
+   ========================================= */
+
+.ft-mini-card{
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+
+  padding: 22px 18px 20px;
+  margin: 18px auto;
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14, 8, 28, 0.95),
+      rgba(8, 4, 20, 0.98)
+    );
+
+  border: 1px solid rgba(0,255,159,0.18);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  overflow: hidden;
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.7),
+    0 0 35px rgba(0,255,159,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  font-family: system-ui, sans-serif;
+}
+
+/* Subtle Texture */
+.ft-mini-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background-image:
+    radial-gradient(circle at 20% 25%, rgba(0,255,159,0.06) 1px, transparent 0),
+    radial-gradient(circle at 75% 40%, rgba(0,255,159,0.05) 1px, transparent 0),
+    radial-gradient(circle at 50% 85%, rgba(138,43,226,0.05) 1px, transparent 0);
+
+  background-size: 85px 85px;
+
+  pointer-events:none;
+}
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+.ft-header-wrap{
+  position: relative;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+
+  margin-bottom: 14px;
+}
+
+/* Glow Behind Text */
+.ft-header-glow{
+  position:absolute;
+
+  width: 140px;
+  height: 48px;
+
+  background: radial-gradient(
+    circle,
+    rgba(0,255,159,0.18),
+    transparent 70%
+  );
+
+  filter: blur(12px);
+  pointer-events:none;
+}
+
+/* Lines */
+.ft-title-line{
+  flex:1;
+  height:1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0,255,159,0.35),
+    transparent
+  );
+}
+
+/* SAME FONT STYLE AS MODAL */
+.ft-title{
+  position:relative;
+  z-index:2;
+
+  font-family: 'Architects Daughter', cursive;
+  font-size: 22px;
+  font-weight: 400;
+
+  letter-spacing: 3px;
+  white-space: nowrap;
+
+  background: linear-gradient(
+    90deg,
+    #00ff9f,
+    #00e6c0,
+    #00ff9f
+  );
+
+  background-size: 200% 200%;
+
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+
+  text-shadow:
+    0 0 18px rgba(0,255,159,0.75),
+    0 0 32px rgba(0,255,159,0.4),
+    0 4px 10px rgba(0,0,0,0.8);
+
+  animation:
+    tonightShift 7s linear infinite,
+    miniPulse 2.6s ease-in-out infinite alternate;
+}
+
+/* =========================================
+   SUBTEXT
+   ========================================= */
+
+.ft-sub{
+  text-align:center;
+
+  color:#c8fff0;
+  font-size:13px;
+  font-weight:600;
+
+  margin-bottom:6px;
+
+  text-shadow: 0 2px 8px rgba(0,0,0,0.55);
+}
+
+.ft-sub-small{
+  text-align:center;
+
+  color:#7f93a8;
+  font-size:12px;
+
+  margin-bottom:18px;
+}
+
+/* =========================================
+   BUTTON
+   ========================================= */
+
+.ft-btn{
+  width:100%;
+
+  border:none;
+  outline:none;
+
+  padding: 14px 16px;
+  border-radius: 16px;
+
+  cursor:pointer;
+
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:1.5px;
+
+  color:#03150d;
+
+  background:
+    linear-gradient(
+      135deg,
+      #00ff9f,
+      #00e6c0
+    );
+
+  box-shadow:
+    0 6px 20px rgba(0,255,159,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.45);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    filter .18s ease;
+}
+
+/* Hover */
+.ft-btn:hover{
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 10px 28px rgba(0,255,159,0.38),
+    0 0 22px rgba(0,255,159,0.25);
+}
+
+/* Tap Feel */
+.ft-btn:active{
+  transform: scale(0.97);
+
+  filter: brightness(0.92);
+
+  box-shadow:
+    0 4px 12px rgba(0,255,159,0.22),
+    inset 0 3px 8px rgba(0,0,0,0.18);
+}
+
+/* =========================================
+   MESSAGE
+   ========================================= */
+
+.ft-msg{
+  margin-top:14px;
+
+  text-align:center;
+  font-size:12px;
+
+  color:#9edcc7;
+
+  min-height:16px;
+}
+
+/* =========================================
+   ANIMATIONS
+   ========================================= */
+
+@keyframes tonightShift{
+  0%{
+    background-position:0% 50%;
+  }
+  100%{
+    background-position:200% 50%;
+  }
+}
+
+@keyframes miniPulse{
+  from{
+    filter: drop-shadow(0 0 2px rgba(0,255,159,0.3));
+  }
+
+  to{
+    filter: drop-shadow(0 0 10px rgba(0,255,159,0.65));
+  }
+}
   
 </style>
 </head>
@@ -4138,24 +4391,42 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
 
-<!-- 🔥 FREE TONIGHT – Tiny Neon Glow Panel -->
-<div id="freeTonightCard" class="neon-mini-card">
-  <div class="neon-title-container">
-    <div class="neon-title">◑△◐ Free Tonight? ◑△◐</div>
+<!-- =========================================
+     🔥 FREE TONIGHT – CONNECTED GLASS MINI PANEL
+     ========================================= -->
+<div id="freeTonightCard" class="ft-mini-card">
+
+  <!-- Connected Neon Header -->
+  <div class="ft-header-wrap">
+    <div class="ft-header-glow"></div>
+
+    <div class="ft-title-line"></div>
+
+    <div class="ft-title" id="miniFreeTonightText">
+      FREE TONIGHT?
+    </div>
+
+    <div class="ft-title-line"></div>
   </div>
 
-  <div class="neon-sub">
-    Go live for 24 hours • connect in a safer space.  
-    No fakes. No scams. No bots.
+  <!-- Sub Text -->
+  <div class="ft-sub">
+    Go live for 24 hours • connect in a safer space
   </div>
 
-  <button id="freeTonightBtn" class="neon-btn">
-    I'm Free Tonight
+  <div class="ft-sub-small">
+    No fakes • No scams • No bots
+  </div>
+
+  <!-- CTA -->
+  <button id="freeTonightBtn" class="ft-btn">
+    I’M FREE TONIGHT
   </button>
 
-  <div id="freeTonightMessage" class="neon-msg"></div>
-</div>
+  <!-- Message -->
+  <div id="freeTonightMessage" class="ft-msg"></div>
 
+</div>
 
   
 <!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
