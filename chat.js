@@ -9534,7 +9534,7 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Client-side Free Tonight Toggle + FruitPick Picker (Neon Style)
+// Free Tonight Toggle + Fruit Picker (Single Random Clip)
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('freeTonightBtn');
@@ -9560,90 +9560,60 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
   `;
 
   fruitModal.innerHTML = `
-    <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative;">
-      <!-- Tiny X close button -->
-      <div id="closeFruitModal" style="
-        position:absolute; top:14px; right:14px; width:28px; height:28px;
-        display:flex; align-items:center; justify-content:center;
-        cursor:pointer; color:#ff00f2; font-size:22px; font-weight:900;
-        text-shadow:0 0 8px #ff00f2;">
-        ×
+    <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative; background:rgba(10,5,32,0.95); border:1px solid #00ff9f33; border-radius:24px;">
+      <div id="closeFruitModal" style="position:absolute; top:14px; right:14px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ff00f2; font-size:26px; font-weight:900;">×</div>
+      
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:13px; letter-spacing:3px; color:#00ff9f; margin-bottom:8px;">FREE TONIGHT</div>
+        <div class="neon-title" style="font-size:22px; color:white;">Choose your vibe for tonight</div>
       </div>
 
-      <div class="neon-title-container">
-        <div class="neon-title">Choose your vibe for tonight</div>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:28px 0;">
+        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍇</button>
+        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Meetups" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍉</button>
+        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍒</button>
+        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍓</button>
       </div>
 
-           <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:24px 0;">
-        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout & Friendships"
-                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
-          🍇
-        </button>
-        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Paid Meetups"
-                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
-          🍉
-        </button>
-        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance & Dates"
-                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
-          🍒
-        </button>
-        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures"
-                style="font-size:42px; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">
-          🍓
+      <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <button id="confirmFruit" disabled style="padding:12px 40px; background:#444; color:#888; border:none; border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed;">
+          ACTIVATE TONIGHT
         </button>
       </div>
-
-      <!-- Centered GO Button -->
-      <div style="display: flex; justify-content: center; margin-top: 28px;">
-        <button id="confirmFruit" disabled style="
-          padding: 10px 32px;
-          background: #444;
-          color: #888;
-          border: none;
-          border-radius: 50px;
-          font-weight: 700;
-          font-size: 14px;
-          cursor: not-allowed;
-          width: auto;
-          min-width: 140px;
-          white-space: nowrap;
-        ">
-          GO
-        </button>
-      </div>
+    </div>
   `;
 
   document.body.appendChild(fruitModal);
 
   let selectedFruit = null;
 
-  // Fruit button interaction
+  // Fruit selection
   fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
     btn.onclick = () => {
-      // Deselect all
       fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
         b.style.borderColor = '#666';
         b.style.transform = 'scale(1)';
       });
-
-      // Select this one
       btn.style.borderColor = '#ff00f2';
-      btn.style.transform = 'scale(1.15)';
+      btn.style.transform = 'scale(1.2)';
       selectedFruit = btn.dataset.fruit;
 
-      // Enable confirm button
       const confirmBtn = fruitModal.querySelector('#confirmFruit');
       confirmBtn.disabled = false;
-      confirmBtn.style.background = 'linear-gradient(90deg, #ff2e78, #ff5e2e)';
-      confirmBtn.style.color = '#fff';
+      confirmBtn.style.background = 'linear-gradient(90deg, #00ff9f, #ff00f2)';
+      confirmBtn.style.color = '#000';
       confirmBtn.style.cursor = 'pointer';
     };
   });
-  // Confirm button
+
+  // Close modal
+  fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
+
+  // Confirm → Activate with ONE random clip
   fruitModal.querySelector('#confirmFruit').onclick = async () => {
     if (!selectedFruit) return;
-    fruitModal.remove();
 
+    fruitModal.remove();
     btn.disabled = true;
     btn.textContent = 'Activating... ✨';
 
@@ -9656,44 +9626,57 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       const userDoc = userSnap.docs[0];
       const sanitizedId = userDoc.id;
 
-      // Save fruitPick
+      // Save vibe
       await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
 
-      // Activate trending for 24 hours
+      // Get highlights
       const highlightsRef = doc(db, "highlightVideos", sanitizedId);
       const highlightsSnap = await getDoc(highlightsRef);
       if (!highlightsSnap.exists()) throw new Error("No highlights found");
 
-      const highlightsData = highlightsSnap.data() || {};
-      const highlights = [...(highlightsData.highlights || [])];
+      let highlights = [...(highlightsSnap.data().highlights || [])];
 
       if (highlights.length === 0) throw new Error("Upload some clips first!");
 
-      const endTime = Date.now() + 24 * 60 * 60 * 1000;
+      // === KEY CHANGE: Pick only ONE random clip ===
+      const randomIndex = Math.floor(Math.random() * highlights.length);
+      const selectedClip = highlights[randomIndex];
 
+      // Reset all clips first
       highlights.forEach(h => {
-        h.isTrending = true;
-        h.trendingUntil = endTime;
+        h.isTrending = false;
+        h.trendingUntil = null;
       });
 
+      // Activate only the chosen one
+      selectedClip.isTrending = true;
+      selectedClip.trendingUntil = Date.now() + 24 * 60 * 60 * 1000;
+
+      // Save back to Firestore
       await updateDoc(highlightsRef, { highlights });
 
-      // Success actions
+      const endTime = selectedClip.trendingUntil;
+
       localStorage.setItem('freeTonightEndTime', endTime);
       startCountdown(btn, endTime);
-      activateViewBoost();                    // ← Fixed: correct function name
-      showStarPopup(`Free Tonight activated! Vibe set to ${selectedFruit} 🔥`, 'success');
+      activateViewBoost?.();
 
+      showStarPopup(`Free Tonight activated! ✨ Vibe: ${selectedFruit}`, 'success');
+
+      // Refresh UI
       if (typeof loadMyClips === 'function') loadMyClips();
+
     } catch (err) {
+      console.error(err);
       let msg = err.message || 'Failed to activate';
-      if (msg.includes("No clips")) msg = "Upload some clips first!";
+      if (msg.includes("No highlights")) msg = "Upload some clips first!";
       showStarPopup(msg, 'error');
-      ('Free Tonight failed:', err);
     } finally {
       btn.disabled = false;
+      btn.textContent = 'FREE TONIGHT'; // reset button text as needed
     }
   };
+});
 
   // Close modal with X button
   fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
