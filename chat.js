@@ -9534,152 +9534,699 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Free Tonight Toggle + Fruit Picker (Mobile Friendly)
+// FREE TONIGHT — PREMIUM FRUIT PICKER
+// sleek neon black + green rewrite
 // ───────────────────────────────────────────────
+
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
+
     const btn = document.getElementById('freeTonightBtn');
+
     if (!btn) return;
 
+    // AUTH
     if (!auth?.currentUser?.uid) {
         showStarPopup('Please sign in first', 'error');
         return;
     }
 
+    // ACTIVE CHECK
     const savedEndTime = localStorage.getItem('freeTonightEndTime');
+
     if (savedEndTime && Number(savedEndTime) > Date.now()) {
-        showStarPopup('Already active! Wait for countdown.', 'info');
-        startCountdown(btn, Number(savedEndTime));
+
+        showStarPopup(
+            'Already active! Wait for countdown.',
+            'info'
+        );
+
+        startCountdown(
+            btn,
+            Number(savedEndTime)
+        );
+
         return;
     }
 
-    // Create Modal
+    // ─────────────────────────────
+    // STYLES (inject once)
+    // ─────────────────────────────
+    if (!document.getElementById('freeTonightModalStyles')) {
+
+        const style = document.createElement('style');
+
+        style.id = 'freeTonightModalStyles';
+
+        style.textContent = `
+
+        .ft-overlay{
+            position:fixed;
+            inset:0;
+            z-index:1000000;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            padding:20px;
+
+            background:
+                rgba(3,0,10,0.9);
+
+            backdrop-filter:blur(18px);
+            -webkit-backdrop-filter:blur(18px);
+
+            animation:ftFade .22s ease;
+        }
+
+        .ft-modal{
+            position:relative;
+            overflow:hidden;
+
+            width:100%;
+            max-width:335px;
+
+            border-radius:28px;
+
+            padding:22px 18px 18px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(10,5,32,0.98),
+                    rgba(5,2,14,0.99)
+                );
+
+            border:1px solid rgba(0,255,159,0.14);
+
+            box-shadow:
+                0 0 24px rgba(0,255,159,0.08),
+                0 20px 60px rgba(0,0,0,0.82),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+
+            animation:ftPop .22s ease;
+        }
+
+        .ft-modal::before{
+            content:"";
+            position:absolute;
+            inset:0;
+
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(0,255,159,0.05) 1px, transparent 0),
+                radial-gradient(circle at 75% 20%, rgba(0,255,159,0.04) 1px, transparent 0),
+                radial-gradient(circle at 50% 80%, rgba(138,43,226,0.05) 1px, transparent 0);
+
+            background-size:90px 90px;
+
+            pointer-events:none;
+        }
+
+        .ft-glow{
+            position:absolute;
+
+            top:-70px;
+            left:50%;
+
+            transform:translateX(-50%);
+
+            width:190px;
+            height:190px;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,159,0.14),
+                    transparent 70%
+                );
+
+            filter:blur(26px);
+
+            pointer-events:none;
+        }
+
+        #closeFruitModal{
+            position:absolute;
+
+            top:12px;
+            right:12px;
+
+            width:32px;
+            height:32px;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            border-radius:50%;
+
+            cursor:pointer;
+
+            color:#8affd5;
+
+            font-size:25px;
+            font-weight:300;
+
+            z-index:10;
+
+            transition:.18s ease;
+        }
+
+        #closeFruitModal:hover{
+            background:rgba(255,255,255,0.06);
+            transform:scale(1.08);
+        }
+
+        .ft-header{
+            text-align:center;
+            margin-bottom:20px;
+        }
+
+        .ft-mini{
+            font-size:11px;
+            letter-spacing:3px;
+
+            color:#00ff9f;
+
+            margin-bottom:10px;
+
+            text-shadow:
+                0 0 12px rgba(0,255,159,0.35);
+        }
+
+        .ft-title{
+            font-family:'Architects Daughter', cursive;
+
+            font-size:24px;
+            letter-spacing:2px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #00ff9f,
+                    #00e6c0,
+                    #00ff9f
+                );
+
+            background-size:200% 200%;
+
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+
+            text-shadow:
+                0 0 20px rgba(0,255,159,0.45);
+
+            animation:ftShift 8s linear infinite;
+        }
+
+        .ft-sub{
+            margin-top:8px;
+
+            font-size:12px;
+            line-height:1.5;
+
+            color:#8da1aa;
+        }
+
+        .ft-grid{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+
+            gap:14px;
+
+            margin-top:22px;
+        }
+
+        .fruit-btn{
+            position:relative;
+
+            border:none;
+            outline:none;
+
+            border-radius:22px;
+
+            padding:16px 10px;
+
+            cursor:pointer;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(255,255,255,0.05),
+                    rgba(255,255,255,0.02)
+                );
+
+            border:1px solid rgba(255,255,255,0.06);
+
+            transition:
+                transform .18s ease,
+                border-color .18s ease,
+                box-shadow .18s ease;
+
+            -webkit-tap-highlight-color:transparent;
+        }
+
+        .fruit-btn:hover{
+            transform:translateY(-2px);
+
+            border-color:rgba(0,255,159,0.25);
+
+            box-shadow:
+                0 0 18px rgba(0,255,159,0.12);
+        }
+
+        .fruit-btn.selected{
+            transform:scale(1.05);
+
+            border-color:#00ff9f;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(0,255,159,0.08),
+                    rgba(255,255,255,0.03)
+                );
+
+            box-shadow:
+                0 0 22px rgba(0,255,159,0.18),
+                inset 0 0 18px rgba(0,255,159,0.05);
+        }
+
+        .fruit-btn.selected::after{
+            content:"";
+            position:absolute;
+            inset:0;
+
+            border-radius:inherit;
+
+            box-shadow:
+                inset 0 0 16px rgba(0,255,159,0.08);
+
+            pointer-events:none;
+        }
+
+        .ft-emoji{
+            display:block;
+
+            font-size:40px;
+            margin-bottom:8px;
+        }
+
+        .ft-label{
+            display:block;
+
+            font-size:12px;
+            font-weight:700;
+
+            letter-spacing:1px;
+
+            color:#dffff5;
+        }
+
+        .ft-footer{
+            text-align:center;
+
+            margin-top:18px;
+            margin-bottom:16px;
+
+            font-size:10px;
+            letter-spacing:1.8px;
+
+            color:rgba(180,255,235,0.28);
+        }
+
+        #confirmFruit{
+            width:100%;
+            max-width:220px;
+
+            padding:13px 20px;
+
+            border:none;
+            border-radius:50px;
+
+            font-size:13px;
+            font-weight:800;
+
+            letter-spacing:1.4px;
+
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                filter .18s ease;
+        }
+
+        #confirmFruit:disabled{
+            background:#2b2b2b;
+            color:#777;
+
+            cursor:not-allowed;
+        }
+
+        #confirmFruit.active{
+            cursor:pointer;
+
+            color:#04150d;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00ff9f,
+                    #00e6c0
+                );
+
+            box-shadow:
+                0 8px 24px rgba(0,255,159,0.22);
+        }
+
+        #confirmFruit.active:hover{
+            transform:translateY(-1px);
+
+            box-shadow:
+                0 12px 28px rgba(0,255,159,0.28);
+        }
+
+        #confirmFruit.active:active{
+            transform:scale(0.97);
+
+            filter:brightness(0.94);
+        }
+
+        @keyframes ftShift{
+            0%{
+                background-position:0% 50%;
+            }
+            100%{
+                background-position:200% 50%;
+            }
+        }
+
+        @keyframes ftFade{
+            from{
+                opacity:0;
+            }
+            to{
+                opacity:1;
+            }
+        }
+
+        @keyframes ftPop{
+            from{
+                opacity:0;
+                transform:translateY(10px) scale(.97);
+            }
+            to{
+                opacity:1;
+                transform:translateY(0) scale(1);
+            }
+        }
+
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    // ─────────────────────────────
+    // MODAL
+    // ─────────────────────────────
     const fruitModal = document.createElement("div");
-    fruitModal.style.cssText = `
-        position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000000;
-        display:flex; align-items:center; justify-content:center; padding:20px;
-    `;
+
+    fruitModal.className = 'ft-overlay';
 
     fruitModal.innerHTML = `
-        <div class="neon-mini-card" style="max-width:340px; width:100%; padding:20px 18px; position:relative; 
-             background:rgba(10,5,32,0.96); border:1px solid #00ff9f33; border-radius:24px;">
-            
-            <!-- Close Button -->
-            <div id="closeFruitModal" style="position:absolute; top:12px; right:12px; width:32px; height:32px; 
-                 display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ff00f2; 
-                 font-size:28px; font-weight:900; z-index:10;">×</div>
-           
-            <div style="text-align:center; margin-bottom:18px;">
-                <div style="font-size:12px; letter-spacing:2px; color:#00ff9f; margin-bottom:6px;">FREE TONIGHT</div>
-                <div style="font-size:19px; color:white; line-height:1.2;">Choose your vibe for tonight</div>
+        <div class="ft-modal">
+
+            <div class="ft-glow"></div>
+
+            <!-- CLOSE -->
+            <div id="closeFruitModal">
+                ×
             </div>
 
-            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
-                <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout" 
-                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
-                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍇</button>
-                <button class="fruit-btn" data-fruit="🍉" title="Thrills & Meetups" 
-                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
-                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍉</button>
-                <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance" 
-                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
-                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍒</button>
-                <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" 
-                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
-                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍓</button>
+            <!-- HEADER -->
+            <div class="ft-header">
+
+                <div class="ft-mini">
+                    FREE TONIGHT
+                </div>
+
+                <div class="ft-title">
+                    Choose your vibe
+                </div>
+
+                <div class="ft-sub">
+                    One mood • one spotlight • 24 hours
+                </div>
+
             </div>
 
-            <div style="display: flex; justify-content: center; margin-top: 12px;">
-                <button id="confirmFruit" disabled style="padding:12px 36px; background:#444; color:#aaa; border:none; 
-                         border-radius:50px; font-weight:700; font-size:14.5px; cursor:not-allowed; width:100%; max-width:220px;">
+            <!-- FRUITS -->
+            <div class="ft-grid">
+
+                <button class="fruit-btn"
+                    data-fruit="🍇">
+
+                    <span class="ft-emoji">🍇</span>
+                    <span class="ft-label">Chill</span>
+
+                </button>
+
+                <button class="fruit-btn"
+                    data-fruit="🍉">
+
+                    <span class="ft-emoji">🍉</span>
+                    <span class="ft-label">Wild</span>
+
+                </button>
+
+                <button class="fruit-btn"
+                    data-fruit="🍒">
+
+                    <span class="ft-emoji">🍒</span>
+                    <span class="ft-label">Romance</span>
+
+                </button>
+
+                <button class="fruit-btn"
+                    data-fruit="🍓">
+
+                    <span class="ft-emoji">🍓</span>
+                    <span class="ft-label">Adventure</span>
+
+                </button>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="ft-footer">
+                www.freetonight.app
+            </div>
+
+            <!-- BUTTON -->
+            <div style="display:flex; justify-content:center;">
+
+                <button id="confirmFruit" disabled>
                     ACTIVATE TONIGHT
                 </button>
+
             </div>
+
         </div>
     `;
 
     document.body.appendChild(fruitModal);
 
+    // ─────────────────────────────
+    // SELECTION
+    // ─────────────────────────────
     let selectedFruit = null;
 
-    // Fruit Selection
-    fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
-        btn.onclick = () => {
-            fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
-                b.style.borderColor = '#666';
-                b.style.transform = 'scale(1)';
-            });
-            btn.style.borderColor = '#ff00f2';
-            btn.style.transform = 'scale(1.18)';
-            selectedFruit = btn.dataset.fruit;
+    const fruitButtons =
+        fruitModal.querySelectorAll('.fruit-btn');
 
-            const confirmBtn = fruitModal.querySelector('#confirmFruit');
+    const confirmBtn =
+        fruitModal.querySelector('#confirmFruit');
+
+    fruitButtons.forEach(fruit => {
+
+        fruit.onclick = () => {
+
+            fruitButtons.forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            fruit.classList.add('selected');
+
+            selectedFruit =
+                fruit.dataset.fruit;
+
             confirmBtn.disabled = false;
-            confirmBtn.style.background = 'linear-gradient(90deg, #00ff9f, #ff00f2)';
-            confirmBtn.style.color = '#000';
-            confirmBtn.style.cursor = 'pointer';
+
+            confirmBtn.classList.add('active');
         };
     });
 
-    // Close Modal
-    fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
+    // CLOSE
+    fruitModal.querySelector('#closeFruitModal').onclick = () => {
+        fruitModal.remove();
+    };
 
-    // Confirm Activation
-    fruitModal.querySelector('#confirmFruit').onclick = async () => {
+    // backdrop close
+    fruitModal.addEventListener('click', (e) => {
+
+        if (e.target === fruitModal) {
+            fruitModal.remove();
+        }
+    });
+
+    // ─────────────────────────────
+    // CONFIRM
+    // ─────────────────────────────
+    confirmBtn.onclick = async () => {
+
         if (!selectedFruit) return;
 
         fruitModal.remove();
+
         btn.disabled = true;
+
         btn.textContent = 'Activating... ✨';
 
         try {
-            // ... (your existing activation logic - unchanged)
-            const rawUid = auth.currentUser.uid;
-            const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
-            const userSnap = await getDocs(usersQuery);
-            if (userSnap.empty) throw new Error("Profile not found");
 
-            const userDoc = userSnap.docs[0];
-            const sanitizedId = userDoc.id;
+            const rawUid =
+                auth.currentUser.uid;
 
-            await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
+            const usersQuery = query(
+                collection(db, "users"),
+                where("uid", "==", rawUid),
+                limit(1)
+            );
 
-            const highlightsRef = doc(db, "highlightVideos", sanitizedId);
-            const highlightsSnap = await getDoc(highlightsRef);
-            if (!highlightsSnap.exists()) throw new Error("No highlights found");
+            const userSnap =
+                await getDocs(usersQuery);
 
-            let highlights = [...(highlightsSnap.data().highlights || [])];
-            if (highlights.length === 0) throw new Error("Upload some clips first!");
+            if (userSnap.empty) {
+                throw new Error(
+                    "Profile not found"
+                );
+            }
 
-            const randomIndex = Math.floor(Math.random() * highlights.length);
-            const selectedClip = highlights[randomIndex];
+            const userDoc =
+                userSnap.docs[0];
+
+            const sanitizedId =
+                userDoc.id;
+
+            await updateDoc(
+                userDoc.ref,
+                {
+                    fruitPick:
+                        selectedFruit
+                }
+            );
+
+            const highlightsRef = doc(
+                db,
+                "highlightVideos",
+                sanitizedId
+            );
+
+            const highlightsSnap =
+                await getDoc(highlightsRef);
+
+            if (!highlightsSnap.exists()) {
+                throw new Error(
+                    "No highlights found"
+                );
+            }
+
+            let highlights = [
+                ...(highlightsSnap.data().highlights || [])
+            ];
+
+            if (highlights.length === 0) {
+                throw new Error(
+                    "Upload some clips first!"
+                );
+            }
+
+            const randomIndex =
+                Math.floor(
+                    Math.random() * highlights.length
+                );
+
+            const selectedClip =
+                highlights[randomIndex];
 
             highlights.forEach(h => {
+
                 h.isTrending = false;
                 h.trendingUntil = null;
             });
 
             selectedClip.isTrending = true;
-            selectedClip.trendingUntil = Date.now() + 24 * 60 * 60 * 1000;
 
-            await updateDoc(highlightsRef, { highlights });
+            selectedClip.trendingUntil =
+                Date.now() +
+                24 * 60 * 60 * 1000;
 
-            const endTime = selectedClip.trendingUntil;
-            localStorage.setItem('freeTonightEndTime', endTime);
+            await updateDoc(
+                highlightsRef,
+                { highlights }
+            );
 
-            startCountdown(btn, endTime);
+            const endTime =
+                selectedClip.trendingUntil;
+
+            localStorage.setItem(
+                'freeTonightEndTime',
+                endTime
+            );
+
+            startCountdown(
+                btn,
+                endTime
+            );
+
             activateViewBoost?.();
-            showStarPopup(`Free Tonight activated! ✨ Vibe: ${selectedFruit}`, 'success');
 
-            if (typeof loadMyClips === 'function') loadMyClips();
+           showStarPopup(
+    `Free Tonight activated! ✨ Vibe: ${selectedFruit}`,
+    'success'
+);
+
+            if (
+                typeof loadMyClips === 'function'
+            ) {
+                loadMyClips();
+            }
 
         } catch (err) {
+
             console.error(err);
-            let msg = err.message || 'Failed to activate';
-            if (msg.includes("No highlights")) msg = "Upload some clips first!";
-            showStarPopup(msg, 'error');
+
+            let msg =
+                err.message ||
+                'Failed to activate';
+
+            if (
+                msg.includes("No highlights")
+            ) {
+                msg =
+                    "Upload some clips first!";
+            }
+
+            showStarPopup(
+                msg,
+                'error'
+            );
+
         } finally {
+
             btn.disabled = false;
-            btn.textContent = 'FREE TONIGHT';
+
+            btn.textContent =
+                'FREE TONIGHT';
         }
     };
 });
