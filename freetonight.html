@@ -1,37 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free Tonight? — Real moments. Real matches. Right now.</title>
-<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --neon: #00ff9f;
-    --neon-dim: #00e6c0;
-    --neon-glow: rgba(0,255,159,0.18);
-    --purple: #8a2be2;
-    --bg: #060212;
-    --bg2: #0a0520;
-    --glass: rgba(15,8,35,0.65);
-    --border: rgba(0,255,159,0.22);
-    --text: #e0d0ff;
-    --muted: #8899aa;
-    --soft: #b0ffeb;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Tonight? — Real moments. Real matches. Right now.</title>
+    
+    <!-- Font Links - More Reliable -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&amp;family=DM+Sans:wght@300;400;500;600&amp;family=DM+Serif+Display:ital@0;1&amp;display=swap" rel="stylesheet">
 
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    <style>
+        :root {
+            --neon: #00ff9f;
+            --neon-dim: #00e6c0;
+            --purple: #8a2be2;
+            --bg: #060212;
+            --glass: rgba(15,8,35,0.65);
+            --border: rgba(0,255,159,0.22);
+            --text: #e0d0ff;
+            --muted: #8899aa;
+            --soft: #b0ffeb;
+        }
 
-  html, body {
-    background: #060212 !important;
-    background-color: #060212 !important;
-    min-height: 100vh;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    overflow-x: hidden;
-    cursor: none;
-  }
+        * { margin:0; padding:0; box-sizing:border-box; }
 
+        html, body {
+            background: #060212 !important;
+            background-color: #060212 !important;
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
   .cursor, .cursor-ring, .mesh, .dotgrid { position: fixed; }
 
 /* ── CUSTOM CURSOR ── */
