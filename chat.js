@@ -9537,148 +9537,141 @@ paystackNigeriaBanks.forEach(bank => {
 // Free Tonight Toggle + Fruit Picker (Single Random Clip)
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
-  const btn = document.getElementById('freeTonightBtn');
-  if (!btn) return;
+    const btn = document.getElementById('freeTonightBtn');
+    if (!btn) return;
 
-  if (!auth?.currentUser?.uid) {
-    showStarPopup('Please sign in first', 'error');
-    return;
-  }
-
-  const savedEndTime = localStorage.getItem('freeTonightEndTime');
-  if (savedEndTime && Number(savedEndTime) > Date.now()) {
-    showStarPopup('Already active! Wait for countdown.', 'info');
-    startCountdown(btn, Number(savedEndTime));
-    return;
-  }
-
-  // Show neon fruit picker modal
-  const fruitModal = document.createElement("div");
-  fruitModal.style.cssText = `
-    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000000;
-    display:flex; align-items:center; justify-content:center;
-  `;
-
-  fruitModal.innerHTML = `
-    <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative; background:rgba(10,5,32,0.95); border:1px solid #00ff9f33; border-radius:24px;">
-      <div id="closeFruitModal" style="position:absolute; top:14px; right:14px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ff00f2; font-size:26px; font-weight:900;">×</div>
-      
-      <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:13px; letter-spacing:3px; color:#00ff9f; margin-bottom:8px;">FREE TONIGHT</div>
-        <div class="neon-title" style="font-size:22px; color:white;">Choose your vibe for tonight</div>
-      </div>
-
-      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:28px 0;">
-        <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍇</button>
-        <button class="fruit-btn" data-fruit="🍉" title="Thrills & Meetups" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍉</button>
-        <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍒</button>
-        <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍓</button>
-      </div>
-
-      <div style="display: flex; justify-content: center; margin-top: 20px;">
-        <button id="confirmFruit" disabled style="padding:12px 40px; background:#444; color:#888; border:none; border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed;">
-          ACTIVATE TONIGHT
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(fruitModal);
-
-  let selectedFruit = null;
-
-  // Fruit selection
-  fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
-    btn.onclick = () => {
-      fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
-        b.style.borderColor = '#666';
-        b.style.transform = 'scale(1)';
-      });
-      btn.style.borderColor = '#ff00f2';
-      btn.style.transform = 'scale(1.2)';
-      selectedFruit = btn.dataset.fruit;
-
-      const confirmBtn = fruitModal.querySelector('#confirmFruit');
-      confirmBtn.disabled = false;
-      confirmBtn.style.background = 'linear-gradient(90deg, #00ff9f, #ff00f2)';
-      confirmBtn.style.color = '#000';
-      confirmBtn.style.cursor = 'pointer';
-    };
-  });
-
-  // Close modal with X button
-  fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
-
-  // Confirm → Activate with ONE random clip
-  fruitModal.querySelector('#confirmFruit').onclick = async () => {
-    if (!selectedFruit) return;
-
-    fruitModal.remove();
-    btn.disabled = true;
-    btn.textContent = 'Activating... ✨';
-
-    try {
-      const rawUid = auth.currentUser.uid;
-      const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
-      const userSnap = await getDocs(usersQuery);
-      if (userSnap.empty) throw new Error("Profile not found");
-
-      const userDoc = userSnap.docs[0];
-      const sanitizedId = userDoc.id;
-
-      // Save vibe
-      await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
-
-      // Get highlights
-      const highlightsRef = doc(db, "highlightVideos", sanitizedId);
-      const highlightsSnap = await getDoc(highlightsRef);
-      if (!highlightsSnap.exists()) throw new Error("No highlights found");
-
-      let highlights = [...(highlightsSnap.data().highlights || [])];
-
-      if (highlights.length === 0) throw new Error("Upload some clips first!");
-
-      // Pick only ONE random clip
-      const randomIndex = Math.floor(Math.random() * highlights.length);
-      const selectedClip = highlights[randomIndex];
-
-      // Reset all clips first
-      highlights.forEach(h => {
-        h.isTrending = false;
-        h.trendingUntil = null;
-      });
-
-      // Activate only the chosen one
-      selectedClip.isTrending = true;
-      selectedClip.trendingUntil = Date.now() + 24 * 60 * 60 * 1000;
-
-      // Save back to Firestore
-      await updateDoc(highlightsRef, { highlights });
-
-      const endTime = selectedClip.trendingUntil;
-      localStorage.setItem('freeTonightEndTime', endTime);
-
-      startCountdown(btn, endTime);
-      activateViewBoost?.();
-
-      showStarPopup(`Free Tonight activated! ✨ Vibe: ${selectedFruit}`, 'success');
-
-      if (typeof loadMyClips === 'function') loadMyClips();
-
-    } catch (err) {
-      console.error(err);
-      let msg = err.message || 'Failed to activate';
-      if (msg.includes("No highlights")) msg = "Upload some clips first!";
-      showStarPopup(msg, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'FREE TONIGHT';
+    if (!auth?.currentUser?.uid) {
+        showStarPopup('Please sign in first', 'error');
+        return;
     }
-  };
-});
 
-  // Close modal with X button
-  fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
+    const savedEndTime = localStorage.getItem('freeTonightEndTime');
+    if (savedEndTime && Number(savedEndTime) > Date.now()) {
+        showStarPopup('Already active! Wait for countdown.', 'info');
+        startCountdown(btn, Number(savedEndTime));
+        return;
+    }
+
+    // Create Modal
+    const fruitModal = document.createElement("div");
+    fruitModal.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000000;
+        display:flex; align-items:center; justify-content:center;
+    `;
+
+    fruitModal.innerHTML = `
+        <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative; background:rgba(10,5,32,0.95); border:1px solid #00ff9f33; border-radius:24px;">
+            <div id="closeFruitModal" style="position:absolute; top:14px; right:14px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ff00f2; font-size:26px; font-weight:900;">×</div>
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:13px; letter-spacing:3px; color:#00ff9f; margin-bottom:8px;">FREE TONIGHT</div>
+                <div class="neon-title" style="font-size:22px; color:white;">Choose your vibe for tonight</div>
+            </div>
+
+            <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:28px 0;">
+                <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍇</button>
+                <button class="fruit-btn" data-fruit="🍉" title="Thrills & Meetups" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍉</button>
+                <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍒</button>
+                <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍓</button>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button id="confirmFruit" disabled style="padding:12px 40px; background:#444; color:#888; border:none; border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed;">
+                    ACTIVATE TONIGHT
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(fruitModal);
+
+    let selectedFruit = null;
+
+    // Fruit Button Selection
+    fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
+        btn.onclick = () => {
+            fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
+                b.style.borderColor = '#666';
+                b.style.transform = 'scale(1)';
+            });
+            btn.style.borderColor = '#ff00f2';
+            btn.style.transform = 'scale(1.2)';
+            selectedFruit = btn.dataset.fruit;
+
+            const confirmBtn = fruitModal.querySelector('#confirmFruit');
+            confirmBtn.disabled = false;
+            confirmBtn.style.background = 'linear-gradient(90deg, #00ff9f, #ff00f2)';
+            confirmBtn.style.color = '#000';
+            confirmBtn.style.cursor = 'pointer';
+        };
+    });
+
+    // Close Modal with X
+    fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
+
+    // Confirm Activation
+    fruitModal.querySelector('#confirmFruit').onclick = async () => {
+        if (!selectedFruit) return;
+
+        fruitModal.remove();
+        btn.disabled = true;
+        btn.textContent = 'Activating... ✨';
+
+        try {
+            const rawUid = auth.currentUser.uid;
+            const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
+            const userSnap = await getDocs(usersQuery);
+            if (userSnap.empty) throw new Error("Profile not found");
+
+            const userDoc = userSnap.docs[0];
+            const sanitizedId = userDoc.id;
+
+            await updateDoc(userDoc.ref, { fruitPick: selectedFruit });
+
+            const highlightsRef = doc(db, "highlightVideos", sanitizedId);
+            const highlightsSnap = await getDoc(highlightsRef);
+            if (!highlightsSnap.exists()) throw new Error("No highlights found");
+
+            let highlights = [...(highlightsSnap.data().highlights || [])];
+
+            if (highlights.length === 0) throw new Error("Upload some clips first!");
+
+            // Pick one random clip
+            const randomIndex = Math.floor(Math.random() * highlights.length);
+            const selectedClip = highlights[randomIndex];
+
+            // Reset all
+            highlights.forEach(h => {
+                h.isTrending = false;
+                h.trendingUntil = null;
+            });
+
+            // Activate chosen one
+            selectedClip.isTrending = true;
+            selectedClip.trendingUntil = Date.now() + 24 * 60 * 60 * 1000;
+
+            await updateDoc(highlightsRef, { highlights });
+
+            const endTime = selectedClip.trendingUntil;
+            localStorage.setItem('freeTonightEndTime', endTime);
+
+            startCountdown(btn, endTime);
+            activateViewBoost?.();
+
+            showStarPopup(`Free Tonight activated! ✨ Vibe: ${selectedFruit}`, 'success');
+
+            if (typeof loadMyClips === 'function') loadMyClips();
+
+        } catch (err) {
+            console.error(err);
+            let msg = err.message || 'Failed to activate';
+            if (msg.includes("No highlights")) msg = "Upload some clips first!";
+            showStarPopup(msg, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'FREE TONIGHT';
+        }
+    };
 });
 
 function startCountdown(btn, endTime) {
