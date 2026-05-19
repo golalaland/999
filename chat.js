@@ -9534,7 +9534,7 @@ paystackNigeriaBanks.forEach(bank => {
 });
 
 // ───────────────────────────────────────────────
-// Free Tonight Toggle + Fruit Picker (Single Random Clip)
+// Free Tonight Toggle + Fruit Picker (Mobile Friendly)
 // ───────────────────────────────────────────────
 document.getElementById('freeTonightBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('freeTonightBtn');
@@ -9555,28 +9555,42 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     // Create Modal
     const fruitModal = document.createElement("div");
     fruitModal.style.cssText = `
-        position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000000;
-        display:flex; align-items:center; justify-content:center;
+        position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000000;
+        display:flex; align-items:center; justify-content:center; padding:20px;
     `;
 
     fruitModal.innerHTML = `
-        <div class="neon-mini-card" style="max-width:380px; width:92%; padding:24px 20px; position:relative; background:rgba(10,5,32,0.95); border:1px solid #00ff9f33; border-radius:24px;">
-            <div id="closeFruitModal" style="position:absolute; top:14px; right:14px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ff00f2; font-size:26px; font-weight:900;">×</div>
+        <div class="neon-mini-card" style="max-width:340px; width:100%; padding:20px 18px; position:relative; 
+             background:rgba(10,5,32,0.96); border:1px solid #00ff9f33; border-radius:24px;">
             
-            <div style="text-align:center; margin-bottom:20px;">
-                <div style="font-size:13px; letter-spacing:3px; color:#00ff9f; margin-bottom:8px;">FREE TONIGHT</div>
-                <div class="neon-title" style="font-size:22px; color:white;">Choose your vibe for tonight</div>
+            <!-- Close Button -->
+            <div id="closeFruitModal" style="position:absolute; top:12px; right:12px; width:32px; height:32px; 
+                 display:flex; align-items:center; justify-content:center; cursor:pointer; color:#ff00f2; 
+                 font-size:28px; font-weight:900; z-index:10;">×</div>
+           
+            <div style="text-align:center; margin-bottom:18px;">
+                <div style="font-size:12px; letter-spacing:2px; color:#00ff9f; margin-bottom:6px;">FREE TONIGHT</div>
+                <div style="font-size:19px; color:white; line-height:1.2;">Choose your vibe for tonight</div>
             </div>
 
-            <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:28px 0;">
-                <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍇</button>
-                <button class="fruit-btn" data-fruit="🍉" title="Thrills & Meetups" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍉</button>
-                <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍒</button>
-                <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" style="font-size:42px; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍓</button>
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:20px 0;">
+                <button class="fruit-btn" data-fruit="🍇" title="Casual Hangout" 
+                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
+                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍇</button>
+                <button class="fruit-btn" data-fruit="🍉" title="Thrills & Meetups" 
+                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
+                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍉</button>
+                <button class="fruit-btn" data-fruit="🍒" title="Passionate Romance" 
+                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
+                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍒</button>
+                <button class="fruit-btn" data-fruit="🍓" title="Love Adventures" 
+                        style="font-size:38px; width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.08); 
+                               border:2px solid #666; cursor:pointer; transition:all 0.25s ease;">🍓</button>
             </div>
 
-            <div style="display: flex; justify-content: center; margin-top: 20px;">
-                <button id="confirmFruit" disabled style="padding:12px 40px; background:#444; color:#888; border:none; border-radius:50px; font-weight:700; font-size:15px; cursor:not-allowed;">
+            <div style="display: flex; justify-content: center; margin-top: 12px;">
+                <button id="confirmFruit" disabled style="padding:12px 36px; background:#444; color:#aaa; border:none; 
+                         border-radius:50px; font-weight:700; font-size:14.5px; cursor:not-allowed; width:100%; max-width:220px;">
                     ACTIVATE TONIGHT
                 </button>
             </div>
@@ -9587,7 +9601,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
     let selectedFruit = null;
 
-    // Fruit Button Selection
+    // Fruit Selection
     fruitModal.querySelectorAll('.fruit-btn').forEach(btn => {
         btn.onclick = () => {
             fruitModal.querySelectorAll('.fruit-btn').forEach(b => {
@@ -9595,7 +9609,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
                 b.style.transform = 'scale(1)';
             });
             btn.style.borderColor = '#ff00f2';
-            btn.style.transform = 'scale(1.2)';
+            btn.style.transform = 'scale(1.18)';
             selectedFruit = btn.dataset.fruit;
 
             const confirmBtn = fruitModal.querySelector('#confirmFruit');
@@ -9606,7 +9620,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
         };
     });
 
-    // Close Modal with X
+    // Close Modal
     fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 
     // Confirm Activation
@@ -9618,6 +9632,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
         btn.textContent = 'Activating... ✨';
 
         try {
+            // ... (your existing activation logic - unchanged)
             const rawUid = auth.currentUser.uid;
             const usersQuery = query(collection(db, "users"), where("uid", "==", rawUid), limit(1));
             const userSnap = await getDocs(usersQuery);
@@ -9633,20 +9648,16 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
             if (!highlightsSnap.exists()) throw new Error("No highlights found");
 
             let highlights = [...(highlightsSnap.data().highlights || [])];
-
             if (highlights.length === 0) throw new Error("Upload some clips first!");
 
-            // Pick one random clip
             const randomIndex = Math.floor(Math.random() * highlights.length);
             const selectedClip = highlights[randomIndex];
 
-            // Reset all
             highlights.forEach(h => {
                 h.isTrending = false;
                 h.trendingUntil = null;
             });
 
-            // Activate chosen one
             selectedClip.isTrending = true;
             selectedClip.trendingUntil = Date.now() + 24 * 60 * 60 * 1000;
 
@@ -9657,7 +9668,6 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
             startCountdown(btn, endTime);
             activateViewBoost?.();
-
             showStarPopup(`Free Tonight activated! ✨ Vibe: ${selectedFruit}`, 'success');
 
             if (typeof loadMyClips === 'function') loadMyClips();
