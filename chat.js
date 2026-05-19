@@ -9606,7 +9606,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     };
   });
 
-  // Close modal
+  // Close modal with X button
   fruitModal.querySelector('#closeFruitModal').onclick = () => fruitModal.remove();
 
   // Confirm → Activate with ONE random clip
@@ -9638,7 +9638,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
 
       if (highlights.length === 0) throw new Error("Upload some clips first!");
 
-      // === KEY CHANGE: Pick only ONE random clip ===
+      // Pick only ONE random clip
       const randomIndex = Math.floor(Math.random() * highlights.length);
       const selectedClip = highlights[randomIndex];
 
@@ -9656,14 +9656,13 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       await updateDoc(highlightsRef, { highlights });
 
       const endTime = selectedClip.trendingUntil;
-
       localStorage.setItem('freeTonightEndTime', endTime);
+
       startCountdown(btn, endTime);
       activateViewBoost?.();
 
       showStarPopup(`Free Tonight activated! ✨ Vibe: ${selectedFruit}`, 'success');
 
-      // Refresh UI
       if (typeof loadMyClips === 'function') loadMyClips();
 
     } catch (err) {
@@ -9673,7 +9672,7 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
       showStarPopup(msg, 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'FREE TONIGHT'; // reset button text as needed
+      btn.textContent = 'FREE TONIGHT';
     }
   };
 });
