@@ -4322,19 +4322,8 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 </div>
   
-<!-- REVENUE DASHBOARD – CASH BALANCE + WITHDRAW (ONE CUTE CASING) -->
+<!-- REVENUE DASHBOARD – COMPACT SINGLE CARD -->
 <div style="margin: 24px 0;">
-  <h4 style="
-    text-align: center;
-    margin-bottom: 16px;
-    font-weight: 700;
-    font-size: 18px;
-    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  ">
-    REVENUE DASHBOARD
-  </h4>
 
   <!-- One Unified Cute Card -->
   <div style="
@@ -4342,13 +4331,28 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     backdrop-filter: blur(12px);
     border: 1px solid rgba(195, 246, 12, 0.35);
     border-radius: 20px;
-    padding: 20px 16px;
+    padding: 18px 16px;
     max-width: 340px;
     margin: 0 auto;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5),
                 0 0 12px rgba(195, 246, 12, 0.12);
   ">
-    <!-- Cash Balance (top, prominent) -->
+
+    <!-- Title INSIDE card -->
+    <div style="
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    ">
+      REVENUE DASHBOARD
+    </div>
+
+    <!-- Cash Balance -->
     <div style="
       font-size: 11px;
       color: #bbbbbb;
@@ -4357,22 +4361,22 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     ">
       CASH BALANCE
     </div>
+
     <div style="
       font-size: 22px;
       font-weight: 900;
       color: #c3f60c;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       letter-spacing: 0.5px;
     ">
       ₦<span id="infoCashBalance">0</span>
     </div>
 
-
-    <!-- Withdraw Section (flows naturally below balance) -->
+    <!-- Withdraw Section -->
     <p style="
       color: #cccccc;
-      margin: 0 0 12px;
+      margin: 0 0 10px;
       font-size: 13.5px;
       font-weight: 600;
       text-align: center;
@@ -4382,12 +4386,13 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
     <p style="
       color: #aaaaaa;
-      margin: -6px 0 16px;
+      margin: 0 0 14px;
       font-size: 11.5px;
       text-align: center;
       line-height: 1.4;
     ">
-      Fill bank details in profile before withdrawal request<br>Minimum Amount: ₦5,000
+      Fill bank details in profile before withdrawal request<br>
+      Minimum Amount: ₦5,000
     </p>
 
     <input
@@ -4405,7 +4410,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
         font-size: 15px;
         text-align: center;
         box-sizing: border-box;
-        margin: 0 auto 16px;
+        margin: 0 auto 14px;
         display: block;
       "
     />
@@ -4415,7 +4420,7 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
       font-size: 18px;
       font-weight: 800;
       text-align: center;
-      margin: 12px 0 20px;
+      margin: 10px 0 18px;
     ">
       → ₦<span id="withdrawPreview">0</span>
     </div>
@@ -4437,64 +4442,83 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
     ">
       WITHDRAW NOW
     </button>
+
   </div>
 </div>
   
 
-   <!-- 🎉 INVITE FRIENDS SECTION -->
-<div style="margin: 24px 0 16px;">
-  <h4 style="
-    text-align: center;
-    margin-bottom: 12px;
-    font-weight: 700;
-    font-size: 18px;                    /* was 22px */
-    background: linear-gradient(90deg, #c3f60c, #e8ff6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  ">
-    HOST & GET REWARDED
-    <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; vertical-align: -4px; margin-left: 6px; fill: #c3f60c;">
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-    </svg>
-  </h4>
+<!-- 🎉 INVITE / REFERRAL CARD (COMPACT VERSION) -->
+<div style="margin: 24px 0;">
 
-  <p style="
-    text-align: center;
-    font-size: 13px;                    /* was 14px */
-    color: #ccc;
+  <div style="
     max-width: 340px;
-    margin: 0 auto 16px;
-    line-height: 1.45;
+    margin: 0 auto;
+    padding: 18px 16px;
+    border-radius: 20px;
+    background: #000;
+    border: 1px solid rgba(195, 246, 12, 0.35);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5),
+                0 0 12px rgba(195, 246, 12, 0.12);
+    text-align: center;
   ">
-    Share your INVITE link and grow your influence.<br>
-   Get <strong>rewarded</strong> for each new host that joins your cube & <strong>more</strong> for VIP invites!
-  </p>
 
-  <div style="display: flex; justify-content: center;">
+    <!-- Title -->
+    <div style="
+      font-weight: 800;
+      font-size: 15px;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #c3f60c, #e8ff6a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    ">
+      HOST & GET REWARDED
+
+      <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: #c3f60c;">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+    </div>
+
+    <!-- Description -->
+    <div style="
+      font-size: 12.5px;
+      color: #ccc;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    ">
+      Share your invite link and grow your influence.<br>
+      Earn rewards for every host that joins your cube & extra for VIP invites.
+    </div>
+
+    <!-- CTA Button -->
     <button id="inviteFriendsToolBtn" style="
-      padding: 10px 28px;               /* was 12px 32px */
+      padding: 12px 18px;
       border: none;
       border-radius: 999px;
       background: linear-gradient(90deg, #c3f60c, #a0d00a);
       color: #000;
-      font-size: 14px;                  /* was 16px */
-      font-weight: 700;                 /* slightly lighter than 800 */
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 0 24px rgba(195,246,12,0.45);
-      display: flex;
+      box-shadow: 0 0 18px rgba(195,246,12,0.35);
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      min-width: 200px;                 /* was 220px */
       justify-content: center;
+      gap: 8px;
+      min-width: 200px;
     ">
-      <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #000;">
+
+      <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: #000;">
         <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
       </svg>
+
       INVITE FRIENDS
     </button>
+
   </div>
 </div>
-
 
   
 <!-- FREE TONIGHT UPLOAD — VIDEO ONLY + CERTIFY CHECKBOX -->
@@ -4676,44 +4700,73 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div>
 </div>
   
-<!-- MY CLIPS ON SALE — THE DOPEST PANEL IN THE EMPIRE -->
+<!-- MY CLIPS PANEL — PREMIUM VERSION -->
 <div id="myClipsPanel" style="margin:40px auto 20px; max-width:900px; font-family:system-ui,sans-serif;">
-  <h2 style="
-    text-align:center;
-    font-size:28px;
-    font-weight:900;
-    background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    margin:0 0 20px;
-    letter-spacing:1px;
-  ">
-    MY CLIPS LIST
-  </h2>
-  <p style="text-align:center; color:#aaa; font-size:14px; margin:-10px 0 30px;">
-    Your uploaded highlights
-  </p>
 
-  <div id="myClipsGrid" style="
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
-    gap:18px;
-    padding:10px;
+  <div style="
+    background:#000;
+    border:1px solid rgba(0,255,234,0.25);
+    border-radius:20px;
+    padding:20px 16px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.5),
+               0 0 14px rgba(0,255,234,0.08);
   ">
-    <!-- CLIPS WILL BE INJECTED HERE BY JS -->
-  </div>
 
-  <div id="noClipsMessage" style="
-    text-align:center;
-    padding:60px 20px;
-    color:#666;
-    font-size:16px;
-    display:none;
-  ">
-    <div style="font-size:60px; margin-bottom:20px;">.____.</div>
-    You haven't uploaded any clips yet.<br>
-    <span style="color:#ffcc00">Upload to earn bonus $STRZ!</span>
+    <!-- HEADER -->
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="
+        font-size:18px;
+        font-weight:900;
+        background:linear-gradient(90deg,#00ffea,#ff00c8,#ffea00);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        letter-spacing:1px;
+      ">
+        MY CLIPS LIST
+      </div>
+
+      <div style="
+        font-size:12.5px;
+        color:#aaa;
+        margin-top:6px;
+      ">
+        Your uploaded highlights
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div id="myClipsGrid" style="
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+      gap:16px;
+    ">
+      <!-- CLIPS WILL BE INJECTED HERE BY JS -->
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="noClipsMessage" style="
+      text-align:center;
+      padding:50px 20px;
+      color:#777;
+      font-size:14px;
+      display:none;
+    ">
+      <div style="font-size:48px; margin-bottom:14px; opacity:0.8;">
+        🎬
+      </div>
+
+      <div style="font-weight:700; color:#bbb; margin-bottom:6px;">
+        No clips yet. 
+      </div>
+
+      <div style="line-height:1.4;">
+        Upload your first clips to start earning $STRZ <br>
+        <span style="color:#ffcc00; font-weight:700;">+$STRZ rewards</span>
+      </div>
+    </div>
+
   </div>
+</div>
 
 
 
