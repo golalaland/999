@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-
-<html lang="en" style="background:#060212;background-color:#060212;">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,22 +20,19 @@
     --soft: #b0ffeb;
   }
 
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-html {
-scroll-behavior: smooth;
-background: #060212 !important;
-background-color: #060212 !important;
-}
+  html, body {
+    background: #060212 !important;
+    background-color: #060212 !important;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
 
-body {
-background: #060212 !important;
-background-color: #060212 !important;
-color: var(–text);
-font-family: ‘DM Sans’, sans-serif;
-overflow-x: hidden;
-cursor: none;
-}
+  .cursor, .cursor-ring, .mesh, .dotgrid { position: fixed; }
 
 /* ── CUSTOM CURSOR ── */
 .cursor {
