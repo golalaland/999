@@ -10231,28 +10231,32 @@ document.getElementById('freeTonightBtn')?.addEventListener('click', async () =>
     };
 });
 
+// ====================== COUNTDOWN FUNCTION ======================
 function startCountdown(btn, endTime) {
-  function updateTimer() {
-    const now = Date.now();
-    const remaining = endTime - now;
+    function updateTimer() {
+        const now = Date.now();
+        const remaining = endTime - now;
 
-    if (remaining <= 0) {
-      btn.disabled = false;
-      btn.textContent = "I'm Free Tonight";
-      localStorage.removeItem('freeTonightEndTime');
-      stopViewBoost();           // ← Important: stop boosting when time ends
-      return;
+        if (remaining <= 0) {
+            btn.disabled = false;
+            btn.textContent = "I'm Free Tonight 🔥";
+            localStorage.removeItem('freeTonightEndTime');
+            stopViewBoost?.(); 
+            return;
+        }
+
+        const hours = Math.floor(remaining / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+
+        btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
     }
 
-    const hours = Math.floor(remaining / 3600000);
-    const minutes = Math.floor((remaining % 3600000) / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
-    btn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} left 🔥`;
-
-    setTimeout(updateTimer, 1000);
-  }
-  updateTimer();
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    btn.dataset.countdownInterval = interval;   // for future cleanup if needed
 }
+
 // Auto-start countdown on load
 window.addEventListener('load', () => {
   const savedEndTime = localStorage.getItem('freeTonightEndTime');
@@ -10316,6 +10320,19 @@ document.getElementById('highlightUploadInput')?.addEventListener('change', (e) 
     }
   });
 
+// ====================== AUTO RESTORE COUNTDOWN ON PAGE LOAD ======================
+function restoreFreeTonightCountdown() {
+    const savedEndTime = localStorage.getItem('freeTonightEndTime');
+    const btn = document.getElementById('freeTonightBtn');
+
+    if (savedEndTime && Number(savedEndTime) > Date.now() && btn) {
+        startCountdown(btn, Number(savedEndTime));
+    }
+}
+
+// Run when page loads
+window.addEventListener('DOMContentLoaded', restoreFreeTonightCountdown);
+window.addEventListener('load', restoreFreeTonightCountdown);
 
 /*********************************
  * INIT
