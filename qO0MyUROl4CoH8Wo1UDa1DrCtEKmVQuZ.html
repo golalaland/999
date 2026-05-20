@@ -457,6 +457,151 @@
   border-color: #ff4444 !important;
   box-shadow: 0 0 15px rgba(255,68,68,0.5);
 }
+/* FEATURED HOST */
+.featured-host-wrap{
+    width:100%;
+    max-width:420px;
+    margin: 0 auto 2rem;
+}
+
+.featured-label{
+    text-align:center;
+    color:#c3f60c;
+    font-size:0.7rem;
+    letter-spacing:3px;
+    margin-bottom:12px;
+    opacity:0.8;
+}
+
+.featured-host-card{
+    position:relative;
+    overflow:hidden;
+
+    border-radius:28px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(18,25,5,0.92),
+            rgba(7,12,2,0.96)
+        );
+
+    border:1px solid rgba(195,246,12,0.18);
+
+    box-shadow:
+        0 12px 50px rgba(0,0,0,0.45),
+        0 0 30px rgba(195,246,12,0.06);
+
+    backdrop-filter: blur(18px);
+}
+
+/* IMAGE */
+.featured-image-wrap{
+    position:relative;
+    height:280px;
+    overflow:hidden;
+}
+
+.featured-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+
+    transform:scale(1.02);
+
+    transition:transform 0.5s ease;
+}
+
+.featured-host-card:hover .featured-image{
+    transform:scale(1.06);
+}
+
+.featured-overlay{
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(0,0,0,0.05),
+            rgba(0,0,0,0.7)
+        );
+}
+
+.featured-badge{
+    position:absolute;
+    top:14px;
+    left:14px;
+
+    padding:7px 12px;
+
+    border-radius:999px;
+
+    background:rgba(195,246,12,0.14);
+
+    border:1px solid rgba(195,246,12,0.3);
+
+    color:#e8ff9c;
+
+    font-size:0.7rem;
+    font-weight:700;
+    letter-spacing:1px;
+
+    backdrop-filter:blur(12px);
+}
+
+/* CONTENT */
+.featured-content{
+    padding:18px 18px 22px;
+}
+
+.featured-mini{
+    color:#7d8f56;
+    font-size:0.68rem;
+    letter-spacing:2px;
+    margin-bottom:10px;
+}
+
+.featured-name{
+    font-size:1.7rem;
+    font-weight:700;
+    color:#fff;
+
+    margin-bottom:10px;
+
+    text-shadow:0 0 20px rgba(255,255,255,0.08);
+}
+
+.featured-note{
+    color:#d9e2c2;
+    font-size:0.96rem;
+    line-height:1.7;
+    opacity:0.92;
+}
+
+/* TAGS */
+.featured-tags{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+
+    margin-top:18px;
+}
+
+.featured-tags span{
+    padding:7px 12px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,0.05);
+
+    border:1px solid rgba(255,255,255,0.06);
+
+    color:#d6ef89;
+
+    font-size:0.68rem;
+    letter-spacing:1px;
+}
 </style>
 
 
