@@ -1014,22 +1014,29 @@ async function showVIPCountdown() {
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
             liveTextEl.innerHTML = `
-                <div style="text-align:center; line-height:1.45;">
-                    <div style="font-size:0.78rem; color:#888; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:4px;">
-                        VIP Access Active
-                    </div>
-                    <div style="font-size:1rem; font-weight:700; color:#fff;">
-                        You're on <span style="color:#ff4db8; text-shadow:0 0 10px rgba(255,77,184,0.4);">${inviterName}'s</span> VIP tab
-                    </div>
-                    <div style="margin-top:9px; display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px; background:rgba(195,246,12,0.10); border:1px solid rgba(195,246,12,0.18);">
-                        <span style="width:8px; height:8px; border-radius:50%; background:#c3f60c; box-shadow:0 0 12px #c3f60c;"></span>
-                        <span style="color:#d8ff65; font-weight:700; font-size:0.92rem;">
-                            BOOSTED • ${days}d ${hours}h left
-                        </span>
-                    </div>
+            <div style="text-align:center; line-height:1.45;">
+                <div style="font-size:0.78rem; color:#888; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:4px;">
+                    VIP Access Active
                 </div>
-            `;
-        }
+                <div style="font-size:1rem; font-weight:700; color:#fff;">
+                    You're on <span style="color:#ff4db8; text-shadow:0 0 10px rgba(255,77,184,0.4);">${inviterName}'s</span> VIP tab
+                </div>
+                
+                <!-- SHIMMERING GOLD BOOSTED SECTION -->
+                <div style="margin-top:9px; display:inline-flex; align-items:center; gap:8px; padding:8px 18px; border-radius:999px; 
+                            background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.25);">
+                    <span style="width:8px; height:8px; border-radius:50%; background:#ffd700; box-shadow:0 0 12px #ffd700;"></span>
+                    <span style="font-weight:700; font-size:0.92rem; 
+                                 background: linear-gradient(90deg, #ffd700, #ffea80, #ffd700, #ffea80);
+                                 -webkit-background-clip: text;
+                                 -webkit-text-fill-color: transparent;
+                                 background-size: 200% 100%;
+                                 animation: goldShimmer 3s linear infinite;">
+                        BOOSTED • ${days}d ${hours}h left
+                    </span>
+                </div>
+            </div>
+        `;
 
         updateCountdown();
         vipCountdownInterval = setInterval(updateCountdown, 60000);
