@@ -533,6 +533,53 @@
   </div>
 </footer>
   </div>
+
+    <!-- FEATURED HOST -->
+<section class="featured-host-wrap">
+
+    <div class="featured-label">
+        ✦ FEATURED HOST
+    </div>
+
+    <div class="featured-host-card">
+
+        <!-- IMAGE -->
+        <div class="featured-image-wrap">
+            <img id="featuredImage" class="featured-image" src="" alt="Featured Host">
+
+            <div class="featured-overlay"></div>
+
+            <div class="featured-badge">
+                MEMBER
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="featured-content">
+
+            <div class="featured-mini">
+                CUBE MAGAZINE
+            </div>
+
+            <div class="featured-name" id="featuredName">
+                ADA
+            </div>
+
+            <div class="featured-note" id="featuredNote">
+                "Soft energy. Loud presence. Somewhere in Lagos tonight."
+            </div>
+
+            <div class="featured-tags">
+                <span></span>
+                <span>FEMALE</span>
+                <span>HOST</span>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
 </body>
 </html>
 
@@ -609,6 +656,41 @@ function showPopup(message, duration = 3500) {
 }
 
 document.getElementById('dob').max = new Date().toISOString().split('T')[0];
+
+  const featuredHosts = [
+
+{
+    name: "ADA",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1200&auto=format&fit=crop",
+    note: "Soft energy. Loud presence. Somewhere in Lagos tonight."
+},
+
+{
+    name: "ZARA",
+    image: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=1200&auto=format&fit=crop",
+    note: "Champagne habits. Rooftop moods. Replies fast after midnight."
+},
+
+{
+    name: "MAYA",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop",
+    note: "Private dinners. Pretty chaos. The type you remember later."
+}
+
+];
+
+const randomHost =
+featuredHosts[Math.floor(Math.random() * featuredHosts.length)];
+
+document.getElementById("featuredName").textContent =
+randomHost.name;
+
+document.getElementById("featuredImage").src =
+randomHost.image;
+
+document.getElementById("featuredNote").textContent =
+randomHost.note;
+
   
 // === CONFETTI SPRAY EFFECT ===
 function triggerSprayConfetti() {
