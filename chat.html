@@ -4300,38 +4300,6 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 </div>
 
-<!-- =========================================
-     FREE TONIGHT – MINI CONNECTED CARD
-     ========================================= -->
-<div id="freeTonightCard" class="neon-mini-card">
-
-  <!-- Title -->
-  <div class="neon-title-container">
-    <div class="neon-title">
-      FREE TONIGHT?
-    </div>
-  </div>
-
-  <!-- Sub -->
-  <div class="neon-sub">
-    Go live for 24 hours • connect in a safer space.<br>
-    No fakes • No scams • No bots
-  </div>
-
-  <!-- Button -->
-  <button id="freeTonightBtn" class="neon-btn">
-    I'M FREE TONIGHT
-  </button>
-
-  <!-- faded footer -->
-<div class="neon-footer">
-  www.freetonight.app
-</div>
-
-  <!-- Message -->
-  <div id="freeTonightMessage" class="neon-msg"></div>
-
-</div>
   
 <!-- REVENUE DASHBOARD – COMPACT SINGLE CARD -->
 <div style="margin: 24px 0;">
@@ -4531,128 +4499,337 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
   </div>
 </div>
 
+
+<!-- =========================================
+     FREE TONIGHT – MINI CONNECTED CARD
+     ========================================= -->
+<div id="freeTonightCard" class="neon-mini-card">
+
+  <!-- Title -->
+  <div class="neon-title-container">
+    <div class="neon-title">
+      FREE TONIGHT?
+    </div>
+  </div>
+
+  <!-- Sub -->
+  <div class="neon-sub">
+    Go live for 24 hours • connect in a safer space.<br>
+    No fakes • No scams • No bots
+  </div>
+
+  <!-- Button -->
+  <button id="freeTonightBtn" class="neon-btn">
+    I'M FREE TONIGHT
+  </button>
+
+  <!-- faded footer -->
+<div class="neon-footer">
+  www.freetonight.app
+</div>
+
+  <!-- Message -->
+  <div id="freeTonightMessage" class="neon-msg"></div>
+
+</div>
+
   
-<!-- FREE TONIGHT UPLOAD — VIDEO ONLY + CERTIFY CHECKBOX -->
-<div id="sellContentBar" style="margin:40px auto 0; max-width:440px; font-family:'Inter', system-ui, -apple-system, sans-serif;">
-  <div style="text-align:center; margin-bottom:28px;">
+This had a strong base already — the issue wasn’t the aesthetic, it was hierarchy + spacing discipline. Some parts looked premium, other parts looked prototype-y.
+
+I kept your energy/style, but tightened it like an actual production upload flow.
+
+Main fixes:
+	•	cleaner visual rhythm
+	•	stronger card proportions
+	•	upload area now feels luxurious instead of random dashed box
+	•	checkbox section integrated properly
+	•	button now feels like the primary action
+	•	less “too many competing glows”
+
+<!-- 🔥 FREE TONIGHT UPLOAD — PRO VERSION -->
+<div id="sellContentBar" style="
+  margin:40px auto 0;
+  max-width:440px;
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+">
+
+  <!-- HEADER -->
+  <div style="text-align:center; margin-bottom:22px;">
+
     <h2 style="
-      margin:0; font-size:28px; font-weight:900; letter-spacing:-1px;
+      margin:0;
+      font-size:30px;
+      font-weight:900;
+      letter-spacing:-1px;
       background:linear-gradient(90deg,#ff2e78,#ff8c2e,#ff2e78);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-      background-size:200% auto; animation:gradient 4s linear infinite;
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-size:200% auto;
+      animation:gradient 4s linear infinite;
     ">
       GO LIVE TONIGHT
     </h2>
-    <p style="margin:8px 0 0; color:#888; font-size:14.5px; font-weight:500;">
+
+    <p style="
+      margin:8px 0 0;
+      color:#8a8a8a;
+      font-size:14px;
+      line-height:1.45;
+      font-weight:500;
+    ">
       Your clip goes live instantly for everyone.
     </p>
+
   </div>
 
-  <!-- Main Card -->
+  <!-- MAIN CARD -->
   <div style="
-    background:rgba(12,12,14,0.75); backdrop-filter:blur(20px);
-    border:1px solid rgba(255,255,255,0.08); border-radius:24px;
-    padding:32px 28px; box-shadow:0 20px 40px rgba(0,0,0,0.5),
-                               inset 0 1px 0 rgba(255,255,255,0.05);
-    position:relative; overflow:hidden;
+    position:relative;
+    overflow:hidden;
+    background:rgba(12,12,14,0.82);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:24px;
+    padding:28px 22px;
+    box-shadow:
+      0 20px 40px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.04);
   ">
-    <div style="position:absolute; inset:0; pointer-events:none;
-                 background:radial-gradient(circle at 30% 30%, rgba(255,0,110,0.12), transparent 50%);
-                 opacity:0.6;"></div>
+
+    <!-- Glow -->
+    <div style="
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at top left,
+        rgba(255,46,120,0.12),
+        transparent 45%);
+      opacity:0.9;
+    "></div>
 
     <div style="position:relative; z-index:2;">
 
-      
-      <!-- Video Upload -->
-      <div style="margin-bottom:32px; text-align:center;">
-        <div style="color:#e0e0e0; font-size:15px; font-weight:600; margin-bottom:16px;">
-          Upload Your Video <span style="color:#888; font-weight:500; font-size:14px;">(MP4 • max 50MB)</span>
-        </div>
-        <label for="highlightUploadInput" style="
-          display:block; padding:32px 24px;
-          background:#111111; border:2px dashed #444;
-          border-radius:16px; cursor:pointer; transition:all 0.3s ease;
-          color:#888; font-size:15px; font-weight:500;
-          margin:0 auto; max-width:340px;
-        "
-        onmouseover="this.style.borderColor='#ff2e78'; this.style.background='#1a1a1a'; this.style.color='#ff2e78'"
-        onmouseout="this.style.borderColor='#444'; this.style.background='#111111'; this.style.color='#888'">
-          <div id="uploadPlaceholder">
-            <div style="margin-bottom:8px; font-size:36px;">↑</div>
-            Click or drag video here
-            <div style="margin-top:8px; font-size:13px; color:#666;">
-              MP4 • max 50MB
-            </div>
-          </div>
-          <div id="videoPreviewContainer" style="display:none; text-align:center;">
-            <video id="videoPreview" controls muted style="
-              width:100%;
-              max-height:220px;
-              border-radius:12px;
-              background:#000;
-              object-fit:contain;
-            "></video>
-            <div id="fileSizeInfo" style="
-              margin-top:12px;
-              font-size:13px;
-              color:#888;
-            "></div>
-          </div>
-          <input type="file" id="highlightUploadInput" accept="video/mp4,video/webm" style="display:none;">
-        </label>
+      <!-- Upload Title -->
+      <div style="
+        text-align:center;
+        margin-bottom:16px;
+        color:#f1f1f1;
+        font-size:15px;
+        font-weight:700;
+      ">
+        Upload Your Video
+        <span style="
+          color:#777;
+          font-size:13px;
+          font-weight:500;
+        ">
+          (MP4 • max 50MB)
+        </span>
       </div>
 
-      <div style="text-align:center; margin:24px 0; color:#e0e0e0; font-size:15px;">
-  <label style="display:inline-flex; align-items:center; gap:12px; cursor:pointer;">
-    <input type="checkbox" id="itsMeCheckbox" style="width:20px; height:20px; accent-color:#ff2e78;">
-    I certify it's me in this video
-  </label>
-</div>
+      <!-- Upload Area -->
+      <label
+        for="highlightUploadInput"
+        style="
+          display:block;
+          padding:30px 20px;
+          border-radius:18px;
+          border:1.5px dashed rgba(255,255,255,0.14);
+          background:#101010;
+          cursor:pointer;
+          transition:all 0.25s ease;
+          text-align:center;
+          max-width:340px;
+          margin:0 auto;
+        "
 
-      <!-- Upload Button + Progress + Disclaimer -->
-      <div style="text-align:center; margin-top:32px;">
-        <button id="uploadHighlightBtn" disabled style="
-          padding:14px 40px; background:#444;
-          color:#888; border:none; border-radius:50px; font-weight:700; font-size:16px;
-          cursor:not-allowed; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(0,0,0,0.3);
-          transition:all 0.3s ease; position:relative; z-index:2;
+        onmouseover="
+          this.style.borderColor='#ff2e78';
+          this.style.background='#161616';
+          this.style.transform='translateY(-1px)';
+        "
+
+        onmouseout="
+          this.style.borderColor='rgba(255,255,255,0.14)';
+          this.style.background='#101010';
+          this.style.transform='translateY(0)';
+        "
+      >
+
+        <!-- Empty State -->
+        <div id="uploadPlaceholder">
+
+          <div style="
+            font-size:34px;
+            margin-bottom:10px;
+            color:#ff2e78;
+          ">
+            ↑
+          </div>
+
+          <div style="
+            color:#d4d4d4;
+            font-size:15px;
+            font-weight:600;
+          ">
+            Click or drag video here
+          </div>
+
+          <div style="
+            margin-top:8px;
+            font-size:12.5px;
+            color:#666;
+          ">
+            MP4 • max 50MB
+          </div>
+
+        </div>
+
+        <!-- Video Preview -->
+        <div id="videoPreviewContainer" style="
+          display:none;
+          text-align:center;
         ">
-          I'm Free Tonight
+
+          <video
+            id="videoPreview"
+            controls
+            muted
+            style="
+              width:100%;
+              max-height:220px;
+              border-radius:14px;
+              background:#000;
+              object-fit:contain;
+            "
+          ></video>
+
+          <div id="fileSizeInfo" style="
+            margin-top:10px;
+            font-size:12.5px;
+            color:#888;
+          "></div>
+
+        </div>
+
+        <input
+          type="file"
+          id="highlightUploadInput"
+          accept="video/mp4,video/webm"
+          style="display:none;"
+        >
+      </label>
+
+      <!-- CERTIFICATION -->
+      <div style="
+        margin:22px 0 8px;
+        text-align:center;
+      ">
+
+        <label style="
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          cursor:pointer;
+          color:#ddd;
+          font-size:14px;
+          font-weight:500;
+        ">
+
+          <input
+            type="checkbox"
+            id="itsMeCheckbox"
+            style="
+              width:18px;
+              height:18px;
+              accent-color:#ff2e78;
+            "
+          >
+
+          I certify it's me in this video
+
+        </label>
+
+      </div>
+
+      <!-- BUTTON -->
+      <div style="text-align:center; margin-top:24px;">
+
+        <button
+          id="uploadHighlightBtn"
+          disabled
+          style="
+            padding:14px 38px;
+            border:none;
+            border-radius:999px;
+            background:#444;
+            color:#888;
+            font-size:15px;
+            font-weight:800;
+            cursor:not-allowed;
+            letter-spacing:0.3px;
+            transition:all 0.25s ease;
+            box-shadow:0 8px 24px rgba(0,0,0,0.35);
+          "
+        >
+          I'M FREE TONIGHT
         </button>
 
-      <div style="text-align:center; margin-top:12px; font-size:13px; color:#888; opacity:0.8;">
-  By clicking "I'm Free Tonight" you agree to the 
-  <span id="termsLink" style="
-    color:#ff2e78;
-    cursor:pointer;
-    transition:all 0.2s ease;
-  "
-  onmouseover="this.style.textShadow='0 0 8px rgba(255,46,120,0.6)'"
-  onmouseout="this.style.textShadow='none'">
-    consent & terms
-  </span>.
-</div>
+        <!-- TERMS -->
+        <div style="
+          margin-top:14px;
+          font-size:12.5px;
+          color:#7f7f7f;
+          line-height:1.4;
+        ">
+          By clicking "I'm Free Tonight" you agree to the
 
+          <span
+            id="termsLink"
+            style="
+              color:#ff2e78;
+              cursor:pointer;
+              transition:all 0.2s ease;
+            "
+
+            onmouseover="
+              this.style.textShadow='0 0 8px rgba(255,46,120,0.5)';
+            "
+
+            onmouseout="
+              this.style.textShadow='none';
+            "
+          >
+            consent & terms
+          </span>.
+        </div>
+
+        <!-- PROGRESS -->
         <div id="progressContainer" style="
-          margin:14px auto 0;
-          width:80%;
+          margin:16px auto 0;
+          width:82%;
           max-width:340px;
           height:8px;
           background:rgba(255,255,255,0.08);
-          border-radius:4px;
+          border-radius:999px;
           overflow:hidden;
           opacity:0;
-          transition:opacity 0.4s ease;
+          transition:opacity 0.35s ease;
         ">
+
           <div id="progressBar" style="
             width:0%;
             height:100%;
-            background:linear-gradient(90deg, #ff2e78, #ff8c2e);
-            border-radius:4px;
+            background:linear-gradient(90deg,#ff2e78,#ff8c2e);
+            border-radius:999px;
             transition:width 0.3s ease-out;
           "></div>
+
         </div>
+
       </div>
+
     </div>
   </div>
 </div>
