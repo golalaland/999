@@ -1037,6 +1037,7 @@ async function showVIPCountdown() {
                 </div>
             </div>
         `;
+        }
 
         updateCountdown();
         vipCountdownInterval = setInterval(updateCountdown, 60000);
