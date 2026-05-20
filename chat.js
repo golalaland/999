@@ -906,305 +906,139 @@ function showHotspotAd() {
 let vipCountdownInterval = null;
 
 async function showVIPCountdown() {
-  const countdownEl = document.getElementById("vipCountdown");
-  const textEl = document.getElementById("countdownText");
+    const countdownEl = document.getElementById("vipCountdown");
+    const textEl = document.getElementById("countdownText");
+    if (!countdownEl || !textEl) return;
 
-  if (!countdownEl || !textEl) return;
-
-  if (!currentUser) {
-    countdownEl.style.display = "none";
-    return;
-  }
-
-  try {
-    const userData = await getCachedUserDoc(currentUser.uid);
-
-    if (!userData) {
-      countdownEl.style.display = "none";
-      return;
+    if (!currentUser) {
+        countdownEl.style.display = "none";
+        return;
     }
 
-    // invitedBy is sanitized email/referral
-    // referral = inviter chatId
-    const inviterName =
-      (userData.referral || userData.invitedBy || "someone")
-        .toString()
-        .replace(/_/g, ".")
-        .trim();
+    try {
+        const userData = await getCachedUserDoc(currentUser.uid);
+        if (!userData) {
+            countdownEl.style.display = "none";
+            return;
+        }
 
-    // Main Card Styling
-    countdownEl.style.cssText = `
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:14px 16px;
-      margin:12px 0;
-      border-radius:20px;
-      background:
-        linear-gradient(
-          135deg,
-          rgba(22,22,25,0.94),
-          rgba(10,10,12,0.96)
-        );
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:
-        0 10px 30px rgba(0,0,0,0.45),
-        0 0 18px rgba(255,0,170,0.08);
-      backdrop-filter:blur(16px);
-      overflow:hidden;
-      position:relative;
-    `;
+        // === NEW: Hide if user is Host ===
+        if (userData.isHost === true) {
+            countdownEl.style.display = "none";
+            return;
+        }
 
-    // Soft Glow Layer
-    countdownEl.innerHTML = `
-      <div style="
-        position:absolute;
-        inset:0;
-        background:
-          radial-gradient(circle at top right,
-          rgba(255,0,170,0.10),
-          transparent 45%);
-        pointer-events:none;
-      "></div>
+        const inviterName = (userData.referral || userData.invitedBy || "someone")
+            .toString()
+            .replace(/_/g, ".")
+            .trim();
 
-      <div style="
-        position:relative;
-        z-index:2;
-        width:100%;
-      ">
-        <div id="countdownText"></div>
-      </div>
-    `;
-
-    const liveTextEl = countdownEl.querySelector("#countdownText");
-
-    // No VIP Active
-    if (!userData.vipExpiresAt) {
-
-      liveTextEl.innerHTML = `
-        <div style="
-          text-align:center;
-          line-height:1.5;
-        ">
-
-          <div style="
-            font-size:0.8rem;
-            letter-spacing:1.5px;
-            color:#888;
-            margin-bottom:4px;
-            text-transform:uppercase;
-          ">
-            VIP Access
-          </div>
-
-          <div style="
-            font-size:1rem;
-            font-weight:700;
-            color:#fff;
-          ">
-            You're on
-            <span style="
-              color:#ff4db8;
-              text-shadow:0 0 10px rgba(255,77,184,0.45);
-            ">
-              ${inviterName}'s
-            </span>
-            tab
-          </div>
-
-          <div style="
-            margin-top:6px;
-            color:#ff7777;
-            font-size:0.92rem;
-            font-weight:600;
-          ">
-            No active boost
-          </div>
-
-          <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
-             style="
-               display:inline-flex;
-               align-items:center;
-               justify-content:center;
-               gap:8px;
-               margin-top:14px;
-               padding:11px 22px;
-               border-radius:999px;
-               text-decoration:none;
-               font-weight:800;
-               font-size:0.92rem;
-               letter-spacing:0.4px;
-               background:
-                 linear-gradient(
-                   90deg,
-                   #ffd700,
-                   #ffea61,
-                   #ffd700
-                 );
-               color:#111;
-               box-shadow:
-                 0 0 20px rgba(255,215,0,0.35);
-               transition:0.25s ease;
-             ">
-            ⚡ BOOST YOUR TAB
-          </a>
-        </div>
-      `;
-
-      countdownEl.style.display = "block";
-      return;
-    }
-
-    const expiresAt = userData.vipExpiresAt.toDate
-      ? userData.vipExpiresAt.toDate()
-      : new Date(userData.vipExpiresAt);
-
-    // Clear previous interval
-    if (vipCountdownInterval) {
-      clearInterval(vipCountdownInterval);
-    }
-
-    function updateCountdown() {
-
-      const now = new Date();
-      const diff = expiresAt.getTime() - now.getTime();
-
-      // Expired
-      if (diff <= 0) {
-
-        liveTextEl.innerHTML = `
-          <div style="text-align:center;">
-
-            <div style="
-              font-size:0.8rem;
-              color:#888;
-              text-transform:uppercase;
-              letter-spacing:1.5px;
-              margin-bottom:5px;
-            ">
-              VIP Access
-            </div>
-
-            <div style="
-              font-size:1rem;
-              font-weight:700;
-              color:#fff;
-            ">
-             Your VIP access on ${inviterName}'s tab is expired
-            </div>
-
-            <div style="
-              margin-top:5px;
-              color:#ff4d4d;
-              font-weight:700;
-              font-size:0.95rem;
-            ">
-              BOOST & CLAIM REWARDS
-            </div>
-
-          <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
-   style="
-     display:inline-block;
-     margin-top:14px;
-     padding:11px 24px;
-     border-radius:999px;
-     text-decoration:none;
-     font-weight:800;
-     background:
-       linear-gradient(
-         90deg,
-         #ff0099,
-         #ff6600
-       );
-     color:#fff;
-     box-shadow:
-       0 0 18px rgba(255,102,0,0.35);
-   ">
-  BOOST NOW
-</a>
-</div>
-`;
-
-return;
-      }
-
-      // Time Left
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (diff % (1000 * 60 * 60 * 24)) /
-        (1000 * 60 * 60)
-      );
-
-      liveTextEl.innerHTML = `
-        <div style="text-align:center; line-height:1.45;">
-
-          <div style="
-            font-size:0.78rem;
-            color:#888;
-            letter-spacing:1.6px;
-            text-transform:uppercase;
-            margin-bottom:4px;
-          ">
-            VIP Access Active
-          </div>
-
-          <div style="
-            font-size:1rem;
-            font-weight:700;
-            color:#fff;
-          ">
-            You're on
-            <span style="
-              color:#ff4db8;
-              text-shadow:0 0 10px rgba(255,77,184,0.4);
-            ">
-              ${inviterName}'s
-            </span>
-            VIP tab
-          </div>
-
-          <div style="
-            margin-top:9px;
-            display:inline-flex;
+        // Main Card Styling (your design preserved)
+        countdownEl.style.cssText = `
+            display:flex;
             align-items:center;
-            gap:8px;
-            padding:7px 14px;
-            border-radius:999px;
-            background:rgba(195,246,12,0.10);
-            border:1px solid rgba(195,246,12,0.18);
-          ">
+            justify-content:center;
+            padding:14px 16px;
+            margin:12px 0;
+            border-radius:20px;
+            background: linear-gradient(135deg, rgba(22,22,25,0.94), rgba(10,10,12,0.96));
+            border:1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 18px rgba(255,0,170,0.08);
+            backdrop-filter:blur(16px);
+            overflow:hidden;
+            position:relative;
+        `;
 
-            <span style="
-              width:8px;
-              height:8px;
-              border-radius:50%;
-              background:#c3f60c;
-              box-shadow:0 0 12px #c3f60c;
-            "></span>
+        countdownEl.innerHTML = `
+            <div style="position:absolute; inset:0; background: radial-gradient(circle at top right, rgba(255,0,170,0.10), transparent 45%); pointer-events:none;"></div>
+            <div style="position:relative; z-index:2; width:100%;">
+                <div id="countdownText"></div>
+            </div>
+        `;
 
-            <span style="
-              color:#d8ff65;
-              font-weight:700;
-              font-size:0.92rem;
-            ">
-              BOOSTED • ${days}d ${hours}h left
-            </span>
+        const liveTextEl = countdownEl.querySelector("#countdownText");
 
-          </div>
-        </div>
-      `;
+        // No VIP Active
+        if (!userData.vipExpiresAt) {
+            liveTextEl.innerHTML = `
+                <div style="text-align:center; line-height:1.5;">
+                    <div style="font-size:0.8rem; letter-spacing:1.5px; color:#888; margin-bottom:4px; text-transform:uppercase;">
+                        VIP Access
+                    </div>
+                    <div style="font-size:1rem; font-weight:700; color:#fff;">
+                        You're on <span style="color:#ff4db8; text-shadow:0 0 10px rgba(255,77,184,0.45);">${inviterName}'s</span> tab
+                    </div>
+                    <div style="margin-top:6px; color:#ff7777; font-size:0.92rem; font-weight:600;">
+                        No active boost
+                    </div>
+                    <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
+                       style="display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; padding:11px 22px; border-radius:999px; text-decoration:none; font-weight:800; font-size:0.92rem; letter-spacing:0.4px; background: linear-gradient(90deg, #ffd700, #ffea61, #ffd700); color:#111; box-shadow:0 0 20px rgba(255,215,0,0.35);">
+                        ⚡ BOOST YOUR TAB
+                    </a>
+                </div>
+            `;
+            countdownEl.style.display = "block";
+            return;
+        }
 
-      countdownEl.style.display = "block";
+        // VIP Active / Expired Logic
+        const expiresAt = userData.vipExpiresAt.toDate ? userData.vipExpiresAt.toDate() : new Date(userData.vipExpiresAt);
+
+        if (vipCountdownInterval) clearInterval(vipCountdownInterval);
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = expiresAt.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                // === EXPIRED STATE ===
+                liveTextEl.innerHTML = `
+                    <div style="text-align:center;">
+                        <div style="font-size:0.8rem; color:#888; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:5px;">
+                            VIP Access Expired
+                        </div>
+                        <div style="font-size:1rem; font-weight:700; color:#fff;">
+                            Your VIP access on <span style="color:#ff4db8;">${inviterName}'s</span> tab is expired
+                        </div>
+                        <a href="https://auth.cube.xixi.live/f3593d3f-8b87-4381-99b2-567372d93537"
+                           style="display:inline-block; margin-top:14px; padding:11px 24px; border-radius:999px; text-decoration:none; font-weight:800; background: linear-gradient(90deg, #ff0099, #ff6600); color:#fff; box-shadow:0 0 18px rgba(255,102,0,0.35);">
+                            ⚡ BOOST YOUR TAB
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Active State
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+            liveTextEl.innerHTML = `
+                <div style="text-align:center; line-height:1.45;">
+                    <div style="font-size:0.78rem; color:#888; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:4px;">
+                        VIP Access Active
+                    </div>
+                    <div style="font-size:1rem; font-weight:700; color:#fff;">
+                        You're on <span style="color:#ff4db8; text-shadow:0 0 10px rgba(255,77,184,0.4);">${inviterName}'s</span> VIP tab
+                    </div>
+                    <div style="margin-top:9px; display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px; background:rgba(195,246,12,0.10); border:1px solid rgba(195,246,12,0.18);">
+                        <span style="width:8px; height:8px; border-radius:50%; background:#c3f60c; box-shadow:0 0 12px #c3f60c;"></span>
+                        <span style="color:#d8ff65; font-weight:700; font-size:0.92rem;">
+                            BOOSTED • ${days}d ${hours}h left
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        updateCountdown();
+        vipCountdownInterval = setInterval(updateCountdown, 60000);
+        countdownEl.style.display = "block";
+
+    } catch (err) {
+        console.error("Countdown error:", err);
+        countdownEl.style.display = "none";
     }
-
-    updateCountdown();
-
-    vipCountdownInterval = setInterval(updateCountdown, 60000);
-
-  } catch (err) {
-    console.error("Countdown error:", err);
-    countdownEl.style.display = "none";
-  }
 }
 
 
