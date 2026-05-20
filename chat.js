@@ -771,7 +771,6 @@ window.formatNumberWithCommas = formatNumberWithCommas;
 function showHotspotAd() {
     console.log("🔇 Hotspot Ad popup is currently disabled.");
     return;
-}
   const adModal = document.createElement("div");
   adModal.id = "hotspotAdModal";
   adModal.style.cssText = `
