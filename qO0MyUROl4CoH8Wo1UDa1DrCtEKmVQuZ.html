@@ -457,6 +457,7 @@
   border-color: #ff4444 !important;
   box-shadow: 0 0 15px rgba(255,68,68,0.5);
 }
+  
 /* FEATURED HOST */
 .featured-host-wrap{
     width:100%;
@@ -603,8 +604,7 @@
     letter-spacing:1px;
 }
 </style>
-
-
+  
   <div class="form-group"><input type="text" placeholder="Full Name" id="name"></div>
   <div class="form-group"><input type="text" placeholder="Choose Username" id="chatId"></div>
   <div class="form-group"><input type="tel" placeholder="Phone Number" id="phone"></div>
@@ -1158,7 +1158,7 @@ const userData = {
   vipName: isVIP ? chatId : null,
   socialShare: gender === 'Female' && !isVIP,
 
-  stars: 50,
+  stars: 0,
   starsToday: 0,
   starsGifted: 0,
   lastStarDate: new Date().toISOString().split("T")[0],
@@ -1358,7 +1358,7 @@ vipPayBtn.onclick = () => {
           hasPaid: true,
           vipActivatedAt: serverTimestamp(),
        vipExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // ← Changed to 7 days
-          stars: increment(500),
+          stars: increment(1000),
           lastUpdated: serverTimestamp()
         });
 
