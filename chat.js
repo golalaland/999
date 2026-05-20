@@ -384,7 +384,24 @@ async function syncUserData() {
       }
     }
      
-   
+    // Unlocks sync
+    const localUnlocks = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
+    const merged = [...new Set([...localUnlocks, ...(userData.unlockedVideos || [])])];
+
+    if (merged.length > (userData.unlockedVideos?.length || 0)) {
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        unlockedVideos: merged,
+        lastUnlockSync: serverTimestamp()
+      });
+    }
+
+    currentUser.unlockedVideos = merged;
+    localStorage.setItem("userUnlockedVideos", JSON.stringify(merged));
+
+  } catch (err) {
+    ("syncUserData failed:", err);
+  }
+}
 
 /* ===============================
    GLOBAL DOM REFERENCES — POPULATE THE refs OBJECT (ONLY ONCE!)
