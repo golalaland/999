@@ -4501,101 +4501,104 @@ html,body{height:100%;margin:0;font-family:'XiXi',Inter,system-ui,Segoe UI,Robot
 
 
 <!-- =========================================
-     FREE TONIGHT – COMPACT PREMIUM CARD
+     FREE TONIGHT – CLEAN PREMIUM CARD
      ========================================= -->
-<div id="freeTonightCard" class="neon-mini-card" style="
+<div id="freeTonightCard" style="
   max-width:340px;
   margin:24px auto;
-  padding:18px 16px;
+  padding:20px 16px;
   border-radius:20px;
   background:#000;
-  border:1px solid rgba(255,46,120,0.22);
-  box-shadow:
-    0 8px 24px rgba(0,0,0,0.5),
-    0 0 12px rgba(255,46,120,0.08);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 8px 24px rgba(0,0,0,0.45);
   text-align:center;
-  position:relative;
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
   overflow:hidden;
 ">
 
-  <!-- soft glow -->
-<div style="
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:
-    radial-gradient(circle at top left,
-    rgba(255,46,120,0.05),
-    transparent 42%);
-  opacity:0.65;
-"></div>
-
-<div style="position:relative; z-index:2;">
-
-  <!-- Title -->
-  <div class="neon-title-container" style="margin-bottom:10px;">
-
-    <div class="neon-title" style="
-      font-size:18px;
-      font-weight:900;
-      letter-spacing:0.4px;
-      background:linear-gradient(90deg,#ff4f8f,#ff9a4d);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-    ">
-      FREE TONIGHT?
-    </div>
-
+  <!-- TOP LABEL -->
+  <div style="
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.06);
+    color:#9d9d9d;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.2px;
+    margin-bottom:14px;
+  ">
+    LIVE • 24 HOURS
   </div>
 
-    <!-- Sub -->
-    <div class="neon-sub" style="
-      font-size:12.5px;
-      color:#b8b8b8;
-      line-height:1.5;
-      margin-bottom:18px;
-    ">
-      Go live tonight for 24 hours • Connect in a safer space.<br>
-      No fakes • No scams • No bots
-    </div>
-
-    <!-- Button -->
-    <button id="freeTonightBtn" class="neon-btn" style="
-      width:100%;
-      max-width:240px;
-      padding:12px;
-      border:none;
-      border-radius:999px;
-      background:linear-gradient(90deg,#ff2e78,#ff8c2e);
-      color:#fff;
-      font-size:14px;
-      font-weight:800;
-      cursor:pointer;
-      box-shadow:0 6px 18px rgba(255,46,120,0.25);
-      transition:all 0.25s ease;
-    ">
-      I'M FREE TONIGHT
-    </button>
-
-    <!-- Footer -->
-    <div class="neon-footer" style="
-      margin-top:16px;
-      font-size:11px;
-      color:#666;
-      letter-spacing:0.4px;
-      opacity:0.8;
-    ">
-      www.freetonight.app
-    </div>
-
-    <!-- Message -->
-    <div id="freeTonightMessage" class="neon-msg" style="
-      margin-top:12px;
-      font-size:12px;
-      color:#aaa;
-    "></div>
-
+  <!-- TITLE -->
+  <div style="
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:-0.6px;
+    line-height:1.05;
+    margin-bottom:10px;
+    background:linear-gradient(90deg,#ff4f8f,#ff934d);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+  ">
+    FREE TONIGHT?
   </div>
+
+  <!-- SUBTEXT -->
+  <div style="
+    font-size:13px;
+    line-height:1.5;
+    color:#b7b7b7;
+    margin-bottom:20px;
+  ">
+    Go live tonight and connect in a safer space.<br>
+    No fakes • No scams • No bots
+  </div>
+
+  <!-- BUTTON -->
+  <button id="freeTonightBtn" style="
+    width:100%;
+    max-width:240px;
+    padding:12px;
+    border:none;
+    border-radius:999px;
+    background:linear-gradient(90deg,#ff4f8f,#ff934d);
+    color:#fff;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition:transform 0.2s ease, opacity 0.2s ease;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  "
+  onmouseover="this.style.transform='translateY(-1px)';this.style.opacity='0.96';"
+  onmouseout="this.style.transform='translateY(0)';this.style.opacity='1';">
+    I'M FREE TONIGHT
+  </button>
+
+  <!-- FOOTER -->
+  <div style="
+    margin-top:16px;
+    font-size:11px;
+    color:#666;
+    letter-spacing:0.4px;
+  ">
+    www.freetonight.app
+  </div>
+
+  <!-- MESSAGE -->
+  <div id="freeTonightMessage" style="
+    margin-top:12px;
+    font-size:12px;
+    color:#9a9a9a;
+    min-height:16px;
+  "></div>
+
+</div>
 </div>
 
 <!-- 🔥 FREE TONIGHT UPLOAD — PRO VERSION -->
