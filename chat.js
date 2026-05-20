@@ -7656,16 +7656,6 @@ function renderCards() {
     
     visibleVideos.sort(() => Math.random() - 0.5).forEach(video => {
       
-      console.log("🎥 Free Tonight Video Data:", {
-        uploaderName: video.uploaderName,
-        fruitPick: video.fruitPick,
-        naturePick: video.naturePick,
-        gender: video.gender,
-        age: video.age,
-        location: video.location,
-        city: video.city
-      });
-
       // ==================== CARD - GLASSY LUXE ====================
       const card = document.createElement("div");
       Object.assign(card.style, {
