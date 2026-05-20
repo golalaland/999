@@ -384,24 +384,7 @@ async function syncUserData() {
       }
     }
      
-    // Unlocks sync
-    const localUnlocks = JSON.parse(localStorage.getItem("userUnlockedVideos") || "[]");
-    const merged = [...new Set([...localUnlocks, ...(userData.unlockedVideos || [])])];
-
-    if (merged.length > (userData.unlockedVideos?.length || 0)) {
-      await updateDoc(doc(db, "users", currentUser.uid), {
-        unlockedVideos: merged,
-        lastUnlockSync: serverTimestamp()
-      });
-    }
-
-    currentUser.unlockedVideos = merged;
-    localStorage.setItem("userUnlockedVideos", JSON.stringify(merged));
-
-  } catch (err) {
-    ("syncUserData failed:", err);
-  }
-}
+   
 
 /* ===============================
    GLOBAL DOM REFERENCES — POPULATE THE refs OBJECT (ONLY ONCE!)
@@ -576,7 +559,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       usernameColor: data.usernameColor || "#ff69b4",
       subscriptionActive: !!data.subscriptionActive,
       subscriptionCount: data.subscriptionCount || 0,
-      unlockedVideos: data.unlockedVideos || [],
+      //unlockedVideos: data.unlockedVideos || [],//
       invitedBy: data.invitedBy || null,
       inviteeGiftShown: !!data.inviteeGiftShown,
       hostLink: data.hostLink || null,
