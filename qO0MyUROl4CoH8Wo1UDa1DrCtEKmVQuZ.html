@@ -529,7 +529,7 @@
     color: #666;
     margin-top: 20px;
   ">
-    © 2025 CUBE. All rights reserved. • UYE™
+    © 2026 CUBE. All rights reserved. • UYE™
   </div>
 </footer>
   </div>
@@ -1130,7 +1130,7 @@ vipPayBtn.onclick = () => {
           isVIP: true,
           hasPaid: true,
           vipActivatedAt: serverTimestamp(),
-          vipExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 365 days
+       vipExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // ← Changed to 7 days
           stars: increment(500),
           lastUpdated: serverTimestamp()
         });
@@ -1152,7 +1152,7 @@ vipPayBtn.onclick = () => {
             recipientId: inviterId,
             type: "vip_cash_reward",
             title: `₦${cashRewardAmount.toLocaleString()} Cash Reward Earned!`,
-            message: `@${userData.chatId || 'Someone'} just activated VIP!\n₦${cashRewardAmount.toLocaleString()} + 250 STRZ added to your account.`,
+            message: `@${userData.chatId || 'Someone'} just activated VIP!\n₦${cashRewardAmount.toLocaleString()} & 250 STRZ added to your account.`,
             vipUserId: userData.uid || docId,
             vipUserName: userData.chatId || 'New VIP',
             read: false,
