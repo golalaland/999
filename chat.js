@@ -117,7 +117,7 @@ window.auth = auth;
 // Optional: welcome popup on re-login
 if (sessionStorage.getItem("justLoggedOut") === "true") {
   sessionStorage.removeItem("justLoggedOut");
-  showStarPopup("Welcome back, legend!");
+  //showStarPopup("Welcome back, legend!");//
 }
 
 /* ---------- Presence (Realtime) ---------- */
